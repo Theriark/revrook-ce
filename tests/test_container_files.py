@@ -57,8 +57,26 @@ def test_compose_keeps_keys_out_of_the_file() -> None:
     assert environment["FERNET_KEY"].startswith("${FERNET_KEY:?")
 
 
-def test_worker_does_not_inherit_the_web_health_check() -> None:
-    assert COMPOSE["services"]["worker"]["healthcheck"] == {"disable": True}
+def test_worker_has_its_own_health_check_that_reads_its_command_line() -> None:
+    # `docker compose up --wait` rejects a service without a health check, and
+    # the web health check (port 8080) does not apply to the worker.
+    worker = COMPOSE["services"]["worker"]
+    health = worker["healthcheck"]
+    assert health.get("disable") is not True
+    assert health["test"][0] == "CMD"
+    assert "/proc/1/cmdline" in " ".join(health["test"])
+    assert "8080" not in " ".join(health["test"])
+    assert worker["command"] == ["worker"]
+    for key in ("interval", "timeout", "retries", "start_period"):
+        assert key in health
+
+
+def test_no_service_depends_on_a_service_without_a_health_check() -> None:
+    services = COMPOSE["services"]
+    for definition in services.values():
+        for name, condition in definition.get("depends_on", {}).items():
+            if condition["condition"] == "service_healthy":
+                assert "test" in services[name].get("healthcheck", {}), name
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="bash is not installed")

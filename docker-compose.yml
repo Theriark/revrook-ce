@@ -47,6 +47,9 @@ services:
 
   worker:
     build: .
+    # The role is also passed as the command, so PID 1 is `python -m app.cli
+    # worker`. The health check below reads that command line.
+    command: ["worker"]
     environment:
       <<: *app-environment
       ROLE: worker
@@ -55,9 +58,21 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-    # The image health check probes the web port, which the worker does not serve.
+    # The image health check probes the web port, which the worker does not
+    # serve, so the worker has its own. `docker compose up --wait` rejects a
+    # service with no health check, so it cannot be disabled. Healthy means
+    # PID 1 is still the worker process. A startup failure makes the process
+    # exit and the container stop, which compose reports as a failure.
     healthcheck:
-      disable: true
+      test:
+        - CMD
+        - python
+        - -c
+        - "import sys; sys.exit(0 if 'worker' in open('/proc/1/cmdline').read().split(chr(0)) else 1)"
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
