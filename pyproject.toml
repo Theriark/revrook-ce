@@ -27,6 +27,10 @@ dependencies = { file = ["requirements.in"] }
 [tool.setuptools.packages.find]
 include = ["app*"]
 
+[tool.setuptools.package-data]
+"app" = ["static/css/*.css", "static/vendor/*/*", "static/brand/*"]
+"app.ui" = ["templates/*.html"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -48,7 +52,7 @@ target-version = "py312"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tools"]
+known-first-party = ["app", "helpers", "tools"]
 known-third-party = ["alembic"]
 
 [tool.mypy]

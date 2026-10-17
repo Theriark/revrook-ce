@@ -15,7 +15,7 @@ WORKER_LOCK_KEY = 7_262_001
 
 
 class Base(DeclarativeBase):
-    """Declarative base for every table; the models arrive in phase 1."""
+    """Declarative base for every table; the tables are defined in app.models."""
 
 
 def make_engine(url: str) -> AsyncEngine:

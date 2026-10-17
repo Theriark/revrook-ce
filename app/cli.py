@@ -1,5 +1,6 @@
-"""Command line entry point: revrook web | worker | all | verify-chain | make-fixtures.
+"""Command line entry point.
 
+Subcommands: web, worker, all, migrate, verify-chain, make-fixtures.
 Without a subcommand the ROLE setting (web, worker or all; default all) decides.
 """
 
@@ -13,6 +14,7 @@ from collections.abc import Callable, Sequence
 
 import uvicorn
 
+from app.migrate import upgrade_to_head
 from app.settings import Settings, SettingsError, load_settings
 from app.worker import serve
 
@@ -70,6 +72,9 @@ def supervise(
 
 
 def _serve_web(settings: Settings) -> int:  # pragma: no cover
+    # The first-run page needs the tables, so the web role brings the schema up
+    # to date before it listens (a locked, one-at-a-time step; see app.migrate).
+    upgrade_to_head()
     uvicorn.run(
         "app.main:create_app",
         factory=True,
@@ -99,6 +104,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subcommands.add_parser("web", help="serve the web interface on port 8080")
     subcommands.add_parser("worker", help="run the background worker")
     subcommands.add_parser("all", help="run web and worker as two processes")
+    subcommands.add_parser("migrate", help="bring the database schema up to date")
     for name, reason in STUBS.items():
         subcommands.add_parser(name, help=reason)
     return parser
@@ -119,6 +125,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
     command = args.command or settings.role
+    if command == "migrate":
+        upgrade_to_head()
+        return 0
     if command == "web":
         return _serve_web(settings)
     if command == "worker":

@@ -34,12 +34,42 @@ def alembic(database_url: str, *args: str) -> str:
 
 def test_migrations_upgrade_check_downgrade_upgrade(database_url: str) -> None:
     alembic(database_url, "upgrade", "head")
-    assert "0001" in alembic(database_url, "current")
+    assert "0002" in alembic(database_url, "current")
     assert "No new upgrade operations detected" in alembic(database_url, "check")
     alembic(database_url, "downgrade", "-1")
+    current = alembic(database_url, "current")
+    assert "0001" in current
+    assert "0002" not in current
+    alembic(database_url, "upgrade", "head")
+    assert "0002" in alembic(database_url, "current")
+    # All the way down and up again.
+    alembic(database_url, "downgrade", "base")
     assert "0001" not in alembic(database_url, "current")
     alembic(database_url, "upgrade", "head")
-    assert "0001" in alembic(database_url, "current")
+    assert "0002" in alembic(database_url, "current")
+    assert "No new upgrade operations detected" in alembic(database_url, "check")
+
+
+async def test_downgrade_removes_the_phase_1_tables_and_the_trigger_function(
+    database_url: str,
+) -> None:
+    engine = make_engine(database_url)
+    tables = "SELECT count(*) FROM pg_tables WHERE tablename = 'audit_event'"
+    functions = (
+        "SELECT count(*) FROM pg_proc WHERE proname = 'revrook_reject_modification'"
+    )
+    try:
+        alembic(database_url, "upgrade", "head")
+        async with engine.connect() as connection:
+            assert (await connection.execute(text(tables))).scalar_one() == 1
+            assert (await connection.execute(text(functions))).scalar_one() == 1
+        alembic(database_url, "downgrade", "-1")
+        async with engine.connect() as connection:
+            assert (await connection.execute(text(tables))).scalar_one() == 0
+            assert (await connection.execute(text(functions))).scalar_one() == 0
+    finally:
+        alembic(database_url, "upgrade", "head")
+        await engine.dispose()
 
 
 async def test_asyncpg_driver_connects_to_postgresql_16(database_url: str) -> None:

@@ -10,13 +10,43 @@ import functools
 import ipaddress
 import os
 import socket
+import subprocess
+import sys
+from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+import httpx
 import pytest
+from fastapi import FastAPI
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
 
+from app.db import make_engine
+from app.main import create_app
 from app.settings import Settings, load_settings
+from helpers import FakeClock
 
+ROOT = Path(__file__).resolve().parent.parent
+# Tables a test may empty. audit_event and evidence_log are append-only: the
+# database rejects TRUNCATE on them, so tests filter their rows instead.
+DATA_TABLES = (
+    "worker_heartbeat",
+    "schedule",
+    "report_export",
+    "exception_record",
+    "control_result",
+    "snapshot",
+    "fact",
+    "import_profile",
+    "evidence_revision",
+    "evidence_item",
+    "client",
+    "setting",
+    "api_token",
+    "app_user",
+)
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
 UNREACHABLE_DATABASE_URL = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
 
@@ -105,3 +135,52 @@ def database_url() -> str:
     if not url:
         pytest.skip("DATABASE_URL is not set; the PostgreSQL tests need it")
     return url
+
+
+@pytest.fixture(scope="session")
+def migrated_database() -> str:
+    """The test database brought to the newest revision (skipped without one)."""
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        pytest.skip("DATABASE_URL is not set; the PostgreSQL tests need it")
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        cwd=ROOT,
+        env={**os.environ, "DATABASE_URL": url},
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    return url
+
+
+@pytest.fixture
+async def db_engine(migrated_database: str) -> AsyncIterator[AsyncEngine]:
+    """An engine on the migrated database with every data table emptied."""
+    engine = make_engine(migrated_database)
+    async with engine.begin() as connection:
+        statement = "TRUNCATE " + ", ".join(DATA_TABLES) + " CASCADE"
+        await connection.execute(text(statement))
+    yield engine
+    await engine.dispose()
+
+
+@pytest.fixture
+def clock() -> FakeClock:
+    return FakeClock()
+
+
+@pytest.fixture
+def web_app(settings: Settings, db_engine: AsyncEngine, clock: FakeClock) -> FastAPI:
+    return create_app(settings, engine=db_engine, clock=clock)
+
+
+@pytest.fixture
+async def client(web_app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
+    transport = httpx.ASGITransport(app=web_app)
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://testserver"
+    ) as http_client:
+        yield http_client
