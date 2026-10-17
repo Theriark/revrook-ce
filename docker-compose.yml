@@ -41,6 +41,19 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    # Declared here as well as in the image: the worker waits for this check,
+    # and the static compose test requires every service_healthy dependency
+    # to carry its own. Same probe as the Dockerfile HEALTHCHECK.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3).status == 200 else 1)"
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     depends_on:
       db:
         condition: service_healthy
@@ -75,6 +88,13 @@ services:
       start_period: 10s
     depends_on:
       db:
+        condition: service_healthy
+      # The evidence volume is empty on the first start and Docker copies the
+      # image's /data into it when the first container is created. Web and
+      # worker created at the same moment both did that copy and raced
+      # ("failed to mkdir ... file exists"). Waiting for a healthy web means
+      # exactly one container ever populates the volume.
+      web:
         condition: service_healthy
 
 volumes:
