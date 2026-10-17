@@ -127,12 +127,16 @@ async def authenticate(
     """
     if len(password) > MAX_PASSWORD_LENGTH:
         return LoginResult("invalid")
-    result = await session.execute(
-        select(AppUser)
-        .where(AppUser.username == normalise_username(username)[:64])
-        .with_for_update()
-    )
-    user = result.scalar_one_or_none()
+    user: AppUser | None = None
+    # PostgreSQL text cannot hold a NUL byte; a name with one cannot exist, so
+    # it is treated as an unknown user instead of being sent to the database.
+    if "\x00" not in username:
+        result = await session.execute(
+            select(AppUser)
+            .where(AppUser.username == normalise_username(username)[:64])
+            .with_for_update()
+        )
+        user = result.scalar_one_or_none()
     if user is None or not user.is_active:
         await asyncio.to_thread(verify_password, dummy_password_hash(), password)
         add_audit_event(session, "login.failed", detail={"reason": "unknown_user"})

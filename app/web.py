@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.clock import Clock
 from app.crypto import FieldCipher
+from app.evidence.files import FileStore
+from app.evidence.service import EvidenceContext
 from app.security import (
     SESSION_COOKIE,
     SESSION_MAX_AGE,
@@ -32,6 +34,21 @@ def clock_of(request: Request) -> Clock:
 def cipher_of(request: Request) -> FieldCipher:
     cipher: FieldCipher = request.app.state.cipher
     return cipher
+
+
+def files_of(request: Request) -> FileStore:
+    files: FileStore = request.app.state.files
+    return files
+
+
+def evidence_context(request: Request) -> EvidenceContext:
+    """The files, cipher, importers and settings the evidence functions need."""
+    return EvidenceContext(
+        files=files_of(request),
+        cipher=cipher_of(request),
+        importers=request.app.state.importers,
+        settings=request.app.state.settings,
+    )
 
 
 def _codec(request: Request) -> SessionCodec:

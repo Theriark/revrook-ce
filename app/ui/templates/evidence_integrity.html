@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block nav %}
+<ul>
+<li><a class="rv-nav-link" href="/">Home</a></li>
+<li><a class="rv-nav-link" href="/evidence/integrity" aria-current="page">Evidence integrity</a></li>
+<li>
+<form class="rv-inline-form" method="post" action="/logout">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">Sign out</button>
+</form>
+</li>
+</ul>
+{% endblock %}
+{% block content %}
+<h1>Evidence integrity</h1>
+<p>Every client has a chain of evidence records. Each record stores the hash of the record before it, so a record that was changed or removed afterwards breaks the chain at that point.</p>
+<form method="post" action="/evidence/integrity">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit">Check all chains</button>
+</form>
+{% if rows is not none %}
+{% if not rows %}
+<p class="rv-text-secondary">There are no evidence records yet.</p>
+{% else %}
+{% if failed %}
+<p class="rv-status-not-protected" role="alert"><span class="rv-status-icon" aria-hidden="true">!</span> {{ failed }} of {{ rows|length }} chains failed the check.</p>
+{% else %}
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> All {{ rows|length }} chains are intact.</p>
+{% endif %}
+<table>
+<caption>Result of the check</caption>
+<thead>
+<tr>
+<th scope="col">Client</th>
+<th scope="col">Result</th>
+<th scope="col">Records</th>
+<th scope="col">Latest record hash</th>
+<th scope="col">Problem</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr>
+<th scope="row">{{ row.client_label }}</th>
+<td>
+{% if row.ok %}
+<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Intact</span>
+{% else %}
+<span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">!</span> Broken</span>
+{% endif %}
+</td>
+<td>{{ row.records }}</td>
+<td><code>{{ row.head }}</code></td>
+<td>{{ row.problem }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p class="rv-text-secondary">The check proves that nothing in the log changed after it was written. It does not prove that the data in the source system was true, and it cannot see records cut off the end of a chain. Keep the latest record hash if you need that.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

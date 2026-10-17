@@ -25,6 +25,8 @@ async def create_client(
         raise ValueError(
             f"client name must be 1 to {MAX_CLIENT_NAME_LENGTH} characters"
         )
+    if "\x00" in cleaned:
+        raise ValueError("client name must not contain a NUL character")
     client = Client(
         name=cleaned,
         pseudonym_key_encrypted=cipher.encrypt(new_pseudonym_key()),

@@ -49,7 +49,7 @@ deviation that needs an R&D decision. It cannot simply be removed: cffi is in th
 runtime lock, so check 6 would fail. R&D is asked to confirm the addition or to
 choose another resolution.
 
-## Front-end assets (vendored in phase 1, not in the repository yet)
+## Front-end assets (vendored in `app/static/vendor`)
 
 | Asset | SPDX identifier | LICENSE file read | Date read | Notes |
 | --- | --- | --- | --- | --- |

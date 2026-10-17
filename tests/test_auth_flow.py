@@ -339,3 +339,15 @@ async def test_pages_are_not_cached_and_keep_the_security_headers(
     response = await client.get("/login")
     assert response.headers["cache-control"] == "no-store"
     assert "default-src 'self'" in response.headers["content-security-policy"]
+
+
+async def test_a_nul_byte_in_the_username_is_an_unknown_user_not_a_server_error(
+    client: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    await create_admin(db_engine)
+    baseline = await audit_baseline(db_engine)
+    response = await login(client, WRONG_PASSWORD, username="adm\x00in")
+    assert response.status_code == 401
+    assert "username or password is not correct" in response.text
+    events = await audit_since(db_engine, baseline)
+    assert [event.detail["reason"] for event in events] == ["unknown_user"]
