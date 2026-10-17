@@ -130,11 +130,15 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
     role = _choice(source, "ROLE", Settings.role, ROLES, errors)
     log_level = _choice(source, "LOG_LEVEL", Settings.log_level, LOG_LEVELS, errors)
     raw_retention_days = _integer(source, "RAW_RETENTION_DAYS", 0, 0, 35, errors)
-    pack_retention_months = _integer(source, "PACK_RETENTION_MONTHS", 25, 1, 120, errors)
+    pack_retention_months = _integer(
+        source, "PACK_RETENTION_MONTHS", 25, 1, 120, errors
+    )
     import_max_bytes = _integer(
         source, "IMPORT_MAX_BYTES", 20_971_520, 1, 1_073_741_824, errors
     )
-    import_max_rows = _integer(source, "IMPORT_MAX_ROWS", 200_000, 1, 10_000_000, errors)
+    import_max_rows = _integer(
+        source, "IMPORT_MAX_ROWS", 200_000, 1, 10_000_000, errors
+    )
     smtp_port = _integer(source, "SMTP_PORT", 587, 1, 65_535, errors)
 
     if errors:
