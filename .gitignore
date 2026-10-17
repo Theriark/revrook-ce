@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+build/
+dist/
+
+# Local environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local tooling output
+release-record.json
