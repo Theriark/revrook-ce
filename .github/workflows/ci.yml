@@ -1,37 +1,48 @@
 name: CI
 
-# Merge gate for revrook-ce: the nine required checks from phase-plan-3.
+# Merge gate for revrook-ce (the nine required checks from phase-plan-3), the
+# Development deployment job and the lock-file job, in ONE workflow. This
+# repository has exactly three workflows: CI, Promote - Stage, Promote - Production.
 # STRICT is "true" since phase 0 added the application: every check must run and
 # succeed, and a skipped check fails the gate. (With STRICT "false" checks whose
 # inputs do not exist are SKIPPED and reported as skipped, never as a pass.)
 # See docs/ci-cd.md.
 
-# How CI is started: a push never runs this workflow. For pull requests the ONLY
-# trigger is the label event, and a run does anything only for the label "ci-go",
-# which the CI request broker sets (one request per commit, at most one per pull
-# request every 3 minutes and 12 a day). A push to a feature branch runs nothing.
-# release.yml calls this workflow on a push to development (workflow_call).
+# How CI is started: a push to a feature branch never runs this workflow. For pull
+# requests the ONLY trigger is the label event, and a run does anything only for
+# the label "ci-go", which the CI request broker sets (one request per commit, at
+# most one per pull request every 3 minutes and 12 a day). A push to development
+# (a merge) runs the gate and then the deploy-development job. workflow_dispatch
+# with mode=ci runs the gate by hand; mode=lock runs ONLY the lock job.
 # pull_request (not pull_request_target) has a read-only token and no secrets, so
 # it is safe for every base branch, including stacked pull requests.
 on:
+  push:
+    branches:
+      - development
   pull_request:
     types: [labeled]
   workflow_dispatch:
-  workflow_call:
-    outputs:
-      strict:
-        description: "Value of the STRICT constant evaluated by this run."
-        value: ${{ jobs.detect.outputs.strict }}
+    inputs:
+      mode:
+        description: "ci runs the merge gate. lock ONLY compiles the hashed requirement files and commits them to this branch."
+        required: false
+        default: ci
+        type: choice
+        options:
+          - ci
+          - lock
 
 permissions:
   contents: read
 
-# Superseded pull request runs are cancelled. Only pull_request runs cancel; when
-# release.yml calls this workflow on a push, nothing is cancelled. The deployment
-# group in release.yml is separate. A labeled event for any other label gets its
-# own unique group (all its jobs are skipped), so it can never cancel a ci-go run.
+# Pull request runs: one group per ref, superseded runs are cancelled, and a label
+# other than ci-go gets its own unique group (all its jobs are skipped), so it can
+# never cancel a ci-go run. Every other event (merge to development, manual gate,
+# lock) uses the single repository group shared with Promote - Stage and Promote -
+# Production: those runs never overlap and a live deployment is never cancelled.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ (github.event_name != 'pull_request' || github.event.label.name == 'ci-go') && 'run' || github.run_id }}
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}-{1}', github.ref, github.event.label.name == 'ci-go' && 'run' || github.run_id) || 'revrook-ce-delivery' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -44,9 +55,12 @@ env:
 jobs:
   detect:
     name: Detect which inputs exist
-    # Every other job needs detect, so a pull request label other than ci-go skips
-    # the whole run. workflow_dispatch and workflow_call always run.
-    if: github.event_name != 'pull_request' || github.event.label.name == 'ci-go'
+    # Every other gate job needs detect, so a pull request label other than ci-go
+    # and the lock mode skip the whole gate.
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'ci-go') ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode != 'lock')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -366,7 +380,11 @@ jobs:
       - content-licences
       - docker-build
       - compose-smoke
-    if: always() && (github.event_name != 'pull_request' || github.event.label.name == 'ci-go')
+    if: >-
+      always() && (
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'ci-go') ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode != 'lock'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -399,3 +417,164 @@ jobs:
             echo "::error::STRICT value unavailable (detect did not complete)"
             exit 1
           fi
+
+  deploy-development:
+    name: Deploy Development (build once, deploy the digest)
+    # Only a merge (push) to development, and only after the whole gate succeeded:
+    # nothing is deployed from an unverified commit. Feature branches and pull
+    # requests never reach this job.
+    needs: gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: development
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      SOURCE_SHA: ${{ github.sha }}
+      DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
+      DEV_HOST: ce-dev-revrook.theriark.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: true
+          # Built once. Only the source SHA tag is pushed (never latest); every
+          # later step uses the digest.
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Require a valid digest
+        shell: bash
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::build produced no valid digest"; exit 1; }
+      - id: deploy
+        uses: ./.github/actions/dokploy-deploy
+        with:
+          application-id: ${{ env.DEV_APPLICATION_ID }}
+          expected-host: ${{ env.DEV_HOST }}
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          health-url: https://${{ env.DEV_HOST }}/healthz
+          expected-revision: ${{ github.sha }}
+          title: Development ${{ github.sha }}
+          dokploy-url: ${{ secrets.DOKPLOY_URL }}
+          dokploy-api-key: ${{ secrets.DOKPLOY_API_KEY }}
+          cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          cf-access-client-secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      - name: Record immutable Development result
+        shell: bash
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## revrook-ce deployed to Development"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\`"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\`"
+            echo "- Previous image (rollback target): \`${PREVIOUS:-none}\`"
+            echo "- URL: https://${DEV_HOST}/"
+            echo "- Promote to Stage with Promote - Stage (source_sha above). Roll back by running it with an earlier approved digest."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  lock:
+    name: Lock - compile and commit hashed requirements
+    # ONLY for workflow_dispatch with mode=lock, same-repository, non-protected
+    # branches. Nothing else in this workflow runs in that mode.
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.mode == 'lock' &&
+      github.event.repository.fork == false &&
+      github.ref_type == 'branch' &&
+      github.actor != 'github-actions[bot]' &&
+      !contains(fromJSON('["main","development","stage","production"]'), github.ref_name)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      # Exact tool versions so two runs on the same inputs agree.
+      PIP_VERSION: "25.1.1"
+      PIP_TOOLS_VERSION: "7.5.0"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Compile the runtime lock, then the development lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Both tools are pinned: pip-tools reaches into pip internals, so a newer
+          # pip than the pip-tools release supports breaks pip-compile.
+          python -m pip install "pip==${PIP_VERSION}" "pip-tools==${PIP_TOOLS_VERSION}"
+          python --version
+          pip --version
+          pip-compile --version
+          # On failure keep the tail of the output as an annotation (visible in
+          # the check run) because the full log needs a signed-in session.
+          fail() {
+            echo "::error::pip-compile failed: $(tail -n 12 compile.log | tr '\n' '|' | cut -c1-900)"
+            exit 1
+          }
+          # Runtime first: requirements-dev.in uses requirements.txt as a constraint.
+          # --allow-unsafe pins setuptools (a dependency of pip-tools): without it
+          # the lock omits setuptools and pip --require-hashes refuses to install it.
+          pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements.txt requirements.in > compile.log 2>&1 || fail
+          cat compile.log
+          pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements-dev.txt requirements-dev.in > compile.log 2>&1 || fail
+          cat compile.log
+          rm -f compile.log
+      - name: Commit changed locks to the branch
+        id: commit
+        shell: bash
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git add requirements.txt requirements-dev.txt
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lock files are already up to date. Nothing committed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update hashed requirements lock files"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Summary
+        if: steps.commit.outputs.changed == 'true'
+        shell: bash
+        env:
+          BRANCH: ${{ github.ref_name }}
+          NEW_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          {
+            echo "## Lock files committed"
+            echo
+            echo "- Branch: \`${BRANCH}\`"
+            echo "- New head: \`${NEW_SHA}\`"
+            echo "- CI was NOT started. Request one run for this head with the CI request broker (label \`ci-go\`)."
+          } >> "${GITHUB_STEP_SUMMARY}"

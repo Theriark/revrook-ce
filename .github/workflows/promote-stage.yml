@@ -1,38 +1,56 @@
-name: Promote to Stage
+name: Promote - Stage
 
-# Promote the exact image that Development already runs to the Stage Dokploy
-# application. Never rebuilds: the digest published for the source SHA by
-# deploy-development.yml is resolved, confirmed on Development, deployed to
-# Stage, verified, tagged `stage`, and the `stage` branch is advanced to the same
-# SHA. Explicit approval for Stage is a human step before dispatching this run;
-# human QA in Jira follows. See docs/ci-cd.md.
+# Promote an already built image to the Stage Dokploy application. Never rebuilds.
+#
+# Promote (digest left empty): source_sha must be the current development head. The
+# digest published for it by CI (deploy-development job) is resolved, Development
+# must run exactly that digest, it is deployed to Stage and verified, the image is
+# tagged `stage` and the `stage` branch is advanced to the same SHA.
+#
+# Rollback (digest given): run this same workflow with source_sha and the earlier
+# approved digest. source_sha must be an earlier commit of development, and the
+# image published for sha-<source_sha> must be exactly that digest. The digest is
+# redeployed to Stage and verified, `stage` is re-tagged, and the `stage` branch is
+# moved back to source_sha (only when the current stage head descends from it).
+# There is no separate rollback workflow. The database is not downgraded: name any
+# irreversible migration before rolling back.
+#
+# Explicit approval for Stage is a human step before dispatching this run; human QA
+# in Jira follows. See docs/ci-cd.md.
 
 on:
   workflow_dispatch:
     inputs:
       source_sha:
-        description: "Exact tested commit (full 40-character SHA) that Development runs."
+        description: "Exact tested commit (full 40-character SHA)."
         required: true
+        type: string
+      digest:
+        description: "Optional. Earlier approved image digest (sha256:<64 hex>) to ROLL BACK Stage to. Leave empty to promote what Development runs."
+        required: false
+        default: ""
         type: string
 
 permissions:
   contents: write
   packages: write
 
-# One delivery run at a time per repository; a live run is never cancelled.
+# One delivery run at a time per repository (shared with CI on development, and
+# Promote - Production); a live run is never cancelled.
 concurrency:
   group: revrook-ce-delivery
   cancel-in-progress: false
 
 jobs:
   promote:
-    name: Promote the Development digest to Stage
+    name: Promote or roll back Stage to an immutable digest
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: stage
     env:
       IMAGE: ghcr.io/theriark/revrook-ce
       SOURCE_SHA: ${{ inputs.source_sha }}
+      DIGEST_INPUT: ${{ inputs.digest }}
       DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
       DEV_HOST: ce-dev-revrook.theriark.dev
       STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
@@ -43,17 +61,28 @@ jobs:
           fetch-depth: 0
 
       - name: Validate the promotion source
+        id: mode
         shell: bash
         run: |
           set -euo pipefail
           [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_sha must be a full 40-character commit SHA"; exit 1; }
-          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || { echo "::error::Stage promotion must run from development, got ${GITHUB_REF}"; exit 1; }
+          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || { echo "::error::Promote - Stage must run from development, got ${GITHUB_REF}"; exit 1; }
           git fetch origin +refs/heads/development:refs/remotes/origin/development
           development_sha="$(git rev-parse refs/remotes/origin/development)"
-          [[ "${SOURCE_SHA}" == "${development_sha}" ]] || {
-            echo "::error::source ${SOURCE_SHA} is not current development ${development_sha}"
-            exit 1
-          }
+          if [[ -z "${DIGEST_INPUT}" ]]; then
+            echo "rollback=false" >> "${GITHUB_OUTPUT}"
+            [[ "${SOURCE_SHA}" == "${development_sha}" ]] || {
+              echo "::error::source ${SOURCE_SHA} is not current development ${development_sha}. To go back to an earlier approved image, give its digest."
+              exit 1
+            }
+          else
+            [[ "${DIGEST_INPUT}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must be sha256:<64 hex>"; exit 1; }
+            git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/development || {
+              echo "::error::${SOURCE_SHA} is not a commit of development"
+              exit 1
+            }
+            echo "rollback=true" >> "${GITHUB_OUTPUT}"
+          fi
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -65,14 +94,21 @@ jobs:
       - name: Resolve the digest published for this commit
         id: digest
         shell: bash
+        env:
+          ROLLBACK: ${{ steps.mode.outputs.rollback }}
         run: |
           set -euo pipefail
           digest="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
           [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
+          if [[ "${ROLLBACK}" == "true" && "${digest}" != "${DIGEST_INPUT}" ]]; then
+            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is ${digest}, not the requested ${DIGEST_INPUT}; refusing"
+            exit 1
+          fi
           echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
           echo "Resolved ${IMAGE}@${digest}"
 
       - name: Confirm Development runs exactly this digest
+        if: steps.mode.outputs.rollback != 'true'
         shell: bash
         env:
           DIGEST: ${{ steps.digest.outputs.digest }}
@@ -106,6 +142,8 @@ jobs:
           health-url: https://${{ env.STAGE_HOST }}/healthz
           expected-revision: ${{ env.SOURCE_SHA }}
           title: Stage ${{ env.SOURCE_SHA }}
+          # A failed rollback is not rolled forward again automatically.
+          restore-on-failure: ${{ steps.mode.outputs.rollback == 'true' && 'false' || 'true' }}
           dokploy-url: ${{ secrets.DOKPLOY_URL }}
           dokploy-api-key: ${{ secrets.DOKPLOY_API_KEY }}
           cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
@@ -119,14 +157,26 @@ jobs:
           set -euo pipefail
           docker buildx imagetools create --tag "${IMAGE}:stage" "${IMAGE}@${DIGEST}"
 
-      - name: Advance the stage branch to the promoted commit
+      - name: Point the stage branch at the deployed commit
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          ROLLBACK: ${{ steps.mode.outputs.rollback }}
         run: |
           set -euo pipefail
+          force=false
+          if [[ "${ROLLBACK}" == "true" ]]; then
+            # Moving backwards is only allowed when the current stage head descends
+            # from the commit being restored.
+            git fetch origin +refs/heads/stage:refs/remotes/origin/stage
+            git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/stage || {
+              echo "::error::stage does not descend from ${SOURCE_SHA}; not moving the branch"
+              exit 1
+            }
+            force=true
+          fi
           gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stage" \
-            -f sha="${SOURCE_SHA}" -F force=false >/dev/null
+            -f sha="${SOURCE_SHA}" -F force="${force}" >/dev/null
           stage_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
           [[ "${stage_sha}" == "${SOURCE_SHA}" ]] || { echo "::error::stage is ${stage_sha}, expected ${SOURCE_SHA}"; exit 1; }
 
@@ -135,15 +185,24 @@ jobs:
         env:
           DIGEST: ${{ steps.digest.outputs.digest }}
           PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
+          ROLLBACK: ${{ steps.mode.outputs.rollback }}
         run: |
           set -euo pipefail
           {
-            echo "## revrook-ce promoted to Stage"
+            if [[ "${ROLLBACK}" == "true" ]]; then
+              echo "## revrook-ce Stage rolled back"
+            else
+              echo "## revrook-ce promoted to Stage"
+            fi
             echo
             echo "- Source commit: \`${SOURCE_SHA}\`"
-            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (same digest as Development, no rebuild)"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
             echo "- Previous Stage image (rollback target): \`${PREVIOUS:-none}\`"
             echo "- URL: https://${STAGE_HOST}/"
             echo "- Stage branch: \`${SOURCE_SHA}\`; main is unchanged"
-            echo "- Next: human QA in Jira"
+            if [[ "${ROLLBACK}" == "true" ]]; then
+              echo "- The database was not downgraded. Check release notes for irreversible migrations."
+            else
+              echo "- Next: human QA in Jira"
+            fi
           } >> "${GITHUB_STEP_SUMMARY}"
