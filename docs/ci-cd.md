@@ -54,8 +54,8 @@ Branch protection cannot be set from YAML and has NOT been verified or changed. 
 
 ## Known gaps
 
-- Actions are pinned to mutable version tags, not commit SHAs. SHAs could not be verified from a primary source with the tools of this run; pin them (with a version comment) in a follow-up and let Dependabot maintain them.
-- `pip-audit` is bounded to major version 2, not pinned exactly (exact version not verified from PyPI in this run).
+- Every `uses:` line in `.github/workflows` names a full 40-character commit SHA with the major version tag in a comment. Each SHA was resolved from the tag in the action's own repository; the comment records the major tag, not a patch release. Dependabot proposes updates.
+- `pip-audit` is pinned to `==2.10.1` (upstream tag `v2.10.1`). The tag was verified in the pypa/pip-audit repository; publication of that version on PyPI was not checked directly and is first exercised by check 5 once the application exists.
 - Plan check 6 "no development package in the final image" is not implemented; it needs the real Dockerfile (phase 0).
 - Branch protection and `.github/CODEOWNERS` need a human (see above).
 - No `actionlint`, `shellcheck` or coverage run was available; `release.yml`, `promote-stage.yml` and `rollback.yml` have never been executed.
@@ -64,4 +64,4 @@ Branch protection cannot be set from YAML and has NOT been verified or changed. 
 ## Known differences from the reference repositories
 
 - Release trigger is push to `development` (task scope); phase-plan-3 words it as merge to `main`.
-- Dokploy IDs, health URLs and secrets are intentionally not copied from Nowlert CE.
+- Dokploy IDs, health URLs and secrets are intentionally not copied from any other repository.
