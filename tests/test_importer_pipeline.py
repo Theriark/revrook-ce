@@ -357,7 +357,12 @@ async def test_the_api_saves_a_mapping_and_an_upload_names_it(
         "/api/v1/clients/987654321/import-profiles", headers=token, json=body
     )
     assert missing.status_code == 404
-    assert (await client.post(profiles, json=body)).status_code == 401
+    # No credential at all stops at the CSRF gate; a wrong Bearer token passes it
+    # and is refused by authentication.
+    assert (await client.post(profiles, json=body)).status_code == 403
+    wrong_token = {"Authorization": "Bearer rvk_not-a-real-one"}
+    unauthorised = await client.post(profiles, headers=wrong_token, json=body)
+    assert unauthorised.status_code == 401
     saved = await client.post(profiles, headers=token, json=body)
     assert saved.status_code == 201
     assert saved.json()["mapping"] == VENDOR_MAPPING
