@@ -1,0 +1,79 @@
+name: Promote to Stage (DISABLED)
+
+# DEFINITION ONLY. Fail closed: the guard job always fails while PROMOTION_ENABLED
+# is "false". Enabling it needs a later change that carries its own explicit
+# Stage-promotion approval. No environment, secret or controller credential is
+# referenced here, so nothing can be deployed from this file as written.
+#
+# Intended behaviour once enabled: promote the SAME immutable digest that passed
+# Development (no rebuild), ask the existing serialized controller to deploy it to
+# Stage on VM-09, verify the target reports the same source SHA and digest, run a
+# passive smoke check, then wait for human QA in Jira. See docs/ci-cd.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: "Immutable image digest to promote (sha256:<64 hex>). Never a tag."
+        required: true
+        type: string
+      source_sha:
+        description: "Full 40-character source commit the digest was built from."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Separate group while disabled: a stray dispatch must not displace a pending
+# release in revrook-ce-delivery. The approved change that enables this workflow
+# moves it into revrook-ce-delivery (see docs/ci-cd.md).
+concurrency:
+  group: revrook-ce-delivery-disabled
+  cancel-in-progress: false
+
+env:
+  # Flip to "true" only in a separately approved change.
+  PROMOTION_ENABLED: "false"
+
+jobs:
+  guard:
+    name: Guard (fails closed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        env:
+          DIGEST: ${{ inputs.digest }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${PROMOTION_ENABLED}" != "true" ]]; then
+            echo "::error::Stage promotion is not enabled for revrook-ce. A later approved change must enable it."
+            exit 1
+          fi
+          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must be sha256:<64 hex>"; exit 1; }
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_sha must be a full 40-character SHA"; exit 1; }
+
+  promote:
+    name: Request Stage promotion of the same digest (placeholder)
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      # PLACEHOLDER: request the controller to deploy ${{ inputs.digest }} to Stage
+      # (VM-09) and confirm the target reports this source SHA and digest.
+      - run: echo "::error::Controller interface not wired. Refusing."; exit 1
+
+  smoke:
+    name: Passive smoke check (placeholder)
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # PLACEHOLDER: read-only GET of the Stage health/provenance endpoint.
+      - run: echo "::error::Smoke check not wired. Refusing."; exit 1

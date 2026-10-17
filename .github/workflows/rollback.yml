@@ -1,0 +1,71 @@
+name: Rollback (DISABLED)
+
+# DEFINITION ONLY. Fail closed, like promote-stage.yml. Rolls an environment back
+# to the exact prior approved digest. No environment, secret or controller
+# credential is referenced, so this file cannot change any runtime as written.
+# Any irreversible migration or data-format change must be named in the release
+# notes before a rollback is attempted; this recipe does not downgrade the database.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment."
+        required: true
+        type: choice
+        options:
+          - development
+          - stage
+      previous_digest:
+        description: "Prior APPROVED immutable digest (sha256:<64 hex>)."
+        required: true
+        type: string
+      previous_source_sha:
+        description: "Full 40-character source commit of that digest."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Separate group while disabled: a stray dispatch must not displace a pending
+# release in revrook-ce-delivery. The approved change that enables this workflow
+# moves it into revrook-ce-delivery (see docs/ci-cd.md).
+concurrency:
+  group: revrook-ce-delivery-disabled
+  cancel-in-progress: false
+
+env:
+  # Flip to "true" only in a separately approved change.
+  ROLLBACK_ENABLED: "false"
+
+jobs:
+  guard:
+    name: Guard (fails closed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        env:
+          DIGEST: ${{ inputs.previous_digest }}
+          SOURCE_SHA: ${{ inputs.previous_source_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${ROLLBACK_ENABLED}" != "true" ]]; then
+            echo "::error::Rollback is not enabled for revrook-ce. A later approved change must enable it."
+            exit 1
+          fi
+          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must be sha256:<64 hex>"; exit 1; }
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source SHA must be 40 hex characters"; exit 1; }
+
+  rollback:
+    name: Request rollback to the prior digest (placeholder)
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      # PLACEHOLDER: ask the serialized controller to redeploy the previous digest
+      # and confirm the target reports that digest and source SHA.
+      - run: echo "::error::Controller interface not wired. Refusing."; exit 1

@@ -1,0 +1,9 @@
+version: 2
+updates:
+  # Keeps action versions current. Pinning actions to commit SHAs is a recorded gap
+  # in docs/ci-cd.md; once pinned, Dependabot updates the SHA and the version comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
