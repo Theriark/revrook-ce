@@ -5,8 +5,8 @@ dependency, read from the LICENSE file in the project's own source repository,
 and the driver decision of the phase 0 spike. Datasets are recorded separately
 in `LICENSES-CONTENT.md`.
 
-Policy (merge gate check 6): MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC,
-PSF-2.0, Python-2.0, CNRI-Python, 0BSD, Unlicense and CC0-1.0 are allowed;
+Policy (merge gate check 6): MIT, MIT-0, BSD-2-Clause, BSD-3-Clause, Apache-2.0,
+ISC, PSF-2.0, Python-2.0, CNRI-Python, 0BSD, Unlicense and CC0-1.0 are allowed;
 MPL-2.0 only for development packages. LGPL, GPL, AGPL, SSPL and unknown
 licences fail, transitive packages included. `tools/licence_audit.py` enforces
 this on the installed packages; psycopg must not appear in the lock file.
@@ -26,13 +26,24 @@ read on 2026-10-17 from the default branch of the repository named in the
 | cryptography | Apache-2.0 OR BSD-3-Clause | pyca/cryptography `LICENSE` | 2026-10-17 | The file offers either licence (LICENSE.APACHE or LICENSE.BSD). Those two files were not opened. |
 | dnspython | ISC | rthalley/dnspython `LICENSE` | 2026-10-17 | Permissive. Phase 7 may use dnspython for SPF, DKIM and DMARC lookups. The file also carries a second ISC-style notice for code from Nominum and Google. |
 | fastapi | MIT | fastapi/fastapi `LICENSE` | 2026-10-17 | |
-| itsdangerous | BSD-3-Clause | pallets/itsdangerous `LICENSE.txt` | 2026-10-17 | |
-| jinja2 | BSD-3-Clause | pallets/jinja `LICENSE.txt` | 2026-10-17 | |
+| itsdangerous | BSD-3-Clause | pallets/itsdangerous `LICENSE.txt` | 2026-10-17 | Re-read at tag 2.2.0 for the lock: three-clause BSD, Copyright 2011 Pallets. The package metadata only says "BSD License", so it is recorded in `licence-exceptions.txt`. |
+| jinja2 | BSD-3-Clause | pallets/jinja `LICENSE.txt` | 2026-10-17 | Re-read at tag 3.1.6 for the lock: three-clause BSD, Copyright 2007 Pallets. The package metadata only says "BSD License", so it is recorded in `licence-exceptions.txt`. |
 | pydantic | MIT | pydantic/pydantic `LICENSE` | 2026-10-17 | |
 | python-multipart | Apache-2.0 | Kludex/python-multipart `LICENSE.txt` | 2026-10-17 | The file keeps the template copyright line `[yyyy] [name of copyright owner]`. |
 | PyYAML | MIT | yaml/pyyaml `LICENSE` | 2026-10-17 | |
 | sqlalchemy | MIT | sqlalchemy/sqlalchemy `LICENSE` | 2026-10-17 | |
 | uvicorn | BSD-3-Clause | encode/uvicorn `LICENSE.md` | 2026-10-17 | |
+
+## Transitive runtime package that needed a policy decision: cffi (MIT-0)
+
+cffi is not a direct dependency. argon2-cffi-bindings requires it. Its metadata
+declares the SPDX expression `MIT-0` and its LICENSE file (python-cffi/cffi
+`LICENSE` at tag v2.1.1, read 2026-10-17) is the "MIT No Attribution" licence:
+the MIT grant without the attribution condition. It is strictly more permissive
+than MIT, so phase 0 added `MIT-0` to the allow-list in
+`tools/licence_audit.py` rather than recording an exception (an exception cannot
+admit an identifier that is off the list). R&D is asked to confirm this
+addition.
 
 ## Front-end assets (vendored in phase 1, not in the repository yet)
 
@@ -63,8 +74,11 @@ neither decision.
 ## Packages not yet read
 
 - Development group (`requirements-dev.in`): pytest, pytest-asyncio, pytest-cov,
-  mypy, ruff, pip-tools. Their LICENSE files have not been read. They never enter
-  the image, and the audit runs with `--allow-mpl-dev` for them.
+  mypy, ruff. Their LICENSE files have not been read. They never enter the
+  image, and the audit runs with `--allow-mpl-dev` for them. pip-tools is not in
+  the development lock: the "Lock requirements" workflow installs it on its own,
+  because its dependency on setuptools made the hashed install fail (pip-compile
+  leaves setuptools out of a lock by design).
 - Transitive runtime packages: listed only when `requirements.txt` exists. The
   CI licence audit checks every installed package; a package whose metadata is
   ambiguous fails the audit and is resolved in `licence-exceptions.txt` after
