@@ -122,10 +122,12 @@ docker exec "${web}" python -m app.cli verify-chain || fail "verify-chain report
 echo "phase_02: chain intact, ${records} records"
 
 # No synthetic user name survives in any stored fact: the whole dump is searched.
+# Fixed-string match on the whole UPN domain: the marker's dot must not act as a
+# regex wildcard (it would match the API token label phase02-e2e).
 dump="${work}/dump.sql"
 docker exec "${db}" pg_dump -U revrook revrook > "${dump}"
 [[ -s "${dump}" ]] || fail "the database dump is empty"
-hits="$(grep -c "${UPN_MARKER}" "${dump}" || true)"
+hits="$(grep -cF "@${UPN_MARKER}.example.invalid" "${dump}" || true)"
 [[ "${hits}" == "0" ]] || fail "${hits} line(s) of the database dump contain the synthetic user name"
 echo "phase_02: no synthetic user name in the database dump"
 
