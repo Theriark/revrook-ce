@@ -9,10 +9,12 @@ set -euo pipefail
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-fail() { echo "phase_00: FAIL: $*" >&2; exit 1; }
+# "::error::" makes GitHub Actions show the message as an annotation, so the
+# failure reason is visible in the CI summary and in ci_logs.
+fail() { echo "::error::phase_00: FAIL: $*" >&2; exit 1; }
 
 for path in /healthz /readyz; do
-  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "${BASE_URL}${path}")"
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "${BASE_URL}${path}" || echo curl-failed)"
   [[ "${code}" == "200" ]] || fail "${path} returned ${code}, expected 200"
   echo "phase_00: ${path} 200"
 done
@@ -21,13 +23,13 @@ if command -v docker >/dev/null 2>&1; then
   # Compose labels avoid "docker compose ps", which would need the env file.
   container="$(docker ps -q \
     --filter label=com.docker.compose.project=revrook \
-    --filter label=com.docker.compose.service=web)"
+    --filter label=com.docker.compose.service=web | head -n 1)"
   if [[ -n "${container}" ]]; then
-    uid="$(docker exec "${container}" id -u)"
+    uid="$(docker exec "${container}" id -u)" || fail "docker exec id -u failed"
     [[ "${uid}" == "10001" ]] || fail "web container runs as uid ${uid}, expected 10001"
     echo "phase_00: web container uid ${uid}"
     image="$(docker inspect --format '{{.Image}}' "${container}")"
-    bash "${ROOT}/scripts/check_image_packages.sh" "${image}"
+    bash "${ROOT}/scripts/check_image_packages.sh" "${image}" || fail "image package check failed (see lines above)"
   else
     echo "phase_00: no compose web container found, skipping uid and image checks"
   fi
