@@ -1,5 +1,6 @@
 # Direct runtime dependencies (decision D2). Compile with pip-tools on Python 3.12
-# into the hashed requirements.txt; see docs/development.md. Lower bounds only:
+# into the hashed requirements.txt; see docs/development.md. The Lock requirements
+# workflow does this on every push that changes this file. Lower bounds only:
 # the lock file pins exact versions and hashes.
 #
 # httpx is not listed: it requires certifi (MPL-2.0), which the runtime licence
