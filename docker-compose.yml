@@ -21,7 +21,10 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U revrook -d revrook"]
+      # -h 127.0.0.1 forces TCP. Without it pg_isready answers from the unix
+      # socket, which the temporary init-time server also serves, so web and
+      # worker could start before the real server listens on 5432.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U revrook -d revrook"]
       interval: 5s
       timeout: 5s
       retries: 12
