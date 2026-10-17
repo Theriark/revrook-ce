@@ -26,6 +26,7 @@ read on 2026-10-17 from the default branch of the repository named in the
 | cryptography | Apache-2.0 OR BSD-3-Clause | pyca/cryptography `LICENSE` | 2026-10-17 | The file offers either licence (LICENSE.APACHE or LICENSE.BSD). Those two files were not opened. |
 | dnspython | ISC | rthalley/dnspython `LICENSE` | 2026-10-17 | Permissive. Phase 7 may use dnspython for SPF, DKIM and DMARC lookups. The file also carries a second ISC-style notice for code from Nominum and Google. |
 | fastapi | MIT | fastapi/fastapi `LICENSE` | 2026-10-17 | |
+| greenlet | MIT AND PSF-2.0 | python-greenlet/greenlet `LICENSE` | 2026-10-17 | Required by SQLAlchemy's asyncio support (SQLAlchemy 2.1 does not install it on its own). The file is MIT; a few platform source files derive from Stackless Python and carry the PSF licence (`LICENSE.PSF`, not opened). Both identifiers are on the allow-list. |
 | itsdangerous | BSD-3-Clause | pallets/itsdangerous `LICENSE.txt` | 2026-10-17 | Re-read at tag 2.2.0 for the lock: three-clause BSD, Copyright 2011 Pallets. The package metadata only says "BSD License", so it is recorded in `licence-exceptions.txt`. |
 | jinja2 | BSD-3-Clause | pallets/jinja `LICENSE.txt` | 2026-10-17 | Re-read at tag 3.1.6 for the lock: three-clause BSD, Copyright 2007 Pallets. The package metadata only says "BSD License", so it is recorded in `licence-exceptions.txt`. |
 | pydantic | MIT | pydantic/pydantic `LICENSE` | 2026-10-17 | |
