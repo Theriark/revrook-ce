@@ -1,0 +1,285 @@
+/*
+ * revrook brand layer on top of the vendored Pico CSS (dev-work-plan section 4).
+ * One file, no build chain, system fonts only, light theme only (no dark mode).
+ *
+ * Contrast convention, enforced by tests/test_brand_contrast.py: every rule that
+ * sets a text colour also sets its background-color, so each foreground and
+ * background pair is declared here explicitly. Text of 24px (1.5rem) or larger
+ * declares that font-size in the same rule. Gray (--rv-gray) is never text on
+ * white or stone; violet-blue (--rv-accent) is never text on charcoal.
+ */
+
+:root:not([data-theme="dark"]),
+[data-theme="light"] {
+  /* Brand palette */
+  --rv-charcoal: #2d2f3a;
+  --rv-accent: #4c5bd4;
+  --rv-stone: #d9d6cf;
+  --rv-gray: #8a8f98;
+  --rv-white: #ffffff;
+  --rv-text-secondary: #5a5e6b;
+
+  /* Status colours: text on white only, always with an icon and a text label */
+  --rv-status-protected: #1b6e3c;
+  --rv-status-needs-attention: #8a5a00;
+  --rv-status-not-protected: #b3261e;
+  --rv-status-not-checked: #5a5e6b;
+
+  /* Pico CSS variables */
+  color-scheme: light;
+  --pico-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --pico-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  --pico-font-size: 100%;
+  --pico-background-color: var(--rv-white);
+  --pico-color: var(--rv-charcoal);
+  --pico-h1-color: var(--rv-charcoal);
+  --pico-h2-color: var(--rv-charcoal);
+  --pico-h3-color: var(--rv-charcoal);
+  --pico-muted-color: var(--rv-text-secondary);
+  --pico-muted-border-color: var(--rv-gray);
+  --pico-primary: var(--rv-accent);
+  --pico-primary-background: var(--rv-accent);
+  --pico-primary-border: var(--rv-accent);
+  --pico-primary-underline: var(--rv-accent);
+  --pico-primary-inverse: var(--rv-white);
+  --pico-primary-hover: var(--rv-charcoal);
+  --pico-primary-hover-background: var(--rv-charcoal);
+  --pico-primary-hover-border: var(--rv-charcoal);
+  --pico-primary-hover-underline: var(--rv-charcoal);
+  --pico-primary-focus: transparent;
+  --pico-form-element-background-color: var(--rv-white);
+  --pico-form-element-color: var(--rv-charcoal);
+  --pico-form-element-border-color: var(--rv-gray);
+  --pico-form-element-focus-color: var(--rv-accent);
+  --pico-form-element-placeholder-color: var(--rv-text-secondary);
+}
+
+body {
+  font-size: 16px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+small,
+.rv-caption {
+  font-size: 13px;
+}
+
+/* Visible focus ring: 3px charcoal with a 2px offset on every focusable control */
+html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--rv-charcoal);
+  outline-offset: 2px;
+}
+
+/* Skip link, shown when it receives keyboard focus */
+.rv-skip-link {
+  position: absolute;
+  left: -10000px;
+  top: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-skip-link:focus {
+  left: 0.5rem;
+  z-index: 10;
+}
+
+/* Header: white, gray bottom border, horizontal logo at 36px height */
+.rv-header {
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  border-bottom: 1px solid var(--rv-gray);
+}
+
+.rv-header nav {
+  align-items: center;
+}
+
+.rv-brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.rv-logo {
+  display: block;
+  height: 36px;
+  width: auto;
+}
+
+/* Text wordmark: rev in charcoal, rook in violet-blue, bold Helvetica or Arial */
+.rv-wordmark {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 36px;
+}
+
+.rv-wordmark .rv-wordmark-rev {
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-wordmark .rv-wordmark-rook {
+  color: var(--rv-accent);
+  background-color: var(--rv-white);
+}
+
+/* Navigation: the active item has a 3px violet-blue underline */
+.rv-nav-link {
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+
+.rv-nav-link[aria-current="page"] {
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  border-bottom-color: var(--rv-accent);
+}
+
+.rv-inline-form {
+  margin: 0;
+}
+
+/* Buttons: primary violet-blue with white text; quiet buttons charcoal on white */
+:is(button, [type="submit"], [role="button"]):not(.rv-button-quiet) {
+  color: var(--rv-white);
+  background-color: var(--rv-accent);
+  border-color: var(--rv-accent);
+}
+
+:is(button, [type="submit"], [role="button"]):not(.rv-button-quiet):hover {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}
+
+.rv-button-quiet {
+  margin: 0;
+  padding: 0.375rem 0.875rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  border: 1px solid var(--rv-gray);
+}
+
+.rv-button-quiet:hover {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}
+
+/* Links on white */
+main a:not([role="button"]) {
+  color: var(--rv-accent);
+  background-color: var(--rv-white);
+}
+
+.rv-text-secondary {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* Sign-in and first-run pages */
+.rv-auth {
+  max-width: 28rem;
+  margin: 2rem auto;
+}
+
+/* Form errors: charcoal text on white with a not-protected marker */
+.rv-errors {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  border: 1px solid var(--rv-gray);
+  border-left: 4px solid var(--rv-status-not-protected);
+}
+
+.rv-errors ul {
+  margin-bottom: 0;
+}
+
+.rv-errors-title {
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-white);
+}
+
+.rv-status-icon {
+  display: inline-block;
+  min-width: 1.25em;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Status labels: icon plus text, never colour alone, on white only */
+.rv-status-protected {
+  color: var(--rv-status-protected);
+  background-color: var(--rv-white);
+}
+
+.rv-status-needs-attention {
+  color: var(--rv-status-needs-attention);
+  background-color: var(--rv-white);
+}
+
+.rv-status-not-protected {
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-white);
+}
+
+.rv-status-not-checked {
+  color: var(--rv-status-not-checked);
+  background-color: var(--rv-white);
+}
+
+/* Footer: charcoal with stone text and the short report disclaimer */
+.rv-footer {
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-footer p {
+  margin-bottom: 0.5rem;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-footer .rv-disclaimer {
+  font-size: 13px;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+/* On charcoal the wordmark is stone and gray, large text only (gray 4.09) */
+.rv-footer-wordmark {
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 700;
+}
+
+.rv-footer .rv-footer-wordmark .rv-wordmark-rev {
+  font-size: 1.5rem;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-footer .rv-footer-wordmark .rv-wordmark-rook {
+  font-size: 1.5rem;
+  color: var(--rv-gray);
+  background-color: var(--rv-charcoal);
+}

@@ -4,6 +4,19 @@ Licensed under the MIT License (see LICENSE).
 
 Third-party attributions
 ------------------------
-Placeholder. No third-party code or data is bundled yet. When dependencies or
-content are added, their licences and required attributions are listed here
-(content licences are tracked in LICENSES-CONTENT.md once a data directory exists).
+The following third-party files are bundled unmodified. Their licence files
+sit next to them; docs/licences.md records the SPDX identifier and the date
+each licence file was read. Content licences are tracked in
+LICENSES-CONTENT.md.
+
+Pico CSS 2.1.1
+  File: app/static/vendor/pico/pico.min.css
+  Source: https://github.com/picocss/pico (tag v2.1.1, css/pico.min.css)
+  Licence: MIT, Copyright (c) 2019-2024 Pico
+  Licence file: app/static/vendor/pico/LICENSE.md
+
+htmx 2.0.4
+  File: app/static/vendor/htmx/htmx.min.js
+  Source: https://github.com/bigskysoftware/htmx (tag v2.0.4, dist/htmx.min.js)
+  Licence: 0BSD (Zero-Clause BSD)
+  Licence file: app/static/vendor/htmx/LICENSE

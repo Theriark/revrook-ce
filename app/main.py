@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request, Response, status
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app import __version__, api
@@ -13,6 +14,7 @@ from app.db import check_database, make_engine
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
 from app.ui import auth as ui_auth
+from app.ui.brand import STATIC_DIR
 from app.web import csrf_protect
 
 
@@ -71,4 +73,7 @@ def create_app(
 
     app.include_router(ui_auth.router)
     app.include_router(api.router)
+    # Stylesheets, vendored scripts and brand files, served from the same origin
+    # (CSP default-src 'self').
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     return app

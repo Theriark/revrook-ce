@@ -28,6 +28,7 @@ dependencies = { file = ["requirements.in"] }
 include = ["app*"]
 
 [tool.setuptools.package-data]
+"app" = ["static/css/*.css", "static/vendor/*/*", "static/brand/*"]
 "app.ui" = ["templates/*.html"]
 
 [tool.pytest.ini_options]

@@ -1,13 +1,49 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false}'>
 <title>{{ title }} - revrook</title>
+<link rel="stylesheet" href="/static/vendor/pico/pico.min.css">
+<link rel="stylesheet" href="/static/css/revrook.css">
+{% if "favicon-32x32.png" in brand_files %}
+<link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png">
+{% endif %}
+{% if "favicon-180x180.png" in brand_files %}
+<link rel="apple-touch-icon" sizes="180x180" href="/static/brand/favicon-180x180.png">
+{% endif %}
+<script src="/static/vendor/htmx/htmx.min.js" defer></script>
 </head>
 <body>
-<main>
+<a class="rv-skip-link" href="#main">Skip to content</a>
+<header class="rv-header">
+<nav class="container" aria-label="Main">
+<ul>
+<li>
+<a class="rv-brand" href="/">
+{% if "logo-horizontal-1200x400.png" in brand_files %}
+<img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"
+{% if "logo-horizontal-2400x800.png" in brand_files %} srcset="/static/brand/logo-horizontal-1200x400.png 1x, /static/brand/logo-horizontal-2400x800.png 2x"{% endif %}
+ width="108" height="36" alt="revrook">
+{% else %}
+<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span><span class="rv-wordmark-rook">rook</span></span>
+{% endif %}
+</a>
+</li>
+</ul>
+{% block nav %}{% endblock %}
+</nav>
+</header>
+<main id="main" class="container">
 {% block content %}{% endblock %}
 </main>
+<footer class="rv-footer">
+<div class="container">
+<p class="rv-footer-wordmark" aria-hidden="true"><span class="rv-wordmark-rev">rev</span><span class="rv-wordmark-rook">rook</span></p>
+<p class="rv-disclaimer">revrook reports summarise security settings observed on the stated date. They are not a certification, audit or attestation, and not insurance, legal or financial advice.</p>
+</div>
+</footer>
 </body>
 </html>

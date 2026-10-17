@@ -18,9 +18,11 @@ from app.auth import (
 )
 from app.models import AppUser
 from app.security import SessionData, new_csrf_token
+from app.ui.brand import available_brand_files
 from app.web import clock_of, current_session, session_factory, set_session_cookie
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+templates.env.globals["brand_files"] = available_brand_files()
 router = APIRouter()
 
 SETUP_TITLE = "Create the administrator"

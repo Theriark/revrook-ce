@@ -1,7 +1,10 @@
 {% if errors %}
-<ul role="alert">
+<div class="rv-errors" role="alert">
+<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!</span> Please check the form</p>
+<ul>
 {% for message in errors %}
 <li>{{ message }}</li>
 {% endfor %}
 </ul>
+</div>
 {% endif %}
