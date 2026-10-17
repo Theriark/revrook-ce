@@ -10,3 +10,6 @@
 #
 # Example:
 # some-package | BSD-3-Clause | LICENSE file read at <url> on <date>
+
+jinja2 | BSD-3-Clause | pallets/jinja LICENSE.txt at tag 3.1.6 read 2026-10-17: three-clause BSD, Copyright 2007 Pallets
+itsdangerous | BSD-3-Clause | pallets/itsdangerous LICENSE.txt at tag 2.2.0 read 2026-10-17: three-clause BSD, Copyright 2011 Pallets
