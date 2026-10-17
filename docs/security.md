@@ -68,6 +68,51 @@ DISABLE TRIGGER`. The guarantee therefore holds against the application, not
 against whoever owns the tables: run the application with a role that does not
 own them when that matters.
 
+## Evidence files and retention (phases 2 and 3)
+
+- A raw export is kept only while `RAW_RETENTION_DAYS` is above zero (default 0:
+  gone as soon as it is parsed). A manual artefact is always kept. Files are
+  stored under the SHA-256 of their content, in one folder per client.
+- A file is written last, after the database rows and the hash-chain record of the
+  upload have been written in the same transaction. A failure before that point
+  leaves no file behind (`tests/test_evidence_orphans.py`). A failure while the
+  transaction is being committed, after the file is written, can still leave one
+  file that no row points to; it holds only what the client uploaded and goes
+  when the client is deleted.
+- `purge_expired_raw` (`app/evidence/retention.py`) deletes raw files whose
+  retention date has passed. Nothing calls it yet: the worker schedules it from
+  phase 10, so until then a raw file kept with `RAW_RETENTION_DAYS` above zero
+  stays on disk until the client is deleted.
+- The capture time and the expiry given with an upload must lie between the year
+  2000 and the year 2199, and a capture time found inside a file must also not be
+  in the future.
+
+## Importers (phase 3)
+
+An importer reads a file the MSP exported from a tool. The file is untrusted.
+
+- Size and rows: the evidence store refuses a file over `IMPORT_MAX_BYTES` (20 MB)
+  and an importer refuses more than `IMPORT_MAX_ROWS` (200,000) rows. A JSON file
+  is refused above 20 MB, nested deeper than 12 levels or with a list longer than
+  the row limit; a CSV field larger than 131,072 characters refuses the file.
+- Text: UTF-8 (with or without a byte order mark) and UTF-16 with a mark are read
+  directly; anything else goes through `charset-normalizer`. A file with NUL bytes
+  is not text and is refused.
+- Recognition: a file is recognised by its header columns or its JSON fields and
+  never by its name. A file that lacks a required column is refused naming it, and
+  the message says when it looks like another source.
+- What is stored: counts, flags, times the importer parsed itself, words from a
+  fixed list and short printable text. Personal identifiers (user, device) are
+  replaced by the client's pseudonym before anything is stored, and a stored value
+  that still looks like an email address refuses the upload.
+- Dropped: `imei`, `phoneNumber` and `activationLockBypassCode` are never read.
+  Device names, serial numbers and policy names are not read either.
+- Spreadsheet formulas: text kept in a fact that starts with `=`, `+`, `-` or `@`
+  gets a leading apostrophe, so exporting the facts to a spreadsheet cannot run it.
+- Row errors: a row that cannot be read is counted, the first 50 reasons are kept
+  as facts, and a file in which no row can be read is refused. A reason names the
+  column and never repeats what the file said.
+
 ## Known limits
 
 - Sign-out clears the cookie but cannot revoke a stolen signed cookie before it
