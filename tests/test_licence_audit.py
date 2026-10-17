@@ -1,10 +1,18 @@
 from collections.abc import Sequence
 from importlib import metadata
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from tools import licence_audit
+
+OSI = "License :: OSI Approved :: "
+MIT_CLASSIFIER = OSI + "MIT License"
+BSD_CLASSIFIER = OSI + "BSD License"
+LGPL_CLASSIFIER = OSI + "GNU Lesser General Public License v3 (LGPLv3)"
+
+AuditResult = tuple[int, list[licence_audit.Finding]]
 
 
 def write_distribution(
@@ -28,18 +36,14 @@ def write_distribution(
     (info / "METADATA").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def audit_path(
-    root: Path, **kwargs: object
-) -> tuple[int, list[licence_audit.Finding]]:
-    return licence_audit.audit(metadata.distributions(path=[str(root)]), **kwargs)  # type: ignore[arg-type]
+def audit_path(root: Path, **kwargs: Any) -> AuditResult:
+    return licence_audit.audit(metadata.distributions(path=[str(root)]), **kwargs)
 
 
 def test_permissive_packages_pass(tmp_path: Path) -> None:
     write_distribution(tmp_path, "mit-pkg", expression="MIT")
     write_distribution(tmp_path, "legacy-apache", licence="Apache Software License")
-    write_distribution(
-        tmp_path, "classifier-only", classifiers=["License :: OSI Approved :: MIT License"]
-    )
+    write_distribution(tmp_path, "classifier-only", classifiers=[MIT_CLASSIFIER])
     write_distribution(tmp_path, "dual", expression="Apache-2.0 OR BSD-3-Clause")
     checked, findings = audit_path(tmp_path)
     assert checked == 4
@@ -56,14 +60,7 @@ def test_a_fake_lgpl_package_fails(tmp_path: Path) -> None:
 
 
 def test_lgpl_declared_only_by_classifier_fails(tmp_path: Path) -> None:
-    write_distribution(
-        tmp_path,
-        "fake-lgpl-classifier",
-        classifiers=[
-            "License :: OSI Approved :: "
-            "GNU Lesser General Public License v3 (LGPLv3)"
-        ],
-    )
+    write_distribution(tmp_path, "fake-lgpl-classifier", classifiers=[LGPL_CLASSIFIER])
     _, findings = audit_path(tmp_path)
     assert [finding.name for finding in findings] == ["fake-lgpl-classifier"]
 
@@ -96,16 +93,14 @@ def test_long_licence_text_in_the_licence_field_is_ignored(tmp_path: Path) -> No
         tmp_path,
         "full-text",
         licence="Permission is hereby granted " * 20,
-        classifiers=["License :: OSI Approved :: MIT License"],
+        classifiers=[MIT_CLASSIFIER],
     )
     _, findings = audit_path(tmp_path)
     assert findings == []
 
 
 def test_the_generic_bsd_classifier_is_unresolved(tmp_path: Path) -> None:
-    write_distribution(
-        tmp_path, "bsd-pkg", classifiers=["License :: OSI Approved :: BSD License"]
-    )
+    write_distribution(tmp_path, "bsd-pkg", classifiers=[BSD_CLASSIFIER])
     _, findings = audit_path(tmp_path)
     assert [finding.name for finding in findings] == ["bsd-pkg"]
 
@@ -113,9 +108,7 @@ def test_the_generic_bsd_classifier_is_unresolved(tmp_path: Path) -> None:
 def test_a_recorded_exception_resolves_an_ambiguous_declaration(
     tmp_path: Path,
 ) -> None:
-    write_distribution(
-        tmp_path, "bsd-pkg", classifiers=["License :: OSI Approved :: BSD License"]
-    )
+    write_distribution(tmp_path, "bsd-pkg", classifiers=[BSD_CLASSIFIER])
     recorded = {"bsd-pkg": ("BSD-3-Clause", "LICENSE file read 2026-10-17")}
     _, findings = audit_path(tmp_path, exceptions=recorded)
     assert findings == []
@@ -165,7 +158,9 @@ def test_expression_evaluation(expression: str, expected: bool) -> None:
     assert licence_audit.is_allowed_expression(expression) is expected
 
 
-@pytest.mark.parametrize("expression", ["MIT AND", "(MIT", "MIT BSD-3-Clause", "OR MIT", ")"])
+@pytest.mark.parametrize(
+    "expression", ["MIT AND", "(MIT", "MIT BSD-3-Clause", "OR MIT", ")"]
+)
 def test_malformed_expressions_raise(expression: str) -> None:
     with pytest.raises(ValueError):
         licence_audit.is_allowed_expression(expression)
@@ -178,12 +173,14 @@ def test_exceptions_file_is_parsed(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert licence_audit.load_exceptions(path) == {
-        "some-package": ("BSD-3-Clause", "LICENSE read 2026-10-17")
+        "some-package": ("BSD-3-Clause", "LICENSE read 2026-10-17"),
     }
     assert licence_audit.load_exceptions(tmp_path / "absent.txt") == {}
 
 
-@pytest.mark.parametrize("line", ["name only", "a | b", "a | | reason", "a | b | c | d"])
+@pytest.mark.parametrize(
+    "line", ["name only", "a | b", "a | | reason", "a | b | c | d"]
+)
 def test_malformed_exceptions_lines_are_rejected(tmp_path: Path, line: str) -> None:
     path = tmp_path / "licence-exceptions.txt"
     path.write_text(line + "\n", encoding="utf-8")
@@ -214,9 +211,7 @@ def test_main_honours_allow_mpl_dev_and_the_exceptions_file(
     tmp_path: Path,
 ) -> None:
     write_distribution(tmp_path, "mpl-pkg", expression="MPL-2.0")
-    write_distribution(
-        tmp_path, "bsd-pkg", classifiers=["License :: OSI Approved :: BSD License"]
-    )
+    write_distribution(tmp_path, "bsd-pkg", classifiers=[BSD_CLASSIFIER])
     exceptions = tmp_path / "exceptions.txt"
     exceptions.write_text("bsd-pkg | BSD-3-Clause | LICENSE read\n", encoding="utf-8")
     base = ["--path", str(tmp_path), "--exceptions", str(exceptions)]
