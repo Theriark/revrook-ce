@@ -130,7 +130,10 @@ for name in $(jq -r '.files | keys[]' "${manifest}"); do
 done
 
 # A file of another source is refused, and the message names the missing column.
-code="$(upload "${fixtures}/intune-devices.csv" entra-registration)"
+# The Intune export was uploaded above, so a copy with one extra byte is used: the
+# same bytes would be refused first as a duplicate (409) before they are read.
+{ cat "${fixtures}/intune-devices.csv"; printf '\n'; } > "${work}/wrong-source.csv"
+code="$(upload "${work}/wrong-source.csv" entra-registration)"
 [[ "${code}" == "422" ]] || fail "a wrong file returned ${code}, expected 422"
 message="$(jq -r .detail "${work}/upload.json")"
 [[ "${message}" == *"missing the column User principal name"* ]] \
