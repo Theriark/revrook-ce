@@ -211,7 +211,9 @@ async def test_a_huge_user_count_in_json_is_a_row_reject_not_a_500(
 ) -> None:
     client_id = await create_test_client(db_engine, ctx)
     data = score_json(licensedUserCount='"' + "1" * 5000 + '"')
-    with pytest.raises(EvidenceRejectedError, match="licensedUserCount must be a whole"):
+    with pytest.raises(
+        EvidenceRejectedError, match="licensedUserCount must be a whole"
+    ):
         await upload(db_engine, ctx, client_id, export("secure-score", data))
     assert await item_count(db_engine, client_id) == 0
 
