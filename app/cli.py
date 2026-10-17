@@ -1,5 +1,6 @@
-"""Command line entry point: revrook web | worker | all | migrate | verify-chain | make-fixtures.
+"""Command line entry point.
 
+Subcommands: web, worker, all, migrate, verify-chain, make-fixtures.
 Without a subcommand the ROLE setting (web, worker or all; default all) decides.
 """
 
