@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "revrook"
+version = "0.0.0.dev0"
+description = "Client security posture, insurance evidence and QBR reports for small MSPs (Community Edition)."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+# Runtime dependencies live in requirements.in (single source, compiled with
+# pip-tools into the hashed requirements.txt). Development tools live in
+# requirements-dev.in.
+dynamic = ["dependencies"]
+
+[project.scripts]
+revrook = "app.cli:main"
+
+[project.entry-points."revrook.plugins"]
+# Plugin entry-point group (decision D1). Empty in the Community Edition.
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.in"] }
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["app"]
+
+[tool.coverage.report]
+exclude_also = ["pragma: no cover", "if __name__ == .__main__.:"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tools"]
+known-third-party = ["alembic"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app"]
+warn_unused_configs = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+# Strict settings for the four packages that carry the product logic
+# (merge gate check 2). "strict" itself cannot be set per module, so the
+# flags it enables are listed.
+[[tool.mypy.overrides]]
+module = [
+    "app.checks",
+    "app.checks.*",
+    "app.scoring",
+    "app.scoring.*",
+    "app.evidence",
+    "app.evidence.*",
+    "app.importers",
+    "app.importers.*",
+]
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+no_implicit_reexport = true
+warn_return_any = true
+warn_unused_ignores = true
+strict_equality = true
+extra_checks = true
