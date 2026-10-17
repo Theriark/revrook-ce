@@ -456,6 +456,12 @@ async def add_evidence(
         if parsed.captured_at is not None:
             _check_file_time(parsed.captured_at, now)
     captured_at = (parsed.captured_at if parsed else None) or evidence.captured_at
+    # The time found in the file replaced the one given at upload, so an expiry
+    # that was valid against the upload time is checked again against it.
+    if evidence.expires_at is not None and evidence.expires_at <= captured_at:
+        raise EvidenceRejectedError(
+            "The expiry must be after the capture time found in the file."
+        )
     expires_at = evidence.expires_at or stale_after(
         captured_at, default_max_age(evidence.assurance)
     )

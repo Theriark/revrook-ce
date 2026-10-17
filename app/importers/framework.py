@@ -34,6 +34,10 @@ MAX_JSON_DEPTH = 12
 MAX_TEXT_LENGTH = 100
 MAX_REJECT_FACTS = 50
 MAX_NUMBER = Decimal(1_000_000_000)
+MAX_DECIMAL_PLACES = 6
+MAX_NUMBER_DIGITS = 10
+MAX_COUNT_DIGITS = 18
+NUMBER_SCALE = Decimal(1).scaleb(-MAX_DECIMAL_PLACES)
 EARLIEST_TIME = datetime(2000, 1, 1, tzinfo=UTC)
 LATEST_TIME = datetime(2100, 1, 1, tzinfo=UTC)
 FORMULA_STARTS = ("=", "+", "-", "@")
@@ -383,8 +387,29 @@ def parse_bool(value: object) -> bool:
     raise ValueError("not a flag")
 
 
+def _decimal_places(number: Decimal) -> int:
+    """How many places after the point a finite number needs.
+
+    Trailing zeros do not count (1.500000000 needs one place). Only the
+    exponent and the last digits are looked at, so a number written as
+    1e-999990 costs nothing to measure.
+    """
+    _, digits, exponent = number.as_tuple()
+    if not isinstance(exponent, int) or exponent >= 0:
+        return 0
+    trailing = 0
+    for digit in reversed(digits):
+        if digit != 0:
+            break
+        trailing += 1
+    return max(0, -(exponent + trailing))
+
+
 def parse_number(value: object) -> Decimal:
-    """A non-negative finite number. Raises ValueError otherwise."""
+    """A non-negative finite number of at most 6 decimal places.
+
+    Raises ValueError otherwise. Zero is accepted however it is written.
+    """
     number: Decimal
     if isinstance(value, bool):
         raise ValueError("not a number")
@@ -399,14 +424,26 @@ def parse_number(value: object) -> Decimal:
         raise ValueError("not a number")
     if not number.is_finite() or number < 0 or number > MAX_NUMBER:
         raise ValueError("not a plausible number")
+    if number != 0 and _decimal_places(number) > MAX_DECIMAL_PLACES:
+        raise ValueError("not a plausible number")
     return number
 
 
 def number_text(number: Decimal) -> str:
-    """An exact decimal as text ('48.5', '100'), the way scores are stored."""
+    """An exact decimal as text ('48.5', '100'), the way scores are stored.
+
+    The text is at most 17 characters for a number `parse_number` accepted;
+    any other number raises ValueError instead of expanding into a huge string.
+    """
     if number == 0:
         return "0"
-    return format(number.normalize(), "f")
+    if (
+        not number.is_finite()
+        or number.adjusted() >= MAX_NUMBER_DIGITS
+        or _decimal_places(number) > MAX_DECIMAL_PLACES
+    ):
+        raise ValueError("not a plausible number")
+    return format(number.quantize(NUMBER_SCALE).normalize(), "f")
 
 
 def safe_text(value: object, limit: int = MAX_TEXT_LENGTH) -> str:
@@ -469,13 +506,22 @@ def read_flag(
 
 
 def read_count(raw: Mapping[str, object], key: str, label: str) -> int | None:
-    """A whole number of zero or more, or None when the cell is empty."""
+    """A whole number of zero or more, or None when the cell is empty.
+
+    At most 18 digits: a longer number is a row error, never an exception.
+    """
     value = raw.get(key)
     if _is_empty(value):
         return None
-    if isinstance(value, str) and value.strip().isdecimal():
-        return int(value.strip())
-    if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+    if isinstance(value, str):
+        digits = value.strip()
+        if digits.isdecimal() and len(digits) <= MAX_COUNT_DIGITS:
+            return int(digits)
+    elif (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and 0 <= value < 10**MAX_COUNT_DIGITS
+    ):
         return value
     raise RowError(f"{label} must be a whole number")
 
