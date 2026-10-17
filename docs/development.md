@@ -4,7 +4,10 @@
 
 `requirements.in` and `requirements-dev.in` are the inputs. The hashed locks
 `requirements.txt` and `requirements-dev.txt` are generated, never edited by
-hand. Generate them on Linux with Python 3.12 so environment markers match CI:
+hand. The `Lock requirements` workflow (`.github/workflows/lock-requirements.yml`)
+does it for you: push a change to either `.in` file and it commits the locks to
+your branch (see `docs/ci-cd.md`). To generate them yourself, use Linux with
+Python 3.12 so environment markers match CI:
 
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate
