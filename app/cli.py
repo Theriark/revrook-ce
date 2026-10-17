@@ -5,6 +5,7 @@ Without a subcommand the ROLE setting (web, worker or all; default all) decides.
 """
 
 import argparse
+import asyncio
 import logging
 import signal
 import subprocess
@@ -13,14 +14,17 @@ import threading
 from collections.abc import Callable, Sequence
 
 import uvicorn
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app.db import make_engine
+from app.evidence.chain import ChainResult, verify_all
 from app.migrate import upgrade_to_head
 from app.settings import Settings, SettingsError, load_settings
 from app.worker import serve
 
 PORT = 8080
 STUBS = {
-    "verify-chain": "not available until phase 2 (evidence hash chain)",
     "make-fixtures": "not available until phase 3 (synthetic fixtures)",
 }
 
@@ -71,6 +75,39 @@ def supervise(
     return first_exit or 1
 
 
+async def _verify_all_chains(database_url: str) -> list[ChainResult]:
+    engine = make_engine(database_url)
+    try:
+        async with async_sessionmaker(engine)() as session:
+            return await verify_all(session)
+    finally:
+        await engine.dispose()
+
+
+def verify_chain_command(settings: Settings) -> int:
+    """Verify every client's evidence chain. Exit 0 intact, 1 broken, 2 no database."""
+    try:
+        results = asyncio.run(_verify_all_chains(settings.database_url))
+    except (SQLAlchemyError, OSError) as error:
+        print(f"revrook verify-chain: the database cannot be read: {error}")
+        return 2
+    broken = 0
+    for result in results:
+        if result.ok:
+            print(
+                f"client {result.client_id}: intact, {result.records} records, "
+                f"head {result.head_hash}"
+            )
+        else:
+            broken += 1
+            print(
+                f"client {result.client_id}: BROKEN at record "
+                f"{result.failed_record_id}: {result.reason}"
+            )
+    print(f"{len(results) - broken} of {len(results)} chains intact")
+    return 1 if broken else 0
+
+
 def _serve_web(settings: Settings) -> int:  # pragma: no cover
     # The first-run page needs the tables, so the web role brings the schema up
     # to date before it listens (a locked, one-at-a-time step; see app.migrate).
@@ -105,6 +142,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subcommands.add_parser("worker", help="run the background worker")
     subcommands.add_parser("all", help="run web and worker as two processes")
     subcommands.add_parser("migrate", help="bring the database schema up to date")
+    subcommands.add_parser("verify-chain", help="verify the evidence hash chains")
     for name, reason in STUBS.items():
         subcommands.add_parser(name, help=reason)
     return parser
@@ -128,6 +166,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if command == "migrate":
         upgrade_to_head()
         return 0
+    if command == "verify-chain":
+        return verify_chain_command(settings)
     if command == "web":
         return _serve_web(settings)
     if command == "worker":

@@ -11,9 +11,13 @@ from app import __version__, api
 from app.clock import Clock, utcnow
 from app.crypto import FieldCipher
 from app.db import check_database, make_engine
+from app.evidence.files import FileStore
+from app.importers.registry import build_default_registry
+from app.limits import UploadSizeLimitMiddleware
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
 from app.ui import auth as ui_auth
+from app.ui import evidence as ui_evidence
 from app.ui.brand import STATIC_DIR
 from app.web import csrf_protect
 
@@ -53,6 +57,12 @@ def create_app(
     app.state.cipher = FieldCipher(resolved.fernet_key)
     app.state.session_codec = SessionCodec(resolved.secret_key)
     app.state.api_limiter = api.make_api_limiter()
+    app.state.files = FileStore(resolved.evidence_dir)
+    app.state.importers = build_default_registry()
+    # Added first, so the security headers (added next) wrap its refusals too.
+    app.add_middleware(
+        UploadSizeLimitMiddleware, max_file_bytes=resolved.import_max_bytes
+    )
     app.add_middleware(
         SecurityHeadersMiddleware,
         hsts=resolved.base_url.startswith("https://"),
@@ -72,6 +82,7 @@ def create_app(
         return {"status": "not ready", "database": "unavailable"}
 
     app.include_router(ui_auth.router)
+    app.include_router(ui_evidence.router)
     app.include_router(api.router)
     # Stylesheets, vendored scripts and brand files, served from the same origin
     # (CSP default-src 'self').
