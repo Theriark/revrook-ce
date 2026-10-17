@@ -40,6 +40,8 @@ jobs:
       image: ${{ steps.ref.outputs.image }}
     env:
       SOURCE_SHA: ${{ github.sha }}
+      # STRICT as evaluated by the ci.yml run that just passed (single source).
+      STRICT: ${{ needs.tests.outputs.strict }}
     steps:
       - name: Verify source branch
         shell: bash
@@ -52,7 +54,17 @@ jobs:
       - id: exists
         shell: bash
         run: |
-          if [[ -f Dockerfile ]]; then echo "dockerfile=true" >> "$GITHUB_OUTPUT"; else echo "dockerfile=false" >> "$GITHUB_OUTPUT"; echo "::notice::No Dockerfile yet (phase 0 creates it). Image build skipped; this is not a pass."; fi
+          set -euo pipefail
+          if [[ -f Dockerfile ]]; then
+            echo "dockerfile=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${STRICT}" == "false" ]]; then
+            echo "dockerfile=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Dockerfile yet (phase 0 creates it). Image build skipped; this is not a pass."
+          else
+            # STRICT true, or the STRICT value is missing: fail closed.
+            echo "::error::Dockerfile is missing and STRICT is '${STRICT:-unset}'. A release without an image is a failure."
+            exit 1
+          fi
       - id: ref
         shell: bash
         run: |
