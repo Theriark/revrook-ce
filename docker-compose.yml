@@ -76,6 +76,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # The evidence volume is empty on the first start and Docker copies the
+      # image's /data into it when the first container is created. Web and
+      # worker created at the same moment both did that copy and raced
+      # ("failed to mkdir ... file exists"). Waiting for a healthy web means
+      # exactly one container ever populates the volume.
+      web:
+        condition: service_healthy
 
 volumes:
   db-data:
