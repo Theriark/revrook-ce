@@ -1,10 +1,11 @@
-name: Rollback (DISABLED)
+name: Rollback
 
-# DEFINITION ONLY. Fail closed, like promote-stage.yml. Rolls an environment back
-# to the exact prior approved digest. No environment, secret or controller
-# credential is referenced, so this file cannot change any runtime as written.
-# Any irreversible migration or data-format change must be named in the release
-# notes before a rollback is attempted; this recipe does not downgrade the database.
+# Redeploy a previously recorded image digest to the Development or Stage Dokploy
+# application and verify it. The digest comes from the run summary of the
+# deployment that is being replaced ("Previous image (rollback target)") or from
+# an earlier approved deployment. This recipe never rebuilds and does not
+# downgrade the database: any irreversible migration or data-format change must
+# be named in the release notes before a rollback is attempted.
 
 on:
   workflow_dispatch:
@@ -17,54 +18,95 @@ on:
           - development
           - stage
       previous_digest:
-        description: "Prior APPROVED immutable digest (sha256:<64 hex>)."
-        required: true
-        type: string
-      previous_source_sha:
-        description: "Full 40-character source commit of that digest."
+        description: "Previously recorded immutable digest (sha256:<64 hex>)."
         required: true
         type: string
 
 permissions:
   contents: read
 
-# Same group as release.yml and promote-stage.yml: one delivery run at a time per
-# repository, a live run is never cancelled (see docs/ci-cd.md).
+# One delivery run at a time per repository; a live run is never cancelled.
 concurrency:
   group: revrook-ce-delivery
   cancel-in-progress: false
 
-env:
-  # Flip to "true" only in a separately approved change.
-  ROLLBACK_ENABLED: "false"
-
 jobs:
-  guard:
-    name: Guard (fails closed)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - shell: bash
-        env:
-          DIGEST: ${{ inputs.previous_digest }}
-          SOURCE_SHA: ${{ inputs.previous_source_sha }}
-        run: |
-          set -euo pipefail
-          if [[ "${ROLLBACK_ENABLED}" != "true" ]]; then
-            echo "::error::Rollback is not enabled for revrook-ce. A later approved change must enable it."
-            exit 1
-          fi
-          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must be sha256:<64 hex>"; exit 1; }
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source SHA must be 40 hex characters"; exit 1; }
-
   rollback:
-    name: Request rollback to the prior digest (placeholder)
-    needs: guard
+    name: Redeploy the recorded digest
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: read
+    environment: ${{ inputs.environment }}
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      TARGET: ${{ inputs.environment }}
+      DIGEST: ${{ inputs.previous_digest }}
     steps:
-      # PLACEHOLDER: ask the serialized controller to redeploy the previous digest
-      # and confirm the target reports that digest and source SHA.
-      - run: echo "::error::Controller interface not wired. Refusing."; exit 1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Select the target and validate the digest
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::previous_digest must be sha256:<64 hex>"; exit 1; }
+          case "${TARGET}" in
+            development)
+              echo "application_id=zsYpMEYIAGHbJQZuh_1RT" >> "${GITHUB_OUTPUT}"
+              echo "host=ce-dev-revrook.theriark.dev" >> "${GITHUB_OUTPUT}"
+              ;;
+            stage)
+              echo "application_id=7QVBrkTn6rzEcICxV9GTj" >> "${GITHUB_OUTPUT}"
+              echo "host=ce-stg-revrook.theriark.dev" >> "${GITHUB_OUTPUT}"
+              ;;
+            *)
+              echo "::error::environment must be development or stage"
+              exit 1
+              ;;
+          esac
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: The digest must exist in the registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "${IMAGE}@${DIGEST}" >/dev/null || {
+            echo "::error::${IMAGE}@${DIGEST} is not in the registry"
+            exit 1
+          }
+
+      - id: deploy
+        uses: ./.github/actions/dokploy-deploy
+        with:
+          application-id: ${{ steps.target.outputs.application_id }}
+          expected-host: ${{ steps.target.outputs.host }}
+          image: ${{ env.IMAGE }}@${{ env.DIGEST }}
+          health-url: https://${{ steps.target.outputs.host }}/healthz
+          title: Rollback ${{ env.TARGET }} to ${{ env.DIGEST }}
+          # A failed rollback is not rolled forward again automatically.
+          restore-on-failure: "false"
+          dokploy-url: ${{ secrets.DOKPLOY_URL }}
+          dokploy-api-key: ${{ secrets.DOKPLOY_API_KEY }}
+          cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          cf-access-client-secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+
+      - name: Record the rollback
+        shell: bash
+        env:
+          PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
+          HOST: ${{ steps.target.outputs.host }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## revrook-ce rolled back (${TARGET})"
+            echo
+            echo "- Now running: \`${IMAGE}@${DIGEST}\`"
+            echo "- Replaced image: \`${PREVIOUS:-none}\`"
+            echo "- URL: https://${HOST}/"
+            echo "- The database was not downgraded. Check release notes for irreversible migrations."
+          } >> "${GITHUB_STEP_SUMMARY}"

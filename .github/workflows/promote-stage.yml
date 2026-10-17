@@ -1,78 +1,149 @@
-name: Promote to Stage (DISABLED)
+name: Promote to Stage
 
-# DEFINITION ONLY. Fail closed: the guard job always fails while PROMOTION_ENABLED
-# is "false". Enabling it needs a later change that carries its own explicit
-# Stage-promotion approval. No environment, secret or controller credential is
-# referenced here, so nothing can be deployed from this file as written.
-#
-# Intended behaviour once enabled: promote the SAME immutable digest that passed
-# Development (no rebuild), ask the existing serialized controller to deploy it to
-# Stage on VM-09, verify the target reports the same source SHA and digest, run a
-# passive smoke check, then wait for human QA in Jira. See docs/ci-cd.md.
+# Promote the exact image that Development already runs to the Stage Dokploy
+# application. Never rebuilds: the digest published for the source SHA by
+# deploy-development.yml is resolved, confirmed on Development, deployed to
+# Stage, verified, tagged `stage`, and the `stage` branch is advanced to the same
+# SHA. Explicit approval for Stage is a human step before dispatching this run;
+# human QA in Jira follows. See docs/ci-cd.md.
 
 on:
   workflow_dispatch:
     inputs:
-      digest:
-        description: "Immutable image digest to promote (sha256:<64 hex>). Never a tag."
-        required: true
-        type: string
       source_sha:
-        description: "Full 40-character source commit the digest was built from."
+        description: "Exact tested commit (full 40-character SHA) that Development runs."
         required: true
         type: string
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
 
-# Same group as release.yml and rollback.yml: one delivery run at a time per
-# repository, a live run is never cancelled (see docs/ci-cd.md).
+# One delivery run at a time per repository; a live run is never cancelled.
 concurrency:
   group: revrook-ce-delivery
   cancel-in-progress: false
 
-env:
-  # Flip to "true" only in a separately approved change.
-  PROMOTION_ENABLED: "false"
-
 jobs:
-  guard:
-    name: Guard (fails closed)
+  promote:
+    name: Promote the Development digest to Stage
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 45
+    environment: stage
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
+      DEV_HOST: ce-dev-revrook.theriark.dev
+      STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
+      STAGE_HOST: ce-stg-revrook.theriark.dev
     steps:
-      - shell: bash
-        env:
-          DIGEST: ${{ inputs.digest }}
-          SOURCE_SHA: ${{ inputs.source_sha }}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate the promotion source
+        shell: bash
         run: |
           set -euo pipefail
-          if [[ "${PROMOTION_ENABLED}" != "true" ]]; then
-            echo "::error::Stage promotion is not enabled for revrook-ce. A later approved change must enable it."
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_sha must be a full 40-character commit SHA"; exit 1; }
+          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || { echo "::error::Stage promotion must run from development, got ${GITHUB_REF}"; exit 1; }
+          git fetch origin +refs/heads/development:refs/remotes/origin/development
+          development_sha="$(git rev-parse refs/remotes/origin/development)"
+          [[ "${SOURCE_SHA}" == "${development_sha}" ]] || {
+            echo "::error::source ${SOURCE_SHA} is not current development ${development_sha}"
             exit 1
-          fi
-          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must be sha256:<64 hex>"; exit 1; }
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_sha must be a full 40-character SHA"; exit 1; }
+          }
 
-  promote:
-    name: Request Stage promotion of the same digest (placeholder)
-    needs: guard
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      # PLACEHOLDER: request the controller to deploy ${{ inputs.digest }} to Stage
-      # (VM-09) and confirm the target reports this source SHA and digest.
-      - run: echo "::error::Controller interface not wired. Refusing."; exit 1
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-  smoke:
-    name: Passive smoke check (placeholder)
-    needs: promote
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      # PLACEHOLDER: read-only GET of the Stage health/provenance endpoint.
-      - run: echo "::error::Smoke check not wired. Refusing."; exit 1
+      - name: Resolve the digest published for this commit
+        id: digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+          echo "Resolved ${IMAGE}@${digest}"
+
+      - name: Confirm Development runs exactly this digest
+        shell: bash
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          for required in DOKPLOY_URL DOKPLOY_API_KEY CF_ID CF_SECRET; do
+            [[ -n "${!required}" ]] || { echo "::error::${required} is missing from the stage environment"; exit 1; }
+          done
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || {
+            echo "::error::Development runs '${running}', not ${IMAGE}@${DIGEST}"
+            exit 1
+          }
+          curl --fail --silent --show-error --max-time 15 "https://${DEV_HOST}/healthz" >/dev/null
+
+      - id: deploy
+        uses: ./.github/actions/dokploy-deploy
+        with:
+          application-id: ${{ env.STAGE_APPLICATION_ID }}
+          expected-host: ${{ env.STAGE_HOST }}
+          image: ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+          health-url: https://${{ env.STAGE_HOST }}/healthz
+          expected-revision: ${{ env.SOURCE_SHA }}
+          title: Stage ${{ env.SOURCE_SHA }}
+          dokploy-url: ${{ secrets.DOKPLOY_URL }}
+          dokploy-api-key: ${{ secrets.DOKPLOY_API_KEY }}
+          cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          cf-access-client-secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+
+      - name: Tag the promoted image as stage
+        shell: bash
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --tag "${IMAGE}:stage" "${IMAGE}@${DIGEST}"
+
+      - name: Advance the stage branch to the promoted commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stage" \
+            -f sha="${SOURCE_SHA}" -F force=false >/dev/null
+          stage_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
+          [[ "${stage_sha}" == "${SOURCE_SHA}" ]] || { echo "::error::stage is ${stage_sha}, expected ${SOURCE_SHA}"; exit 1; }
+
+      - name: Record the Stage result
+        shell: bash
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+          PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## revrook-ce promoted to Stage"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\`"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (same digest as Development, no rebuild)"
+            echo "- Previous Stage image (rollback target): \`${PREVIOUS:-none}\`"
+            echo "- URL: https://${STAGE_HOST}/"
+            echo "- Stage branch: \`${SOURCE_SHA}\`; main is unchanged"
+            echo "- Next: human QA in Jira"
+          } >> "${GITHUB_STEP_SUMMARY}"
