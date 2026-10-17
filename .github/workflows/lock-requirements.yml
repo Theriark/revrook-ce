@@ -5,40 +5,29 @@ name: Lock requirements
 # them back to the SAME branch with the repository GITHUB_TOKEN. No secret, no
 # personal access token, no new credential. See docs/ci-cd.md.
 #
-# Triggers: a push that changes requirements.in or requirements-dev.in, or a
-# manual dispatch. Pull requests from forks never run this workflow (it has no
-# pull_request trigger), and a push only exists inside this repository.
+# Trigger: manual dispatch of a branch ONLY. A push never runs this workflow, so
+# a burst of pushes cannot start runs, and pull requests from forks cannot run it
+# (it has no pull_request trigger). Dispatch it from the Actions page or with
+# `gh workflow run lock-requirements.yml --ref <branch>` after changing
+# requirements.in or requirements-dev.in.
 #
-# No loop: the commit it makes touches only requirements.txt and
-# requirements-dev.txt, which are not in the trigger paths, and a push made with
-# GITHUB_TOKEN does not start a push workflow in any case. When the compiled files
-# are identical to the committed ones nothing is committed.
-#
-# A push made with GITHUB_TOKEN also does not start the pull_request CI run, so
-# after committing this workflow dispatches ci.yml on the new head (workflow_dispatch
-# is the documented exception that GITHUB_TOKEN may trigger) and waits until that
-# run is visible on the new commit.
+# No loop: there is no push trigger, so its own commit cannot start it again, and
+# a push made with GITHUB_TOKEN never starts a push or pull_request workflow in
+# any case. When the compiled files are identical to the committed ones nothing
+# is committed. The commit does not start CI either: request one CI run for the
+# new head with the CI request broker (label ci-go).
 
 on:
-  push:
-    branches-ignore:
-      - main
-      - development
-      - stage
-      - production
-    paths:
-      - requirements.in
-      - requirements-dev.in
   workflow_dispatch:
 
 permissions:
   contents: write
-  actions: write
 
-# One run per branch at a time; a lock run is never cancelled half way through a
-# commit. Not part of the delivery group: it publishes and deploys nothing.
+# One shared group per repository for every non-CI workflow (build, promotion,
+# rollback, lock): they never run at the same time and a live run is never
+# cancelled. Pull request CI uses its own group (see docs/ci-cd.md).
 concurrency:
-  group: lock-requirements-${{ github.ref }}
+  group: revrook-ce-delivery
   cancel-in-progress: false
 
 env:
@@ -108,28 +97,17 @@ jobs:
           git push origin "HEAD:refs/heads/${BRANCH}"
           echo "changed=true" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-      - name: Run CI on the new head
+      - name: Summary
         if: steps.commit.outputs.changed == 'true'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ github.ref_name }}
           NEW_SHA: ${{ steps.commit.outputs.sha }}
         run: |
-          set -euo pipefail
-          gh workflow run ci.yml --ref "${BRANCH}"
-          found=""
-          for i in $(seq 1 12); do
-            sleep 5
-            found="$(gh run list --workflow ci.yml --branch "${BRANCH}" --event workflow_dispatch \
-              --json databaseId,headSha --jq "[.[] | select(.headSha == \"${NEW_SHA}\")][0].databaseId // empty")"
-            [[ -n "${found}" ]] && break
-          done
-          [[ -n "${found}" ]] || { echo "::error::ci.yml was dispatched but no run appeared on ${NEW_SHA}"; exit 1; }
           {
             echo "## Lock files committed"
             echo
             echo "- Branch: \`${BRANCH}\`"
             echo "- New head: \`${NEW_SHA}\`"
-            echo "- CI run on that head (workflow_dispatch): ${found}"
+            echo "- CI was NOT started. Request one run for this head with the CI request broker (label \`ci-go\`)."
           } >> "${GITHUB_STEP_SUMMARY}"

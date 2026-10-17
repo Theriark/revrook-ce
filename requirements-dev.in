@@ -1,6 +1,6 @@
 # Development and test tools. Never installed in the final image (check 6).
 # Compile with pip-tools on Python 3.12 into requirements-dev.txt (the Lock
-# requirements workflow does it on every push that changes this file); the runtime
+# requirements workflow does it when dispatched manually); the runtime
 # pins in requirements.txt are used as constraints so both locks agree.
 -r requirements.in
 -c requirements.txt

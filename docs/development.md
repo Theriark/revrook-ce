@@ -5,8 +5,10 @@
 `requirements.in` and `requirements-dev.in` are the inputs. The hashed locks
 `requirements.txt` and `requirements-dev.txt` are generated, never edited by
 hand. The `Lock requirements` workflow (`.github/workflows/lock-requirements.yml`)
-does it for you: push a change to either `.in` file and it commits the locks to
-your branch (see `docs/ci-cd.md`). To generate them yourself, use Linux with
+does it for you: after changing either `.in` file, dispatch it on your branch
+(`gh workflow run lock-requirements.yml --ref <branch>`) and it commits the
+locks there; it never runs on a push, and its commit does not start CI (see
+`docs/ci-cd.md`). To generate them yourself, use Linux with
 Python 3.12 so environment markers match CI:
 
 ```bash

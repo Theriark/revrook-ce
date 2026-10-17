@@ -6,10 +6,16 @@ name: CI
 # inputs do not exist are SKIPPED and reported as skipped, never as a pass.)
 # See docs/ci-cd.md.
 
+# How CI is started: a push never runs this workflow. For pull requests the ONLY
+# trigger is the label event, and a run does anything only for the label "ci-go",
+# which the CI request broker sets (one request per commit, at most one per pull
+# request every 3 minutes and 12 a day). A push to a feature branch runs nothing.
+# release.yml calls this workflow on a push to development (workflow_call).
 # pull_request (not pull_request_target) has a read-only token and no secrets, so
 # it is safe for every base branch, including stacked pull requests.
 on:
   pull_request:
+    types: [labeled]
   workflow_dispatch:
   workflow_call:
     outputs:
@@ -22,9 +28,10 @@ permissions:
 
 # Superseded pull request runs are cancelled. Only pull_request runs cancel; when
 # release.yml calls this workflow on a push, nothing is cancelled. The deployment
-# group in release.yml is separate.
+# group in release.yml is separate. A labeled event for any other label gets its
+# own unique group (all its jobs are skipped), so it can never cancel a ci-go run.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ (github.event_name != 'pull_request' || github.event.label.name == 'ci-go') && 'run' || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -37,6 +44,9 @@ env:
 jobs:
   detect:
     name: Detect which inputs exist
+    # Every other job needs detect, so a pull request label other than ci-go skips
+    # the whole run. workflow_dispatch and workflow_call always run.
+    if: github.event_name != 'pull_request' || github.event.label.name == 'ci-go'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -356,7 +366,7 @@ jobs:
       - content-licences
       - docker-build
       - compose-smoke
-    if: always()
+    if: always() && (github.event_name != 'pull_request' || github.event.label.name == 'ci-go')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
