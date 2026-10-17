@@ -1,0 +1,82 @@
+# Local and CI stack: web, worker and a PostgreSQL 16 database.
+# Copy .env.example to .env first (docker compose --env-file .env.ci in CI).
+# Every value below is a throwaway local value, never a deployment secret.
+
+name: revrook
+
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql+asyncpg://revrook:local-dev-only-not-a-secret@db:5432/revrook
+  SECRET_KEY: ${SECRET_KEY:?copy .env.example to .env}
+  FERNET_KEY: ${FERNET_KEY:?copy .env.example to .env}
+  BASE_URL: http://localhost:8080
+  EVIDENCE_DIR: /data/evidence
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: revrook
+      POSTGRES_PASSWORD: local-dev-only-not-a-secret
+      POSTGRES_DB: revrook
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # -h 127.0.0.1 forces TCP. Without it pg_isready answers from the unix
+      # socket, which the temporary init-time server also serves, so web and
+      # worker could start before the real server listens on 5432.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U revrook -d revrook"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    build: .
+    environment:
+      <<: *app-environment
+      ROLE: web
+    ports:
+      - "8080:8080"
+    volumes:
+      - evidence:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build: .
+    # The role is also passed as the command, so PID 1 is `python -m app.cli
+    # worker`. The health check below reads that command line.
+    command: ["worker"]
+    environment:
+      <<: *app-environment
+      ROLE: worker
+    volumes:
+      - evidence:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image health check probes the web port, which the worker does not
+    # serve, so the worker has its own. `docker compose up --wait` rejects a
+    # service with no health check, so it cannot be disabled. Healthy means
+    # PID 1 is still the worker process. A startup failure makes the process
+    # exit and the container stop, which compose reports as a failure.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import sys; sys.exit(0 if 'worker' in open('/proc/1/cmdline').read().split(chr(0)) else 1)"
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  evidence:

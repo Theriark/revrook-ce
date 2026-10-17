@@ -1,0 +1,15 @@
+# Recorded licence exceptions for tools/licence_audit.py (merge gate check 6).
+#
+# One line per package: name | SPDX expression | reason
+#
+# Use a line only when a package declares its licence ambiguously (for example
+# the generic "BSD License" classifier) and you have read its LICENSE file. The
+# line gives the identifier found in that file and says where it was read. The
+# resolved expression must still be on the allow-list: an exception cannot admit
+# a disallowed licence.
+#
+# Example:
+# some-package | BSD-3-Clause | LICENSE file read at <url> on <date>
+
+jinja2 | BSD-3-Clause | pallets/jinja LICENSE.txt at tag 3.1.6 read 2026-10-17: three-clause BSD, Copyright 2007 Pallets
+itsdangerous | BSD-3-Clause | pallets/itsdangerous LICENSE.txt at tag 2.2.0 read 2026-10-17: three-clause BSD, Copyright 2011 Pallets

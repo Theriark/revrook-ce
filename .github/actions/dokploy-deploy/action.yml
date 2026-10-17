@@ -1,0 +1,210 @@
+name: Deploy an immutable image to a Dokploy application
+description: >-
+  Fail-closed deployment of one image@sha256 digest to one existing Dokploy
+  application. Checks the target identity first, updates the image, deploys,
+  waits for the new Dokploy deployment to finish, checks health and confirms the
+  application reports exactly the requested digest. Records the previous image
+  as the rollback target. Creates and deletes nothing in Dokploy.
+
+inputs:
+  application-id:
+    description: Existing Dokploy application id (verified against the host).
+    required: true
+  expected-host:
+    description: Domain that must be attached to that application (identity check).
+    required: true
+  image:
+    description: Immutable reference ghcr.io/theriark/revrook-ce@sha256:<64 hex>.
+    required: true
+  health-url:
+    description: Passive health URL of the target (HTTP GET, expects 200).
+    required: true
+  expected-revision:
+    description: Full source SHA. Compared when the app reports its revision.
+    required: false
+    default: ""
+  title:
+    description: Title of the Dokploy deployment record.
+    required: true
+  restore-on-failure:
+    description: Redeploy the previous image when this deployment fails.
+    required: false
+    default: "true"
+  timeout-seconds:
+    description: Time allowed for the Dokploy deployment and for the health check.
+    required: false
+    default: "600"
+  dokploy-url:
+    description: Dokploy base URL (secret DOKPLOY_URL).
+    required: true
+  dokploy-api-key:
+    description: Dokploy API key (secret DOKPLOY_API_KEY).
+    required: true
+  cf-access-client-id:
+    description: Cloudflare Access client id (secret CF_ACCESS_CLIENT_ID).
+    required: true
+  cf-access-client-secret:
+    description: Cloudflare Access client secret (secret CF_ACCESS_CLIENT_SECRET).
+    required: true
+
+outputs:
+  previous-image:
+    description: Image the application used before this deployment (rollback target).
+    value: ${{ steps.deploy.outputs.previous_image }}
+
+runs:
+  using: composite
+  steps:
+    - id: deploy
+      shell: bash
+      env:
+        APP_ID: ${{ inputs.application-id }}
+        EXPECTED_HOST: ${{ inputs.expected-host }}
+        IMAGE: ${{ inputs.image }}
+        HEALTH_URL: ${{ inputs.health-url }}
+        EXPECTED_REVISION: ${{ inputs.expected-revision }}
+        TITLE: ${{ inputs.title }}
+        RESTORE_ON_FAILURE: ${{ inputs.restore-on-failure }}
+        TIMEOUT: ${{ inputs.timeout-seconds }}
+        DOKPLOY_URL: ${{ inputs.dokploy-url }}
+        DOKPLOY_API_KEY: ${{ inputs.dokploy-api-key }}
+        CF_ID: ${{ inputs.cf-access-client-id }}
+        CF_SECRET: ${{ inputs.cf-access-client-secret }}
+      run: |
+        set -euo pipefail
+
+        for required in APP_ID EXPECTED_HOST IMAGE HEALTH_URL TITLE DOKPLOY_URL DOKPLOY_API_KEY CF_ID CF_SECRET; do
+          [[ -n "${!required}" ]] || { echo "::error::${required} is missing"; exit 1; }
+        done
+        [[ "${IMAGE}" =~ ^ghcr\.io/theriark/revrook-ce@sha256:[0-9a-f]{64}$ ]] || {
+          echo "::error::image must be ghcr.io/theriark/revrook-ce@sha256:<64 hex>"
+          exit 1
+        }
+        [[ "${EXPECTED_REVISION}" =~ ^([0-9a-f]{40})?$ ]] || {
+          echo "::error::expected-revision must be a full 40-character SHA or empty"
+          exit 1
+        }
+        [[ "${TIMEOUT}" =~ ^[0-9]+$ ]] || { echo "::error::timeout-seconds must be a number"; exit 1; }
+
+        base="${DOKPLOY_URL%/}/api"
+
+        # GET is retried; POST is not, so a deployment is never requested twice.
+        api_get() {
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --header "accept: application/json" \
+            --get "${base}/$1" "${@:2}"
+        }
+        api_post() {
+          curl --fail-with-body --silent --show-error --max-time 60 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --header "Content-Type: application/json" \
+            --request POST --data "$2" "${base}/$1"
+        }
+        current_image() {
+          api_get application.one --data-urlencode "applicationId=${APP_ID}" | jq -r '.dockerImage // empty'
+        }
+        deployment_ids() {
+          api_get deployment.allByType --data-urlencode "id=${APP_ID}" --data-urlencode "type=application" |
+            jq -r '[.. | objects | select(has("status") and (has("deploymentId") or has("id")))
+                    | (.deploymentId // .id)] | unique | .[]'
+        }
+        request_deploy() {
+          api_post application.update "$(jq -nc --arg a "${APP_ID}" --arg i "$1" \
+            '{applicationId: $a, sourceType: "docker", dockerImage: $i}')" >/dev/null
+          api_post application.deploy "$(jq -nc --arg a "${APP_ID}" --arg t "$2" \
+            --arg d "revrook-ce GitHub Actions run ${GITHUB_RUN_ID}" \
+            '{applicationId: $a, title: $t, description: $d}')" >/dev/null
+        }
+
+        UPDATED=0
+        PREVIOUS=""
+        restore() {
+          if [[ "${UPDATED}" == "1" && "${RESTORE_ON_FAILURE}" == "true" && -n "${PREVIOUS}" && "${PREVIOUS}" != "${IMAGE}" ]]; then
+            echo "::warning::restoring previous image ${PREVIOUS}"
+            request_deploy "${PREVIOUS}" "Automatic restore after failed run ${GITHUB_RUN_ID}" || echo "::warning::restore request failed"
+          fi
+        }
+        fail() { echo "::error::$*"; restore; exit 1; }
+
+        # 1. Target identity: the application must carry the expected domain and
+        #    must be the application we were given. Anything else fails closed.
+        domains="$(api_get domain.byApplicationId --data-urlencode "applicationId=${APP_ID}")" ||
+          { echo "::error::cannot read domains of the Dokploy application"; exit 1; }
+        jq -e --arg h "${EXPECTED_HOST}" 'type == "array" and any(.[]; .host == $h)' <<<"${domains}" >/dev/null ||
+          { echo "::error::Dokploy application ${APP_ID} is not attached to ${EXPECTED_HOST}; refusing to deploy"; exit 1; }
+        app_id_seen="$(api_get application.one --data-urlencode "applicationId=${APP_ID}" | jq -r '.applicationId // empty')" ||
+          { echo "::error::cannot read the Dokploy application"; exit 1; }
+        [[ "${app_id_seen}" == "${APP_ID}" ]] || { echo "::error::Dokploy returned a different application id"; exit 1; }
+
+        # 2. Rollback target and the deployments that already exist.
+        PREVIOUS="$(current_image)" || { echo "::error::cannot read the current image"; exit 1; }
+        echo "previous_image=${PREVIOUS}" >> "${GITHUB_OUTPUT}"
+        before="$(deployment_ids)" || { echo "::error::cannot list Dokploy deployments"; exit 1; }
+        echo "Target ${EXPECTED_HOST} (${APP_ID}); previous image: ${PREVIOUS:-none}; requested: ${IMAGE}"
+
+        # 3. Update and deploy, then confirm the configured image.
+        UPDATED=1
+        request_deploy "${IMAGE}" "${TITLE}" || fail "Dokploy rejected the update or deploy request"
+        configured="$(current_image)" || fail "cannot read the configured image after the update"
+        [[ "${configured}" == "${IMAGE}" ]] || fail "Dokploy reports ${configured}, expected ${IMAGE}"
+
+        # 4. Wait for the NEW Dokploy deployment (not an older one) to finish.
+        deadline=$((SECONDS + TIMEOUT))
+        finished=""
+        while ((SECONDS < deadline)); do
+          sleep 5
+          after="$(api_get deployment.allByType --data-urlencode "id=${APP_ID}" --data-urlencode "type=application" 2>/dev/null)" || continue
+          # Newest record whose id was not present before the request.
+          status="$(jq -r --arg before "${before}" '
+              ($before | split("\n")) as $old
+              | [.. | objects | select(has("status") and (has("deploymentId") or has("id")))
+                 | select((.deploymentId // .id) as $i | ($old | index($i)) == null)]
+              | sort_by(.createdAt // .startedAt // "") | last | .status // empty' <<<"${after}")"
+          case "${status}" in
+            done) finished=done; break ;;
+            error | cancelled | canceled) fail "Dokploy deployment ended with status ${status}" ;;
+          esac
+        done
+        [[ "${finished}" == "done" ]] || fail "no new Dokploy deployment reached status done within ${TIMEOUT}s"
+
+        # 5. Passive health (and revision when the app reports it), twice in a row.
+        ok=0
+        while ((SECONDS < deadline + 120)); do
+          body="$(curl --silent --show-error --max-time 15 --write-out $'\n%{http_code}' "${HEALTH_URL}" 2>/dev/null || true)"
+          code="${body##*$'\n'}"
+          payload="${body%$'\n'*}"
+          if [[ "${code}" == "200" ]]; then
+            seen_rev="$(jq -r '.revision // .source_sha // empty' <<<"${payload}" 2>/dev/null || true)"
+            if [[ -n "${EXPECTED_REVISION}" && -n "${seen_rev}" && "${seen_rev}" != "${EXPECTED_REVISION}" ]]; then
+              ok=0
+            else
+              ok=$((ok + 1))
+            fi
+            ((ok >= 2)) && break
+          else
+            ok=0
+          fi
+          sleep 5
+        done
+        ((ok >= 2)) || fail "${HEALTH_URL} did not return two healthy responses for ${EXPECTED_REVISION:-the requested image}"
+        if [[ -n "${EXPECTED_REVISION}" && -z "${seen_rev:-}" ]]; then
+          echo "::notice::The application does not report its revision on ${HEALTH_URL}; identity is proven by the Dokploy deployment and the exact image digest only."
+        fi
+
+        # 6. Final confirmation of the exact digest.
+        final="$(current_image)" || fail "cannot read the final image"
+        [[ "${final}" == "${IMAGE}" ]] || fail "Dokploy reports ${final}, expected ${IMAGE}"
+        {
+          echo "### Dokploy deployment verified"
+          echo
+          echo "- Target: \`${EXPECTED_HOST}\` (application \`${APP_ID}\`)"
+          echo "- Image: \`${IMAGE}\`"
+          echo "- Previous image (rollback target): \`${PREVIOUS:-none}\`"
+          echo "- Health: two consecutive HTTP 200 from \`${HEALTH_URL}\`"
+        } >> "${GITHUB_STEP_SUMMARY}"
