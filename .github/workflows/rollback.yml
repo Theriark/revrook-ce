@@ -28,11 +28,10 @@ on:
 permissions:
   contents: read
 
-# Separate group while disabled: a stray dispatch must not displace a pending
-# release in revrook-ce-delivery. The approved change that enables this workflow
-# moves it into revrook-ce-delivery (see docs/ci-cd.md).
+# Same group as release.yml and promote-stage.yml: one delivery run at a time per
+# repository, a live run is never cancelled (see docs/ci-cd.md).
 concurrency:
-  group: revrook-ce-delivery-disabled
+  group: revrook-ce-delivery
   cancel-in-progress: false
 
 env:
