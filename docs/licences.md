@@ -43,8 +43,11 @@ declares the SPDX expression `MIT-0` and its LICENSE file (python-cffi/cffi
 the MIT grant without the attribution condition. It is strictly more permissive
 than MIT, so phase 0 added `MIT-0` to the allow-list in
 `tools/licence_audit.py` rather than recording an exception (an exception cannot
-admit an identifier that is off the list). R&D is asked to confirm this
-addition.
+admit an identifier that is off the list). MIT-0 is NOT on the allow-list of the
+approved phase plan (merge gate check 6 of phase-plan-3), so this addition is a
+deviation that needs an R&D decision. It cannot simply be removed: cffi is in the
+runtime lock, so check 6 would fail. R&D is asked to confirm the addition or to
+choose another resolution.
 
 ## Front-end assets (vendored in phase 1, not in the repository yet)
 
@@ -77,10 +80,12 @@ neither decision.
 - Development group (`requirements-dev.in`): pytest, pytest-asyncio, pytest-cov,
   mypy, ruff, pip-tools. Their LICENSE files have not been read. They never enter
   the image, and the audit runs with `--allow-mpl-dev` for them.
-- Transitive runtime packages: listed only when `requirements.txt` exists. The
-  CI licence audit checks every installed package; a package whose metadata is
-  ambiguous fails the audit and is resolved in `licence-exceptions.txt` after
-  its LICENSE file is read.
+- Transitive runtime packages: `requirements.txt` is now produced by
+  the lock mode of `ci.yml` and the licence audit (check 6) runs in CI on every
+  installed package, runtime and development. A package whose metadata is
+  ambiguous fails the audit and is resolved in `licence-exceptions.txt` after its
+  LICENSE file is read; the exceptions recorded so far are the ones named in the
+  tables above.
 
 ## Database driver spike: asyncpg with Alembic
 
@@ -94,8 +99,8 @@ spike fails, after reading its LICENSE file; it is not adopted.
 
 Evidence: `tests/test_db_spike.py` runs, against PostgreSQL 16, `alembic upgrade
 head`, `alembic check`, `alembic downgrade -1`, `alembic upgrade head`, and two
-connections competing for the same advisory lock. At the time of this record the
-test had been written but not yet executed by its author, because the phase 0
-author had no Python packages or PostgreSQL available. The decision stands
-provisionally on those tests passing in CI. If they fail, this section must be
-corrected before merge.
+connections competing for the same advisory lock. The test is executed by the
+merge gate (check 3, with a PostgreSQL 16 service container, and check 4 for the
+migration cycle); the gate fails if any test is skipped, so the spike cannot pass
+silently without a database. The decision stands on those checks being green on
+the commit that is merged (CI run ids are recorded on the pull request).
