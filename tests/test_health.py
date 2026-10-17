@@ -44,9 +44,7 @@ async def test_readyz_is_200_with_a_working_database(
 
 
 @pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
-async def test_interactive_docs_are_not_exposed(
-    settings: Settings, path: str
-) -> None:
+async def test_interactive_docs_are_not_exposed(settings: Settings, path: str) -> None:
     app = create_app(settings, engine=make_engine(UNREACHABLE))
     async with client_for(app) as client:
         response = await client.get(path)
