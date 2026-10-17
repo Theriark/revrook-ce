@@ -11,12 +11,15 @@ Python 3.12 so environment markers match CI:
 
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate
-pip install pip-tools
-pip-compile --generate-hashes --strip-extras --output-file requirements.txt requirements.in
-pip-compile --generate-hashes --strip-extras --output-file requirements-dev.txt requirements-dev.in
+pip install "pip==25.1.1" "pip-tools==7.5.0"   # the versions the workflow uses
+pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements.txt requirements.in
+pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements-dev.txt requirements-dev.in
 ```
 
 Compile `requirements.txt` first: the dev input uses it as a constraint file.
+`--allow-unsafe` is needed because pip-tools depends on setuptools, which
+pip-compile otherwise leaves out of the lock; `pip install --require-hashes`
+then fails on it.
 Then install and run the checks:
 
 ```bash
