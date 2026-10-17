@@ -18,7 +18,10 @@ for path in /healthz /readyz; do
 done
 
 if command -v docker >/dev/null 2>&1; then
-  container="$(docker compose -f "${ROOT}/docker-compose.yml" ps -q web)"
+  # Compose labels avoid "docker compose ps", which would need the env file.
+  container="$(docker ps -q \
+    --filter label=com.docker.compose.project=revrook \
+    --filter label=com.docker.compose.service=web)"
   if [[ -n "${container}" ]]; then
     uid="$(docker exec "${container}" id -u)"
     [[ "${uid}" == "10001" ]] || fail "web container runs as uid ${uid}, expected 10001"
