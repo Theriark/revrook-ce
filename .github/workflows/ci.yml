@@ -1,10 +1,10 @@
 name: CI
 
 # Merge gate for revrook-ce: the nine required checks from phase-plan-3.
-# While STRICT is "false" (no application yet), checks whose inputs do not exist
-# are SKIPPED and reported as skipped in the summary, never as a pass. Once STRICT
-# is "true" every check must run and succeed: a skipped check fails the gate. The
-# phase 0 pull request flips STRICT. See docs/ci-cd.md.
+# STRICT is "true" since phase 0 added the application: every check must run and
+# succeed, and a skipped check fails the gate. (With STRICT "false" checks whose
+# inputs do not exist are SKIPPED and reported as skipped, never as a pass.)
+# See docs/ci-cd.md.
 
 # pull_request (not pull_request_target) has a read-only token and no secrets, so
 # it is safe for every base branch, including stacked pull requests.
@@ -29,11 +29,10 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.12"
-  # Flip to "true" in the phase 0 pull request, the one that adds the application.
   # "true": no check may skip; any result other than success fails the gate.
   # "false": skips are tolerated only while no application file exists (detect
-  # fails if one does).
-  STRICT: "false"
+  # fails if one does). Set to "true" by phase 0 (the application exists).
+  STRICT: "true"
 
 jobs:
   detect:
@@ -64,14 +63,14 @@ jobs:
           flag() { if [[ "${STRICT}" == "true" || -e "$2" ]]; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi; }
           flag app pyproject.toml
           flag alembic alembic.ini
-          flag licence_script scripts/licence_audit.py
+          flag licence_script tools/licence_audit.py
           flag content data
           flag docker Dockerfile
           flag compose_smoke docker-compose.yml
           # Tripwire: the application must not land while STRICT is still false, and
           # deleting one input must not quietly switch its check off.
           if [[ "${STRICT}" != "true" ]]; then
-            for f in pyproject.toml requirements.txt requirements-dev.txt app tests alembic.ini Dockerfile docker-compose.yml scripts/licence_audit.py; do
+            for f in pyproject.toml requirements.txt requirements-dev.txt app tests alembic.ini Dockerfile docker-compose.yml tools/licence_audit.py; do
               if [[ -e "${f}" ]]; then
                 echo "::error::${f} exists but STRICT is false. Set STRICT to \"true\" in .github/workflows/ci.yml."
                 exit 1
@@ -252,7 +251,7 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install --require-hashes -r requirements.txt
-          python scripts/licence_audit.py
+          python tools/licence_audit.py
           if grep -qiE '^[[:space:]]*psycopg' requirements.txt; then
             echo "::error::psycopg must not appear in the lock file"
             exit 1
@@ -323,19 +322,26 @@ jobs:
       - shell: bash
         run: |
           set -euo pipefail
-          cp -n .env.example .env.ci || true
+          # Throwaway values only (see .env.example). Compose reads them through
+          # --env-file so SECRET_KEY and FERNET_KEY resolve.
+          cp .env.example .env.ci
           docker compose --env-file .env.ci up -d --build --wait
+          ready=false
           for i in $(seq 1 30); do
-            curl -fsS http://localhost:8000/readyz && break
+            if curl -fsS http://localhost:8080/readyz; then ready=true; break; fi
             sleep 2
           done
-          curl -fsS http://localhost:8000/readyz
-          # The end-to-end script is optional; the readyz check above is the
-          # phase 0 smoke test and needs only docker-compose.yml.
+          [[ "${ready}" == "true" ]] || { echo "::error::/readyz did not answer 200 on port 8080"; exit 1; }
+          # Phase 0 end-to-end script: /healthz, /readyz, uid 10001 and no
+          # development package in the image. tests/e2e/run.sh is optional.
+          bash scripts/e2e/phase_00.sh
           if [[ -f tests/e2e/run.sh ]]; then bash tests/e2e/run.sh; fi
+      - if: failure()
+        shell: bash
+        run: docker compose --env-file .env.ci logs --no-color --tail 200 || true
       - if: always()
         shell: bash
-        run: docker compose down -v || true
+        run: docker compose --env-file .env.ci down -v || true
 
   gate:
     name: Merge gate summary
