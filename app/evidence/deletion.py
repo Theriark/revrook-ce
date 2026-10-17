@@ -11,6 +11,7 @@ still verifies afterwards.
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import Select, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -42,8 +43,8 @@ class DeletionReport:
     files: int
 
 
-async def _count(session: AsyncSession, query: Select[tuple[int]]) -> int:
-    return (await session.execute(query)).scalar_one()
+async def _count(session: AsyncSession, query: Select[Any]) -> int:
+    return int((await session.execute(query)).scalar_one())
 
 
 async def _delete_rows(

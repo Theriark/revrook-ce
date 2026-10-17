@@ -46,7 +46,7 @@ def test_startup_failure_does_not_print_the_secret_it_was_given() -> None:
     assert "sentinel-secret-value-123456" not in result.stderr + result.stdout
 
 
-@pytest.mark.parametrize("command", ["verify-chain", "make-fixtures"])
+@pytest.mark.parametrize("command", ["make-fixtures"])
 def test_unbuilt_commands_exit_nonzero_with_a_reason(
     command: str, capsys: pytest.CaptureFixture[str]
 ) -> None:

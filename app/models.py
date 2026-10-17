@@ -173,7 +173,12 @@ class EvidenceItem(Base):
 
 
 class EvidenceRevision(Base):
-    """An immutable revision of an evidence item; a correction is a new revision."""
+    """An immutable revision of an evidence item; a correction is a new revision.
+
+    A database trigger (alembic revision 0003) rejects any change except the
+    stored file reference and its retention date, so a purge can drop a raw
+    file but nothing can rewrite what was recorded.
+    """
 
     __tablename__ = "evidence_revision"
     __table_args__ = (
@@ -190,15 +195,19 @@ class EvidenceRevision(Base):
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     storage_key: Mapped[str | None] = mapped_column(String(255))
     note: Mapped[str | None] = mapped_column(Text)
+    reviewer: Mapped[str | None] = mapped_column(String(100))
+    reviewed_on: Mapped[date | None] = mapped_column(Date)
+    raw_expires_at: Mapped[datetime | None] = optional_timestamp()
     created_by_id: Mapped[int | None] = foreign_key("app_user.id", "SET NULL")
     created_at: Mapped[datetime] = timestamp_column()
 
 
 class EvidenceLog(Base):
-    """Append-only evidence log.
+    """Append-only evidence log with one hash chain per client.
 
-    Each record stores the hash of the previous one; the chain itself is
-    computed and verified from phase 2.
+    Each record stores the hash of the previous record of the same client; the
+    chain is written and verified by app.evidence.chain (phase 2). A record
+    without a client is not part of any chain.
     """
 
     __tablename__ = "evidence_log"
