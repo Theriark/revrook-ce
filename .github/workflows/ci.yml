@@ -10,15 +10,17 @@ on:
       - development
       - main
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
-# Superseded pull request runs are cancelled. This group is per PR ref only; the
-# deployment group in release.yml is separate and never cancels.
+# Superseded pull request runs are cancelled. Only pull_request runs cancel; when
+# release.yml calls this workflow on a push, nothing is cancelled. The deployment
+# group in release.yml is separate.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   PYTHON_VERSION: "3.12"
@@ -319,11 +321,11 @@ jobs:
             echo
             echo "| Job | Result |"
             echo "| --- | --- |"
-            echo "${RESULTS}" | python3 -c 'import json,sys; [print(f"| {k} | {v[\"result\"]} |") for k,v in json.load(sys.stdin).items()]'
+            echo "${RESULTS}" | jq -r 'to_entries[] | "| \(.key) | \(.value.result) |"'
             echo
             echo "A result of \`skipped\` means the check input does not exist yet (see docs/ci-cd.md). It is not a pass."
           } >> "${GITHUB_STEP_SUMMARY}"
-          if echo "${RESULTS}" | grep -qE '"result": *"(failure|cancelled)"'; then
+          if echo "${RESULTS}" | jq -e '[.[].result] | any(. == "failure" or . == "cancelled")' >/dev/null; then
             echo "::error::at least one required check failed"
             exit 1
           fi
