@@ -2,7 +2,8 @@
 
 Creates the sixteen tables of phase 1. UPDATE, DELETE and TRUNCATE on
 audit_event and evidence_log are rejected by triggers (restrict_violation).
-Only a database superuser can switch the triggers off.
+The table owner or a superuser can switch the triggers off (ALTER TABLE ...
+DISABLE TRIGGER).
 
 Revision ID: 0002
 Revises: 0001

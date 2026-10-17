@@ -62,9 +62,11 @@ Deleting the client deletes the key.
 
 `audit_event` and `evidence_log` reject UPDATE, DELETE and TRUNCATE inside the
 database (triggers from revision `0002`, error code `restrict_violation`). They
-have no foreign keys, so deleting a client never touches them. A database
-superuser can disable a trigger; run the application with a role that owns the
-tables but is not a superuser to keep the guarantee.
+have no foreign keys, so deleting a client never touches them. The database
+table owner (and a superuser) can disable a trigger with `ALTER TABLE ...
+DISABLE TRIGGER`. The guarantee therefore holds against the application, not
+against whoever owns the tables: run the application with a role that does not
+own them when that matters.
 
 ## Known limits
 
@@ -75,4 +77,11 @@ tables but is not a superuser to keep the guarantee.
 - The in-memory API rate limit is per process.
 - Internal server errors (500) are produced outside the middleware stack and do
   not carry the security headers.
-- A request body is not size-capped yet (upload caps arrive with phase 2).
+- Evidence uploads are capped (`IMPORT_MAX_BYTES`, refused before the body is
+  read); other request bodies are not size-capped yet.
+- N2, for phase 11: account existence can be learned from the lockout (a known
+  account answers as locked after five failures, an unknown name never does).
+- N3, for phase 11: a database connection is held while Argon2 checks a password
+  and no throttle sits in front of it, so many parallel sign-ins can use up the pool.
+- N5, for phase 11: every request with an `Authorization: Bearer` header skips the
+  CSRF check, not only the API routes.
