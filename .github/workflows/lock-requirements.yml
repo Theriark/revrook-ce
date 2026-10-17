@@ -82,9 +82,11 @@ jobs:
             exit 1
           }
           # Runtime first: requirements-dev.in uses requirements.txt as a constraint.
-          pip-compile --generate-hashes --strip-extras --output-file requirements.txt requirements.in > compile.log 2>&1 || fail
+          # --allow-unsafe pins setuptools (a dependency of pip-tools): without it
+          # the lock omits setuptools and pip --require-hashes refuses to install it.
+          pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements.txt requirements.in > compile.log 2>&1 || fail
           cat compile.log
-          pip-compile --generate-hashes --strip-extras --output-file requirements-dev.txt requirements-dev.in > compile.log 2>&1 || fail
+          pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements-dev.txt requirements-dev.in > compile.log 2>&1 || fail
           cat compile.log
           rm -f compile.log
       - name: Commit changed locks to the branch
