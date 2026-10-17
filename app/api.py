@@ -27,6 +27,7 @@ from app.evidence.service import (
     add_revision,
     list_evidence,
 )
+from app.importers.profiles import save_profile
 from app.models import ApiToken, AppUser, Client
 from app.ratelimit import SlidingWindowLimiter
 from app.web import cipher_of, clock_of, evidence_context, files_of, session_factory
@@ -112,6 +113,38 @@ async def post_client(
     return {"id": client.id, "name": client.name}
 
 
+class ProfileCreate(BaseModel):
+    name: str
+    source_code: str
+    mapping: dict[str, str]
+
+
+@router.post("/clients/{client_id}/import-profiles", status_code=201)
+async def post_import_profile(
+    request: Request, client_id: int, body: ProfileCreate, user: CurrentUser
+) -> dict[str, object]:
+    """Save a column mapping for one client and source (vendor header to column)."""
+    try:
+        async with session_factory(request)() as session, session.begin():
+            profile = await save_profile(
+                session,
+                evidence_context(request).importers,
+                client_id,
+                name=body.name,
+                source_code=body.source_code,
+                mapping=body.mapping,
+                actor_user_id=user.id,
+            )
+    except EvidenceError as error:
+        raise http_error(error) from None
+    return {
+        "id": profile.id,
+        "name": profile.name,
+        "source_code": profile.source_code,
+        "mapping": profile.mapping,
+    }
+
+
 def _text(form: FormData, name: str) -> str | None:
     value = form.get(name)
     if value is None:
@@ -153,6 +186,17 @@ def _day(form: FormData, name: str) -> date | None:
             status_code=422,
             detail=f"The field {name} must be a date such as 2026-10-01.",
         ) from None
+
+
+def _whole_number(form: FormData, name: str) -> int | None:
+    value = _text(form, name)
+    if value is None:
+        return None
+    if not value.isascii() or not value.isdecimal() or len(value) > 18:
+        raise HTTPException(
+            status_code=422, detail=f"The field {name} must be a whole number."
+        )
+    return int(value)
 
 
 def _assurance(form: FormData, *, required: bool) -> Assurance:
@@ -209,6 +253,7 @@ async def read_evidence_form(
             note=_text(form, "note"),
             expires_at=_moment(form, "expires_at"),
             uploader_id=user.id,
+            profile_id=_whole_number(form, "profile_id"),
         )
     finally:
         await form.close()
