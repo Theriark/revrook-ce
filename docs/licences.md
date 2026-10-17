@@ -74,11 +74,8 @@ neither decision.
 ## Packages not yet read
 
 - Development group (`requirements-dev.in`): pytest, pytest-asyncio, pytest-cov,
-  mypy, ruff. Their LICENSE files have not been read. They never enter the
-  image, and the audit runs with `--allow-mpl-dev` for them. pip-tools is not in
-  the development lock: the "Lock requirements" workflow installs it on its own,
-  because its dependency on setuptools made the hashed install fail (pip-compile
-  leaves setuptools out of a lock by design).
+  mypy, ruff, pip-tools. Their LICENSE files have not been read. They never enter
+  the image, and the audit runs with `--allow-mpl-dev` for them.
 - Transitive runtime packages: listed only when `requirements.txt` exists. The
   CI licence audit checks every installed package; a package whose metadata is
   ambiguous fails the audit and is resolved in `licence-exceptions.txt` after
