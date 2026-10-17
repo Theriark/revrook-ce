@@ -54,6 +54,18 @@ def test_unbuilt_commands_exit_nonzero_with_a_reason(
     assert "not available until phase" in capsys.readouterr().err
 
 
+def test_migrate_brings_the_schema_to_the_newest_revision(
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_database: str,
+    env: dict[str, str],
+) -> None:
+    for name, value in env.items():
+        monkeypatch.setenv(name, value)
+    assert cli.main(["migrate"]) == 0
+    # A second run finds nothing left to do and still succeeds.
+    assert cli.main(["migrate"]) == 0
+
+
 def test_main_reports_settings_errors(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
