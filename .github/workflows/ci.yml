@@ -1,16 +1,21 @@
 name: CI
 
 # Merge gate for revrook-ce: the nine required checks from phase-plan-3.
-# Checks whose inputs do not exist yet are SKIPPED and reported as skipped in the
-# summary. They never report a fake pass. See docs/ci-cd.md.
+# While STRICT is "false" (no application yet), checks whose inputs do not exist
+# are SKIPPED and reported as skipped in the summary, never as a pass. Once STRICT
+# is "true" every check must run and succeed: a skipped check fails the gate. The
+# phase 0 pull request flips STRICT. See docs/ci-cd.md.
 
+# pull_request (not pull_request_target) has a read-only token and no secrets, so
+# it is safe for every base branch, including stacked pull requests.
 on:
   pull_request:
-    branches:
-      - development
-      - main
   workflow_dispatch:
   workflow_call:
+    outputs:
+      strict:
+        description: "Value of the STRICT constant evaluated by this run."
+        value: ${{ jobs.detect.outputs.strict }}
 
 permissions:
   contents: read
@@ -24,6 +29,11 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.12"
+  # Flip to "true" in the phase 0 pull request, the one that adds the application.
+  # "true": no check may skip; any result other than success fails the gate.
+  # "false": skips are tolerated only while no application file exists (detect
+  # fails if one does).
+  STRICT: "false"
 
 jobs:
   detect:
@@ -37,19 +47,37 @@ jobs:
       content: ${{ steps.probe.outputs.content }}
       docker: ${{ steps.probe.outputs.docker }}
       compose_smoke: ${{ steps.probe.outputs.compose_smoke }}
+      strict: ${{ steps.probe.outputs.strict }}
     steps:
       - uses: actions/checkout@v4
       - id: probe
         shell: bash
         run: |
           set -euo pipefail
-          flag() { if [[ -e "$2" ]]; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi; }
+          case "${STRICT}" in
+            true|false) ;;
+            *) echo "::error::STRICT must be the literal true or false, got '${STRICT}'"; exit 1 ;;
+          esac
+          echo "strict=${STRICT}" >> "$GITHUB_OUTPUT"
+          # In strict mode every flag is true, so a missing input makes its check
+          # run and fail loudly instead of skipping.
+          flag() { if [[ "${STRICT}" == "true" || -e "$2" ]]; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi; }
           flag app pyproject.toml
           flag alembic alembic.ini
           flag licence_script scripts/licence_audit.py
           flag content data
           flag docker Dockerfile
-          flag compose_smoke tests/e2e/run.sh
+          flag compose_smoke docker-compose.yml
+          # Tripwire: the application must not land while STRICT is still false, and
+          # deleting one input must not quietly switch its check off.
+          if [[ "${STRICT}" != "true" ]]; then
+            for f in pyproject.toml requirements.txt requirements-dev.txt app tests alembic.ini Dockerfile docker-compose.yml scripts/licence_audit.py; do
+              if [[ -e "${f}" ]]; then
+                echo "::error::${f} exists but STRICT is false. Set STRICT to \"true\" in .github/workflows/ci.yml."
+                exit 1
+              fi
+            done
+          fi
           cat "$GITHUB_OUTPUT"
 
   lint:
@@ -130,10 +158,13 @@ jobs:
           echo "::add-mask::${FERNET_KEY}"
           export FERNET_KEY
           # Overall 80 percent. 95 percent for the four core packages is enforced
-          # by the second report below.
+          # by the second report below. In coverage.py a single * does not cross a
+          # directory separator, so ** is needed to include nested subpackages.
+          # Phase 0 must add a test that fails when a nested module such as
+          # app/checks/<pkg>/<module>.py is below 95 percent.
           pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80
           coverage report --fail-under=95 \
-            --include='app/checks/*,app/scoring/*,app/evidence/*,app/importers/*'
+            --include='app/checks/**,app/scoring/**,app/evidence/**,app/importers/**'
 
   migrations:
     name: 4 - alembic up, check, down, up
@@ -174,7 +205,9 @@ jobs:
           alembic upgrade head
 
   audit:
-    name: 5 - pip-audit (medium or higher)
+    # pip-audit has no severity filter: it fails on ANY known vulnerability, which
+    # is stricter than the plan's "medium or higher". Exceptions are recorded IDs.
+    name: 5 - pip-audit (any known vulnerability)
     needs: detect
     if: needs.detect.outputs.app == 'true'
     runs-on: ubuntu-latest
@@ -188,7 +221,9 @@ jobs:
       - shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip pip-audit
+          # Major version bound only; an exact pin needs a verified version (gap in
+          # docs/ci-cd.md).
+          python -m pip install --upgrade pip "pip-audit>=2,<3"
           # Recorded exceptions live in .pip-audit-exceptions (one ID per line,
           # with a reason comment). An empty or absent file means none.
           ARGS=()
@@ -218,7 +253,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --require-hashes -r requirements.txt
           python scripts/licence_audit.py
-          if grep -qiE '^psycopg' requirements.txt; then
+          if grep -qiE '^[[:space:]]*psycopg' requirements.txt; then
             echo "::error::psycopg must not appear in the lock file"
             exit 1
           fi
@@ -234,10 +269,12 @@ jobs:
       - shell: bash
         run: |
           set -euo pipefail
-          [[ -f LICENSES-CONTENT.md ]] || { echo "::error::LICENSES-CONTENT.md is missing but data/ exists"; exit 1; }
+          [[ -f LICENSES-CONTENT.md ]] || { echo "::error::LICENSES-CONTENT.md is missing"; exit 1; }
           missing=0
           while IFS= read -r f; do
-            if ! grep -qF "${f}" LICENSES-CONTENT.md; then
+            # Exact path match: a row for data/a.json.bak must not satisfy data/a.json.
+            pat="$(printf '%s' "${f}" | sed 's/[][\.*^$+?(){}|/]/\\&/g')"
+            if ! grep -qE "(^|[^A-Za-z0-9_./-])${pat}($|[^A-Za-z0-9_./-])" LICENSES-CONTENT.md; then
               echo "::error::${f} has no row in LICENSES-CONTENT.md"
               missing=1
             fi
@@ -246,11 +283,15 @@ jobs:
 
   docker-build:
     name: 8 - docker build
-    # Tests precede the build.
+    # Tests precede the build. lint, typecheck, test and audit must have SUCCEEDED
+    # (a skip is not enough). With STRICT, every prerequisite must have succeeded.
     needs: [detect, lint, typecheck, test, migrations, audit, licences, content-licences]
     if: >-
       always() && needs.detect.outputs.docker == 'true' &&
-      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+      needs.lint.result == 'success' && needs.typecheck.result == 'success' &&
+      needs.test.result == 'success' && needs.audit.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (needs.detect.outputs.strict != 'true' || !contains(needs.*.result, 'skipped'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -289,7 +330,9 @@ jobs:
             sleep 2
           done
           curl -fsS http://localhost:8000/readyz
-          bash tests/e2e/run.sh
+          # The end-to-end script is optional; the readyz check above is the
+          # phase 0 smoke test and needs only docker-compose.yml.
+          if [[ -f tests/e2e/run.sh ]]; then bash tests/e2e/run.sh; fi
       - if: always()
         shell: bash
         run: docker compose down -v || true
@@ -314,18 +357,29 @@ jobs:
       - shell: bash
         env:
           RESULTS: ${{ toJSON(needs) }}
+          STRICT: ${{ needs.detect.outputs.strict }}
         run: |
           set -euo pipefail
           {
-            echo "## revrook-ce merge gate"
+            echo "## revrook-ce merge gate (STRICT=${STRICT:-unknown})"
             echo
             echo "| Job | Result |"
             echo "| --- | --- |"
             echo "${RESULTS}" | jq -r 'to_entries[] | "| \(.key) | \(.value.result) |"'
             echo
-            echo "A result of \`skipped\` means the check input does not exist yet (see docs/ci-cd.md). It is not a pass."
+            echo "A result of \`skipped\` is not a pass. It is tolerated only while STRICT is false (see docs/ci-cd.md)."
           } >> "${GITHUB_STEP_SUMMARY}"
           if echo "${RESULTS}" | jq -e '[.[].result] | any(. == "failure" or . == "cancelled")' >/dev/null; then
             echo "::error::at least one required check failed"
+            exit 1
+          fi
+          if [[ "${STRICT}" == "true" ]]; then
+            # Every needed job (detect and checks 1 to 9) must be exactly success.
+            if ! echo "${RESULTS}" | jq -e 'all(.[]; .result == "success")' >/dev/null; then
+              echo "::error::STRICT is true: every check must succeed, a skipped check fails the gate"
+              exit 1
+            fi
+          elif [[ "${STRICT}" != "false" ]]; then
+            echo "::error::STRICT value unavailable (detect did not complete)"
             exit 1
           fi
