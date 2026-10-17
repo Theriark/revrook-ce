@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Create the administrator</h1>
+<p>This is the first start. Create the one administrator account of this installation.</p>
+{% include "_errors.html" %}
+<form method="post" action="/setup">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<p>
+<label for="username">Username</label>
+<input id="username" name="username" type="text" value="{{ username }}" autocomplete="username" required>
+</p>
+<p>
+<label for="password">Password (at least 12 characters)</label>
+<input id="password" name="password" type="password" autocomplete="new-password" required>
+</p>
+<p>
+<label for="confirm_password">Repeat the password</label>
+<input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+</p>
+<p><button type="submit">Create administrator</button></p>
+</form>
+{% endblock %}

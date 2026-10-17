@@ -1,0 +1,7 @@
+{% if errors %}
+<ul role="alert">
+{% for message in errors %}
+<li>{{ message }}</li>
+{% endfor %}
+</ul>
+{% endif %}
