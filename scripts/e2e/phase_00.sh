@@ -19,7 +19,16 @@ for path in /healthz /readyz; do
   echo "phase_00: ${path} 200"
 done
 
-if command -v docker >/dev/null 2>&1; then
+# In CI (CI=true) the uid and image checks are mandatory: a missing docker or a
+# compose label that drifted must fail the run, not skip silently.
+strict="${CI:-}"
+
+if ! command -v docker >/dev/null 2>&1; then
+  if [[ "${strict}" == "true" ]]; then
+    fail "docker is not available in CI, so the uid and image checks cannot run"
+  fi
+  echo "phase_00: docker not found, skipping uid and image checks (outside CI)"
+else
   # Compose labels avoid "docker compose ps", which would need the env file.
   container="$(docker ps -q \
     --filter label=com.docker.compose.project=revrook \
@@ -30,8 +39,10 @@ if command -v docker >/dev/null 2>&1; then
     echo "phase_00: web container uid ${uid}"
     image="$(docker inspect --format '{{.Image}}' "${container}")"
     bash "${ROOT}/scripts/check_image_packages.sh" "${image}" || fail "image package check failed (see lines above)"
+  elif [[ "${strict}" == "true" ]]; then
+    fail "no compose web container found by label (project revrook, service web) in CI"
   else
-    echo "phase_00: no compose web container found, skipping uid and image checks"
+    echo "phase_00: no compose web container found, skipping uid and image checks (outside CI)"
   fi
 fi
 

@@ -183,9 +183,25 @@ jobs:
           # Overall 80 percent. 95 percent for the four core packages is enforced
           # by the second report below. In coverage.py a single * does not cross a
           # directory separator, so ** is needed to include nested subpackages.
-          # Phase 0 must add a test that fails when a nested module such as
-          # app/checks/<pkg>/<module>.py is below 95 percent.
-          pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80
+          # The 95 percent report is aggregate over those packages, nested ones
+          # included. A per-module floor for nested subpackages is not enforced yet.
+          pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80 \
+            --junitxml="${RUNNER_TEMP}/pytest-junit.xml"
+          # Skip guard: the PostgreSQL tests skip when DATABASE_URL is unset, so a
+          # lost variable must not turn them into a silent pass. No test may skip.
+          python - "${RUNNER_TEMP}/pytest-junit.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.argv[1]).getroot()
+          suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
+          tests = sum(int(s.get("tests", 0)) for s in suites)
+          skipped = sum(int(s.get("skipped", 0)) for s in suites)
+          print(f"pytest: {tests} tests, {skipped} skipped")
+          if skipped:
+              print(f"::error::{skipped} test(s) were skipped; CI requires zero skips (is DATABASE_URL set?)")
+              sys.exit(1)
+          PY
           coverage report --fail-under=95 \
             --include='app/checks/**,app/scoring/**,app/evidence/**,app/importers/**'
 
@@ -422,9 +438,13 @@ jobs:
     name: Deploy Development (build once, deploy the digest)
     # Only a merge (push) to development, and only after the whole gate succeeded:
     # nothing is deployed from an unverified commit. Feature branches and pull
-    # requests never reach this job.
+    # requests never reach this job. It is also gated on the repository variable
+    # DEPLOY_DEVELOPMENT_ENABLED, which is unset by default: until a human sets it
+    # to "true" (see docs/ci-cd.md), a merge deploys nothing and pushes no image.
     needs: gate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/development' &&
+      vars.DEPLOY_DEVELOPMENT_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: development

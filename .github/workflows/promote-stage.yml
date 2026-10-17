@@ -5,7 +5,8 @@ name: Promote - Stage
 # Promote (digest left empty): source_sha must be the current development head. The
 # digest published for it by CI (deploy-development job) is resolved, Development
 # must run exactly that digest, it is deployed to Stage and verified, the image is
-# tagged `stage` and the `stage` branch is advanced to the same SHA.
+# tagged `stage` and the `stage` branch is advanced to the same SHA. Before any
+# Stage write the stage branch must exist and the move must be a fast-forward.
 #
 # Rollback (digest given): run this same workflow with source_sha and the earlier
 # approved digest. source_sha must be an earlier commit of development, and the
@@ -82,6 +83,25 @@ jobs:
               exit 1
             }
             echo "rollback=true" >> "${GITHUB_OUTPUT}"
+          fi
+          # The stage branch must exist and the move must be allowed BEFORE anything
+          # is written to Stage, so a branch problem cannot fail the run after the
+          # deployment. Promote: stage must be an ancestor of source_sha (a
+          # fast-forward). Rollback: stage must descend from source_sha.
+          git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
+            echo "::error::the stage branch does not exist; create it before promoting"
+            exit 1
+          }
+          if [[ -z "${DIGEST_INPUT}" ]]; then
+            git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}" || {
+              echo "::error::advancing stage to ${SOURCE_SHA} would not be a fast-forward"
+              exit 1
+            }
+          else
+            git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/stage || {
+              echo "::error::stage does not descend from ${SOURCE_SHA}; refusing to roll the branch back"
+              exit 1
+            }
           fi
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
@@ -165,14 +185,9 @@ jobs:
         run: |
           set -euo pipefail
           force=false
+          # Moving backwards was already validated before the deployment (the
+          # current stage head descends from the commit being restored).
           if [[ "${ROLLBACK}" == "true" ]]; then
-            # Moving backwards is only allowed when the current stage head descends
-            # from the commit being restored.
-            git fetch origin +refs/heads/stage:refs/remotes/origin/stage
-            git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/stage || {
-              echo "::error::stage does not descend from ${SOURCE_SHA}; not moving the branch"
-              exit 1
-            }
             force=true
           fi
           gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stage" \
