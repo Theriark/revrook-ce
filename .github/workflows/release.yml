@@ -1,0 +1,136 @@
+name: Build and publish
+
+# On push to development: tests first, then build ONE image tagged with the source
+# SHA, push it to GHCR and record its immutable digest. The Development deploy is
+# a REQUEST to the existing private controller (documented placeholder below);
+# this workflow never writes to Dokploy or Portainer. See docs/ci-cd.md.
+
+on:
+  push:
+    branches:
+      - development
+
+permissions:
+  contents: read
+
+# One shared group per repository for every delivery workflow (build, promotion,
+# rollback). cancel-in-progress is FALSE so a live deployment is never cancelled.
+concurrency:
+  group: revrook-ce-delivery
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    name: Tests (merge gate)
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  build:
+    name: Build and push image
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      built: ${{ steps.exists.outputs.dockerfile }}
+      digest: ${{ steps.push.outputs.digest }}
+      image: ${{ steps.ref.outputs.image }}
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - name: Verify source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || { echo "::error::build runs from development only, got ${GITHUB_REF}"; exit 1; }
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - id: exists
+        shell: bash
+        run: |
+          if [[ -f Dockerfile ]]; then echo "dockerfile=true" >> "$GITHUB_OUTPUT"; else echo "dockerfile=false" >> "$GITHUB_OUTPUT"; echo "::notice::No Dockerfile yet (phase 0 creates it). Image build skipped; this is not a pass."; fi
+      - id: ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/revrook-ce" >> "$GITHUB_OUTPUT"
+      - if: steps.exists.outputs.dockerfile == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - if: steps.exists.outputs.dockerfile == 'true'
+        uses: docker/setup-buildx-action@v3
+      - if: steps.exists.outputs.dockerfile == 'true'
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Only the source SHA tag is pushed. Promotion uses the digest.
+          tags: ${{ steps.ref.outputs.image }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Record immutable digest
+        if: steps.exists.outputs.dockerfile == 'true'
+        shell: bash
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+          IMAGE: ${{ steps.ref.outputs.image }}
+        run: |
+          set -euo pipefail
+          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::build produced no valid digest"; exit 1; }
+          printf '{"source_sha":"%s","image":"%s","digest":"%s","run_id":"%s"}\n' \
+            "${SOURCE_SHA}" "${IMAGE}" "${DIGEST}" "${GITHUB_RUN_ID}" > release-record.json
+          {
+            echo "## revrook-ce image published"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\`"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+      - if: steps.exists.outputs.dockerfile == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-record-${{ github.sha }}
+          path: release-record.json
+          if-no-files-found: error
+          retention-days: 90
+
+  request-development-deploy:
+    name: Request Development deployment (controller placeholder)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # PLACEHOLDER. Deployment writes stay with the existing private serialized
+      # controller (Development and Stage on VM-09, production on VM-10 only after a
+      # separate authorisation). No Dokploy or Portainer credential is referenced
+      # here. A later approved change defines the real request to the controller:
+      #   {repository, environment: "development", source_sha, image digest}
+      # and the controller verifies target identity and the running revision/digest.
+      - shell: bash
+        env:
+          BUILT: ${{ needs.build.outputs.built }}
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Development deployment request"
+            echo
+            if [[ "${BUILT}" == "true" ]]; then
+              echo "- Digest ready for the controller: \`${DIGEST}\`"
+              echo "- Status: NOT SENT. Controller interface is not wired yet. Image publication is not deployment proof."
+            else
+              echo "- Status: nothing to deploy yet (no image built)."
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
