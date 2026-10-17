@@ -43,7 +43,8 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.12"
-  # Exact tool version so two runs on the same inputs agree.
+  # Exact tool versions so two runs on the same inputs agree.
+  PIP_VERSION: "25.1.1"
   PIP_TOOLS_VERSION: "7.5.0"
 
 jobs:
@@ -68,13 +69,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install "pip-tools==${PIP_TOOLS_VERSION}"
+          # Both tools are pinned: pip-tools reaches into pip internals, so a newer
+          # pip than the pip-tools release supports breaks pip-compile.
+          python -m pip install "pip==${PIP_VERSION}" "pip-tools==${PIP_TOOLS_VERSION}"
           python --version
           pip --version
           pip-compile --version
+          # On failure keep the tail of the output as an annotation (visible in
+          # the check run) because the full log needs a signed-in session.
+          fail() {
+            echo "::error::pip-compile failed: $(tail -n 12 compile.log | tr '\n' '|' | cut -c1-900)"
+            exit 1
+          }
           # Runtime first: requirements-dev.in uses requirements.txt as a constraint.
-          pip-compile --generate-hashes --strip-extras --output-file requirements.txt requirements.in
-          pip-compile --generate-hashes --strip-extras --output-file requirements-dev.txt requirements-dev.in
+          pip-compile --generate-hashes --strip-extras --output-file requirements.txt requirements.in > compile.log 2>&1 || fail
+          cat compile.log
+          pip-compile --generate-hashes --strip-extras --output-file requirements-dev.txt requirements-dev.in > compile.log 2>&1 || fail
+          cat compile.log
+          rm -f compile.log
       - name: Commit changed locks to the branch
         id: commit
         shell: bash
