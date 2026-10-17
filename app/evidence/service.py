@@ -6,20 +6,22 @@ An upload goes through these steps, in one database transaction:
 2. lock the client row, so uploads, chain writes and deletion of one client
    happen one at a time;
 3. refuse a file this client already has (same SHA-256);
-4. for an automatic export, run the importer, replace every personal
-   identifier with the client's pseudonym, and refuse the upload when a stored
-   value still looks like an email address;
+4. for an automatic export, run the importer (through the saved mapping
+   profile when one is named), replace every personal identifier with the
+   client's pseudonym, and refuse the upload when a stored value still looks
+   like an email address;
 5. write the item, its first revision and its facts;
-6. keep the file only when the rules say so (a manual artefact always; a raw
-   export only when RAW_RETENTION_DAYS is above zero);
-7. append a record to the client's hash chain and one audit event.
+6. append a record to the client's hash chain and one audit event;
+7. only then keep the file, when the rules say so (a manual artefact always; a
+   raw export only when RAW_RETENTION_DAYS is above zero). Any failure before
+   this step rolls the transaction back and leaves no file behind.
 """
 
 import asyncio
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,7 +46,7 @@ from app.evidence.expiry import (
     stale_after,
     state_of_item,
 )
-from app.evidence.files import FileStore, sha256_hex
+from app.evidence.files import FileStore, sha256_hex, storage_key
 from app.evidence.locking import lock_client
 from app.importers.base import (
     SOURCE_CODE_PATTERN,
@@ -54,13 +56,15 @@ from app.importers.base import (
     SourceImporter,
 )
 from app.importers.registry import ImporterRegistry
-from app.models import Client, EvidenceItem, EvidenceRevision, Fact
+from app.models import Client, EvidenceItem, EvidenceRevision, Fact, ImportProfile
 from app.pseudonym import Pseudonymiser
 from app.settings import Settings
 
 MAX_REVIEWER_LENGTH = 100
 MAX_NOTE_LENGTH = 2000
 FUTURE_TOLERANCE = timedelta(minutes=5)
+EARLIEST_TIME = datetime(2000, 1, 1, tzinfo=UTC)
+LATEST_EXPIRY = datetime(2200, 1, 1, tzinfo=UTC)
 FACT_BATCH_SIZE = 1000
 EMAIL_LIKE = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 
@@ -77,7 +81,10 @@ class EvidenceContext:
 
 @dataclass(frozen=True)
 class NewEvidence:
-    """One upload. `data` is the file; an attestation has none."""
+    """One upload. `data` is the file; an attestation has none.
+
+    `profile_id` names a saved column mapping for an automatic export.
+    """
 
     source_code: str
     assurance: Assurance
@@ -88,6 +95,7 @@ class NewEvidence:
     note: str | None = None
     expires_at: datetime | None = None
     uploader_id: int | None = None
+    profile_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -156,10 +164,14 @@ def _validate(ctx: EvidenceContext, evidence: NewEvidence, now: datetime) -> Non
     _check_time_zone(evidence.captured_at, "capture time")
     if evidence.captured_at > now + FUTURE_TOLERANCE:
         raise EvidenceRejectedError("The capture time is in the future.")
+    if evidence.captured_at < EARLIEST_TIME:
+        raise EvidenceRejectedError("The capture time is before the year 2000.")
     if evidence.expires_at is not None:
         _check_time_zone(evidence.expires_at, "expiry time")
         if evidence.expires_at <= evidence.captured_at:
             raise EvidenceRejectedError("The expiry must be after the capture time.")
+        if evidence.expires_at > LATEST_EXPIRY:
+            raise EvidenceRejectedError("The expiry is after the year 2199.")
     if evidence.reviewer is not None and len(evidence.reviewer) > MAX_REVIEWER_LENGTH:
         raise EvidenceRejectedError(
             f"The reviewer name must be at most {MAX_REVIEWER_LENGTH} characters."
@@ -173,6 +185,13 @@ def _validate(ctx: EvidenceContext, evidence: NewEvidence, now: datetime) -> Non
             raise EvidenceRejectedError(f"The {label} must not contain a NUL byte.")
     if evidence.reviewed_on is not None and evidence.reviewed_on > now.date():
         raise EvidenceRejectedError("The review date is in the future.")
+    if (
+        evidence.profile_id is not None
+        and evidence.assurance is not Assurance.AUTOMATIC_EXPORT
+    ):
+        raise EvidenceRejectedError(
+            "A mapping profile applies to an automatic export only."
+        )
     if evidence.assurance is Assurance.ATTESTATION:
         if evidence.data is not None:
             raise EvidenceRejectedError("An attestation has no file.")
@@ -193,6 +212,19 @@ def _validate(ctx: EvidenceContext, evidence: NewEvidence, now: datetime) -> Non
     ):
         raise EvidenceRejectedError(
             "A manual artefact needs a reviewer and a review date."
+        )
+
+
+def _check_file_time(moment: datetime, now: datetime) -> None:
+    """The capture time an importer found in a file must be plausible."""
+    _check_time_zone(moment, "capture time found in the file")
+    if moment > now + FUTURE_TOLERANCE:
+        raise EvidenceRejectedError(
+            "The capture time found in the file is in the future."
+        )
+    if moment < EARLIEST_TIME:
+        raise EvidenceRejectedError(
+            "The capture time found in the file is before the year 2000."
         )
 
 
@@ -257,6 +289,35 @@ def _importer_for(ctx: EvidenceContext, source_code: str) -> SourceImporter:
     return importer
 
 
+async def _importer_with_profile(
+    session: AsyncSession,
+    client_id: int,
+    evidence: NewEvidence,
+    importer: SourceImporter,
+) -> SourceImporter:
+    """The importer reading through a saved column mapping.
+
+    The profile must be for this source and belong to this client or to no
+    client in particular.
+    """
+    profile = await session.get(ImportProfile, evidence.profile_id)
+    if (
+        profile is None
+        or profile.source_code != evidence.source_code
+        or profile.client_id not in (None, client_id)
+    ):
+        raise EvidenceRejectedError(
+            "There is no such mapping profile for this client and source."
+        )
+    with_mapping = getattr(importer, "with_mapping", None)
+    if with_mapping is None:
+        raise EvidenceRejectedError(
+            f"The source {evidence.source_code} does not read mapping profiles."
+        )
+    mapped: SourceImporter = with_mapping(profile.mapping)
+    return mapped
+
+
 def _fact_value(fact: ParsedFact, pseudonymise: Pseudonymiser) -> dict[str, FactValue]:
     """The stored value of a fact: identifiers replaced, nothing personal left."""
     value: dict[str, FactValue] = dict(fact.value)
@@ -317,19 +378,36 @@ async def _insert_facts(
         )
 
 
-async def _keep_file(
-    ctx: EvidenceContext, client_id: int, evidence: NewEvidence, now: datetime
+def _plan_file(
+    ctx: EvidenceContext,
+    client_id: int,
+    evidence: NewEvidence,
+    digest: str,
+    now: datetime,
 ) -> tuple[str | None, datetime | None]:
-    """Store the file when the rules say so. Returns its key and retention date."""
+    """Whether the file is kept, under which key and until when.
+
+    Nothing is written here: the file is written last (see `_write_file`).
+    """
     if evidence.data is None:
         return None, None
     if evidence.assurance is Assurance.MANUAL_ARTEFACT:
-        return await asyncio.to_thread(ctx.files.put, client_id, evidence.data), None
+        return storage_key(client_id, digest), None
     keep_until = raw_expires_at(now, ctx.settings.raw_retention_days)
     if keep_until is None:
         return None, None
-    key = await asyncio.to_thread(ctx.files.put, client_id, evidence.data)
-    return key, keep_until
+    return storage_key(client_id, digest), keep_until
+
+
+async def _write_file(
+    ctx: EvidenceContext,
+    client_id: int,
+    evidence: NewEvidence,
+    key: str | None,
+) -> None:
+    """Write the file that `_plan_file` decided to keep."""
+    if key is not None and evidence.data is not None:
+        await asyncio.to_thread(ctx.files.put, client_id, evidence.data)
 
 
 def _chain_payload(stored: StoredEvidence) -> Mapping[str, object]:
@@ -367,10 +445,16 @@ async def add_evidence(
 
     parsed: _ParsedExport | None = None
     if importer is not None and evidence.data is not None:
+        if evidence.profile_id is not None:
+            importer = await _importer_with_profile(
+                session, client_id, evidence, importer
+            )
         pseudonymise = Pseudonymiser(pseudonym_key(ctx.cipher, client))
         parsed = await _parse_export(
             importer, evidence.data, pseudonymise, ctx.settings.import_max_rows
         )
+        if parsed.captured_at is not None:
+            _check_file_time(parsed.captured_at, now)
     captured_at = (parsed.captured_at if parsed else None) or evidence.captured_at
     expires_at = evidence.expires_at or stale_after(
         captured_at, default_max_age(evidence.assurance)
@@ -393,7 +477,7 @@ async def add_evidence(
     await session.flush()
     if parsed is not None:
         await _insert_facts(session, client_id, item.id, captured_at, parsed.rows)
-    key, raw_expires_at = await _keep_file(ctx, client_id, evidence, now)
+    key, raw_expires = _plan_file(ctx, client_id, evidence, digest, now)
     revision = EvidenceRevision(
         item_id=item.id,
         revision_number=1,
@@ -403,7 +487,7 @@ async def add_evidence(
         note=evidence.note,
         reviewer=evidence.reviewer,
         reviewed_on=evidence.reviewed_on,
-        raw_expires_at=raw_expires_at,
+        raw_expires_at=raw_expires,
         created_by_id=evidence.uploader_id,
         created_at=now,
     )
@@ -443,6 +527,8 @@ async def add_evidence(
             "assurance": evidence.assurance.value,
         },
     )
+    await session.flush()
+    await _write_file(ctx, client_id, evidence, key)
     return stored
 
 
@@ -489,7 +575,7 @@ async def add_revision(
     expires_at = evidence.expires_at or stale_after(
         evidence.captured_at, default_max_age(assurance)
     )
-    key, raw_expires_at = await _keep_file(ctx, client_id, evidence, now)
+    key, raw_expires = _plan_file(ctx, client_id, evidence, digest, now)
     revision = EvidenceRevision(
         item_id=item_id,
         revision_number=number,
@@ -500,7 +586,7 @@ async def add_revision(
         note=evidence.note,
         reviewer=evidence.reviewer,
         reviewed_on=evidence.reviewed_on,
-        raw_expires_at=raw_expires_at,
+        raw_expires_at=raw_expires,
         created_by_id=evidence.uploader_id,
         created_at=now,
     )
@@ -541,6 +627,8 @@ async def add_revision(
         target_id=item_id,
         detail={"client_id": client_id, "revision": number},
     )
+    await session.flush()
+    await _write_file(ctx, client_id, evidence, key)
     return stored
 
 
