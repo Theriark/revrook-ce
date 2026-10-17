@@ -1,0 +1,329 @@
+name: CI
+
+# Merge gate for revrook-ce: the nine required checks from phase-plan-3.
+# Checks whose inputs do not exist yet are SKIPPED and reported as skipped in the
+# summary. They never report a fake pass. See docs/ci-cd.md.
+
+on:
+  pull_request:
+    branches:
+      - development
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Superseded pull request runs are cancelled. This group is per PR ref only; the
+# deployment group in release.yml is separate and never cancels.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  detect:
+    name: Detect which inputs exist
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.probe.outputs.app }}
+      alembic: ${{ steps.probe.outputs.alembic }}
+      licence_script: ${{ steps.probe.outputs.licence_script }}
+      content: ${{ steps.probe.outputs.content }}
+      docker: ${{ steps.probe.outputs.docker }}
+      compose_smoke: ${{ steps.probe.outputs.compose_smoke }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          flag() { if [[ -e "$2" ]]; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi; }
+          flag app pyproject.toml
+          flag alembic alembic.ini
+          flag licence_script scripts/licence_audit.py
+          flag content data
+          flag docker Dockerfile
+          flag compose_smoke tests/e2e/run.sh
+          cat "$GITHUB_OUTPUT"
+
+  lint:
+    name: 1 - ruff check and format
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          ruff check .
+          ruff format --check .
+
+  typecheck:
+    name: 2 - mypy (strict for checks, scoring, evidence, importers)
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          # Strict per-package settings live in pyproject.toml.
+          mypy app
+
+  test:
+    name: 3 - pytest with PostgreSQL 16 and coverage thresholds
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revrook
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: revrook_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revrook -d revrook_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+asyncpg://revrook:ci-only-not-a-secret@localhost:5432/revrook_test
+      SECRET_KEY: ci-only-secret-key-not-for-deployment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          FERNET_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          echo "::add-mask::${FERNET_KEY}"
+          export FERNET_KEY
+          # Overall 80 percent. 95 percent for the four core packages is enforced
+          # by the second report below.
+          pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80
+          coverage report --fail-under=95 \
+            --include='app/checks/*,app/scoring/*,app/evidence/*,app/importers/*'
+
+  migrations:
+    name: 4 - alembic up, check, down, up
+    needs: detect
+    if: needs.detect.outputs.app == 'true' && needs.detect.outputs.alembic == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revrook
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: revrook_migrate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revrook -d revrook_migrate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+asyncpg://revrook:ci-only-not-a-secret@localhost:5432/revrook_migrate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          alembic upgrade head
+          alembic check
+          alembic downgrade -1
+          alembic upgrade head
+
+  audit:
+    name: 5 - pip-audit (medium or higher)
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip pip-audit
+          # Recorded exceptions live in .pip-audit-exceptions (one ID per line,
+          # with a reason comment). An empty or absent file means none.
+          ARGS=()
+          if [[ -f .pip-audit-exceptions ]]; then
+            while read -r id _; do
+              [[ -z "${id}" || "${id}" == \#* ]] && continue
+              ARGS+=(--ignore-vuln "${id}")
+            done < .pip-audit-exceptions
+          fi
+          pip-audit --require-hashes -r requirements.txt "${ARGS[@]}"
+
+  licences:
+    name: 6 - SPDX licence audit
+    needs: detect
+    if: needs.detect.outputs.app == 'true' && needs.detect.outputs.licence_script == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements.txt
+          python scripts/licence_audit.py
+          if grep -qiE '^psycopg' requirements.txt; then
+            echo "::error::psycopg must not appear in the lock file"
+            exit 1
+          fi
+
+  content-licences:
+    name: 7 - content licence check
+    needs: detect
+    if: needs.detect.outputs.content == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          [[ -f LICENSES-CONTENT.md ]] || { echo "::error::LICENSES-CONTENT.md is missing but data/ exists"; exit 1; }
+          missing=0
+          while IFS= read -r f; do
+            if ! grep -qF "${f}" LICENSES-CONTENT.md; then
+              echo "::error::${f} has no row in LICENSES-CONTENT.md"
+              missing=1
+            fi
+          done < <(git ls-files data | grep -v '/\.gitkeep$' || true)
+          exit "${missing}"
+
+  docker-build:
+    name: 8 - docker build
+    # Tests precede the build.
+    needs: [detect, lint, typecheck, test, migrations, audit, licences, content-licences]
+    if: >-
+      always() && needs.detect.outputs.docker == 'true' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: revrook-ce:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Image must run as non-root
+        shell: bash
+        run: |
+          set -euo pipefail
+          user="$(docker image inspect revrook-ce:ci --format '{{.Config.User}}')"
+          [[ -n "${user}" && "${user}" != "root" && "${user}" != "0" ]] || { echo "::error::image runs as root"; exit 1; }
+
+  compose-smoke:
+    name: 9 - compose smoke test
+    needs: [detect, docker-build]
+    if: needs.detect.outputs.compose_smoke == 'true' && needs.docker-build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          cp -n .env.example .env.ci || true
+          docker compose --env-file .env.ci up -d --build --wait
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8000/readyz && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8000/readyz
+          bash tests/e2e/run.sh
+      - if: always()
+        shell: bash
+        run: docker compose down -v || true
+
+  gate:
+    name: Merge gate summary
+    needs:
+      - detect
+      - lint
+      - typecheck
+      - test
+      - migrations
+      - audit
+      - licences
+      - content-licences
+      - docker-build
+      - compose-smoke
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## revrook-ce merge gate"
+            echo
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "${RESULTS}" | python3 -c 'import json,sys; [print(f"| {k} | {v[\"result\"]} |") for k,v in json.load(sys.stdin).items()]'
+            echo
+            echo "A result of \`skipped\` means the check input does not exist yet (see docs/ci-cd.md). It is not a pass."
+          } >> "${GITHUB_STEP_SUMMARY}"
+          if echo "${RESULTS}" | grep -qE '"result": *"(failure|cancelled)"'; then
+            echo "::error::at least one required check failed"
+            exit 1
+          fi
