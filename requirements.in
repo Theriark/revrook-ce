@@ -1,0 +1,21 @@
+# Direct runtime dependencies (decision D2). Compile with pip-tools on Python 3.12
+# into the hashed requirements.txt; see docs/development.md. Lower bounds only:
+# the lock file pins exact versions and hashes.
+#
+# httpx is not listed: it requires certifi (MPL-2.0), which the runtime licence
+# allow-list does not permit. It is a development dependency for now (see
+# docs/licences.md).
+alembic>=1.13
+argon2-cffi>=23.1
+asyncpg>=0.29
+charset-normalizer>=3.3
+cryptography>=42
+dnspython>=2.6
+fastapi>=0.115
+itsdangerous>=2.2
+jinja2>=3.1
+pydantic>=2.7
+python-multipart>=0.0.9
+PyYAML>=6.0
+sqlalchemy>=2.0.30
+uvicorn>=0.30
