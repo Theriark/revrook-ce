@@ -47,6 +47,9 @@ FORMULA_STARTS = ("=", "+", "-", "@")
 EMAIL_LIKE = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 TRUE_WORDS = frozenset({"true", "yes", "1"})
 FALSE_WORDS = frozenset({"false", "no", "0"})
+SEMICOLON_CSV = (
+    "The delimiter looks like a semicolon; the file must be comma separated."
+)
 UNREADABLE_CSV = (
     "The file is not a readable CSV file, or one field is larger than "
     f"{csv.field_size_limit()} characters."
@@ -232,7 +235,10 @@ def open_csv(
     positions = resolve_columns(header, spec, mapping)
     missing = missing_columns(spec, positions)
     if missing:
-        raise MissingStructureError(missing_message(missing))
+        message = missing_message(missing)
+        if len(header) == 1 and ";" in header[0]:
+            message = f"{SEMICOLON_CSV} {message}"
+        raise MissingStructureError(message)
     return CsvFile(reader, header, positions, max_rows)
 
 
@@ -459,13 +465,17 @@ def safe_text(
     spreadsheet formula. Text that looks like an email address is a row error
     (RowError names `label`): the evidence store would refuse the whole upload
     for it, and a short text field is never meant to hold a person's address.
+    The check runs on the text as it will be stored, after the formula prefix:
+    the prefix can supply the part before an at sign (@acme.com becomes
+    '@acme.com), which the store would then refuse for the whole upload.
     Call it only while reading a row.
     """
     text = value if isinstance(value, str) else ""
     cleaned = "".join(char for char in text if char.isprintable()).strip()[:limit]
-    if EMAIL_LIKE.search(cleaned):
+    kept = "'" + cleaned if cleaned.startswith(FORMULA_STARTS) else cleaned
+    if EMAIL_LIKE.search(kept):
         raise RowError(f"{label} must not contain an email address")
-    return "'" + cleaned if cleaned.startswith(FORMULA_STARTS) else cleaned
+    return kept
 
 
 def choice(value: object, allowed: Mapping[str, str]) -> str:
