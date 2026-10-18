@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Phase 5 (part 1) end-to-end check against a running compose stack (check 9 runs it
-# through tests/e2e/run.sh). Run with: bash scripts/e2e/phase_05.sh
+# Phase 5 (parts 1 and 2) end-to-end check against a running compose stack (check 9
+# runs it through tests/e2e/run.sh). Run with: bash scripts/e2e/phase_05.sh
 #
 # Proves, in the image that the stack runs:
 #   - the application loads the control library through its own code
 #     (python -m app.cli verify-controls): 51 controls, 8 domains, domain weights 100,
-#     3 gates, 8 manual-only, and the two NIST reference datasets with their credit;
+#     3 gates, 8 manual-only, a rule in the check engine for every measured control,
+#     and the two NIST reference datasets with their credit;
+#   - the check engine runs in the image: with no evidence every control is unknown;
 #   - the control file and the NIST datasets inside the image are byte for byte the
 #     files of the repository (sha256), so the image does not carry another library;
 #   - the JSON Schema is in the image and the file validates against it there;
@@ -63,6 +65,24 @@ document["controls"][0]["weight"] = 7
 problems = validate_document(document)
 assert any("controls/0/weight" in problem for problem in problems), problems
 print("schema check in the image: ok")
+PY
+
+# The check engine in the image: no evidence, no pass and no fail for any control.
+docker exec -i "${web}" python - <<'PY'
+from datetime import UTC, datetime
+
+from app.checks.engine import evaluate_all
+from app.checks.library import load_library
+from app.checks.model import Evidence
+
+results = evaluate_all(
+    load_library(), Evidence(as_of=datetime(2026, 10, 17, tzinfo=UTC))
+)
+assert len(results) == 51, len(results)
+assert {result.status for result in results.values()} == {"unknown"}
+reasons = {result.reason for result in results.values()}
+assert reasons == {"licence_or_scope", "no_artefact"}, reasons
+print("check engine in the image: 51 controls unknown, none passes without evidence")
 PY
 
 echo "phase_05: OK"

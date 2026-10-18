@@ -106,33 +106,81 @@ def read_configured_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactVa
     return read_text(raw, key) is not None
 
 
+Interval = tuple[int, int, int]
+
+
+def _interval(token: str) -> Interval | None:
+    """The addresses a word names, as (IP version, first, last); None if none.
+
+    A word is a block (10.0.0.0/8, ::/0, 0.0.0.0/0.0.0.0), a single address or a
+    range of two addresses of one version, first not after last.
+    """
+    first, dash, last = token.partition("-")
+    try:
+        if dash:
+            low = ipaddress.ip_address(first)
+            high = ipaddress.ip_address(last)
+            if low.version != high.version or int(low) > int(high):
+                return None
+            return (low.version, int(low), int(high))
+        network = ipaddress.ip_network(token, strict=False)
+    except ValueError:
+        return None
+    return (
+        network.version,
+        int(network.network_address),
+        int(network.broadcast_address),
+    )
+
+
+def _whole_space(version: int) -> int:
+    return 2 ** (32 if version == 4 else 128)
+
+
 def _source_token(token: str) -> str | None:
     """`any`, `restricted`, or None when one word of a source cannot be told.
 
-    The whole internet is a word of ANY_WORDS or an address block with no fixed
-    bits (0.0.0.0/0, ::/0, 0.0.0.0/0.0.0.0 and the other spellings of them).
-    Only an address, a block or a range of addresses is known to be restricted.
+    The whole internet is a word of ANY_WORDS, an unspecified address (a bare
+    0.0.0.0 or ::), or an address block or range that covers every address of its
+    version (0.0.0.0/0, ::/0, 0.0.0.0/0.0.0.0, a range from 0.0.0.0 to
+    255.255.255.255 and the other spellings of them). Only an address, a block or a
+    range of addresses is known to be restricted.
     """
     if token.lower() in ANY_WORDS:
         return "any"
     try:
-        network = ipaddress.ip_network(token, strict=False)
+        address = ipaddress.ip_address(token)
     except ValueError:
         pass
     else:
-        return "any" if network.prefixlen == 0 else "restricted"
-    first, dash, last = token.partition("-")
-    if dash:
-        try:
-            low = ipaddress.ip_address(first)
-            high = ipaddress.ip_address(last)
-        except ValueError:
-            return None
-        if low.version != high.version or int(low) > int(high):
-            return None
-        whole = int(high) - int(low) + 1 == 2**low.max_prefixlen
-        return "any" if whole else "restricted"
-    return None
+        return "any" if address.is_unspecified else "restricted"
+    interval = _interval(token)
+    if interval is None:
+        return None
+    version, low, high = interval
+    return "any" if high - low + 1 == _whole_space(version) else "restricted"
+
+
+def _covers_everything(words: list[str]) -> bool:
+    """Whether the words together name every address of one IP version.
+
+    Two blocks such as 0.0.0.0/1 and 128.0.0.0/1 are each restricted and together
+    are the whole internet.
+    """
+    spans: dict[int, list[tuple[int, int]]] = {}
+    for word in words:
+        interval = _interval(word)
+        if interval is not None:
+            spans.setdefault(interval[0], []).append((interval[1], interval[2]))
+    for version, found in spans.items():
+        reached = -1
+        for low, high in sorted(found):
+            if low > reached + 1:
+                break
+            reached = max(reached, high)
+        if reached == _whole_space(version) - 1:
+            return True
+    return False
 
 
 def source_scope(text: str) -> str | None:
@@ -140,12 +188,15 @@ def source_scope(text: str) -> str | None:
     every word of it is a known address, block or range, else None (unknown).
 
     A source with several words (comma, semicolon or space separated) is `any` as
-    soon as one word is. A name that revrook cannot resolve (an address object
-    such as LAN) is unknown, never restricted: a control must not pass on it.
+    soon as one word is, or when the words together cover every address. Spaces
+    around the dash of a range are ignored (0.0.0.0 - 255.255.255.255). A name that
+    revrook cannot resolve (an address object such as LAN) is unknown, never
+    restricted: a control must not pass on it.
     """
-    words = [word for word in re.split(r"[,;\s]+", text.strip()) if word]
+    spaced = re.sub(r"\s*-\s*", "-", text.strip())
+    words = [word for word in re.split(r"[,;\s]+", spaced) if word]
     found = {_source_token(word) for word in words}
-    if "any" in found:
+    if "any" in found or _covers_everything(words):
         return "any"
     if words and found == {"restricted"}:
         return "restricted"
