@@ -1,0 +1,208 @@
+# The fields that the 51 controls of ruleset PC-RULES v0.1 read, written from
+# rnd-report-3 section 3.4 (phase 4). tests/test_control_fields.py checks it
+# against the importers; phase 5 must keep it equal to data/controls.yaml.
+#
+# controls   control id -> the ids of the fields its rule names. A control with
+#            an empty list reads no import field: it is manual-only, or it
+#            reads our own versioned table (PC-LOG-02) plus a manual artefact.
+# fields     field id -> the one adapter and the one column (or, for a JSON-only
+#            source, fact value) that carries it. The id is the source code of
+#            section 3.4 (G Graph, R RMM device file, B backup file, N network
+#            export, T training file, H leavers file, X Exchange export) and the
+#            name the control text uses.
+# unavailable  fields no CE importer reads. Each has a reason: the check engine
+#            gives such a control `unknown` with reason licence_or_scope (a
+#            Graph field that needs a licence tier or a permission outside the
+#            verified list), or the field comes from the public DNS check of
+#            phase 7 (dnscheck) or from a shipped table of ours (shipped_list).
+#            A field in neither section is an orphan and fails the test.
+
+controls:
+  PC-ACC-01: [G.isMfaRegistered, G.isMfaCapable]
+  PC-ACC-02: [G.isAdmin, G.isMfaRegistered]
+  PC-ACC-03:
+    - G.ca.state
+    - G.ca.users
+    - G.ca.applications
+    - G.ca.grantControls.mfa
+    - G.ca.exclusions
+    - G.securityDefaults
+  PC-ACC-04:
+    - G.ca.state
+    - G.ca.grantControls.block
+    - G.ca.clientAppTypes
+    - G.securityDefaults
+  PC-ACC-05: [G.role.displayName, G.role.permanent, G.role.memberEnabled]
+  PC-ACC-06: [G.user.signInActivity, G.user.accountEnabled]
+  PC-ACC-07: [G.userType, G.user.signInActivity, G.authorizationPolicy.invitations]
+  PC-ACC-08: []
+  PC-DEV-01:
+    - G.managedDevices.id
+    - G.managedDevices.lastSyncDateTime
+    - R.device_id
+    - R.last_seen_utc
+  PC-DEV-02: [R.last_patch_utc, R.pending_critical]
+  PC-DEV-03:
+    - R.os
+    - R.os_build
+    - G.managedDevices.operatingSystem
+    - G.managedDevices.osVersion
+  PC-DEV-04: [G.managedDevices.isEncrypted, R.disk_encrypted]
+  PC-DEV-05: [G.managedDevices.complianceState]
+  PC-DEV-06: [G.deviceConfigurationProfile]
+  PC-DEV-07: [R.local_admin_count]
+  PC-END-01: [R.av_status, G.windowsProtectionState]
+  PC-END-02: [R.av_def_date_utc, G.signatureUpdateOverdue]
+  PC-END-03: [G.securityAlerts, R.threats]
+  PC-END-04: [R.tamper_protection]
+  PC-END-05: [R.installed_software]
+  PC-EML-01: [D.spf]
+  PC-EML-02: [X.dkim.domain, X.dkim.enabled, D.dkim_selectors]
+  PC-EML-03: [D.dmarc]
+  PC-EML-04: [X.policy_type, X.policy.enabled]
+  PC-EML-05: [X.policy_type, X.auto_forwarding_mode, X.mailbox.forwarding_external]
+  PC-EML-06: [X.recipient_type, X.mailbox.account_enabled]
+  PC-EML-07: []
+  PC-BCK-01:
+    - B.asset_id
+    - B.schedule_hours
+    - B.last_success_utc
+    - B.last_status
+    - R.form_factor
+    - G.licensedMailboxes
+  PC-BCK-02: [B.asset_type, G.licensedMailboxes]
+  PC-BCK-03: [B.last_restore_test_utc, B.restore_test_result, B.asset_type]
+  PC-BCK-04: [B.immutable, B.offsite]
+  PC-BCK-05: [B.encrypted, B.retention_days]
+  PC-BCK-06: []
+  PC-NET-01: [N.firmware_release_date, N.end_of_support_date, N.perimeter]
+  PC-NET-02:
+    - N.rules.enabled
+    - N.rules.direction
+    - N.rules.action
+    - N.rules.source
+    - N.rules.destination_port
+  PC-NET-03: [N.wan_admin_enabled, N.default_credentials_flag]
+  PC-NET-04: [N.ssid, N.security_mode, N.guest_isolated, N.guest_ssid]
+  PC-NET-05: [R.dns_filter_active]
+  PC-LOG-01: [X.unified_audit_log_enabled, X.audit_disabled]
+  PC-LOG-02: []
+  PC-LOG-03: [X.alert.recipient_count, X.alert.last_acknowledged]
+  PC-LOG-04: [X.alert.kind, X.alert.disabled]
+  PC-LOG-05: []
+  PC-LOG-06: [N.syslog_target, R.log_forwarding]
+  PC-GOV-01: []
+  PC-GOV-02: []
+  PC-GOV-03: [T.user_id, T.completed_utc]
+  PC-GOV-04: [H.user_id, H.leave_date, H.account_enabled]
+  PC-GOV-05: []
+  PC-GOV-06: [G.oauth2PermissionGrants, G.servicePrincipals]
+  PC-GOV-07: []
+
+fields:
+  # Entra authentication-methods registration
+  G.isMfaRegistered: {adapter: entra-registration, column: mfa_registered}
+  G.isMfaCapable: {adapter: entra-registration, column: mfa_capable}
+  G.isAdmin: {adapter: entra-registration, column: is_admin}
+  G.userType: {adapter: entra-registration, column: user_type}
+  # Conditional Access policies (JSON only: fact values)
+  G.ca.state: {adapter: conditional-access, column: state}
+  G.ca.users: {adapter: conditional-access, column: all_users}
+  G.ca.applications: {adapter: conditional-access, column: all_apps}
+  G.ca.grantControls.mfa: {adapter: conditional-access, column: requires_mfa}
+  G.ca.grantControls.block: {adapter: conditional-access, column: blocks}
+  G.ca.clientAppTypes: {adapter: conditional-access, column: legacy_clients}
+  G.ca.exclusions: {adapter: conditional-access, column: exclusions}
+  G.securityDefaults: {adapter: conditional-access, column: tenant_state}
+  # Directory roles
+  G.role.displayName: {adapter: directory-roles, column: role}
+  G.role.permanent: {adapter: directory-roles, column: permanent}
+  G.role.memberEnabled: {adapter: directory-roles, column: enabled}
+  # Intune devices
+  G.managedDevices.id: {adapter: intune-devices, column: device_id}
+  G.managedDevices.lastSyncDateTime: {adapter: intune-devices, column: last_contact}
+  G.managedDevices.operatingSystem: {adapter: intune-devices, column: os}
+  G.managedDevices.osVersion: {adapter: intune-devices, column: os_version}
+  G.managedDevices.isEncrypted: {adapter: intune-devices, column: encrypted}
+  G.managedDevices.complianceState: {adapter: intune-devices, column: compliance}
+  # Device inventory, patch and antivirus (R)
+  R.device_id: {adapter: device-inventory, column: device_id}
+  R.last_seen_utc: {adapter: device-inventory, column: last_seen}
+  R.os: {adapter: device-inventory, column: os}
+  R.os_build: {adapter: device-inventory, column: os_build}
+  R.form_factor: {adapter: device-inventory, column: form_factor}
+  R.last_patch_utc: {adapter: device-inventory, column: last_patch}
+  R.pending_critical: {adapter: device-inventory, column: pending_critical_updates}
+  R.av_status: {adapter: device-inventory, column: av_status}
+  R.av_def_date_utc: {adapter: device-inventory, column: av_signature_date}
+  R.disk_encrypted: {adapter: device-inventory, column: disk_encrypted}
+  R.local_admin_count: {adapter: device-inventory, column: local_admin_count}
+  R.tamper_protection: {adapter: device-inventory, column: tamper_protection}
+  R.dns_filter_active: {adapter: device-inventory, column: dns_filter_active}
+  R.log_forwarding: {adapter: device-inventory, column: log_forwarding}
+  # Backup file (B)
+  B.asset_id: {adapter: backup-export, column: system_or_device}
+  B.asset_type: {adapter: backup-export, column: asset_type}
+  B.schedule_hours: {adapter: backup-export, column: schedule_hours}
+  B.last_success_utc: {adapter: backup-export, column: last_success}
+  B.last_status: {adapter: backup-export, column: last_result}
+  B.retention_days: {adapter: backup-export, column: retention_days}
+  B.encrypted: {adapter: backup-export, column: encrypted}
+  B.immutable: {adapter: backup-export, column: immutable}
+  B.offsite: {adapter: backup-export, column: offsite}
+  B.last_restore_test_utc: {adapter: backup-export, column: restore_test_date}
+  B.restore_test_result: {adapter: backup-export, column: restore_test_result}
+  # Network export (N)
+  N.firmware_release_date: {adapter: network-export, column: firmware_release_date}
+  N.end_of_support_date: {adapter: network-export, column: end_of_support_date}
+  N.perimeter: {adapter: network-export, column: perimeter}
+  N.rules.enabled: {adapter: network-export, column: rule_enabled}
+  N.rules.direction: {adapter: network-export, column: direction}
+  N.rules.action: {adapter: network-export, column: action}
+  N.rules.source: {adapter: network-export, column: source}
+  N.rules.destination_port: {adapter: network-export, column: destination_port}
+  N.wan_admin_enabled: {adapter: network-export, column: wan_admin_enabled}
+  N.default_credentials_flag: {adapter: network-export, column: default_credentials_flag}
+  N.ssid: {adapter: network-export, column: ssid}
+  N.security_mode: {adapter: network-export, column: security_mode}
+  N.guest_isolated: {adapter: network-export, column: guest_isolated}
+  N.guest_ssid: {adapter: network-export, column: guest_ssid}
+  N.syslog_target: {adapter: network-export, column: syslog_target}
+  # Training file (T) and leavers file (H)
+  T.user_id: {adapter: training-csv, column: user_id}
+  T.completed_utc: {adapter: training-csv, column: completed_utc}
+  H.user_id: {adapter: leavers-csv, column: user_id}
+  H.leave_date: {adapter: leavers-csv, column: leave_date}
+  H.account_enabled: {adapter: leavers-csv, column: account_enabled}
+  # Exchange export (X)
+  X.dkim.domain: {adapter: exchange-export, column: domain}
+  X.dkim.enabled: {adapter: exchange-export, column: enabled}
+  X.policy_type: {adapter: exchange-export, column: policy_type}
+  X.policy.enabled: {adapter: exchange-export, column: enabled}
+  X.auto_forwarding_mode: {adapter: exchange-export, column: auto_forwarding_mode}
+  X.mailbox.forwarding_external: {adapter: exchange-export, column: forwarding_external}
+  X.recipient_type: {adapter: exchange-export, column: recipient_type}
+  X.mailbox.account_enabled: {adapter: exchange-export, column: account_enabled}
+  X.unified_audit_log_enabled: {adapter: exchange-export, column: unified_audit_log_enabled}
+  X.audit_disabled: {adapter: exchange-export, column: audit_disabled}
+  X.alert.kind: {adapter: exchange-export, column: alert_kind}
+  X.alert.disabled: {adapter: exchange-export, column: disabled}
+  X.alert.recipient_count: {adapter: exchange-export, column: recipient_count}
+  X.alert.last_acknowledged: {adapter: exchange-export, column: last_acknowledged}
+
+unavailable:
+  G.user.signInActivity: licence_or_scope
+  G.user.accountEnabled: licence_or_scope
+  G.authorizationPolicy.invitations: licence_or_scope
+  G.deviceConfigurationProfile: licence_or_scope
+  G.windowsProtectionState: licence_or_scope
+  G.signatureUpdateOverdue: licence_or_scope
+  G.securityAlerts: licence_or_scope
+  G.oauth2PermissionGrants: licence_or_scope
+  G.servicePrincipals: licence_or_scope
+  G.licensedMailboxes: licence_or_scope
+  R.threats: licence_or_scope
+  R.installed_software: shipped_list
+  D.spf: dnscheck
+  D.dkim_selectors: dnscheck
+  D.dmarc: dnscheck

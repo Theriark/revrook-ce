@@ -195,4 +195,3 @@ def test_every_unavailable_field_is_explained_in_the_importer_docs() -> None:
     docs = (Path(__file__).parent.parent / "docs" / "importers.md").read_text()
     for field_id in load_spec()["unavailable"]:
         assert f"`{field_id}`" in docs, field_id
-"""
