@@ -1,11 +1,15 @@
 """FastAPI application: health endpoints, sign-in pages and the token API."""
 
+import html
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request, Response, status
+from fastapi.exception_handlers import http_exception_handler
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __version__, api
 from app.clock import Clock, utcnow
@@ -21,6 +25,16 @@ from app.ui import evidence as ui_evidence
 from app.ui import profiles as ui_profiles
 from app.ui.brand import STATIC_DIR
 from app.web import csrf_protect
+
+HX_FORBIDDEN = (
+    "Your session has ended or this page is out of date, so nothing was "
+    "changed. Reload the page, sign in again if asked, and try again."
+)
+REFUSED_HTML = (
+    '<div class="rv-errors" role="alert">'
+    '<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!'
+    "</span> The request was refused</p><p>{message}</p></div>"
+)
 
 
 def create_app(
@@ -68,6 +82,22 @@ def create_app(
         SecurityHeadersMiddleware,
         hsts=resolved.base_url.startswith("https://"),
     )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def refusal(request: Request, error: StarletteHTTPException) -> Response:
+        """A refusal of a page request made by htmx is shown as a message.
+
+        htmx swaps the body of the response into the page (see base.html), so a
+        403 (an expired session or a stale form) must carry a readable HTML
+        message and not JSON. Every other request keeps FastAPI's JSON answer.
+        """
+        if request.headers.get("hx-request") == "true" and error.status_code == 403:
+            return HTMLResponse(
+                REFUSED_HTML.format(message=html.escape(HX_FORBIDDEN)),
+                status_code=403,
+                headers={"Cache-Control": "no-store"},
+            )
+        return await http_exception_handler(request, error)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:

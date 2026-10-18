@@ -12,6 +12,7 @@ is kept, as for any upload, only when it is imported and the retention rules say
 so. Nothing of its content is logged.
 """
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Any
 
@@ -327,16 +328,22 @@ async def _handle(request: Request, action: str) -> Response:
         client = await _client(request, client_id)
         limit: int = request.app.state.settings.import_max_bytes
         data = await _file_bytes(form, limit)
-        pseudonymise = Pseudonymiser(pseudonym_key(cipher_of(request), client))
-        max_rows: int = request.app.state.settings.import_max_rows
-        preview = build_preview(adapter, data, _chosen(form), pseudonymise, max_rows)
-        context["preview"] = preview
-        if action == "save":
-            await _save(request, context, form, preview, user)
-            status = 201
-        elif action == "import":
+        if action == "import":
+            # The import reads the file itself; the preview would only repeat that
+            # work, so it is not built for this action.
             await _import(request, context, form, data, user)
             status = 201
+        else:
+            pseudonymise = Pseudonymiser(pseudonym_key(cipher_of(request), client))
+            max_rows: int = request.app.state.settings.import_max_rows
+            # Decoding and tokenising up to 20 MB must not stall the event loop.
+            preview = await asyncio.to_thread(
+                build_preview, adapter, data, _chosen(form), pseudonymise, max_rows
+            )
+            context["preview"] = preview
+            if action == "save":
+                await _save(request, context, form, preview, user)
+                status = 201
     except FormError as error:
         context["errors"] = [str(error)]
         status = error.status_code
