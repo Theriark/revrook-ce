@@ -263,7 +263,8 @@ def test_txt_answers_are_texts_and_other_records_in_the_answer_are_skipped() -> 
         rrset("other.example", "TXT", '"v=spf1 -all"', '"v=spf1 ~all"'),
     )
     found = doh(answered(body)).lookup("client.example", "TXT")
-    assert found == ("v=spf1 -all", "v=spf1 ~all")
+    # dnspython shuffles the records of a set when it writes the answer.
+    assert sorted(found) == ["v=spf1 -all", "v=spf1 ~all"]
 
 
 def test_a_cname_question_returns_the_target() -> None:
