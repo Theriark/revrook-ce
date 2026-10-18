@@ -73,7 +73,7 @@ def run(table, domain="client.example"):
     stub = Stub(table)
     check = run_checks(stub, [domain], captured_at=AT)
     parsed = DnsCheckImporter().parse(render_document(check), 1000)
-    rows = [(fact.fact_key, fact.value) for fact in parsed.facts]
+    rows = [(fact.key, fact.value) for fact in parsed.facts]
     sources = {"dns-check": SourceFacts.from_facts(parsed.captured_at, rows)}
     evidence = Evidence(as_of=AT + timedelta(days=1), sources=sources)
     results = {
