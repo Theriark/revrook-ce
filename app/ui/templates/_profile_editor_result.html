@@ -1,0 +1,150 @@
+{% include "_errors.html" %}
+{% if saved %}
+<p id="rv-saved-profile" class="rv-status-protected" role="status" data-profile-id="{{ saved.id }}"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Profile {{ saved.name }} saved (profile {{ saved.id }}). You can now import the file with it.</p>
+{% endif %}
+{% if imported %}
+<p id="rv-imported" class="rv-status-protected" role="status" data-item-id="{{ imported.item_id }}"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Imported with profile {{ imported.profile_id }} as evidence item {{ imported.item_id }}: {{ imported.facts }} facts stored.</p>
+<table>
+<caption>What the import counted</caption>
+<thead>
+<tr>
+<th scope="col">Count or flag</th>
+<th scope="col">Value</th>
+</tr>
+</thead>
+<tbody>
+{% for key, value in imported.summary %}
+<tr>
+<th scope="row">{{ key }}</th>
+<td>{{ value }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+{% if preview %}
+<fieldset>
+<legend>2. Map the columns</legend>
+<p class="rv-text-secondary">For each column of the source, choose the column of your file that holds it. Columns found by their name are chosen already. A column marked required must be in the file.</p>
+{% if preview.hidden_headers %}
+<p class="rv-text-secondary">{{ preview.hidden_headers }} column(s) of the file are not offered: columns revrook never reads (serial numbers, client names), names longer than 100 characters, not printable or like an email address, and repeated names.</p>
+{% endif %}
+<div class="rv-mapping">
+{% for choice in preview.choices %}
+<p>
+<label for="map-{{ choice.key }}">{{ choice.label }}{% if choice.required %} (required){% endif %}</label>
+<select id="map-{{ choice.key }}" name="map-{{ choice.key }}">
+<option value="">Not in the file</option>
+{% for header in preview.offered %}
+<option value="{{ header }}"{% if header == choice.header %} selected{% endif %}>{{ header }}</option>
+{% endfor %}
+</select>
+</p>
+{% endfor %}
+</div>
+<p><button type="submit" class="rv-button-quiet" formaction="/imports/profile-editor/preview" hx-post="/imports/profile-editor/preview">Update the preview</button></p>
+</fieldset>
+{% if preview.missing %}
+<div id="rv-missing" class="rv-errors" role="alert">
+<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!</span> Required columns are missing</p>
+<ul>
+{% for label in preview.missing %}
+<li>{{ label }}</li>
+{% endfor %}
+</ul>
+<p>The import would refuse this file. Choose a file column for each of them, or use another file.</p>
+</div>
+{% elif preview.problem %}
+<div id="rv-problem" class="rv-errors" role="alert">
+<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!</span> The import would refuse this file</p>
+<p>{{ preview.problem }}</p>
+</div>
+{% endif %}
+{% if preview.shown and (preview.rows or not preview.problem) %}
+<h2>3. The first rows as revrook reads them</h2>
+<p>{{ preview.rows|length }} row(s) shown, {{ preview.rejected }} of them rejected.{% if preview.more_rows %} The file has more rows; only the first 20 are shown.{% endif %} A user, a device, a mailbox or another identifier is shown as this client's pseudonym, the way it is stored.</p>
+{% if preview.assumed_utc %}
+<p id="rv-utc-note" class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">?</span> Some times have no time zone. They are read as UTC, and the import marks the file as UTC assumed.</p>
+{% endif %}
+{% if preview.rows %}
+<div class="rv-table-scroll" role="region" aria-label="Preview of the first rows" tabindex="0">
+<table id="rv-preview">
+<caption>Preview of the first rows</caption>
+<thead>
+<tr>
+<th scope="col">Row</th>
+<th scope="col">Result</th>
+{% for choice in preview.shown %}
+<th scope="col">{{ choice.label }}</th>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for row in preview.rows %}
+<tr>
+<th scope="row">{{ row.number }}</th>
+<td>
+{% if row.reason %}
+<span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">!</span> Rejected: {{ row.reason }}</span>
+{% else %}
+<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Read</span>
+{% endif %}
+</td>
+{% for cell in row.cells %}
+<td>
+{% if cell.state == "pseudonym" %}
+<span class="rv-pseudonym">{{ cell.text }}</span>
+{% elif cell.state == "value" %}
+{{ cell.text }}
+{% elif cell.state == "unreadable" %}
+<span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">!</span> Cannot be read</span>
+{% elif cell.state == "not-read" %}
+<span class="rv-text-secondary">Not read for this record</span>
+{% else %}
+<span class="rv-text-secondary">Empty</span>
+{% endif %}
+{% if cell.assumed_utc %}
+<span class="rv-status-needs-attention rv-utc-flag"><span class="rv-status-icon" aria-hidden="true">?</span> UTC assumed</span>
+{% endif %}
+</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="rv-text-secondary">The file has no data rows.</p>
+{% endif %}
+{% endif %}
+<fieldset>
+<legend>4. Save the profile</legend>
+<p>
+<label for="name">Profile name</label>
+<input id="name" name="name" type="text" maxlength="100" value="{{ name }}">
+</p>
+<p><button type="submit" formaction="/imports/profile-editor/save" hx-post="/imports/profile-editor/save">Save the profile</button></p>
+</fieldset>
+<fieldset>
+<legend>5. Import the file with a saved profile</legend>
+{% if profiles %}
+<p>
+<label for="profile_id">Saved profile</label>
+<select id="profile_id" name="profile_id">
+{% for id, profile_name in profiles %}
+<option value="{{ id }}"{% if id == profile_id %} selected{% endif %}>{{ profile_name }} (profile {{ id }})</option>
+{% endfor %}
+</select>
+</p>
+<p>
+<label for="captured_at">When the export was taken (UTC)</label>
+<input id="captured_at" name="captured_at" type="datetime-local" value="{{ captured_at }}">
+</p>
+<p><button type="submit" formaction="/imports/profile-editor/import" hx-post="/imports/profile-editor/import">Import the file</button></p>
+{% else %}
+<p class="rv-text-secondary">There is no saved profile for this client and source yet. Save one first.</p>
+{% endif %}
+</fieldset>
+{% else %}
+<p class="rv-text-secondary">Choose a client, a source and a file, then read the file to map its columns.</p>
+{% endif %}

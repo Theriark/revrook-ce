@@ -9,6 +9,11 @@ from app.limits import FORM_OVERHEAD_BYTES, UploadSizeLimitMiddleware
 
 UPLOAD_PATH = "/api/v1/clients/3/evidence"
 REVISION_PATH = "/api/v1/clients/3/evidence/9/revisions"
+EDITOR_PATHS = [
+    "/imports/profile-editor/preview",
+    "/imports/profile-editor/save",
+    "/imports/profile-editor/import",
+]
 LIMIT = 1000
 
 
@@ -51,7 +56,7 @@ def status_of(sent: list[Message]) -> int:
     return int(sent[0]["status"])
 
 
-@pytest.mark.parametrize("path", [UPLOAD_PATH, REVISION_PATH])
+@pytest.mark.parametrize("path", [UPLOAD_PATH, REVISION_PATH, *EDITOR_PATHS])
 async def test_an_upload_within_the_limit_passes_through(path: str) -> None:
     size = str(LIMIT + FORM_OVERHEAD_BYTES).encode()
     inner, sent = await run(path, [(b"content-length", size)])
@@ -59,7 +64,7 @@ async def test_an_upload_within_the_limit_passes_through(path: str) -> None:
     assert status_of(sent) == 204
 
 
-@pytest.mark.parametrize("path", [UPLOAD_PATH, REVISION_PATH])
+@pytest.mark.parametrize("path", [UPLOAD_PATH, REVISION_PATH, *EDITOR_PATHS])
 async def test_an_upload_over_the_limit_is_refused_with_413(path: str) -> None:
     size = str(LIMIT + FORM_OVERHEAD_BYTES + 1).encode()
     inner, sent = await run(path, [(b"content-length", size)])
@@ -87,6 +92,8 @@ async def test_a_size_that_is_not_a_number_is_refused_with_400() -> None:
         ("/api/v1/clients/3/evidence/chain", "GET"),
         ("/api/v1/clients/x/evidence", "POST"),
         ("/login", "POST"),
+        ("/imports/profile-editor", "GET"),
+        ("/imports/profile-editor/other", "POST"),
     ],
 )
 async def test_other_requests_are_not_checked(path: str, method: str) -> None:

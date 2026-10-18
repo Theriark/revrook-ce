@@ -69,8 +69,35 @@ the tables below). `POST /api/v1/clients/{id}/import-profiles` saves one
 (`name`, `source_code`, `mapping`) for a client; an upload names it with the form
 field `profile_id`. A mapping wins over name matching, applies to CSV only, and
 belongs to one client and one source (`app/importers/profiles.py`). It works for
-all eleven CSV sources, the six of phase 4 included. The editor page with a
-preview is part 2 of phase 4 (Frontend); this part provides the API.
+all eleven CSV sources, the six of phase 4 included.
+
+### The profile editor page
+
+`/imports/profile-editor` (signed in, phase 4 part 2) builds a mapping for one of
+the six generic sources in the browser:
+
+1. Choose the client, the source and the vendor file, and read it.
+2. For each column of the source choose the file column that holds it
+   (dropdowns). Columns found by their name are chosen already. Columns the
+   adapters never read (serial numbers, client names), names longer than 100
+   characters, names that are not printable or look like an email address, and
+   repeated names are not offered; the page says how many were hidden.
+3. Check the first 20 rows the way the importer reads them
+   (`app/importers/preview.py`, with the same column resolution and cell readers
+   as the import): a rejected row shows its reason, a time without a time zone is
+   marked "UTC assumed" (icon and text), an identifier is shown only as the
+   client's pseudonym, and text is cut and formula-neutralised as it would be
+   stored. Every cell is escaped.
+4. Save the profile (`save_profile`, the same function as the API). A missing
+   required column is listed by name and the save is refused with 422.
+5. Import the file with a saved profile (`add_evidence`, as the API upload).
+   The page shows the stored counts of the summary.
+
+The forms post with htmx so the chosen file stays in the page between steps;
+without JavaScript each button posts the whole page. Every POST needs the CSRF
+token, and the upload size limit applies to the editor's POSTs as to the API.
+The file is only read for the preview and save; it is kept only when imported,
+under the usual retention rules. Nothing of its content is logged.
 
 ## The five Microsoft sources
 

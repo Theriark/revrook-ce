@@ -27,6 +27,7 @@ from app.evidence.service import (
 from app.importers.registry import build_default_registry
 from app.models import AppUser, AuditEvent
 from app.settings import Settings
+from tools import make_generic_fixtures
 
 PASSWORD = "correct horse battery staple"
 WRONG_PASSWORD = "not the right password at all"
@@ -50,6 +51,39 @@ LOG_COLUMNS = (
 )
 DISABLE_TRIGGERS = text("ALTER TABLE evidence_log DISABLE TRIGGER USER")
 ENABLE_TRIGGERS = text("ALTER TABLE evidence_log ENABLE TRIGGER USER")
+# The device inventory columns as a vendor might name them: column key to file
+# column. None of these names is a label or an alias of a column of the contract.
+VENDOR_COLUMNS = {
+    "hostname": "Machine",
+    "os": "Platform",
+    "form_factor": "Chassis",
+    "os_build": "Build",
+    "last_seen": "Seen at",
+    "patch_status": "Patch state",
+    "pending_critical_updates": "Critical patches",
+    "last_patch": "Patched at",
+    "av_product": "Antivirus",
+    "av_status": "Antivirus state",
+    "av_signature_date": "Definitions",
+    "disk_encrypted": "BitLocker",
+    "local_admin_count": "Admins",
+    "tamper_protection": "Tamper",
+    "dns_filter_active": "DNS filter",
+    "log_forwarding": "Syslog",
+    "user": "Owner",
+}
+# The vendor's required columns only, in the order of vendor_device_row.
+VENDOR_REQUIRED = (
+    "hostname",
+    "os",
+    "last_seen",
+    "patch_status",
+    "pending_critical_updates",
+    "av_product",
+    "av_status",
+    "av_signature_date",
+    "disk_encrypted",
+)
 COLUMNS = ", ".join(LOG_COLUMNS)
 SELECT_LOG = text(
     f"SELECT {COLUMNS} FROM evidence_log WHERE client_id = :client_id ORDER BY id"
@@ -146,6 +180,36 @@ def users_csv(users: tuple[tuple[str, bool], ...] = SYNTHETIC_USERS) -> bytes:
     lines = ["user_principal_name,mfa_registered"]
     lines += [f"{upn},{'true' if flag else 'false'}" for upn, flag in users]
     return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def vendor_inventory() -> bytes:
+    """The canonical device inventory fixture with the vendor's column names."""
+    fixture = make_generic_fixtures.device_inventory_csv()
+    header, rest = fixture.data.decode("utf-8").split("\n", 1)
+    renamed = [VENDOR_COLUMNS.get(name, name) for name in header.split(",")]
+    return (",".join(renamed) + "\n" + rest).encode("utf-8")
+
+
+def vendor_header() -> list[str]:
+    """The vendor's names of the required device inventory columns."""
+    return [VENDOR_COLUMNS[key] for key in VENDOR_REQUIRED]
+
+
+def vendor_device_row(
+    host: str, product: str, seen: str = "2026-10-16T08:00:00"
+) -> list[str]:
+    """One device under vendor_header(); the time has no time zone."""
+    return [
+        host,
+        "Windows 11",
+        seen,
+        "up_to_date",
+        "0",
+        product,
+        "protected",
+        "2026-10-15T08:00:00Z",
+        "true",
+    ]
 
 
 def make_context(settings: Settings, root: Path, **changes: Any) -> EvidenceContext:
