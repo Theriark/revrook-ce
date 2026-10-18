@@ -164,6 +164,7 @@ def share_vectors(
     make: Make,
     absent_reason: str = LOS,
     unresolved_rows: bool = False,
+    left_out_name: str = "unknown-rows-left-out",
 ) -> list[Vector]:
     """The vectors of a share rule; `make(good, bad, unknown)` builds the evidence.
 
@@ -215,7 +216,7 @@ def share_vectors(
         ]
     else:
         status = share_status(rule, top, 100)
-        found.append(vec("unknown-rows-left-out", left_out, status, None, top, 100))
+        found.append(vec(left_out_name, left_out, status, None, top, 100))
     found += [
         vec("unknown-field-absent", make(0, 0, 5), "unknown", absent_reason),
         vec("unknown-source-missing", ev(), "unknown", absent_reason),
@@ -321,7 +322,9 @@ def bck_01(control: Mapping[str, Any]) -> list[Vector]:
             return ev({"backup-export": src({"job": [rep(5, JOB, "asset", "o")]})})
         return servers(good)
 
-    found = share_vectors(rule, make)
+    # The maker builds the same 100 servers whatever `unknown` says, and every
+    # evidence adds one job of an asset that is not a server: it is not counted.
+    found = share_vectors(rule, make, left_out_name="job-of-a-non-server-not-counted")
     # A schedule of 24 hours times the factor of the file is the longest age.
     limit = int(hours)
     exact = {**JOB, "last_success": ago(hours=limit)}
