@@ -15,6 +15,14 @@ from typing import Any
 import pytest
 import yaml
 
+from app.checks.library import (
+    CONTROLS_PATH,
+    build_library,
+    derived_field_list,
+    load_library,
+    parse_yaml,
+    validate_document,
+)
 from app.importers.registry import build_default_registry
 from tools import make_fixtures
 
@@ -195,3 +203,48 @@ def test_every_unavailable_field_is_explained_in_the_importer_docs() -> None:
     docs = (Path(__file__).parent.parent / "docs" / "importers.md").read_text()
     for field_id in load_spec()["unavailable"]:
         assert f"`{field_id}`" in docs, field_id
+
+
+# --- phase 5: the list must stay equal to data/controls.yaml -----------------------
+
+
+def raw_controls() -> dict[str, Any]:
+    document = parse_yaml(CONTROLS_PATH.read_text(encoding="utf-8"))
+    assert isinstance(document, dict)
+    return document
+
+
+def test_the_field_list_equals_the_one_derived_from_controls_yaml() -> None:
+    assert derived_field_list(load_library()) == load_spec()
+
+
+def test_the_derived_field_list_passes_the_adapter_cross_check() -> None:
+    assert find_problems(derived_field_list(load_library()), provided_by()) == []
+
+
+def test_an_orphan_field_in_controls_yaml_is_refused_and_breaks_the_equality() -> None:
+    document = raw_controls()
+    for control in document["controls"]:
+        if control["id"] == "PC-NET-05":
+            control["fields"].append("N.invented_field")
+    problems = validate_document(document)
+    assert "PC-NET-05: orphan field N.invented_field" in problems
+    derived = derived_field_list(build_library(document))
+    assert derived != load_spec()
+    assert find_problems(derived, provided_by()) == [
+        "orphan field N.invented_field of PC-NET-05"
+    ]
+
+
+def test_a_changed_column_or_reason_in_controls_yaml_breaks_the_equality() -> None:
+    document = raw_controls()
+    document["field_map"]["R.dns_filter_active"]["column"] = "renamed_column"
+    assert derived_field_list(build_library(document)) != load_spec()
+    document = raw_controls()
+    document["unavailable"]["G.securityAlerts"] = "dnscheck"
+    assert derived_field_list(build_library(document)) != load_spec()
+    document = raw_controls()
+    for control in document["controls"]:
+        if control["id"] == "PC-NET-05":
+            control["fields"] = []
+    assert derived_field_list(build_library(document)) != load_spec()
