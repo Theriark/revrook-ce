@@ -1,6 +1,7 @@
 """Command line entry point.
 
-Subcommands: web, worker, all, migrate, verify-chain, make-fixtures.
+Subcommands: web, worker, all, migrate, verify-chain, verify-controls,
+make-fixtures.
 Without a subcommand the ROLE setting (web, worker or all; default all) decides.
 """
 
@@ -17,6 +18,8 @@ import uvicorn
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app.checks.library import ControlLibraryError, describe, load_library
+from app.checks.reference import load_reference_names, reference_problems
 from app.db import make_engine
 from app.evidence.chain import ChainResult, verify_all
 from app.migrate import upgrade_to_head
@@ -108,6 +111,27 @@ def verify_chain_command(settings: Settings) -> int:
     return 1 if broken else 0
 
 
+def verify_controls_command() -> int:
+    """Load the control library and the NIST names. Exit 0 valid, 1 not.
+
+    Needs no database and no keys: it only reads data/controls.yaml and data/nist.
+    """
+    try:
+        library = load_library()
+        references = load_reference_names()
+    except ControlLibraryError as error:
+        print(f"revrook verify-controls: {error}")
+        return 1
+    problems = reference_problems(library, references)
+    if problems:
+        print("revrook verify-controls: " + "; ".join(problems))
+        return 1
+    print(describe(library))
+    for key in sorted(references):
+        print(f"{references[key].framework}: {len(references[key].names)} names")
+    return 0
+
+
 def _serve_web(settings: Settings) -> int:  # pragma: no cover
     # The first-run page needs the tables, so the web role brings the schema up
     # to date before it listens (a locked, one-at-a-time step; see app.migrate).
@@ -143,6 +167,9 @@ def _build_parser() -> argparse.ArgumentParser:
     subcommands.add_parser("all", help="run web and worker as two processes")
     subcommands.add_parser("migrate", help="bring the database schema up to date")
     subcommands.add_parser("verify-chain", help="verify the evidence hash chains")
+    subcommands.add_parser(
+        "verify-controls", help="check the control library and the NIST names"
+    )
     for name, reason in STUBS.items():
         subcommands.add_parser(name, help=reason)
     return parser
@@ -153,6 +180,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command in STUBS:
         print(f"revrook {args.command}: {STUBS[args.command]}", file=sys.stderr)
         return 2
+    if args.command == "verify-controls":
+        return verify_controls_command()
     try:
         settings = load_settings()
     except SettingsError as error:
