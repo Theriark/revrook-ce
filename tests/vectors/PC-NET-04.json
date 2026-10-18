@@ -10,6 +10,7 @@
     {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": false, "guest_ssid": true, "security_mode": "wpa2", "ssid": "g"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "guest-not-isolated"},
     {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": true, "security_mode": "wpa2", "ssid": "g"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "guest-isolation-unknown"},
     {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "wpa2", "ssid": "s1"}, {"guest_isolated": null, "guest_ssid": false, "security_mode": null, "ssid": "s2"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "mode-unknown"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "other", "ssid": "s1"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "unrecognised-mode"},
     {"evidence": {"sources": {"network-export": {"kinds": {"ssid": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-wifi-network"},
     {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
   ]
