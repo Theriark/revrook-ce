@@ -59,6 +59,7 @@ from app.importers.framework import (
     slug,
     summary_fact,
 )
+from app.pseudonym import normalise_identifier
 
 SENSITIVE_FIELDS = frozenset({"imei", "phonenumber", "activationlockbypasscode"})
 USER_TYPES = {"member": "member", "guest": "guest"}
@@ -756,9 +757,9 @@ class DirectoryRolesAdapter(MicrosoftAdapter):
         not_users: int,
         input_format: str,
     ) -> dict[str, FactValue]:
-        users = {fact.identifiers["user"].lower() for fact in facts}
+        users = {normalise_identifier(fact.identifiers["user"]) for fact in facts}
         admins = {
-            fact.identifiers["user"].lower()
+            normalise_identifier(fact.identifiers["user"])
             for fact in facts
             if fact.value["global_admin"] is True
         }

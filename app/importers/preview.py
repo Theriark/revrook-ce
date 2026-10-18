@@ -354,4 +354,13 @@ def build_preview(
             rows.append(preview_row(adapter, number, raw, shown, pseudonymise))
     except ImportRejectedError as error:
         problem_found = str(error)
+    if (
+        problem_found is None
+        and rows
+        and not more
+        and all(row.reason is not None for row in rows)
+    ):
+        # The whole file is on show and no row can be read: the import refuses it
+        # (Rejects.require_usable), so the preview must not offer it for saving.
+        problem_found = f"No row of the file could be read. {rows[0].reason}"
     return Preview(choices, offered, hidden, (), problem_found, tuple(rows), more)
