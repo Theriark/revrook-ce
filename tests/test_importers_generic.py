@@ -418,6 +418,78 @@ def test_safe_text_names_the_field_and_leaves_other_at_signs_alone() -> None:
     assert safe_text("price @ 5") == "price @ 5"
 
 
+def test_safe_text_checks_the_text_as_stored_after_the_formula_prefix() -> None:
+    with pytest.raises(RowError, match="Course must not contain an email address"):
+        safe_text("@acme.com", label="Course")
+    stored = safe_text("@acme")
+    assert stored == "'@acme"
+    assert not EMAIL_LIKE.search(stored)
+    assert not store_pattern.search(safe_text("=1+1"))
+
+
+def test_a_text_starting_with_an_at_sign_and_a_dot_rejects_only_its_row() -> None:
+    bad = with_cell(GOOD_DEVICE, "av_product", "@acme.com")
+    good = with_cell(GOOD_DEVICE, "hostname", "host-2")
+    result = parse("device-inventory", devices(GOOD_DEVICE, bad, good))
+    summary = summary_of(result)
+    assert (summary["devices"], summary["rows_rejected"]) == (2, 1)
+    assert reasons(result) == ["av_product must not contain an email address"]
+    for fact in result.facts:
+        assert not any(
+            isinstance(item, str) and store_pattern.search(item)
+            for item in fact.value.values()
+        )
+
+
+def test_width_variants_of_one_user_or_asset_are_counted_once() -> None:
+    plain, wide = "alice@x.invalid", "ａlice@x.invalid"
+    when = "2026-10-16T08:00:00Z"
+    people = [plain, wide, " ALICE@x.invalid"]
+    training = to_csv(
+        ["user_id", "course", "completed_utc"],
+        [[person, "Phishing", when] for person in people],
+    )
+    assert summary_of(parse("training-csv", training))["users"] == 1
+    leavers = to_csv(["user_id", "leave_date"], [[plain, when], [wide, when]])
+    assert summary_of(parse("leavers-csv", leavers))["users"] == 1
+    header = [
+        "system_or_device",
+        "backup_job",
+        "last_success",
+        "last_result",
+        "retention_days",
+        "restore_test_date",
+    ]
+    systems = ["srv-1", "ｓrv-1"]
+    rows = [[name, "job", when, "success", "30", when] for name in systems]
+    assert summary_of(parse("backup-export", to_csv(header, rows)))["assets"] == 1
+
+
+def test_common_direction_and_action_words_make_an_open_inbound_allow_rule() -> None:
+    header = ["record_type", "rule_enabled", "direction", "action", "source", "port"]
+    rows = [
+        ["rule", "true", "Ingress", "Accept", "Anywhere", "443"],
+        ["rule", "true", "Incoming", "Accept", "any", "anywhere"],
+    ]
+    summary = summary_of(parse("network-export", to_csv(header, rows)))
+    assert summary["rules"] == 2
+    assert summary["rules_inbound"] == 2
+    assert summary["rules_allow"] == 2
+    assert summary["rules_any_source"] == 2
+
+
+def test_a_semicolon_separated_file_is_refused_saying_so() -> None:
+    data = b"user_id;course;completed_utc\nalice@x.invalid;Phishing;2026-10-16\n"
+    with pytest.raises(ImportRejectedError, match="semicolon") as refused:
+        parse("training-csv", data)
+    assert "must be comma separated" in str(refused.value)
+    assert "missing the column" in str(refused.value)
+    commas = b"course,completed_utc\nPhishing,2026-10-16\n"
+    with pytest.raises(ImportRejectedError, match="missing the column") as plain:
+        parse("training-csv", commas)
+    assert "semicolon" not in str(plain.value)
+
+
 # --- dates without a time zone --------------------------------------------------------
 
 

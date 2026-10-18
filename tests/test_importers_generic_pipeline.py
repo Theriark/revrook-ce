@@ -157,6 +157,20 @@ async def test_an_email_like_text_rejects_the_row_and_not_the_upload(
     assert DOMAIN not in await database_dump(db_engine)
 
 
+async def test_an_at_sign_text_with_a_dot_rejects_the_row_and_not_the_upload(
+    db_engine: AsyncEngine, ctx: EvidenceContext
+) -> None:
+    client_id = await create_test_client(db_engine, ctx)
+    header = list(VENDOR_MAPPING.values())
+    second = ["vendor-host-2", *VENDOR_ROW[1:]]
+    flagged = ["vendor-host-3", *VENDOR_ROW[1:5], "@acme.com", *VENDOR_ROW[6:]]
+    data = to_csv(header, [VENDOR_ROW, flagged, second])
+    stored = await upload(db_engine, ctx, client_id, export("device-inventory", data))
+    summary = summary_of(await facts_of(db_engine, stored.item_id))
+    assert (summary["devices"], summary["rows_rejected"]) == (2, 1)
+    assert "acme.com" not in await database_dump(db_engine)
+
+
 async def test_a_wrong_file_is_rejected_naming_the_missing_column(
     db_engine: AsyncEngine, ctx: EvidenceContext
 ) -> None:
