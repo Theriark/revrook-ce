@@ -12,9 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __version__, api
+from app.checks.library import load_library
 from app.clock import Clock, utcnow
 from app.crypto import FieldCipher
 from app.db import check_database, make_engine
+from app.dns_resolver import make_resolver
 from app.evidence.files import FileStore
 from app.importers.registry import build_default_registry
 from app.limits import UploadSizeLimitMiddleware
@@ -74,6 +76,8 @@ def create_app(
     app.state.api_limiter = api.make_api_limiter()
     app.state.files = FileStore(resolved.evidence_dir)
     app.state.importers = build_default_registry()
+    app.state.library = load_library()
+    app.state.dns_resolver = make_resolver(resolved.dns_resolver)
     # Added first, so the security headers (added next) wrap its refusals too.
     app.add_middleware(
         UploadSizeLimitMiddleware, max_file_bytes=resolved.import_max_bytes

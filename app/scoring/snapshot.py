@@ -19,6 +19,7 @@ Trends compare only snapshots of the same ruleset and the same ruleset major ver
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -29,6 +30,7 @@ from app.checks.library import Library
 from app.checks.model import ControlResult, Status
 from app.scoring.display import format_fixed, percent
 from app.scoring.engine import (
+    check_inputs,
     control_inputs,
     domain_weights,
     require_aware,
@@ -44,6 +46,14 @@ from app.scoring.model import (
 
 SCHEMA_VERSION = 1
 STATUSES = frozenset({"pass", "partial", "fail", "unknown", "na"})
+# What a stored number may look like. A fraction is written n/d with plain digits
+# (never an exponent: Fraction("1e999999999") would try to build a number with a
+# billion digits), and no whole number of a snapshot comes near the cap below.
+FRACTION_TEXT = re.compile(r"-?[0-9]+/[0-9]+")
+MAX_FRACTION_TEXT = 80
+MAX_WHOLE = 1_000_000
+MAX_NAME_LENGTH = 64
+MAX_SCORE = 100
 Json = dict[str, Any]
 
 
@@ -263,6 +273,8 @@ def _text(value: object) -> str:
 def _whole(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise TypeError("a whole number was expected")
+    if not 0 <= value <= MAX_WHOLE:
+        raise ValueError(f"a whole number from 0 to {MAX_WHOLE} was expected")
     return value
 
 
@@ -274,10 +286,35 @@ def _flag(value: object) -> bool:
 
 def _fraction(value: object) -> Fraction:
     text = _text(value)
+    if len(text) > MAX_FRACTION_TEXT or FRACTION_TEXT.fullmatch(text) is None:
+        shown = text if len(text) <= 40 else text[:40] + "..."
+        raise ValueError(f"{shown} is not a fraction in lowest terms")
     parsed = Fraction(text)
     if _fraction_text(parsed) != text:
         raise ValueError(f"{text} is not a fraction in lowest terms")
     return parsed
+
+
+def _share(value: object) -> Fraction:
+    """A fraction from 0 to 1 (a coverage or a share of the weight)."""
+    parsed = _fraction(value)
+    if not 0 <= parsed <= 1:
+        raise ValueError(f"{_fraction_text(parsed)} is not between 0 and 1")
+    return parsed
+
+
+def _name(value: object) -> str:
+    text = _text(value)
+    if not text or len(text) > MAX_NAME_LENGTH:
+        raise ValueError(f"a name must have 1 to {MAX_NAME_LENGTH} characters")
+    return text
+
+
+def _score_limit(value: object) -> int:
+    limit = _whole(value)
+    if limit > MAX_SCORE:
+        raise ValueError(f"{limit} is above the highest score, {MAX_SCORE}")
+    return limit
 
 
 def _time(value: object) -> datetime:
@@ -291,16 +328,28 @@ def _status(value: object) -> Status:
     return cast(Status, text)
 
 
+def _band(raw: object) -> tuple[str, int]:
+    band = _array(raw)
+    name, lowest = _name(band[0]), _score_limit(band[1])
+    if len(band) != 2:
+        raise ValueError("a band is a name and the lowest score of it")
+    return name, lowest
+
+
 def _thresholds(raw: object) -> Thresholds:
     item = _object(raw)
+    bands = tuple(_band(band) for band in _array(item["bands"]))
+    lowest = [score for _, score in bands]
+    if not bands or lowest != sorted(lowest, reverse=True):
+        raise ValueError("the bands must run from the best down")
     return Thresholds(
-        cap_fail=_whole(item["cap_fail"]),
-        cap_partial=_whole(item["cap_partial"]),
-        min_coverage=_fraction(item["min_coverage"]),
-        na_flag_above=_fraction(item["na_flag_above"]),
-        bands=tuple((_text(band[0]), _whole(band[1])) for band in item["bands"]),
-        lowest_band=_text(item["lowest_band"]),
-        insufficient_band=_text(item["insufficient_band"]),
+        cap_fail=_score_limit(item["cap_fail"]),
+        cap_partial=_score_limit(item["cap_partial"]),
+        min_coverage=_share(item["min_coverage"]),
+        na_flag_above=_share(item["na_flag_above"]),
+        bands=bands,
+        lowest_band=_name(item["lowest_band"]),
+        insufficient_band=_name(item["insufficient_band"]),
     )
 
 
@@ -324,7 +373,7 @@ def _inputs(document: Json) -> SnapshotInput:
     if document["schema"] != SCHEMA_VERSION:
         raise ValueError(f"schema {document['schema']} is not {SCHEMA_VERSION}")
     ruleset = _object(document["ruleset"])
-    return SnapshotInput(
+    snapshot = SnapshotInput(
         ruleset_id=_text(ruleset["id"]),
         ruleset_version=_text(ruleset["version"]),
         importer_version=_text(document["importer_version"]),
@@ -340,6 +389,8 @@ def _inputs(document: Json) -> SnapshotInput:
             for item in map(_object, _array(document["evidence"]))
         ),
     )
+    check_inputs(snapshot.controls, snapshot.domains)
+    return snapshot
 
 
 def parse_snapshot(data: bytes) -> SnapshotInput:
@@ -355,7 +406,15 @@ def parse_snapshot(data: bytes) -> SnapshotInput:
         if hashlib.sha256(_canonical(body)).hexdigest() != stored:
             raise ValueError("the digest does not match the content")
         return _inputs(document)
-    except (KeyError, IndexError, TypeError, ValueError, ZeroDivisionError) as error:
+    except (
+        KeyError,
+        IndexError,
+        TypeError,
+        ValueError,
+        ZeroDivisionError,
+        OverflowError,
+        RecursionError,
+    ) as error:
         raise SnapshotError(f"the snapshot cannot be read: {error}") from error
 
 
