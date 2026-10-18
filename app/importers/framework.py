@@ -2,8 +2,10 @@
 
 What every adapter needs, written once:
 
-* reading text (BOM, UTF-16, charset detection) and CSV (streaming, header
-  detection by column names and never by file name, saved column mappings);
+* reading text (BOM, UTF-16, charset detection) and CSV (rows are read one at a
+  time from the text in memory, which the evidence store has already limited to
+  20 MB; header detection by column names and never by file name, saved column
+  mappings);
 * reading JSON with a size limit, a depth limit and a limit on list length;
 * turning a cell into a flag, a number, a time or a short safe text;
 * per-row rejects: a row that cannot be read is skipped and counted, with a
@@ -41,6 +43,8 @@ NUMBER_SCALE = Decimal(1).scaleb(-MAX_DECIMAL_PLACES)
 EARLIEST_TIME = datetime(2000, 1, 1, tzinfo=UTC)
 LATEST_TIME = datetime(2100, 1, 1, tzinfo=UTC)
 FORMULA_STARTS = ("=", "+", "-", "@")
+# What the evidence store treats as an email address in a stored value.
+EMAIL_LIKE = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 TRUE_WORDS = frozenset({"true", "yes", "1"})
 FALSE_WORDS = frozenset({"false", "no", "0"})
 UNREADABLE_CSV = (
@@ -446,14 +450,21 @@ def number_text(number: Decimal) -> str:
     return format(number.quantize(NUMBER_SCALE).normalize(), "f")
 
 
-def safe_text(value: object, limit: int = MAX_TEXT_LENGTH) -> str:
+def safe_text(
+    value: object, limit: int = MAX_TEXT_LENGTH, label: str = "A text field"
+) -> str:
     """Text kept in a fact.
 
     Printable characters only, cut to `limit`, and never starting like a
-    spreadsheet formula.
+    spreadsheet formula. Text that looks like an email address is a row error
+    (RowError names `label`): the evidence store would refuse the whole upload
+    for it, and a short text field is never meant to hold a person's address.
+    Call it only while reading a row.
     """
     text = value if isinstance(value, str) else ""
     cleaned = "".join(char for char in text if char.isprintable()).strip()[:limit]
+    if EMAIL_LIKE.search(cleaned):
+        raise RowError(f"{label} must not contain an email address")
     return "'" + cleaned if cleaned.startswith(FORMULA_STARTS) else cleaned
 
 
