@@ -200,8 +200,11 @@ to are included. A NIST name is shown only for a verified row, with the credit
   not exist yet; the engine takes it as `Evidence.lifecycle` and is unknown without
   it.
 - PC-EML-01 to 03 read the facts of our own DNS check (phase 7), in the shape
-  documented in `app/checks/email.py`. Until phase 7 stores them these three
-  controls are unknown with `licence_or_scope`.
+  documented in `app/checks/email.py`. A client that has never been checked has
+  these three controls unknown with `licence_or_scope`. Phase 7 stores a check as
+  evidence of the source `dns-check` (`app/dns_service.py`); a lookup that timed out
+  or failed is stored as `lookup_failed` with its reason and the controls are then
+  unknown with `lookup_failed`, never a fail. See `docs/dns-check.md`.
 
 ## Known gaps (not fixed in phase 5)
 

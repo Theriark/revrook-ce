@@ -401,6 +401,19 @@ Facts: `exchange.dkim`, `exchange.policy`, `exchange.mailbox`, `exchange.audit`,
 `alert_risky_sign_in_enabled`, `alert_acknowledged_newest`,
 `unread_columns_present`.
 
+## The public DNS check (phase 7)
+
+`dns-check` (prefix `dns`) is the one source that is not a file: the application asks
+the public DNS for the mail domains the MSP enters (`app/checks/dnscheck.py`) and
+writes the result as a small JSON document that its own adapter reads
+(`app/importers/dnscheck.py`). The adapter is not in the default registry, so nobody
+can upload a `dns-check` file by hand. The domain is an identifier and becomes the
+client's pseudonym, the same one the `domain` of the Exchange DKIM rows gets. The
+capture time is the time the run started. Facts: `dns.domain` (the columns the
+controls PC-EML-01 to 03 read, see `docs/dns-check.md`) and `dns.summary`
+(`domains`, `lookups_failed`). `POST /api/v1/clients/{id}/dns-check` runs it and
+`GET` reads the three controls with their capture time.
+
 ## The fields of the 51 controls (phase 4)
 
 `tests/control_fields.yaml` lists, for each control of ruleset PC-RULES v0.1
@@ -431,9 +444,9 @@ known gap from an orphan.
 | `G.licensedMailboxes` | `licence_or_scope` | The licence listing is not among the five Microsoft exports. |
 | `R.threats` | `licence_or_scope` | Depends on the antivirus product; not part of the common device contract. |
 | `R.installed_software` | `shipped_list` | Compared with a table we ship and version; no importer carries it. |
-| `D.spf` | `dnscheck` | Comes from the public DNS check of phase 7, not from a file. |
-| `D.dkim_selectors` | `dnscheck` | Comes from the public DNS check of phase 7, not from a file. |
-| `D.dmarc` | `dnscheck` | Comes from the public DNS check of phase 7, not from a file. |
+| `D.spf` | `dnscheck` | Comes from the public DNS check of phase 7 (source `dns-check`, see above), not from a file. |
+| `D.dkim_selectors` | `dnscheck` | Comes from the public DNS check of phase 7 (source `dns-check`), not from a file. |
+| `D.dmarc` | `dnscheck` | Comes from the public DNS check of phase 7 (source `dns-check`), not from a file. |
 
 A field of the table above that a later phase adds an importer for moves into the
 `fields` section of `tests/control_fields.yaml` in the same change.
