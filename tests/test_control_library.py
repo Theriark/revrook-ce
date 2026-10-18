@@ -368,6 +368,16 @@ def test_a_missing_or_unreadable_file_is_a_named_error(tmp_path: Path) -> None:
         load_library(empty)
 
 
+def test_a_file_that_is_not_utf8_is_a_named_error_not_a_traceback(
+    tmp_path: Path,
+) -> None:
+    """Part 1 review NB1: invalid UTF-8 raises UnicodeDecodeError, a ValueError."""
+    path = tmp_path / "latin1.yaml"
+    path.write_bytes(b"ruleset: caf\xe9 \xff\xfe\n")
+    with pytest.raises(ControlLibraryError, match="latin1.yaml cannot be read"):
+        load_library(path)
+
+
 def test_every_problem_is_listed_and_the_message_is_short() -> None:
     document = raw_document()
     for control in document["controls"]:
