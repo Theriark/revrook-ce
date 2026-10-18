@@ -10,7 +10,6 @@ from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
-from dns_helpers import StaticResolver, Zone, resolver_for, zone
 
 from app.checks import dnscheck
 from app.checks.dnscheck import (
@@ -28,6 +27,7 @@ from app.checks.dnscheck import (
     evaluate_spf,
     run_checks,
 )
+from dns_helpers import StaticResolver, Zone, resolver_for, zone
 
 DOMAIN = "client.example"
 AT = datetime(2026, 10, 18, 9, 0, tzinfo=UTC)
