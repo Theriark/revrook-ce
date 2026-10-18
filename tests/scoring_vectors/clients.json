@@ -1,0 +1,122 @@
+{
+  "note": "Scoring vectors of clients A, B and C (phase-plan-3, last section; hand-computed, tolerance 0.05). A control is [status, quality, age in days of its evidence at the pack date]; an age of null means no evidence time. The age limit M of a control is read from the control file (the manual one for a quality below 1). Client C is client A with the controls listed under changes.",
+  "as_of": "2026-10-17T08:00:00+00:00",
+  "tolerance": "0.05",
+  "clients": {
+    "A": {
+      "story": "12 users, evidence complete and fresh; NET-04 not applicable (no wireless); DEV-06 unknown (profile not imported); manual-only items at their quality factors.",
+      "default": ["pass", "1", 0],
+      "controls": {
+        "PC-ACC-06": ["partial", "1", 0],
+        "PC-ACC-08": ["pass", "3/5", 0],
+        "PC-DEV-05": ["partial", "1", 0],
+        "PC-DEV-06": ["unknown", "0", null],
+        "PC-EML-03": ["partial", "1", 0],
+        "PC-EML-07": ["pass", "9/10", 0],
+        "PC-BCK-04": ["partial", "1", 0],
+        "PC-BCK-06": ["pass", "9/10", 0],
+        "PC-NET-04": ["na", "0", null],
+        "PC-LOG-02": ["partial", "1", 0],
+        "PC-LOG-04": ["partial", "1", 0],
+        "PC-LOG-05": ["pass", "3/5", 0],
+        "PC-GOV-01": ["pass", "9/10", 0],
+        "PC-GOV-02": ["pass", "9/10", 0],
+        "PC-GOV-04": ["pass", "9/10", 0],
+        "PC-GOV-05": ["partial", "9/10", 0],
+        "PC-GOV-07": ["pass", "3/5", 0]
+      },
+      "expect": {
+        "raw": "89.5",
+        "score": "89.5",
+        "best_case": "90.5",
+        "coverage_percent": 99,
+        "band": "Strong",
+        "cap": null,
+        "domains": {"ACC": "91.76", "DEV": "86.67", "END": "100", "EML": "87.69", "BCK": "90.77", "NET": "100", "LOG": "78.18", "GOV": "82.50"}
+      }
+    },
+    "B": {
+      "story": "35 users; RMM export 9 days old (F7 controls f = 5/7); backup export 20 days old (F7 controls f = 0); several items missing. The statuses of LOG and GOV that the plan leaves open (it gives only the contributions 3.0 and 3.4 and the best-case domain scores 54.55 and 78.33) are chosen to fit those numbers: LOG-03 and LOG-05 unknown, GOV-02, GOV-04 and GOV-05 unknown, the rest fail.",
+      "controls": {
+        "PC-ACC-01": ["partial", "1", 0],
+        "PC-ACC-02": ["pass", "1", 0],
+        "PC-ACC-03": ["partial", "1", 0],
+        "PC-ACC-04": ["fail", "1", 0],
+        "PC-ACC-05": ["pass", "1", 0],
+        "PC-ACC-06": ["fail", "1", 0],
+        "PC-ACC-07": ["pass", "1", 0],
+        "PC-ACC-08": ["unknown", "0", null],
+        "PC-DEV-01": ["partial", "1", 0],
+        "PC-DEV-02": ["pass", "1", 9],
+        "PC-DEV-03": ["pass", "1", 0],
+        "PC-DEV-04": ["pass", "1", 0],
+        "PC-DEV-05": ["partial", "1", 0],
+        "PC-DEV-06": ["unknown", "0", null],
+        "PC-DEV-07": ["fail", "1", 0],
+        "PC-END-01": ["pass", "1", 9],
+        "PC-END-02": ["partial", "1", 9],
+        "PC-END-03": ["pass", "1", 0],
+        "PC-END-04": ["unknown", "0", null],
+        "PC-END-05": ["pass", "1", 0],
+        "PC-EML-01": ["pass", "1", 0],
+        "PC-EML-02": ["fail", "1", 0],
+        "PC-EML-03": ["fail", "1", 0],
+        "PC-EML-04": ["partial", "1", 0],
+        "PC-EML-05": ["partial", "1", 0],
+        "PC-EML-06": ["pass", "1", 0],
+        "PC-EML-07": ["unknown", "0", null],
+        "PC-BCK-01": ["pass", "1", 20],
+        "PC-BCK-02": ["pass", "1", 20],
+        "PC-BCK-03": ["pass", "1", 60],
+        "PC-BCK-04": ["pass", "1", 20],
+        "PC-BCK-05": ["pass", "1", 20],
+        "PC-BCK-06": ["fail", "9/10", 0],
+        "PC-NET-01": ["pass", "1", 0],
+        "PC-NET-02": ["partial", "1", 0],
+        "PC-NET-03": ["pass", "1", 0],
+        "PC-NET-04": ["pass", "1", 0],
+        "PC-NET-05": ["fail", "1", 0],
+        "PC-LOG-01": ["pass", "1", 0],
+        "PC-LOG-02": ["fail", "1", 0],
+        "PC-LOG-03": ["unknown", "0", null],
+        "PC-LOG-04": ["fail", "1", 0],
+        "PC-LOG-05": ["unknown", "0", null],
+        "PC-LOG-06": ["fail", "1", 0],
+        "PC-GOV-01": ["pass", "9/10", 0],
+        "PC-GOV-02": ["unknown", "0", null],
+        "PC-GOV-03": ["partial", "1", 0],
+        "PC-GOV-04": ["unknown", "0", null],
+        "PC-GOV-05": ["unknown", "0", null],
+        "PC-GOV-06": ["fail", "1", 0],
+        "PC-GOV-07": ["pass", "3/5", 0]
+      },
+      "expect": {
+        "raw": "45.7",
+        "score": "45.7",
+        "best_case": "69.0",
+        "coverage_percent": 71,
+        "band": "Weak",
+        "cap": {"control": "PC-BCK-01", "limit": 49, "reason": "expired"},
+        "domains": {"ACC": "52.94", "DEV": "60.95", "END": "58.57", "EML": "38.46", "BCK": "30.77", "NET": "75.00", "LOG": "27.27", "GOV": "28.33"}
+      }
+    },
+    "C": {
+      "story": "As client A, except PC-ACC-02 fails (one administrator has no MFA), DEV-06 passes and NET-04 applies and passes.",
+      "base": "A",
+      "controls": {
+        "PC-ACC-02": ["fail", "1", 0],
+        "PC-DEV-06": ["pass", "1", 0],
+        "PC-NET-04": ["pass", "1", 0]
+      },
+      "expect": {
+        "raw": "86.6",
+        "score": "49.0",
+        "best_case": "49.0",
+        "coverage_percent": 100,
+        "band": "Weak",
+        "cap": {"control": "PC-ACC-02", "limit": 49, "reason": "fail"},
+        "domains": {"ACC": "74.12", "DEV": "93.33", "NET": "100"}
+      }
+    }
+  }
+}

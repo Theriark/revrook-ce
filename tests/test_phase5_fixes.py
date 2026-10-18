@@ -23,7 +23,9 @@ def test_a_long_run_of_spaces_in_a_source_is_read_in_linear_time() -> None:
     assert source_scope("a" + blanks + "b") is None
     assert source_scope("0.0.0.0" + blanks + "-" + blanks + "255.255.255.255") == "any"
     assert source_scope(blanks + "10.0.0.0/8" + blanks) == "restricted"
-    assert time.monotonic() - started < 2.0
+    # A quadratic scan of 100,000 blanks takes minutes; linear takes milliseconds.
+    # The bound only has to tell the two apart, so a slow CI machine cannot trip it.
+    assert time.monotonic() - started < 30.0
 
 
 def test_a_name_beside_a_spaced_dash_is_one_unreadable_word() -> None:
