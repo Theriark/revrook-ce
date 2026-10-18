@@ -1,6 +1,7 @@
 """Which importer handles which source code."""
 
 from app.importers.base import SOURCE_CODE_PATTERN, SourceImporter
+from app.importers.generic import ADAPTERS as GENERIC_ADAPTERS
 from app.importers.microsoft import ADAPTERS
 from app.importers.reference import ReferenceCsvImporter
 
@@ -30,10 +31,12 @@ def build_default_registry() -> ImporterRegistry:
     """The importers that ship with this version.
 
     The reference importer proves the pipeline; phase 3 adds the five Microsoft
-    sources (phase 4 adds the generic and administrative ones).
+    sources and phase 4 the six generic and administrative ones.
     """
     registry = ImporterRegistry()
     registry.register(ReferenceCsvImporter())
     for adapter in ADAPTERS:
         registry.register(adapter)
+    for generic in GENERIC_ADAPTERS:
+        registry.register(generic)
     return registry

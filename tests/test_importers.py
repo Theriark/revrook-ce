@@ -9,12 +9,18 @@ from app.importers.registry import ImporterRegistry, build_default_registry
 MAX_ROWS = 100
 HEADER = "user_principal_name,mfa_registered"
 SOURCES = [
+    "backup-export",
     "conditional-access",
+    "device-inventory",
     "directory-roles",
     "entra-registration",
+    "exchange-export",
     "intune-devices",
+    "leavers-csv",
+    "network-export",
     "reference-csv",
     "secure-score",
+    "training-csv",
 ]
 
 
