@@ -81,7 +81,12 @@ def test_no_service_depends_on_a_service_without_a_health_check() -> None:
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="bash is not installed")
 @pytest.mark.parametrize(
-    "script", ["scripts/e2e/phase_00.sh", "scripts/check_image_packages.sh"]
+    "script",
+    [
+        "scripts/e2e/phase_00.sh",
+        "scripts/e2e/phase_05.sh",
+        "scripts/check_image_packages.sh",
+    ],
 )
 def test_shell_scripts_parse(script: str) -> None:
     result = subprocess.run(
