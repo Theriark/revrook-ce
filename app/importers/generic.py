@@ -134,7 +134,7 @@ def _interval(token: str) -> Interval | None:
 
 
 def _whole_space(version: int) -> int:
-    return 2 ** (32 if version == 4 else 128)
+    return 1 << (32 if version == 4 else 128)
 
 
 def _source_token(token: str) -> str | None:
