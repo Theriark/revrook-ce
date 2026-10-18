@@ -246,6 +246,34 @@ main a:not([role="button"]) {
   background-color: var(--rv-white);
 }
 
+/* Profile editor: column choices in a grid, and a preview table that scrolls */
+.rv-mapping {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  column-gap: 1.5rem;
+}
+
+.rv-table-scroll {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.rv-table-scroll td {
+  max-width: 20rem;
+  overflow-wrap: anywhere;
+}
+
+.rv-pseudonym {
+  font-family: var(--pico-font-family-monospace);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-utc-flag {
+  display: block;
+  font-size: 13px;
+}
+
 /* Footer: charcoal with stone text and the short report disclaimer */
 .rv-footer {
   margin-top: 3rem;

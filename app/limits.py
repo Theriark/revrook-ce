@@ -5,7 +5,10 @@ import re
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-UPLOAD_PATH = re.compile(r"^/api/v1/clients/\d+/evidence(/\d+/revisions)?$")
+UPLOAD_PATH = re.compile(
+    r"^(/api/v1/clients/\d+/evidence(/\d+/revisions)?"
+    r"|/imports/profile-editor/(preview|save|import))$"
+)
 UPLOAD_METHODS = frozenset({"POST", "PUT", "PATCH"})
 # Room for the multipart boundaries and the small form fields around the file.
 FORM_OVERHEAD_BYTES = 64 * 1024

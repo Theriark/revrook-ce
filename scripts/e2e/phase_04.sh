@@ -7,6 +7,10 @@
 #     and flags) equals the manifest the generator wrote;
 #   - a vendor-style file with other column names imports through a saved mapping
 #     profile (API: save the profile, name it in the upload) and not without it;
+#   - the profile editor page (part 2) maps the canonical device inventory with
+#     renamed columns, previews it (UTC assumption flagged, nothing personal shown),
+#     refuses a missing required column (422) and a POST without CSRF (403), saves
+#     the profile and imports with it to the counts of the manifest;
 #   - a file missing a required column is refused with the column named;
 #   - hostile files: a formula cell is neutralised, a field above the CSV limit and
 #     JSON are refused, and an email-like text rejects its row and not the upload;
@@ -158,6 +162,111 @@ assumed="$(fact_of "${item}" "value->>'timezone_assumed_utc'" "fact_key = 'inven
 [[ "${devices}" == "1" ]] || fail "the mapped vendor file gave ${devices} devices, expected 1"
 [[ "${assumed}" == "true" ]] || fail "a date without a time zone was not flagged (${assumed})"
 echo "phase_04: vendor-style file imported through profile ${profile_id}, UTC assumption flagged"
+
+# The profile editor page (part 2), through HTTP with a signed browser session for
+# the first user: the canonical device inventory with every column renamed is read,
+# mapped, previewed, saved as a profile and imported, and its summary equals the
+# manifest. A missing required column is named and refused with 422; a POST without
+# the CSRF token is refused with 403.
+cookie="$(docker exec -i "${web}" python - <<'PY' | tail -n 1
+import asyncio
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from app.db import make_engine
+from app.models import AppUser
+from app.security import SessionCodec, SessionData, new_csrf_token
+from app.settings import load_settings
+
+
+async def main() -> None:
+    settings = load_settings()
+    engine = make_engine(settings.database_url)
+    try:
+        async with async_sessionmaker(engine)() as session:
+            found = await session.execute(
+                select(AppUser.id).order_by(AppUser.id).limit(1)
+            )
+            user_id = found.scalar_one()
+    finally:
+        await engine.dispose()
+    data = SessionData(csrf=new_csrf_token(), user_id=user_id)
+    print(SessionCodec(settings.secret_key).encode(data))
+
+
+asyncio.run(main())
+PY
+)"
+[[ -n "${cookie}" ]] || fail "no browser session was made for the profile editor"
+browser() { curl -sS --max-time 60 -b "revrook_session=${cookie}" "$@"; }
+editor="${BASE_URL}/imports/profile-editor"
+page="$(browser "${editor}")"
+[[ "${page}" == *"<title>Profile editor - revrook</title>"* ]] || fail "the profile editor page did not open"
+csrf="$(grep -o -m 1 'name="csrf_token" value="[^"]*"' <<<"${page}" | sed 's/.*value="//; s/"$//')"
+[[ -n "${csrf}" ]] || fail "the profile editor page has no CSRF token"
+
+canonical_header='hostname,os,form_factor,os_build,last_seen,patch_status,pending_critical_updates,last_patch,av_product,av_status,av_signature_date,disk_encrypted,local_admin_count,tamper_protection,dns_filter_active,log_forwarding,user,serial,client_name'
+[[ "$(head -n 1 "${fixtures}/device-inventory.csv")" == "${canonical_header}" ]] \
+  || fail "the device inventory fixture has another header than the editor step expects"
+editor_file="${work}/editor-vendor.csv"
+{
+  echo 'Machine,Platform,Chassis,Build,Seen at,Patch state,Critical patches,Patched at,Antivirus,Antivirus state,Definitions,BitLocker,Admins,Tamper,DNS filter,Syslog,Owner,serial,client_name'
+  tail -n +2 "${fixtures}/device-inventory.csv"
+} > "${editor_file}"
+editor_required=(
+  -F "map-hostname=Machine" -F "map-last_seen=Seen at" -F "map-patch_status=Patch state"
+  -F "map-pending_critical_updates=Critical patches" -F "map-av_product=Antivirus"
+  -F "map-av_status=Antivirus state" -F "map-av_signature_date=Definitions"
+  -F "map-disk_encrypted=BitLocker"
+)
+editor_maps=(
+  "${editor_required[@]}" -F "map-os=Platform" -F "map-form_factor=Chassis"
+  -F "map-os_build=Build" -F "map-last_patch=Patched at" -F "map-local_admin_count=Admins"
+  -F "map-tamper_protection=Tamper" -F "map-dns_filter_active=DNS filter"
+  -F "map-log_forwarding=Syslog" -F "map-user=Owner"
+)
+
+# editor_post ACTION [CURL ARGS...]: the HTTP status goes to stdout, the page to
+# ${work}/editor.html.
+editor_post() {
+  local action="$1"
+  shift
+  browser -o "${work}/editor.html" -w '%{http_code}' \
+    -F "client_id=${client_id}" -F "source_code=device-inventory" \
+    -F "file=@${editor_file};type=text/csv" "$@" "${editor}/${action}"
+}
+with_csrf=(-F "csrf_token=${csrf}")
+
+code="$(editor_post preview "${with_csrf[@]}" "${editor_maps[@]}")"
+[[ "${code}" == "200" ]] || fail "the editor preview returned ${code}"
+grep -qF 'id="rv-preview"' "${work}/editor.html" || fail "the editor shows no preview table"
+grep -qF '10 row(s) shown, 0 of them rejected.' "${work}/editor.html" || fail "the editor preview does not show the 10 rows"
+grep -qF 'UTC assumed' "${work}/editor.html" || fail "the editor preview does not flag the dates without a time zone"
+for needle in "$(jq -r .domain "${manifest}")" SERIAL-FIXTURE- FIXTURE-HOST- "Fixture Client Ltd"; do
+  if grep -qF -- "${needle}" "${work}/editor.html"; then fail "the editor preview shows '${needle}'"; fi
+done
+
+code="$(editor_post save "${with_csrf[@]}" "${editor_required[@]}" -F "name=Phase 04 editor short")"
+[[ "${code}" == "422" ]] || fail "a profile without the column os returned ${code}, expected 422"
+grep -qF 'missing the column os' "${work}/editor.html" || fail "the editor does not name the missing column os"
+
+code="$(editor_post save "${editor_maps[@]}" -F "name=Phase 04 editor no token")"
+[[ "${code}" == "403" ]] || fail "an editor POST without the CSRF token returned ${code}, expected 403"
+
+code="$(editor_post save "${with_csrf[@]}" "${editor_maps[@]}" -F "name=Phase 04 editor")"
+[[ "${code}" == "201" ]] || fail "the editor did not save the profile (${code})"
+editor_profile="$(sed -n 's/.*data-profile-id="\([0-9]*\)".*/\1/p' "${work}/editor.html")"
+[[ "${editor_profile}" =~ ^[0-9]+$ ]] || fail "the editor shows no saved profile id"
+
+code="$(editor_post import "${with_csrf[@]}" -F "profile_id=${editor_profile}" -F "captured_at=${captured}")"
+[[ "${code}" == "201" ]] || fail "the editor import returned ${code}"
+editor_item="$(sed -n 's/.*data-item-id="\([0-9]*\)".*/\1/p' "${work}/editor.html")"
+[[ "${editor_item}" =~ ^[0-9]+$ ]] || fail "the editor shows no imported evidence item"
+got="$(fact_of "${editor_item}" "value::text" "fact_key LIKE '%.summary'" | jq -S -c .)"
+want="$(jq -S -c '.files["device-inventory.csv"].expected' "${manifest}")"
+[[ "${got}" == "${want}" ]] || fail "the editor import summary ${got}, expected ${want}"
+echo "phase_04: profile editor: preview, missing column 422, no CSRF 403, profile ${editor_profile} saved, import equals the fixture counts"
 
 # A missing required column refuses the file and names the column.
 printf 'hostname,os\nphase04-short,Windows\n' > "${work}/short.csv"

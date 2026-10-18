@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block nav %}
+<ul>
+<li><a class="rv-nav-link" href="/">Home</a></li>
+<li><a class="rv-nav-link" href="/imports/profile-editor" aria-current="page">Profile editor</a></li>
+<li><a class="rv-nav-link" href="/evidence/integrity">Evidence integrity</a></li>
+<li>
+<form class="rv-inline-form" method="post" action="/logout">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">Sign out</button>
+</form>
+</li>
+</ul>
+{% endblock %}
+{% block content %}
+<h1>Profile editor</h1>
+<p>A mapping profile tells revrook which column of a vendor export holds which column of a source. Choose the file, map the columns, check the first 20 rows the way revrook reads them, save the profile, then import the file with it.</p>
+{% if not clients %}
+<p class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> There are no clients yet. A profile belongs to one client: create a client first (through the API for now).</p>
+{% else %}
+<form id="rv-editor" method="post" action="/imports/profile-editor/preview" enctype="multipart/form-data" hx-post="/imports/profile-editor/preview" hx-encoding="multipart/form-data" hx-target="#rv-editor-result">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<fieldset>
+<legend>1. Client, source and file</legend>
+<p>
+<label for="client_id">Client</label>
+<select id="client_id" name="client_id" required>
+{% for id, client_name in clients %}
+<option value="{{ id }}"{% if id == client_id %} selected{% endif %}>{{ client_name }}</option>
+{% endfor %}
+</select>
+</p>
+<p>
+<label for="source_code">Source</label>
+<select id="source_code" name="source_code" required>
+{% for code, label in sources %}
+<option value="{{ code }}"{% if code == source_code %} selected{% endif %}>{{ code }}: {{ label }}</option>
+{% endfor %}
+</select>
+</p>
+<p>
+<label for="file">Vendor export (CSV, at most {{ max_megabytes }} MB)</label>
+<input id="file" name="file" type="file" accept=".csv,text/csv" required aria-describedby="file-help">
+<small id="file-help" class="rv-text-secondary">The preview only reads the file. Nothing is stored until you import it.</small>
+</p>
+<p><button type="submit" formaction="/imports/profile-editor/preview" hx-post="/imports/profile-editor/preview">Read the file</button></p>
+</fieldset>
+<div id="rv-editor-result">
+{% include "_profile_editor_result.html" %}
+</div>
+</form>
+{% endif %}
+{% endblock %}
