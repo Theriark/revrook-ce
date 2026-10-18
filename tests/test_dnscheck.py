@@ -10,6 +10,7 @@ from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
+from dns_helpers import StaticResolver, Zone, resolver_for, zone
 
 from app.checks import dnscheck
 from app.checks.dnscheck import (
@@ -27,7 +28,6 @@ from app.checks.dnscheck import (
     evaluate_spf,
     run_checks,
 )
-from dns_helpers import StaticResolver, Zone, resolver_for, zone
 
 DOMAIN = "client.example"
 AT = datetime(2026, 10, 18, 9, 0, tzinfo=UTC)
@@ -330,8 +330,12 @@ DMARC_SHAPES = [
     (f"v=DMARC1; p=quarantine; pct=50; {RUA}", "quarantine", 50, True),
     (f"v=DMARC1; p=quarantine; {RUA}", "quarantine", 100, True),
     ("v=DMARC1; p=quarantine", "quarantine", 100, False),
-    ("v=DMARC1; p=reject; rua=mailto:a@client.example,mailto:b@client.example",
-     "reject", 100, True),
+    (
+        "v=DMARC1; p=reject; rua=mailto:a@client.example,mailto:b@client.example",
+        "reject",
+        100,
+        True,
+    ),
     ("v=DMARC1; p=reject", "reject", 100, False),
     (f"  v = dmarc1 ;P=REJECT;PCT=0;{RUA.upper()}", "reject", 0, True),
     (f"v=DMARC1; p=bogus; {RUA}", None, 100, True),
