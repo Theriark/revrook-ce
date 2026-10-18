@@ -198,9 +198,11 @@ def test_a_device_encrypted_in_one_source_only_counts_as_encrypted() -> None:
     control = LIBRARY.control("PC-DEV-04")
     evidence = two_sources()
     result = evaluate_control(LIBRARY, control, evidence)
-    # d1 True, d2 False, d4 False are known; d3 is not. One of three known.
-    assert (result.numerator, result.denominator) == (1, 3)
+    # d1 True, d2 False, d4 False are known; d3 is not and stays in the denominator.
+    # One of four, and one unresolved device cannot lift it to the partial share.
+    assert (result.numerator, result.denominator) == (1, 4)
     assert result.status == "fail"
+    assert "1 could not be told" in result.detail
 
 
 # --- results that need two sources ----------------------------------------------

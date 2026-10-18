@@ -87,6 +87,16 @@ order:
    A value that cannot be told (a flag that is missing, a lookup that failed) is
    `unknown` with `unresolved_values` or `lookup_failed` and is never read kindly: it
    cannot lift a failure and cannot complete a pass.
+   A share rule (PC-ACC-01, PC-DEV-02, 04, 05 and 07, PC-END-01, 02 and 04,
+   PC-NET-05, PC-BCK-01 for a server whose successful job gives no schedule,
+   PC-BCK-05, PC-LOG-06) keeps such rows in the denominator. It works the share out
+   twice, with every row that cannot be told counted as a pass and as a fail, and
+   the control has a status only when both ends give the same one; otherwise it is
+   `unknown` with `unresolved_values`, as for a count rule. 100 members of whom 99
+   have a blank `mfa_capable` are `unknown`, never a pass of 1 of 1. A row that is
+   certainly not a pass (a failed backup job, an end-of-support firewall) still fails
+   whatever its other values. PC-NET-04 treats a Wi-Fi security mode the importer did
+   not recognise (`other`) like a missing one: unknown, not a pass.
 4. When the automatic result is `unknown` and a person recorded a manual artefact or
    an attestation for the control, that judgement is used, at the quality of the
    manual evidence.
@@ -192,3 +202,17 @@ to are included. A NIST name is shown only for a verified row, with the credit
 - PC-EML-01 to 03 read the facts of our own DNS check (phase 7), in the shape
   documented in `app/checks/email.py`. Until phase 7 stores them these three
   controls are unknown with `licence_or_scope`.
+
+## Known gaps (not fixed in phase 5)
+
+- A naive `Evidence.as_of` (no time zone) raises `TypeError` when it is compared
+  with a capture time, which is always timezone aware. Whoever builds the evidence
+  must pass an aware `as_of`; the phase 6 scoring step builds it and is the place
+  to reject a naive one with a clear error.
+- The reason and the reviewer of a not-applicable decision (`NaReview`) have no
+  length limit and the reason is copied into `result.detail`. Phase 8 must escape it
+  when it renders HTML or a PDF, and should cap it where it is saved.
+- A firewall rule source such as `0.0.0.0/0 - LAN` (an address and a name around a
+  spaced dash) is read as one word and is unknown. This is not fail-open (an unknown
+  source never counts as restricted), but it is less exact than before the spaces
+  around the dash of a range were joined.
