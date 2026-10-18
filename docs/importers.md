@@ -52,6 +52,23 @@ no time zone it is read as UTC, stored as UTC, and the summary of the file sets
 `timezone_assumed_utc` to `true` so the report can say so. A date such as
 `2026-10-01` is read as midnight UTC.
 
+### Dates and the capture time: how an age is measured
+
+A date in a file is never compared with the day the file is read. Every age (how
+old a patch, a backup, a sign-in or an export is) is measured from the capture time
+of the evidence item the date came from, so re-reading or re-importing a file never
+makes its evidence younger or older:
+
+- the capture time is the time the file or its tool gives (`capture_time_source` is
+  `file`); a CSV carries none, so the time given with the upload is used and the
+  summary says `upload`;
+- a date with no time zone is read as UTC (`timezone_assumed_utc`), and a date
+  without a time, such as `2026-10-01`, is midnight UTC, so an age taken from it can
+  be up to 24 hours older than the real event;
+- a date later than the capture time is kept as written. It means the capture time
+  or the clock of the tool is wrong. How the check engine treats such an age (below
+  zero) is not decided by the plan; it is an open point for part 2 and R&D.
+
 ### Text that looks like an email address (carry-over N3)
 
 A short text field (a course name, an antivirus product) that contains something
@@ -302,12 +319,32 @@ identifiers; the syslog target is reduced to whether one is set.
 | `rule_enabled` | rule_enabled (enabled) | rule, row | true or false |
 | `direction` | direction | rule, row | inbound or outbound |
 | `action` | action | rule, row | allow or deny |
-| `source` | source | rule | `any` for the whole internet, else `restricted` |
+| `source` | source | rule | `any` for the whole internet, `restricted` for a known address, block or range, or empty (unknown); see below |
 | `destination_port` | destination_port (port) | rule | a port, a range such as 1024-2048, or `any` |
 | `ssid` | ssid | ssid, row | identifier |
 | `security_mode` | security_mode | ssid, row | open, wep, wpa, wpa2, wpa2-enterprise, wpa3, wpa3-enterprise, wpa2-wpa3, owe |
 | `guest_isolated` | guest_isolated | ssid | true or false |
 | `guest_ssid` | guest_ssid | ssid | true or false |
+
+#### The source of a rule: `any`, `restricted` or unknown
+
+The source of a firewall rule is read word by word (a comma, a semicolon or a
+space separates words):
+
+- `any` as soon as one word reaches the whole internet: `any`, `*`, `all`,
+  `anywhere`, `internet`, or an address block with no fixed bits in any spelling
+  (`0.0.0.0/0`, `::/0`, `0.0.0.0/0.0.0.0`, `0::/0`, a range from `0.0.0.0` to
+  `255.255.255.255`).
+- `restricted` only when every word is an address, an address block (`10.0.0.0/8`,
+  `2001:db8::/32`) or a range of addresses.
+- unknown (no value) for everything else: an address object such as `LAN`, a
+  misspelt address, a reversed range, or an empty cell. A source revrook cannot read
+  is never `restricted` by default, so a control that counts rules open to the
+  internet (PC-NET-02) cannot pass on a rule it did not understand. `rules_any_source`
+  counts the `any` rules only.
+
+Carry-over of phase 4: before phase 5 only the exact words of the list were `any`
+and every other text, a list with `0.0.0.0/0` in it included, was `restricted`.
 
 Facts: `network.device`, `network.rule`, `network.ssid`. Summary: `devices`,
 `perimeter_devices`, `wan_admin_enabled`, `default_credentials`,
