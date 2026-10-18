@@ -1,0 +1,1348 @@
+# revrook control library: ruleset PC-RULES v0.1 (phase 5, part 1).
+#
+# The 51 controls of rnd-report-3 section 3.4 (THE-205, revision 10), written by us.
+# Wording, tests, weights and thresholds are our own uncalibrated design choices.
+# No text of the CIS Controls, the Secure Controls Framework, ISO 27001, the CSA
+# CCM or SIG is embedded: the external framework entries under `mappings` are
+# identifiers only, and every row ships verified: false. A report prints an
+# external identifier only after a person who read the source marks the row
+# verified (see app/checks/library.py, visible_mappings). `uncertain: true` is the
+# [U] marker of the report: the identifier is recalled with lower confidence.
+#
+# The file is validated by the models in app/checks/library.py (the JSON Schema is
+# app/checks/controls.schema.json). tests/control_fields.yaml must stay equal to the
+# field list derived from this file (tests/test_control_fields.py).
+#
+# Reading guide
+#   weight        w3 critical, w2 important, w1 baseline.
+#   gate          a failure caps the overall score (see the scoring model).
+#   max_age_days  freshness maximum ages in days, automatic / manual. Where the
+#                 report names one number for a control it is stored as the
+#                 automatic age and the manual age is left empty (null): the
+#                 report does not say, and part 2 must settle it.
+#   fields        the fields the rule reads; the key of `field_map` or `unavailable`.
+#   rule          `text` is the report's rule. `kind` share, count or manual says
+#                 the rule is a plain threshold, and `pass`/`partial` then hold the
+#                 exact numbers (a share is a decimal text, a count a whole number).
+#                 `kind: state` rules are written out in `text` only.
+#   automatic_unavailable  the automatic measure cannot be computed from what the
+#                 CE importers produce (a licence tier, a permission outside the
+#                 verified list, or no importer): the engine gives the control
+#                 unknown with this reason, never pass and never fail. The manual
+#                 alternative still applies.
+#   manual_alternative  an automatic control accepts a dated manual artefact of
+#                 the named setting at quality 0.9.
+
+ruleset:
+  id: PC-RULES
+  version: "0.1"
+  source: "rnd-report-3 section 3.4 (THE-205, revision 10)"
+  manual_alternative_quality: "0.9"
+
+source_codes:
+  G: Graph read-only JSON
+  X: Exchange Online export produced by the MSP admin
+  R: RMM device CSV
+  B: backup CSV
+  N: network export CSV
+  D: DNS records or our own public DNS check
+  T: training CSV
+  H: leavers CSV
+  M: manual evidence
+
+populations:
+  U: enabled member users holding a licence (shared mailboxes and service accounts excluded through a reviewed exclusion list printed in the report)
+  A: users holding an admin directory role
+  DV: active devices seen within 14 days
+
+domains:
+  - {code: ACC, name: Identity and MFA, weight: 22}
+  - {code: DEV, name: Devices and patching, weight: 14}
+  - {code: END, name: Endpoint protection, weight: 10}
+  - {code: EML, name: Email security, weight: 12}
+  - {code: BCK, name: Backup and recovery, weight: 16}
+  - {code: NET, name: Network, weight: 6}
+  - {code: LOG, name: Logging and monitoring, weight: 8}
+  - {code: GOV, name: Governance and people, weight: 12}
+
+# Which adapter and which column carries each field.
+field_map:
+  G.isMfaRegistered: {adapter: entra-registration, column: mfa_registered}
+  G.isMfaCapable: {adapter: entra-registration, column: mfa_capable}
+  G.isAdmin: {adapter: entra-registration, column: is_admin}
+  G.userType: {adapter: entra-registration, column: user_type}
+  G.ca.state: {adapter: conditional-access, column: state}
+  G.ca.users: {adapter: conditional-access, column: all_users}
+  G.ca.applications: {adapter: conditional-access, column: all_apps}
+  G.ca.grantControls.mfa: {adapter: conditional-access, column: requires_mfa}
+  G.ca.grantControls.block: {adapter: conditional-access, column: blocks}
+  G.ca.clientAppTypes: {adapter: conditional-access, column: legacy_clients}
+  G.ca.exclusions: {adapter: conditional-access, column: exclusions}
+  G.securityDefaults: {adapter: conditional-access, column: tenant_state}
+  G.role.displayName: {adapter: directory-roles, column: role}
+  G.role.permanent: {adapter: directory-roles, column: permanent}
+  G.role.memberEnabled: {adapter: directory-roles, column: enabled}
+  G.managedDevices.id: {adapter: intune-devices, column: device_id}
+  G.managedDevices.lastSyncDateTime: {adapter: intune-devices, column: last_contact}
+  G.managedDevices.operatingSystem: {adapter: intune-devices, column: os}
+  G.managedDevices.osVersion: {adapter: intune-devices, column: os_version}
+  G.managedDevices.isEncrypted: {adapter: intune-devices, column: encrypted}
+  G.managedDevices.complianceState: {adapter: intune-devices, column: compliance}
+  R.device_id: {adapter: device-inventory, column: device_id}
+  R.last_seen_utc: {adapter: device-inventory, column: last_seen}
+  R.os: {adapter: device-inventory, column: os}
+  R.os_build: {adapter: device-inventory, column: os_build}
+  R.form_factor: {adapter: device-inventory, column: form_factor}
+  R.last_patch_utc: {adapter: device-inventory, column: last_patch}
+  R.pending_critical: {adapter: device-inventory, column: pending_critical_updates}
+  R.av_status: {adapter: device-inventory, column: av_status}
+  R.av_def_date_utc: {adapter: device-inventory, column: av_signature_date}
+  R.disk_encrypted: {adapter: device-inventory, column: disk_encrypted}
+  R.local_admin_count: {adapter: device-inventory, column: local_admin_count}
+  R.tamper_protection: {adapter: device-inventory, column: tamper_protection}
+  R.dns_filter_active: {adapter: device-inventory, column: dns_filter_active}
+  R.log_forwarding: {adapter: device-inventory, column: log_forwarding}
+  B.asset_id: {adapter: backup-export, column: system_or_device}
+  B.asset_type: {adapter: backup-export, column: asset_type}
+  B.schedule_hours: {adapter: backup-export, column: schedule_hours}
+  B.last_success_utc: {adapter: backup-export, column: last_success}
+  B.last_status: {adapter: backup-export, column: last_result}
+  B.retention_days: {adapter: backup-export, column: retention_days}
+  B.encrypted: {adapter: backup-export, column: encrypted}
+  B.immutable: {adapter: backup-export, column: immutable}
+  B.offsite: {adapter: backup-export, column: offsite}
+  B.last_restore_test_utc: {adapter: backup-export, column: restore_test_date}
+  B.restore_test_result: {adapter: backup-export, column: restore_test_result}
+  N.firmware_release_date: {adapter: network-export, column: firmware_release_date}
+  N.end_of_support_date: {adapter: network-export, column: end_of_support_date}
+  N.perimeter: {adapter: network-export, column: perimeter}
+  N.rules.enabled: {adapter: network-export, column: rule_enabled}
+  N.rules.direction: {adapter: network-export, column: direction}
+  N.rules.action: {adapter: network-export, column: action}
+  N.rules.source: {adapter: network-export, column: source}
+  N.rules.destination_port: {adapter: network-export, column: destination_port}
+  N.wan_admin_enabled: {adapter: network-export, column: wan_admin_enabled}
+  N.default_credentials_flag: {adapter: network-export, column: default_credentials_flag}
+  N.ssid: {adapter: network-export, column: ssid}
+  N.security_mode: {adapter: network-export, column: security_mode}
+  N.guest_isolated: {adapter: network-export, column: guest_isolated}
+  N.guest_ssid: {adapter: network-export, column: guest_ssid}
+  N.syslog_target: {adapter: network-export, column: syslog_target}
+  T.user_id: {adapter: training-csv, column: user_id}
+  T.completed_utc: {adapter: training-csv, column: completed_utc}
+  H.user_id: {adapter: leavers-csv, column: user_id}
+  H.leave_date: {adapter: leavers-csv, column: leave_date}
+  H.account_enabled: {adapter: leavers-csv, column: account_enabled}
+  X.dkim.domain: {adapter: exchange-export, column: domain}
+  X.dkim.enabled: {adapter: exchange-export, column: enabled}
+  X.policy_type: {adapter: exchange-export, column: policy_type}
+  X.policy.enabled: {adapter: exchange-export, column: enabled}
+  X.auto_forwarding_mode: {adapter: exchange-export, column: auto_forwarding_mode}
+  X.mailbox.forwarding_external: {adapter: exchange-export, column: forwarding_external}
+  X.recipient_type: {adapter: exchange-export, column: recipient_type}
+  X.mailbox.account_enabled: {adapter: exchange-export, column: account_enabled}
+  X.unified_audit_log_enabled: {adapter: exchange-export, column: unified_audit_log_enabled}
+  X.audit_disabled: {adapter: exchange-export, column: audit_disabled}
+  X.alert.kind: {adapter: exchange-export, column: alert_kind}
+  X.alert.disabled: {adapter: exchange-export, column: disabled}
+  X.alert.recipient_count: {adapter: exchange-export, column: recipient_count}
+  X.alert.last_acknowledged: {adapter: exchange-export, column: last_acknowledged}
+
+# Fields no CE importer reads, and why. The reasons are those of
+# docs/importers.md: licence_or_scope (a licence tier or a permission outside the
+# verified list), dnscheck (our own public DNS check, phase 7) and shipped_list
+# (matched against a list we ship).
+unavailable:
+  G.user.signInActivity: licence_or_scope
+  G.user.accountEnabled: licence_or_scope
+  G.authorizationPolicy.invitations: licence_or_scope
+  G.deviceConfigurationProfile: licence_or_scope
+  G.windowsProtectionState: licence_or_scope
+  G.signatureUpdateOverdue: licence_or_scope
+  G.securityAlerts: licence_or_scope
+  G.oauth2PermissionGrants: licence_or_scope
+  G.servicePrincipals: licence_or_scope
+  G.licensedMailboxes: licence_or_scope
+  R.threats: licence_or_scope
+  R.installed_software: shipped_list
+  D.spf: dnscheck
+  D.dkim_selectors: dnscheck
+  D.dmarc: dnscheck
+
+controls:
+  # ---- ACC identity and MFA (domain weight 22) ---------------------------------
+  - id: PC-ACC-01
+    domain: ACC
+    title: "Every active staff account signs in with more than a password."
+    weight: 3
+    gate: true
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields: [G.isMfaRegistered, G.isMfaCapable]
+    rule:
+      kind: share
+      pass: {at_least: "0.98"}
+      partial: {at_least: "0.80"}
+      text: "userRegistrationDetails isMfaRegistered and isMfaCapable over U. Pass share at least 0.98; partial 0.80 to under 0.98; fail below."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-03", verified: false}
+      - {framework: sp800-171, id: "03.05.03", verified: false}
+      - {framework: cis, id: "6.3", verified: false}
+      - {framework: cis, id: "6.4", verified: false}
+      - {framework: iso27001, id: "A.8.5", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "j", verified: false}
+
+  - id: PC-ACC-02
+    domain: ACC
+    title: "Every administrator uses MFA."
+    weight: 3
+    gate: true
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields: [G.isAdmin, G.isMfaRegistered]
+    rule:
+      kind: count
+      pass: {at_most: 0}
+      text: "userRegistrationDetails isAdmin and isMfaRegistered over A. Pass 0 admins without MFA, else fail."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-03", verified: false}
+      - {framework: csf, id: "PR.AA-05", verified: false}
+      - {framework: sp800-171, id: "03.05.03", verified: false}
+      - {framework: sp800-171, id: "03.01.06", verified: false}
+      - {framework: cis, id: "6.5", verified: false}
+      - {framework: iso27001, id: "A.8.2", verified: false}
+      - {framework: iso27001, id: "A.8.5", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "j", verified: false}
+
+  - id: PC-ACC-03
+    domain: ACC
+    title: "MFA is enforced by policy, not only registered."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields:
+      - G.ca.state
+      - G.ca.users
+      - G.ca.applications
+      - G.ca.grantControls.mfa
+      - G.ca.exclusions
+      - G.securityDefaults
+    rule:
+      kind: state
+      text: "Conditional Access policies (state, users, applications, grantControls) and the security-defaults policy. Pass if security defaults are on or an enabled policy targets all users and all applications with an MFA grant and at most 2 exclusions; partial if report-only or admins only; fail otherwise. A tenant on security defaults has an empty policy list and is shown as security-defaults."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-03", verified: false}
+      - {framework: sp800-171, id: "03.05.03", verified: false}
+      - {framework: cis, id: "6.3", verified: false}
+      - {framework: iso27001, id: "A.8.5", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "j", verified: false}
+
+  - id: PC-ACC-04
+    domain: ACC
+    title: "Legacy sign-in methods that skip MFA are blocked."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields: [G.ca.state, G.ca.grantControls.block, G.ca.clientAppTypes, G.securityDefaults]
+    rule:
+      kind: state
+      text: "Conditional Access policy client app types, or security defaults. Pass if an enabled policy blocks legacy types for all users or defaults are on; partial report-only or partial scope; fail otherwise."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-03", verified: false}
+      - {framework: sp800-171, id: "03.05.03", verified: false, uncertain: true}
+      - {framework: cis, id: "4.8", verified: false, uncertain: true}
+      - {framework: cis, id: "6.3", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.8.5", verified: false}
+      - {framework: cyber-essentials, id: "Secure configuration", verified: false}
+      - {framework: nis2, id: "j", verified: false}
+
+  - id: PC-ACC-05
+    domain: ACC
+    title: "Few, personal, permanent top-level administrators."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G, M]
+    fields: [G.role.displayName, G.role.permanent, G.role.memberEnabled]
+    rule:
+      kind: state
+      text: "Role assignments for Global Administrator (the unified role-management API is unverified) or a manual admin list. Count of distinct enabled users with a permanent assignment: pass 2 to 4; partial 1 or 5 to 6; fail 7 or more."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-05", verified: false}
+      - {framework: sp800-171, id: "03.01.05", verified: false}
+      - {framework: sp800-171, id: "03.01.06", verified: false}
+      - {framework: cis, id: "5.4", verified: false}
+      - {framework: cis, id: "6.8", verified: false}
+      - {framework: iso27001, id: "A.8.2", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-ACC-06
+    domain: ACC
+    title: "Dormant accounts are disabled."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields: [G.user.signInActivity, G.user.accountEnabled]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: state
+      text: "users signInActivity (needs a licence tier that exposes it) and accountEnabled. Z = enabled members with no sign-in for over 90 days (or none and created over 90 days ago). Pass Z = 0; partial share at most 0.10; fail above; field absent = unknown."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-01", verified: false}
+      - {framework: sp800-171, id: "03.01.01", verified: false}
+      - {framework: cis, id: "5.3", verified: false}
+      - {framework: iso27001, id: "A.5.18", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-ACC-07
+    domain: ACC
+    title: "Guest and external access is reviewed."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields: [G.userType, G.user.signInActivity, G.authorizationPolicy.invitations]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: state
+      text: "users userType Guest, signInActivity, authorizationPolicy invitation setting. Pass if no guest inactive over 180 days and invitations limited to admins or guest inviters; partial inactive share at most 0.25; fail above."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-05", verified: false}
+      - {framework: sp800-171, id: "03.01.20", verified: false, uncertain: true}
+      - {framework: cis, id: "5.3", verified: false}
+      - {framework: cis, id: "6.1", verified: false}
+      - {framework: iso27001, id: "A.5.18", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-ACC-08
+    domain: ACC
+    title: "Emergency (break-glass) access is documented and protected."
+    weight: 1
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact naming the accounts, where credentials are kept and a test within 12 months."
+    mappings:
+      - {framework: csf, id: "PR.AA-05", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.01.01", verified: false, uncertain: true}
+      - {framework: cis, id: "5.4", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.5.18", verified: false, uncertain: true}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  # ---- DEV devices and patching (domain weight 14) -----------------------------
+  - id: PC-DEV-01
+    domain: DEV
+    title: "Devices are inventoried and managed."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: 365}
+    sources: [G, R]
+    fields:
+      - G.managedDevices.id
+      - G.managedDevices.lastSyncDateTime
+      - R.device_id
+      - R.last_seen_utc
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.80"}
+      text: "managedDevices id and lastSyncDateTime joined to R device_id; c = devices in both over devices active in either. Pass c at least 0.95; partial 0.80 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "ID.AM-01", verified: false}
+      - {framework: sp800-171, id: "03.04.10", verified: false}
+      - {framework: cis, id: "1.1", verified: false}
+      - {framework: iso27001, id: "A.5.9", verified: false}
+      - {framework: cyber-essentials, id: "Secure configuration", verified: false, uncertain: true}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-DEV-02
+    domain: DEV
+    title: "Security updates are applied promptly."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [R]
+    fields: [R.last_patch_utc, R.pending_critical]
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.80"}
+      text: "last_patch_utc, pending_critical. Share of DV with no pending critical update or a patch within 30 days: pass at least 0.95; partial 0.80 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-02", verified: false}
+      - {framework: sp800-171, id: "03.14.01", verified: false}
+      - {framework: cis, id: "7.3", verified: false}
+      - {framework: cis, id: "7.4", verified: false}
+      - {framework: iso27001, id: "A.8.8", verified: false}
+      - {framework: cyber-essentials, id: "Security update management", verified: false}
+      - {framework: nis2, id: "e", verified: false}
+
+  - id: PC-DEV-03
+    domain: DEV
+    title: "No operating system past vendor support."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [R, G]
+    fields:
+      - R.os
+      - R.os_build
+      - G.managedDevices.operatingSystem
+      - G.managedDevices.osVersion
+    rule:
+      kind: state
+      text: "os, os_build or managedDevices operatingSystem and osVersion, joined to OUR shipped lifecycle table (vendor end-of-support dates as dated plain facts, versioned with the ruleset). Pass count 0; partial share at most 0.05."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "ID.AM-08", verified: false}
+      - {framework: csf, id: "PR.PS-02", verified: false}
+      - {framework: sp800-171, id: "03.14.01", verified: false, uncertain: true}
+      - {framework: cis, id: "2.2", verified: false}
+      - {framework: iso27001, id: "A.8.8", verified: false}
+      - {framework: cyber-essentials, id: "Security update management", verified: false}
+      - {framework: nis2, id: "e", verified: false}
+
+  - id: PC-DEV-04
+    domain: DEV
+    title: "Disk encryption is on."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [G, R]
+    fields: [G.managedDevices.isEncrypted, R.disk_encrypted]
+    rule:
+      kind: share
+      pass: {at_least: "0.98"}
+      partial: {at_least: "0.85"}
+      text: "managedDevices isEncrypted or disk_encrypted. Pass share at least 0.98; partial 0.85 to under 0.98."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-01", verified: false}
+      - {framework: sp800-171, id: "03.13.08", verified: false}
+      - {framework: cis, id: "3.6", verified: false}
+      - {framework: iso27001, id: "A.8.24", verified: false, uncertain: true}
+      - {framework: cyber-essentials, id: "Secure configuration", verified: false}
+      - {framework: nis2, id: "h", verified: false}
+
+  - id: PC-DEV-05
+    domain: DEV
+    title: "Devices meet a managed compliance baseline."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [G]
+    fields: [G.managedDevices.complianceState]
+    rule:
+      kind: share
+      pass: {at_least: "0.90"}
+      partial: {at_least: "0.70"}
+      text: "managedDevices complianceState compliant. Pass at least 0.90; partial 0.70 to under 0.90."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-01", verified: false}
+      - {framework: sp800-171, id: "03.04.02", verified: false}
+      - {framework: cis, id: "4.1", verified: false}
+      - {framework: iso27001, id: "A.8.9", verified: false}
+      - {framework: cyber-essentials, id: "Secure configuration", verified: false}
+      - {framework: nis2, id: "e", verified: false, uncertain: true}
+
+  - id: PC-DEV-06
+    domain: DEV
+    title: "Screens lock after inactivity."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G]
+    fields: [G.deviceConfigurationProfile]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: share
+      pass: {at_least: "0.90"}
+      partial: {at_least: "0.60"}
+      text: "The configuration profile must be imported, else unknown. Share of DV covered by an assigned profile with a timeout of at most 15 minutes: pass at least 0.90; partial 0.60 to under 0.90."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-01", verified: false}
+      - {framework: sp800-171, id: "03.01.10", verified: false}
+      - {framework: cis, id: "4.3", verified: false}
+      - {framework: cis, id: "4.10", verified: false}
+      - {framework: iso27001, id: "A.8.1", verified: false}
+      - {framework: cyber-essentials, id: "Secure configuration", verified: false}
+      - {framework: nis2, id: "i", verified: false, uncertain: true}
+
+  - id: PC-DEV-07
+    domain: DEV
+    title: "Users do not run as local administrators."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [R]
+    fields: [R.local_admin_count]
+    rule:
+      kind: share
+      pass: {at_least: "0.90"}
+      partial: {at_least: "0.70"}
+      text: "local_admin_count at most 2 (managed admin accounts only). Pass share at least 0.90; partial 0.70 to under 0.90."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-05", verified: false}
+      - {framework: sp800-171, id: "03.01.05", verified: false}
+      - {framework: cis, id: "5.4", verified: false}
+      - {framework: iso27001, id: "A.8.2", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  # ---- END endpoint protection (domain weight 10) ------------------------------
+  - id: PC-END-01
+    domain: END
+    title: "Anti-malware protection runs on every device."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [R, G]
+    fields: [R.av_status, G.windowsProtectionState]
+    rule:
+      kind: share
+      pass: {at_least: "0.98"}
+      partial: {at_least: "0.90"}
+      text: "av_status or windowsProtectionState real-time and malware flags (inferred names). Pass share of Windows DV at least 0.98; partial 0.90 to under 0.98."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.CM-09", verified: false}
+      - {framework: csf, id: "PR.PS-05", verified: false}
+      - {framework: sp800-171, id: "03.14.02", verified: false}
+      - {framework: cis, id: "10.1", verified: false}
+      - {framework: iso27001, id: "A.8.7", verified: false}
+      - {framework: cyber-essentials, id: "Malware protection", verified: false}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-END-02
+    domain: END
+    title: "Protection signatures are current."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [R, G]
+    fields: [R.av_def_date_utc, G.signatureUpdateOverdue]
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.80"}
+      text: "av_def_date_utc within 3 days, or signatureUpdateOverdue false. Pass at least 0.95; partial 0.80 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.CM-09", verified: false}
+      - {framework: sp800-171, id: "03.14.02", verified: false}
+      - {framework: cis, id: "10.2", verified: false}
+      - {framework: iso27001, id: "A.8.7", verified: false}
+      - {framework: cyber-essentials, id: "Malware protection", verified: false}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-END-03
+    domain: END
+    title: "Serious detections do not sit unresolved."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [G, R]
+    fields: [G.securityAlerts, R.threats]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: count
+      pass: {at_most: 0}
+      partial: {at_most: 2}
+      text: "Security alerts (needs an alert-read permission outside the verified list, so CE by upload only) or an RMM threat export. Count of high-severity alerts unresolved over 14 days: pass 0; partial 1 to 2; fail 3 or more."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.AE-02", verified: false}
+      - {framework: csf, id: "RS.MA-02", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.06.02", verified: false}
+      - {framework: cis, id: "13.1", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.5.25", verified: false}
+      - {framework: iso27001, id: "A.8.16", verified: false}
+      - {framework: cyber-essentials, id: "Malware protection", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+
+  - id: PC-END-04
+    domain: END
+    title: "Users cannot switch protection off (tamper protection)."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: null}
+    sources: [R]
+    fields: [R.tamper_protection]
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.80"}
+      text: "tamper_protection. Pass at least 0.95; partial 0.80 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-05", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.14.02", verified: false, uncertain: true}
+      - {framework: cis, id: "10.1", verified: false}
+      - {framework: iso27001, id: "A.8.7", verified: false}
+      - {framework: cyber-essentials, id: "Malware protection", verified: false}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-END-05
+    domain: END
+    title: "Unapproved remote-access software is absent."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [R]
+    fields: [R.installed_software]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: state
+      text: "The installed-software list matched against OUR shipped category list. Pass count 0; partial share at most 0.05."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-05", verified: false}
+      - {framework: sp800-171, id: "03.04.08", verified: false}
+      - {framework: cis, id: "2.3", verified: false}
+      - {framework: iso27001, id: "A.8.19", verified: false}
+      - {framework: cyber-essentials, id: "Secure configuration", verified: false, uncertain: true}
+      - {framework: nis2, id: "e", verified: false, uncertain: true}
+
+  # ---- EML email security (domain weight 12) -----------------------------------
+  - id: PC-EML-01
+    domain: EML
+    title: "Each mail domain publishes an SPF policy."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [D]
+    fields: [D.spf]
+    rule:
+      kind: state
+      text: "TXT at the domain apex (our own public DNS check in CE). Per domain: pass if one v=spf1 record exists ending in a hard or soft fail and including the mail provider; partial if it ends neutral; fail if missing or multiple. Control result: pass if all domains pass; partial if at least half pass; fail below."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-02", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.13.08", verified: false, uncertain: true}
+      - {framework: cis, id: "9.5", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.8.21", verified: false, uncertain: true}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-EML-02
+    domain: EML
+    title: "Outgoing mail is DKIM-signed."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X, D]
+    fields: [X.dkim.domain, X.dkim.enabled, D.dkim_selectors]
+    rule:
+      kind: state
+      text: "Get-DkimSigningConfig Domain and Enabled, plus selector CNAME records (the public check tries the selectors the MSP supplies and the common Microsoft selectors selector1 and selector2). Pass all domains enabled with selectors present; partial at least half; fail below."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-02", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.13.08", verified: false, uncertain: true}
+      - {framework: cis, id: "9.5", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.8.21", verified: false, uncertain: true}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-EML-03
+    domain: EML
+    title: "DMARC is published and enforced."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [D]
+    fields: [D.dmarc]
+    rule:
+      kind: state
+      text: "TXT at _dmarc with tags p, pct, rua. Pass if p is quarantine or reject, pct 100 and rua present on all mail domains; partial if p is none with rua; fail if missing."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-01", verified: false, uncertain: true}
+      - {framework: cis, id: "9.5", verified: false}
+      - {framework: iso27001, id: "A.8.21", verified: false, uncertain: true}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-EML-04
+    domain: EML
+    title: "Inbound mail is filtered for phishing and malicious attachments or links."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X]
+    fields: [X.policy_type, X.policy.enabled]
+    rule:
+      kind: state
+      text: "Get-AntiPhishPolicy, Get-SafeLinksPolicy, Get-SafeAttachmentPolicy enabled flags (the last two depend on the client licence) or a preset protection policy. Pass if anti-phishing plus safe links and safe attachments (or a preset) are enabled; partial if only the default anti-phishing policy applies; fail otherwise."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.CM-09", verified: false}
+      - {framework: csf, id: "PR.PS-05", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.14.02", verified: false}
+      - {framework: cis, id: "9.7", verified: false}
+      - {framework: iso27001, id: "A.8.7", verified: false}
+      - {framework: cyber-essentials, id: "Malware protection", verified: false}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-EML-05
+    domain: EML
+    title: "Automatic forwarding to outside addresses is blocked."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X]
+    fields: [X.policy_type, X.auto_forwarding_mode, X.mailbox.forwarding_external]
+    rule:
+      kind: state
+      text: "Outbound spam policy AutoForwardingMode and mailbox ForwardingSmtpAddress. Pass if auto-forwarding is off and 0 mailboxes forward externally; partial if the policy is off but 1 mailbox forwards; fail otherwise."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-02", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.01.20", verified: false, uncertain: true}
+      - {framework: cis, id: "3.3", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.8.12", verified: false, uncertain: true}
+      - {framework: nis2, id: "i", verified: false, uncertain: true}
+
+  - id: PC-EML-06
+    domain: EML
+    title: "Shared mailboxes cannot be signed into directly."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X, G]
+    fields: [X.recipient_type, X.mailbox.account_enabled]
+    rule:
+      kind: count
+      pass: {at_most: 0}
+      partial: {at_most: 1}
+      text: "Recipient type SharedMailbox joined to accountEnabled by pseudonymous id. Count enabled: pass 0; partial 1; fail 2 or more."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-05", verified: false}
+      - {framework: sp800-171, id: "03.01.01", verified: false, uncertain: true}
+      - {framework: cis, id: "5.1", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.5.15", verified: false, uncertain: true}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-EML-07
+    domain: EML
+    title: "Staff have a simple way to report suspicious email."
+    weight: 1
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact: report-button deployment screenshot or a dated written procedure."
+    mappings:
+      - {framework: csf, id: "PR.AT-01", verified: false}
+      - {framework: sp800-171, id: "03.06.02", verified: false, uncertain: true}
+      - {framework: cis, id: "14.6", verified: false}
+      - {framework: iso27001, id: "A.6.8", verified: false}
+      - {framework: nis2, id: "g", verified: false}
+
+  # ---- BCK backup and recovery (domain weight 16) ------------------------------
+  - id: PC-BCK-01
+    domain: BCK
+    title: "Every in-scope business system has a recent successful backup."
+    weight: 3
+    gate: true
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [B, R, G]
+    fields:
+      - B.asset_id
+      - B.schedule_hours
+      - B.last_success_utc
+      - B.last_status
+      - R.form_factor
+      - G.licensedMailboxes
+    rule:
+      kind: share
+      pass: {at_least: "0.98"}
+      partial: {at_least: "0.85"}
+      text: "asset_id, schedule_hours, last_success_utc, last_status; in-scope assets from R servers and G licensed mailboxes. Share of in-scope assets whose last success is within 1.5 times schedule_hours of the export time and status success: pass at least 0.98; partial 0.85 to under 0.98; fail below."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-11", verified: false}
+      - {framework: cis, id: "11.2", verified: false}
+      - {framework: iso27001, id: "A.8.13", verified: false}
+      - {framework: nis2, id: "c", verified: false}
+
+  - id: PC-BCK-02
+    domain: BCK
+    title: "Microsoft 365 mail and files are covered by an independent backup."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [B, G]
+    fields: [B.asset_type, G.licensedMailboxes]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.70"}
+      text: "asset_type Exchange, OneDrive, SharePoint, Teams over licensed mailbox and site counts. Pass at least 0.95; partial 0.70 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-11", verified: false}
+      - {framework: cis, id: "11.2", verified: false}
+      - {framework: iso27001, id: "A.8.13", verified: false}
+      - {framework: nis2, id: "c", verified: false}
+
+  - id: PC-BCK-03
+    domain: BCK
+    title: "A restore has actually been tested."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 100, manual: 100}
+    sources: [B]
+    fields: [B.last_restore_test_utc, B.restore_test_result, B.asset_type]
+    rule:
+      kind: state
+      text: "last_restore_test_utc and restore_test_result. Pass if every distinct backup product or asset class has a successful restore test within 100 days; fail if any latest test failed; unknown if none recorded."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-11", verified: false}
+      - {framework: csf, id: "RC.RP-03", verified: false, uncertain: true}
+      - {framework: cis, id: "11.5", verified: false}
+      - {framework: iso27001, id: "A.8.13", verified: false}
+      - {framework: nis2, id: "c", verified: false}
+
+  - id: PC-BCK-04
+    domain: BCK
+    title: "At least one backup copy is out of reach of a compromised admin account."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 7, manual: null}
+    sources: [B]
+    fields: [B.immutable, B.offsite]
+    rule:
+      kind: state
+      text: "immutable, offsite. Pass if at least 0.95 of assets are immutable or have an offline copy; partial if offsite but not immutable; fail otherwise."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-11", verified: false}
+      - {framework: csf, id: "PR.IR-03", verified: false, uncertain: true}
+      - {framework: cis, id: "11.3", verified: false}
+      - {framework: cis, id: "11.4", verified: false}
+      - {framework: iso27001, id: "A.8.13", verified: false}
+      - {framework: iso27001, id: "A.8.14", verified: false, uncertain: true}
+      - {framework: nis2, id: "c", verified: false}
+
+  - id: PC-BCK-05
+    domain: BCK
+    title: "Backups are encrypted and kept long enough."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: null}
+    sources: [B]
+    fields: [B.encrypted, B.retention_days]
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.70"}
+      text: "encrypted, retention_days. Share of jobs encrypted with retention at least 30 days: pass at least 0.95; partial 0.70 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.DS-01", verified: false}
+      - {framework: csf, id: "PR.DS-11", verified: false}
+      - {framework: sp800-171, id: "03.08.09", verified: false, uncertain: true}
+      - {framework: cis, id: "11.3", verified: false}
+      - {framework: iso27001, id: "A.8.13", verified: false}
+      - {framework: iso27001, id: "A.8.24", verified: false, uncertain: true}
+      - {framework: nis2, id: "c", verified: false}
+      - {framework: nis2, id: "h", verified: false}
+
+  - id: PC-BCK-06
+    domain: BCK
+    title: "Recovery targets and a recovery plan are written down."
+    weight: 2
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact: approved document with recovery time and data-loss targets per system, owner and a review date within 12 months."
+    mappings:
+      - {framework: csf, id: "RC.RP-01", verified: false}
+      - {framework: cis, id: "11.1", verified: false}
+      - {framework: iso27001, id: "A.5.29", verified: false}
+      - {framework: iso27001, id: "A.5.30", verified: false}
+      - {framework: nis2, id: "c", verified: false}
+
+  # ---- NET network (domain weight 6) -------------------------------------------
+  - id: PC-NET-01
+    domain: NET
+    title: "Perimeter firewall firmware is supported and reasonably recent."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [N]
+    fields: [N.firmware_release_date, N.end_of_support_date, N.perimeter]
+    rule:
+      kind: state
+      text: "firmware_release_date and end_of_support_date. Pass if every perimeter firewall has firmware released within 365 days and is not past end of support; partial 366 to 730 days; fail if older or unsupported."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-02", verified: false}
+      - {framework: csf, id: "ID.AM-08", verified: false}
+      - {framework: sp800-171, id: "03.14.01", verified: false}
+      - {framework: cis, id: "12.1", verified: false}
+      - {framework: iso27001, id: "A.8.8", verified: false}
+      - {framework: iso27001, id: "A.8.20", verified: false}
+      - {framework: cyber-essentials, id: "Firewalls", verified: false}
+      - {framework: nis2, id: "e", verified: false}
+
+  - id: PC-NET-02
+    domain: NET
+    title: "Risky services are not open to the whole internet."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [N]
+    fields:
+      - N.rules.enabled
+      - N.rules.direction
+      - N.rules.action
+      - N.rules.source
+      - N.rules.destination_port
+    rule:
+      kind: count
+      pass: {at_most: 0}
+      partial: {at_most: 1}
+      text: "Rules (enabled, direction, action, source, destination_port). Count of enabled inbound allow rules from any source to our risk list of ports (3389, 445, 23, 5900, unrestricted 22): pass 0; partial 1; fail 2 or more."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.IR-01", verified: false}
+      - {framework: sp800-171, id: "03.13.01", verified: false}
+      - {framework: cis, id: "12.2", verified: false}
+      - {framework: iso27001, id: "A.8.20", verified: false}
+      - {framework: iso27001, id: "A.8.22", verified: false, uncertain: true}
+      - {framework: cyber-essentials, id: "Firewalls", verified: false}
+      - {framework: nis2, id: "a", verified: false, uncertain: true}
+
+  - id: PC-NET-03
+    domain: NET
+    title: "Firewall management is not exposed to the internet and has no default login."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [N]
+    fields: [N.wan_admin_enabled, N.default_credentials_flag]
+    rule:
+      kind: state
+      text: "wan_admin_enabled and default_credentials_flag. Pass if both false on all perimeter devices; fail if any true."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.IR-01", verified: false}
+      - {framework: csf, id: "PR.AA-01", verified: false}
+      - {framework: sp800-171, id: "03.05.01", verified: false, uncertain: true}
+      - {framework: cis, id: "4.7", verified: false}
+      - {framework: cis, id: "12.6", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.8.20", verified: false}
+      - {framework: iso27001, id: "A.8.5", verified: false}
+      - {framework: cyber-essentials, id: "Firewalls", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-NET-04
+    domain: NET
+    title: "Wi-Fi is encrypted and guests are separated."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [N]
+    fields: [N.ssid, N.security_mode, N.guest_isolated, N.guest_ssid]
+    rule:
+      kind: state
+      text: "ssid, security_mode, guest_isolated. Pass if no SSID is open or uses an obsolete mode and any guest SSID is isolated; fail otherwise; NA only with a recorded reason (no wireless)."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.IR-01", verified: false}
+      - {framework: sp800-171, id: "03.01.16", verified: false, uncertain: true}
+      - {framework: cis, id: "12.6", verified: false, uncertain: true}
+      - {framework: iso27001, id: "A.8.22", verified: false, uncertain: true}
+      - {framework: cyber-essentials, id: "Firewalls", verified: false, uncertain: true}
+      - {framework: nis2, id: "a", verified: false, uncertain: true}
+
+  - id: PC-NET-05
+    domain: NET
+    title: "Web or DNS filtering is active on devices."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [R]
+    fields: [R.dns_filter_active]
+    rule:
+      kind: share
+      pass: {at_least: "0.90"}
+      partial: {at_least: "0.60"}
+      text: "dns_filter_active. Pass share at least 0.90; partial 0.60 to under 0.90."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.CM-01", verified: false, uncertain: true}
+      - {framework: cis, id: "9.2", verified: false}
+      - {framework: cis, id: "9.3", verified: false}
+      - {framework: iso27001, id: "A.8.23", verified: false}
+      - {framework: cyber-essentials, id: "Malware protection", verified: false, uncertain: true}
+      - {framework: nis2, id: "g", verified: false}
+
+  # ---- LOG logging and monitoring (domain weight 8) ----------------------------
+  - id: PC-LOG-01
+    domain: LOG
+    title: "Audit logging is on for the tenant and mailboxes."
+    weight: 3
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X]
+    fields: [X.unified_audit_log_enabled, X.audit_disabled]
+    rule:
+      kind: state
+      text: "Get-AdminAuditLogConfig UnifiedAuditLogIngestionEnabled and Get-OrganizationConfig AuditDisabled. Pass if ingestion is enabled and AuditDisabled is false; fail otherwise."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-04", verified: false}
+      - {framework: sp800-171, id: "03.03.01", verified: false}
+      - {framework: cis, id: "8.2", verified: false}
+      - {framework: iso27001, id: "A.8.15", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+
+  - id: PC-LOG-02
+    domain: LOG
+    title: "Logs are kept long enough to investigate."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: state
+      text: "Licence-derived default retention from OUR versioned table (inferred) and a declared archive (manual). effective_retention_days = max of both: pass at least 180; partial 90 to 179; fail below 90."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.PS-04", verified: false}
+      - {framework: sp800-171, id: "03.03.01", verified: false, uncertain: true}
+      - {framework: cis, id: "8.10", verified: false}
+      - {framework: iso27001, id: "A.8.15", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+
+  - id: PC-LOG-03
+    domain: LOG
+    title: "Security alerts reach a named person."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X, M]
+    fields: [X.alert.recipient_count, X.alert.last_acknowledged]
+    rule:
+      kind: state
+      text: "Alert policies with recipients, or RMM alert routing (manual). Pass if at least one enabled alert policy has a recipient and an acknowledged alert exists within 90 days; partial if the policy exists without any acknowledgement; fail if no recipient."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.AE-06", verified: false}
+      - {framework: csf, id: "DE.CM-01", verified: false}
+      - {framework: sp800-171, id: "03.03.05", verified: false}
+      - {framework: cis, id: "13.1", verified: false}
+      - {framework: iso27001, id: "A.8.16", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+
+  - id: PC-LOG-04
+    domain: LOG
+    title: "Alerts exist for the riskiest changes."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [X]
+    fields: [X.alert.kind, X.alert.disabled]
+    rule:
+      kind: state
+      text: "Get-ProtectionAlert (name, category, Disabled). Required set of 3 enabled alerts: new admin role assignment, new mail forwarding rule, risky sign-in. Pass 3; partial 1 to 2; fail 0."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.CM-03", verified: false}
+      - {framework: csf, id: "DE.AE-02", verified: false}
+      - {framework: sp800-171, id: "03.03.05", verified: false, uncertain: true}
+      - {framework: cis, id: "8.11", verified: false, uncertain: true}
+      - {framework: cis, id: "13.1", verified: false}
+      - {framework: iso27001, id: "A.8.16", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+
+  - id: PC-LOG-05
+    domain: LOG
+    title: "Someone reviews security logs or reports monthly."
+    weight: 1
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 35}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact: dated review note by a named reviewer."
+    mappings:
+      - {framework: csf, id: "DE.AE-02", verified: false}
+      - {framework: sp800-171, id: "03.03.05", verified: false}
+      - {framework: cis, id: "8.11", verified: false}
+      - {framework: iso27001, id: "A.8.16", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+      - {framework: nis2, id: "f", verified: false}
+
+  - id: PC-LOG-06
+    domain: LOG
+    title: "Firewall and server logs go to a central place."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [N, R]
+    fields: [N.syslog_target, R.log_forwarding]
+    rule:
+      kind: share
+      pass: {at_least: "0.90"}
+      partial: {at_least: "0.50"}
+      text: "syslog_target; log forwarding flag. Share of perimeter devices and servers with a target: pass at least 0.90; partial 0.50 to under 0.90."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "DE.CM-01", verified: false}
+      - {framework: sp800-171, id: "03.03.01", verified: false}
+      - {framework: cis, id: "8.9", verified: false}
+      - {framework: iso27001, id: "A.8.15", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+
+  # ---- GOV governance and people (domain weight 12) ----------------------------
+  - id: PC-GOV-01
+    domain: GOV
+    title: "A named person owns security and a short written policy exists."
+    weight: 2
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact: approved policy with owner, approval date, review within 12 months."
+    mappings:
+      - {framework: csf, id: "GV.PO-01", verified: false}
+      - {framework: csf, id: "GV.RR-01", verified: false}
+      - {framework: sp800-171, id: "03.15.01", verified: false}
+      - {framework: iso27001, id: "A.5.1", verified: false}
+      - {framework: iso27001, id: "A.5.2", verified: false}
+      - {framework: nis2, id: "20", verified: false}
+      - {framework: nis2, id: "a", verified: false}
+
+  - id: PC-GOV-02
+    domain: GOV
+    title: "Risks are assessed and written down."
+    weight: 2
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact: dated risk register with owners and decisions."
+    mappings:
+      - {framework: csf, id: "ID.RA-05", verified: false}
+      - {framework: csf, id: "GV.RM-01", verified: false}
+      - {framework: sp800-171, id: "03.11.01", verified: false}
+      - {framework: iso27001, id: "clause 6.1.2", verified: false}
+      - {framework: nis2, id: "a", verified: false}
+
+  - id: PC-GOV-03
+    domain: GOV
+    title: "Staff complete security awareness training yearly."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 365, manual: 365}
+    sources: [T, G]
+    fields: [T.user_id, T.completed_utc]
+    rule:
+      kind: share
+      pass: {at_least: "0.95"}
+      partial: {at_least: "0.75"}
+      text: "user_id (pseudonymised) joined to U; share with a completion within 365 days: pass at least 0.95; partial 0.75 to under 0.95."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AT-01", verified: false}
+      - {framework: sp800-171, id: "03.02.01", verified: false}
+      - {framework: cis, id: "14.1", verified: false}
+      - {framework: cis, id: "14.2", verified: false}
+      - {framework: iso27001, id: "A.6.3", verified: false}
+      - {framework: nis2, id: "g", verified: false}
+
+  - id: PC-GOV-04
+    domain: GOV
+    title: "Leavers lose access promptly."
+    weight: 2
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [H, G]
+    fields: [H.user_id, H.leave_date, H.account_enabled]
+    rule:
+      kind: count
+      pass: {at_most: 0}
+      partial: {at_most: 1}
+      text: "user_id and leave_date joined to accountEnabled; leavers still enabled over 3 days after leaving: pass 0; partial 1; fail 2 or more."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "PR.AA-01", verified: false}
+      - {framework: sp800-171, id: "03.09.02", verified: false}
+      - {framework: cis, id: "6.2", verified: false}
+      - {framework: iso27001, id: "A.6.5", verified: false}
+      - {framework: iso27001, id: "A.5.18", verified: false}
+      - {framework: cyber-essentials, id: "User access control", verified: false}
+      - {framework: nis2, id: "i", verified: false}
+
+  - id: PC-GOV-05
+    domain: GOV
+    title: "An incident response plan with contacts exists and was exercised."
+    weight: 2
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Pass needs both the plan and an exercise record; partial plan only; fail none."
+    manual_alternative: false
+    artefact: "Artefact: plan plus an exercise record within 12 months; pass needs both, partial plan only, fail none."
+    mappings:
+      - {framework: csf, id: "RS.MA-01", verified: false}
+      - {framework: csf, id: "ID.IM-02", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.06.01", verified: false}
+      - {framework: sp800-171, id: "03.06.03", verified: false}
+      - {framework: cis, id: "17.1", verified: false}
+      - {framework: cis, id: "17.4", verified: false}
+      - {framework: iso27001, id: "A.5.24", verified: false}
+      - {framework: iso27001, id: "A.5.26", verified: false}
+      - {framework: nis2, id: "b", verified: false}
+      - {framework: nis2, id: "23", verified: false}
+
+  - id: PC-GOV-06
+    domain: GOV
+    title: "Third-party app access and suppliers are reviewed."
+    weight: 1
+    gate: false
+    manual_only: false
+    max_age_days: {automatic: 35, manual: 365}
+    sources: [G, M]
+    fields: [G.oauth2PermissionGrants, G.servicePrincipals]
+    automatic_unavailable: licence_or_scope
+    rule:
+      kind: count
+      pass: {at_most: 0}
+      partial: {at_most: 1}
+      text: "oauth2PermissionGrants and servicePrincipals (scope outside the verified list, so CE by upload only) plus a manual supplier register; tenant-wide grants of broad mail or file scopes to unreviewed apps: pass 0; partial 1; fail 2 or more."
+    manual_alternative: true
+    mappings:
+      - {framework: csf, id: "GV.SC-01", verified: false, uncertain: true}
+      - {framework: csf, id: "ID.AM-04", verified: false, uncertain: true}
+      - {framework: sp800-171, id: "03.16.03", verified: false, uncertain: true}
+      - {framework: cis, id: "15.1", verified: false}
+      - {framework: iso27001, id: "A.5.19", verified: false}
+      - {framework: iso27001, id: "A.5.23", verified: false}
+      - {framework: nis2, id: "d", verified: false}
+
+  - id: PC-GOV-07
+    domain: GOV
+    title: "The business knows where important and personal data lives."
+    weight: 1
+    gate: false
+    manual_only: true
+    max_age_days: {automatic: null, manual: 365}
+    sources: [M]
+    fields: []
+    rule:
+      kind: manual
+      text: "Judged by a named reviewer from the artefact."
+    manual_alternative: false
+    artefact: "Artefact: data and system register reviewed within 12 months."
+    mappings:
+      - {framework: csf, id: "ID.AM-07", verified: false}
+      - {framework: sp800-171, id: "03.04.10", verified: false, uncertain: true}
+      - {framework: cis, id: "3.2", verified: false}
+      - {framework: iso27001, id: "A.5.9", verified: false}
+      - {framework: nis2, id: "i", verified: false}

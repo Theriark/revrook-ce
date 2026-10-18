@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "revrook control library (data/controls.yaml, ruleset PC-RULES)",
+  "description": "The structure of the control library. Cross-references (every field a control reads is declared, domain weights sum to 100, ids are unique) are checked by app/checks/library.py after this schema has passed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ruleset", "source_codes", "populations", "domains", "field_map", "unavailable", "controls"],
+  "properties": {
+    "ruleset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "source", "manual_alternative_quality"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^PC-RULES$"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+        "source": {"type": "string", "minLength": 1},
+        "manual_alternative_quality": {"$ref": "#/$defs/share"}
+      }
+    },
+    "source_codes": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[A-Z]$"},
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "populations": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[A-Z]{1,2}$"},
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "name", "weight"],
+        "properties": {
+          "code": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "name": {"type": "string", "minLength": 1},
+          "weight": {"type": "integer", "minimum": 1, "maximum": 100}
+        }
+      }
+    },
+    "field_map": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"$ref": "#/$defs/field_id"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["adapter", "column"],
+        "properties": {
+          "adapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+          "column": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+        }
+      }
+    },
+    "unavailable": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/field_id"},
+      "additionalProperties": {"enum": ["licence_or_scope", "dnscheck", "shipped_list"]}
+    },
+    "controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/control"}
+    }
+  },
+  "$defs": {
+    "share": {
+      "type": "string",
+      "pattern": "^(0\\.[0-9]{1,4}|1(\\.0{1,4})?)$"
+    },
+    "field_id": {
+      "type": "string",
+      "pattern": "^[A-Z]\\.[A-Za-z0-9_.]+$"
+    },
+    "threshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "at_least": {"$ref": "#/$defs/share"},
+        "at_most": {"type": "integer", "minimum": 0}
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {"enum": ["share", "count", "state", "manual"]},
+        "text": {"type": "string", "minLength": 10},
+        "pass": {"$ref": "#/$defs/threshold"},
+        "partial": {"$ref": "#/$defs/threshold"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "share"}}, "required": ["kind"]},
+          "then": {
+            "required": ["pass", "partial"],
+            "properties": {
+              "pass": {"required": ["at_least"], "not": {"required": ["at_most"]}},
+              "partial": {"required": ["at_least"], "not": {"required": ["at_most"]}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"kind": {"const": "count"}}, "required": ["kind"]},
+          "then": {
+            "required": ["pass"],
+            "properties": {
+              "pass": {"required": ["at_most"], "not": {"required": ["at_least"]}},
+              "partial": {"required": ["at_most"], "not": {"required": ["at_least"]}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"kind": {"enum": ["state", "manual"]}}, "required": ["kind"]},
+          "then": {"not": {"anyOf": [{"required": ["pass"]}, {"required": ["partial"]}]}}
+        }
+      ]
+    },
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["framework", "id", "verified"],
+      "properties": {
+        "framework": {"enum": ["csf", "sp800-171", "cis", "iso27001", "cyber-essentials", "nis2"]},
+        "id": {"type": "string", "minLength": 1, "maxLength": 60},
+        "verified": {"type": "boolean"},
+        "uncertain": {"type": "boolean"}
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "domain", "title", "weight", "gate", "manual_only", "max_age_days",
+        "sources", "fields", "rule", "manual_alternative", "mappings"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^PC-[A-Z]{3}-[0-9]{2}$"},
+        "domain": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "title": {"type": "string", "minLength": 5, "maxLength": 200},
+        "weight": {"enum": [1, 2, 3]},
+        "gate": {"type": "boolean"},
+        "manual_only": {"type": "boolean"},
+        "max_age_days": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["automatic", "manual"],
+          "properties": {
+            "automatic": {"type": ["integer", "null"], "minimum": 1},
+            "manual": {"type": ["integer", "null"], "minimum": 1}
+          }
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Z]$"}
+        },
+        "fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/field_id"}
+        },
+        "automatic_unavailable": {"enum": ["licence_or_scope"]},
+        "rule": {"$ref": "#/$defs/rule"},
+        "manual_alternative": {"type": "boolean"},
+        "artefact": {"type": "string", "minLength": 10},
+        "mappings": {"type": "array", "items": {"$ref": "#/$defs/mapping"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"manual_only": {"const": true}}, "required": ["manual_only"]},
+          "then": {
+            "required": ["artefact"],
+            "properties": {
+              "gate": {"const": false},
+              "sources": {"const": ["M"]},
+              "fields": {"maxItems": 0},
+              "manual_alternative": {"const": false},
+              "rule": {"properties": {"kind": {"const": "manual"}}},
+              "max_age_days": {
+                "properties": {"automatic": {"type": "null"}, "manual": {"type": "integer"}}
+              }
+            },
+            "not": {"required": ["automatic_unavailable"]}
+          },
+          "else": {
+            "properties": {
+              "manual_alternative": {"const": true},
+              "rule": {"properties": {"kind": {"enum": ["share", "count", "state"]}}},
+              "max_age_days": {"properties": {"automatic": {"type": "integer"}}}
+            },
+            "not": {"required": ["artefact"]}
+          }
+        }
+      ]
+    }
+  }
+}
