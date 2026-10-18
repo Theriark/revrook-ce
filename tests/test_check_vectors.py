@@ -102,11 +102,12 @@ def test_every_control_has_six_vectors_of_every_kind(control: Control) -> None:
     assert any(expect["reason"] == "licence_or_scope" for expect in unknown)
 
 
-@pytest.mark.parametrize("control", evaluated(LIBRARY), ids=lambda item: item.id)
+FIELD_CONTROLS = [control for control in evaluated(LIBRARY) if control.fields]
+
+
+@pytest.mark.parametrize("control", FIELD_CONTROLS, ids=lambda item: item.id)
 def test_an_absent_field_is_never_pass_and_never_fail(control: Control) -> None:
     """With no evidence at all the control is unknown with licence_or_scope."""
-    if not control.fields:
-        pytest.skip("the control reads no field")
     result = evaluate_control(LIBRARY, control, build_evidence({}))
     assert result.status == "unknown"
     assert result.reason == "licence_or_scope"
