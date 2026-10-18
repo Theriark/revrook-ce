@@ -41,9 +41,9 @@ x q, no freshness, no gate cap).
 
 | Measure | Value | Threshold |
 | --- | --- | --- |
-| Spearman, published weights against equal weights | 0.993 | 0.90 |
-| Spearman over 200 one-tier perturbations, minimum | 0.972 | 0.90 |
-| Spearman over 200 one-tier perturbations, mean | 0.995 | 0.90 |
+| Spearman, published weights against equal weights | 0.986 | 0.90 |
+| Spearman over 200 one-tier perturbations, minimum | 0.965 | 0.90 |
+| Spearman over 200 one-tier perturbations, mean | 0.987 | 0.90 |
 | Perturbations with a correlation of at least 0.90 | 1.0 (all) | |
 
 Threshold against equal weights: met. Threshold under perturbation: met.
