@@ -1,0 +1,17 @@
+{
+  "control": "PC-BCK-03",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 30}}, "restore_test_result": "success"}, {"asset": "e1", "asset_type": "exchange", "restore_test_date": {"ago": {"days": 30}}, "restore_test_result": "success"}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "all-classes-tested-recently"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 100}}, "restore_test_result": "success"}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "tested-exactly-at-the-window"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 100, "seconds": 1}}, "restore_test_result": "success"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "tested-a-second-past-the-window"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 30}}, "restore_test_result": "success"}, {"asset": "e1", "asset_type": "exchange", "restore_test_date": null, "restore_test_result": null}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "one-class-never-tested"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 30}}, "restore_test_result": "failed"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "latest-test-failed"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 80}}, "restore_test_result": "failed"}, {"asset": "s2", "asset_type": "server", "restore_test_date": {"ago": {"days": 20}}, "restore_test_result": "success"}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "newer-pass-replaces-older-fail"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 80}}, "restore_test_result": "success"}, {"asset": "s2", "asset_type": "server", "restore_test_date": {"ago": {"days": 20}}, "restore_test_result": "failed"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "newer-fail-replaces-older-pass"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "s1", "asset_type": "server", "restore_test_date": {"ago": {"days": 30}}, "restore_test_result": null}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "test-result-unknown"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"asset": "e1", "asset_type": "exchange", "restore_test_date": null, "restore_test_result": null}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-none-recorded"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-job"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

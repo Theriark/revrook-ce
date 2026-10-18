@@ -1,0 +1,15 @@
+{
+  "control": "PC-NET-03",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": true, "wan_admin_enabled": false}, {"default_credentials_flag": false, "device": "f2", "perimeter": true, "wan_admin_enabled": false}]}}}}, "expect": {"denominator": 2, "numerator": 2, "reason": null, "status": "pass"}, "name": "clean-perimeter-devices"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": true, "wan_admin_enabled": true}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "management-open-to-the-internet"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": true, "device": "f1", "perimeter": true, "wan_admin_enabled": false}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "default-login-kept"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": true, "wan_admin_enabled": null}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "flag-unknown"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": true, "wan_admin_enabled": true}, {"default_credentials_flag": null, "device": "f2", "perimeter": true, "wan_admin_enabled": false}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "a-failure-beats-an-unknown"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": true, "wan_admin_enabled": false}, {"default_credentials_flag": false, "device": "f2", "perimeter": false, "wan_admin_enabled": true}]}}}}, "expect": {"denominator": 1, "numerator": 1, "reason": null, "status": "pass"}, "name": "other-devices-are-ignored"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": false, "wan_admin_enabled": false}]}}}}, "expect": {"reason": "empty_population", "status": "unknown"}, "name": "empty-no-perimeter-device"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"default_credentials_flag": false, "device": "f1", "perimeter": null, "wan_admin_enabled": false}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-perimeter-not-reported"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

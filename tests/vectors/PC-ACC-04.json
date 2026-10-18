@@ -1,0 +1,14 @@
+{
+  "control": "PC-ACC-04",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": []}, "summary": {"tenant_state": "security-defaults"}}}}, "expect": {"reason": null, "status": "pass"}, "name": "security-defaults"},
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": [{"all_apps": true, "all_users": true, "blocks": true, "exclusions": 0, "legacy_clients": true, "requires_mfa": false, "state": "enabled", "targets_roles": false}]}, "summary": {"tenant_state": "conditional-access"}}}}, "expect": {"reason": null, "status": "pass"}, "name": "blocking-for-all-users"},
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": [{"all_apps": true, "all_users": false, "blocks": true, "exclusions": 0, "legacy_clients": true, "requires_mfa": false, "state": "enabled", "targets_roles": false}]}, "summary": {"tenant_state": "conditional-access"}}}}, "expect": {"reason": null, "status": "partial"}, "name": "blocking-some-users"},
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": [{"all_apps": true, "all_users": true, "blocks": true, "exclusions": 0, "legacy_clients": true, "requires_mfa": false, "state": "report-only", "targets_roles": false}]}, "summary": {"tenant_state": "conditional-access"}}}}, "expect": {"reason": null, "status": "partial"}, "name": "report-only-block"},
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": [{"all_apps": true, "all_users": true, "blocks": false, "exclusions": 0, "legacy_clients": false, "requires_mfa": true, "state": "enabled", "targets_roles": false}]}, "summary": {"tenant_state": "conditional-access"}}}}, "expect": {"reason": null, "status": "fail"}, "name": "no-block"},
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": [{"all_apps": true, "all_users": true, "blocks": true, "exclusions": 0, "legacy_clients": true, "requires_mfa": false, "state": "disabled", "targets_roles": false}]}, "summary": {"tenant_state": "conditional-access"}}}}, "expect": {"reason": null, "status": "fail"}, "name": "disabled-block"},
+    {"evidence": {"sources": {"conditional-access": {"kinds": {"policy": []}, "summary": {}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-policies-no-defaults"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

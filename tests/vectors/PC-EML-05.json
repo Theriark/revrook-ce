@@ -1,0 +1,16 @@
+{
+  "control": "PC-EML-05",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": false, "mailbox": "b0"}, {"forwarding_external": false, "mailbox": "b1"}, {"forwarding_external": false, "mailbox": "b2"}], "policy": [{"auto_forwarding_mode": "off", "policy_type": "outbound-spam"}]}}}}, "expect": {"denominator": 3, "numerator": 0, "reason": null, "status": "pass"}, "name": "off-and-nobody-forwards"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": true, "mailbox": "b0"}, {"forwarding_external": false, "mailbox": "b1"}, {"forwarding_external": false, "mailbox": "b2"}], "policy": [{"auto_forwarding_mode": "off", "policy_type": "outbound-spam"}]}}}}, "expect": {"denominator": 3, "numerator": 1, "reason": null, "status": "partial"}, "name": "off-one-forwards"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": true, "mailbox": "b0"}, {"forwarding_external": true, "mailbox": "b1"}, {"forwarding_external": false, "mailbox": "b2"}], "policy": [{"auto_forwarding_mode": "off", "policy_type": "outbound-spam"}]}}}}, "expect": {"denominator": 3, "numerator": 2, "reason": null, "status": "fail"}, "name": "off-two-forward"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": false, "mailbox": "b0"}], "policy": [{"auto_forwarding_mode": "on", "policy_type": "outbound-spam"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "forwarding-on"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": false, "mailbox": "b0"}], "policy": [{"auto_forwarding_mode": "automatic", "policy_type": "outbound-spam"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "forwarding-automatic"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": false, "mailbox": "b0"}, {"forwarding_external": null, "mailbox": "b1"}], "policy": [{"auto_forwarding_mode": "off", "policy_type": "outbound-spam"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "mailbox-state-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": true, "mailbox": "b0"}, {"forwarding_external": null, "mailbox": "b1"}], "policy": [{"auto_forwarding_mode": "off", "policy_type": "outbound-spam"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "one-forwards-one-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"forwarding_external": false}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "no-outbound-policy"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [], "policy": [{"auto_forwarding_mode": "off", "policy_type": "outbound-spam"}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-mailbox"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

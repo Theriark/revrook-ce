@@ -1,0 +1,15 @@
+{
+  "control": "PC-EML-04",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": true, "policy_type": "anti-phish"}, {"enabled": true, "policy_type": "safe-links"}, {"enabled": true, "policy_type": "safe-attachments"}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "all-three-enabled"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": true, "policy_type": "preset"}, {"enabled": false, "policy_type": "anti-phish"}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "preset-only"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": true, "policy_type": "anti-phish"}, {"enabled": false, "policy_type": "safe-links"}, {"enabled": false, "policy_type": "safe-attachments"}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "anti-phishing-only"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": true, "policy_type": "anti-phish"}, {"enabled": true, "policy_type": "safe-links"}, {"enabled": false, "policy_type": "safe-attachments"}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "links-without-attachments"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": false, "policy_type": "anti-phish"}, {"enabled": false, "policy_type": "safe-links"}, {"enabled": false, "policy_type": "safe-attachments"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "nothing-enabled"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": false, "policy_type": "anti-phish"}, {"enabled": true, "policy_type": "safe-links"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "safe-links-without-anti-phishing"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": [{"enabled": null, "policy_type": "anti-phish"}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-state-not-reported"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"policy": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-policy"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

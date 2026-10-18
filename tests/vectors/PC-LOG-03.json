@@ -1,0 +1,16 @@
+{
+  "control": "PC-LOG-03",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": false, "last_acknowledged": {"ago": {"days": 10}}, "recipient_count": 2}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "routed-and-acknowledged"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": false, "last_acknowledged": {"ago": {"days": 90}}, "recipient_count": 2}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "acknowledged-exactly-at-the-window"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": false, "last_acknowledged": {"ago": {"days": 90, "seconds": 1}}, "recipient_count": 2}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "acknowledged-a-second-late"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": false, "last_acknowledged": null, "recipient_count": 2}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "never-acknowledged"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": false, "last_acknowledged": {"ago": {"days": 10}}, "recipient_count": 0}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "no-recipient"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": true, "last_acknowledged": {"ago": {"days": 10}}, "recipient_count": 2}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "disabled-alert-does-not-count"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": null, "last_acknowledged": {"ago": {"days": 10}}, "recipient_count": 2}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "alert-state-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": [{"alert_kind": "admin-role", "disabled": false, "last_acknowledged": {"ago": {"days": 10}}, "recipient_count": null}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-recipients-not-reported"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"alert": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-alert"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

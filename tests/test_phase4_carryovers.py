@@ -95,6 +95,65 @@ def test_a_source_revrook_cannot_read_is_unknown_never_restricted(text: str) -> 
     assert source_scope(text) is None
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        # NB3 (part 1 review): an unspecified address is the whole internet.
+        "0.0.0.0",
+        "::",
+        "0::0",
+        "::0",
+        " 0.0.0.0 ",
+        # NB3: words that are each restricted and together cover every address.
+        "0.0.0.0/1, 128.0.0.0/1",
+        "0.0.0.0/1 128.0.0.0/1",
+        "128.0.0.0/1; 0.0.0.0/1",
+        "0.0.0.0/2, 64.0.0.0/2, 128.0.0.0/1",
+        "0.0.0.0-127.255.255.255, 128.0.0.0/1",
+        "0.0.0.0/1, 100.0.0.0/8, 128.0.0.0/1",
+        "::/1, 8000::/1",
+        "0.0.0.0/1, 128.0.0.0/1, LAN",
+        # L2: spaces around the dash of a range.
+        "0.0.0.0 - 255.255.255.255",
+        "0.0.0.0 -255.255.255.255",
+        "0.0.0.0- 255.255.255.255",
+        ":: - ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+    ],
+)
+def test_the_whole_internet_in_its_other_spellings_is_any(text: str) -> None:
+    assert source_scope(text) == "any"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # A gap, another version, a range that starts after zero: not the internet.
+        "0.0.0.0/1, 128.0.0.0/2",
+        "0.0.0.0/1, ::/1",
+        "1.0.0.0-255.255.255.255",
+        "0.0.0.0-255.255.255.254",
+        "0.0.0.1",
+        "127.0.0.1",
+        "10.0.0.1 - 10.0.0.9",
+    ],
+)
+def test_a_source_that_leaves_addresses_out_is_still_restricted(text: str) -> None:
+    assert source_scope(text) == "restricted"
+
+
+def test_a_range_with_spaces_around_the_dash_in_a_wrong_order_is_unknown() -> None:
+    assert source_scope("255.255.255.255 - 0.0.0.0") is None
+
+
+def test_a_rule_open_to_the_whole_internet_in_another_spelling_counts_as_any() -> None:
+    sources = ["0.0.0.0", "0.0.0.0/1, 128.0.0.0/1", "0.0.0.0 - 255.255.255.255"]
+    rows = [["rule", "true", "inbound", "allow", item, "3389"] for item in sources]
+    result = parse("network-export", to_csv(RULE_HEADER, rows))
+    rules = [fact for fact in result.facts if fact.key == "network.rule"]
+    assert [fact.value["source"] for fact in rules] == ["any", "any", "any"]
+    assert dict(result.facts[-1].value)["rules_any_source"] == 3
+
+
 def test_network_rules_carry_any_restricted_or_unknown_to_the_facts() -> None:
     sources = ["0.0.0.0/0", "::/0", "203.0.113.0/24", "LAN", "10.0.0.0/8, 0.0.0.0/0"]
     rows = [["rule", "true", "inbound", "allow", item, "3389"] for item in sources]

@@ -1,0 +1,14 @@
+{
+  "control": "PC-ACC-02",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": [{"is_admin": true, "mfa_capable": true, "mfa_registered": true, "user": "a0", "user_type": "member"}, {"is_admin": true, "mfa_capable": true, "mfa_registered": true, "user": "a1", "user_type": "member"}, {"is_admin": true, "mfa_capable": true, "mfa_registered": true, "user": "a2", "user_type": "member"}, {"is_admin": false, "mfa_capable": true, "mfa_registered": true, "user": "u9", "user_type": "member"}]}}}}, "expect": {"denominator": 3, "numerator": 0, "reason": null, "status": "pass"}, "name": "no-admin-without-mfa"},
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": [{"is_admin": false, "mfa_capable": true, "mfa_registered": true, "user": "u1", "user_type": "member"}]}}}}, "expect": {"denominator": 0, "numerator": 0, "reason": null, "status": "pass"}, "name": "no-administrator-at-all"},
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": [{"is_admin": true, "mfa_capable": true, "mfa_registered": true, "user": "a1", "user_type": "member"}, {"is_admin": true, "mfa_capable": true, "mfa_registered": false, "user": "a2", "user_type": "member"}]}}}}, "expect": {"denominator": 2, "numerator": 1, "reason": null, "status": "fail"}, "name": "one-admin-without-mfa"},
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": [{"is_admin": true, "mfa_capable": true, "mfa_registered": false, "user": "a0", "user_type": "member"}, {"is_admin": true, "mfa_capable": true, "mfa_registered": false, "user": "a1", "user_type": "member"}, {"is_admin": true, "mfa_capable": true, "mfa_registered": true, "user": "a3", "user_type": "member"}]}}}}, "expect": {"denominator": 3, "numerator": 2, "reason": null, "status": "fail"}, "name": "two-admins-without-mfa"},
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": [{"is_admin": true, "mfa_capable": true, "mfa_registered": null, "user": "a1", "user_type": "member"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "admin-mfa-unknown"},
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": [{"is_admin": null, "mfa_capable": true, "mfa_registered": true, "user": "u1", "user_type": "member"}, {"is_admin": null, "mfa_capable": true, "mfa_registered": true, "user": "u2", "user_type": "member"}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "admin-flag-absent"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"},
+    {"evidence": {"sources": {"entra-registration": {"kinds": {"user": []}}}}, "expect": {"reason": "empty_population", "status": "unknown"}, "name": "empty-no-users"}
+  ]
+}

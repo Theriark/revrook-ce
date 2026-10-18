@@ -8,6 +8,7 @@ import base64
 import contextlib
 import functools
 import ipaddress
+import json
 import os
 import socket
 import subprocess
@@ -27,6 +28,7 @@ from app.db import make_engine
 from app.main import create_app
 from app.settings import Settings, load_settings
 from helpers import FakeClock
+from tools import sensitivity
 
 ROOT = Path(__file__).resolve().parent.parent
 # Tables a test may empty. audit_event and evidence_log are append-only: the
@@ -111,6 +113,20 @@ def forbid_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "connect", connect)
     monkeypatch.setattr(socket.socket, "connect_ex", connect_ex)
     monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+
+
+def pytest_terminal_summary(terminalreporter: Any) -> None:
+    """Print the sensitivity harness result at the end of the run (phase 5).
+
+    The harness test writes build/sensitivity-report.json; the correlation with equal
+    weights is shown here so that it is in the log of the run, passed or not.
+    """
+    path = sensitivity.DEFAULT_REPORT
+    if not path.is_file():
+        return
+    report = json.loads(path.read_text(encoding="utf-8"))
+    terminalreporter.write_sep("-", "sensitivity harness (docs/scoring.md)")
+    terminalreporter.write_line(sensitivity.summary(report))
 
 
 @pytest.fixture
