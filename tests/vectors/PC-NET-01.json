@@ -1,0 +1,19 @@
+{
+  "control": "PC-NET-01",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 100}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "firmware-recent"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 365}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "firmware-exactly-at-the-pass-age"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 365, "seconds": 1}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "firmware-a-second-past-the-pass-age"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 730}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "firmware-exactly-at-the-partial-age"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 730, "seconds": 1}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "firmware-a-second-past-the-partial-age"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": {"ago": {"days": 1}}, "firmware_release_date": {"ago": {"days": 10}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "past-end-of-support"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": {"ago": {"days": -30}}, "firmware_release_date": {"ago": {"days": 10}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "end-of-support-still-ahead"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 100}}, "perimeter": true}, {"device": "f2", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 740}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "one-old-firewall-fails-the-control"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 100}}, "perimeter": true}, {"device": "f2", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 375}}, "perimeter": true}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "a-pass-and-a-partial"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": null, "perimeter": true}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "release-date-unknown"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 1}}, "perimeter": false}]}}}}, "expect": {"reason": "empty_population", "status": "unknown"}, "name": "empty-no-perimeter-device"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"device": [{"device": "f1", "end_of_support_date": null, "firmware_release_date": {"ago": {"days": 1}}, "perimeter": null}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-perimeter-not-reported"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

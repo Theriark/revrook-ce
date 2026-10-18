@@ -1,0 +1,14 @@
+{
+  "control": "PC-LOG-01",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": [{"audit_disabled": false, "unified_audit_log_enabled": true}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "ingestion-on-auditing-on"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": [{"audit_disabled": false, "unified_audit_log_enabled": false}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "ingestion-off"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": [{"audit_disabled": true, "unified_audit_log_enabled": true}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "auditing-disabled"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": [{"audit_disabled": null, "unified_audit_log_enabled": true}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "auditing-flag-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": [{"audit_disabled": false, "unified_audit_log_enabled": null}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "ingestion-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": [{"audit_disabled": false, "unified_audit_log_enabled": true}, {"audit_disabled": false, "unified_audit_log_enabled": false}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "one-failing-setting-fails"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"audit": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-audit-record"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

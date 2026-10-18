@@ -1,0 +1,14 @@
+{
+  "control": "PC-LOG-02",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"licence_log_retention_days": 180, "sources": {}}, "expect": {"reason": null, "status": "pass"}, "name": "licence-at-the-pass-days"},
+    {"evidence": {"licence_log_retention_days": 179, "sources": {}}, "expect": {"reason": null, "status": "partial"}, "name": "licence-one-day-short"},
+    {"evidence": {"licence_log_retention_days": 90, "sources": {}}, "expect": {"reason": null, "status": "partial"}, "name": "licence-at-the-partial-days"},
+    {"evidence": {"licence_log_retention_days": 89, "sources": {}}, "expect": {"reason": null, "status": "fail"}, "name": "licence-one-day-below-partial"},
+    {"evidence": {"licence_log_retention_days": 30, "manual": {"PC-LOG-02": {"assurance": "manual-artefact", "outcome": null, "reviewed_on": "2026-10-01", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "value": 360}}, "sources": {}}, "expect": {"reason": null, "status": "pass"}, "name": "declared-archive-is-longer"},
+    {"evidence": {"licence_log_retention_days": 360, "manual": {"PC-LOG-02": {"assurance": "manual-artefact", "outcome": null, "reviewed_on": "2026-10-01", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "value": 10}}, "sources": {}}, "expect": {"reason": null, "status": "pass"}, "name": "licence-is-longer"},
+    {"evidence": {"licence_log_retention_days": null, "sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-nothing-known"},
+    {"evidence": {"licence_log_retention_days": null, "manual": {"PC-LOG-02": {"assurance": "manual-artefact", "outcome": null, "reviewed_on": "2026-10-01", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "value": null}}, "sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-archive-without-number"}
+  ]
+}

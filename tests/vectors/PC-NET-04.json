@@ -1,0 +1,16 @@
+{
+  "control": "PC-NET-04",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "wpa2", "ssid": "s1"}, {"guest_isolated": true, "guest_ssid": true, "security_mode": "wpa3", "ssid": "g"}]}}}}, "expect": {"denominator": 2, "numerator": 2, "reason": null, "status": "pass"}, "name": "encrypted-and-guests-isolated"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "wpa2-wpa3", "ssid": "s1"}, {"guest_isolated": null, "guest_ssid": false, "security_mode": "wpa3-enterprise", "ssid": "s2"}]}}}}, "expect": {"reason": null, "status": "pass"}, "name": "modern-modes-pass"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "open", "ssid": "s1"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "open-network"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "wep", "ssid": "s1"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "wep-network"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "wpa", "ssid": "s1"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "wpa1-network"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": false, "guest_ssid": true, "security_mode": "wpa2", "ssid": "g"}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "guest-not-isolated"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": true, "security_mode": "wpa2", "ssid": "g"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "guest-isolation-unknown"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": [{"guest_isolated": null, "guest_ssid": false, "security_mode": "wpa2", "ssid": "s1"}, {"guest_isolated": null, "guest_ssid": false, "security_mode": null, "ssid": "s2"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "mode-unknown"},
+    {"evidence": {"sources": {"network-export": {"kinds": {"ssid": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-wifi-network"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}

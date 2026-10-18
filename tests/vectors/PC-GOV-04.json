@@ -1,0 +1,16 @@
+{
+  "control": "PC-GOV-04",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p0"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p1"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p2"}]}}}}, "expect": {"denominator": 3, "numerator": 0, "reason": null, "status": "pass"}, "name": "all-leavers-disabled"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": true, "leave_date": {"ago": {"days": 3}}, "user": "p1"}]}}}}, "expect": {"denominator": 0, "numerator": 0, "reason": null, "status": "pass"}, "name": "nobody-is-past-the-grace-period-yet"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": true, "leave_date": {"ago": {"days": 3, "seconds": 1}}, "user": "p1"}]}}}}, "expect": {"denominator": 1, "numerator": 1, "reason": null, "status": "partial"}, "name": "a-second-past-the-grace-period"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": true, "leave_date": {"ago": {"days": 10}}, "user": "p1"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p0"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p1"}]}}}}, "expect": {"denominator": 3, "numerator": 1, "reason": null, "status": "partial"}, "name": "one-still-enabled"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": true, "leave_date": {"ago": {"days": 10}}, "user": "p1"}, {"account_enabled": true, "leave_date": {"ago": {"days": 10}}, "user": "p2"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p3"}]}}}}, "expect": {"denominator": 3, "numerator": 2, "reason": null, "status": "fail"}, "name": "two-still-enabled"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": true, "leave_date": {"ago": {"days": -5}}, "user": "p1"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p2"}]}}}}, "expect": {"denominator": 1, "numerator": 0, "reason": null, "status": "pass"}, "name": "a-future-leave-date-is-ignored"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": null, "leave_date": {"ago": {"days": 10}}, "user": "p1"}, {"account_enabled": false, "leave_date": {"ago": {"days": 10}}, "user": "p2"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "account-state-unknown"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": [{"account_enabled": null, "leave_date": {"ago": {"days": 10}}, "user": "p1"}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-account-state-not-reported"},
+    {"evidence": {"sources": {"leavers-csv": {"kinds": {"leaver": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-leaver"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}
