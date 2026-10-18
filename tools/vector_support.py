@@ -94,6 +94,27 @@ def share_status(rule: Mapping[str, Any], good: int, total: int) -> str:
     return "fail"
 
 
+def bounded_share(
+    name: str,
+    evidence: Mapping[str, Any],
+    rule: Mapping[str, Any],
+    good: int,
+    total: int,
+    unresolved: int,
+) -> Vector:
+    """A share vector where `unresolved` of the `total` rows cannot be told.
+
+    The share is between `good` and `good + unresolved` of `total`. When the rule
+    gives one status at both ends that is the expected result; otherwise it is
+    unknown with unresolved_values, never the kinder status.
+    """
+    worst = share_status(rule, good, total)
+    best = share_status(rule, good + unresolved, total)
+    if worst != best:
+        return vec(name, evidence, "unknown", UNRESOLVED)
+    return vec(name, evidence, worst, None, good, total)
+
+
 def count_status(rule: Mapping[str, Any], found: int) -> str:
     """pass, partial or fail for a count that should be small."""
     if found <= at_most(rule, "pass"):
