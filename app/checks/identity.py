@@ -38,9 +38,12 @@ def acc_01(ctx: Context) -> Outcome:
     def with_mfa(row: Row) -> bool | None:
         registered = flag_of(row.get("mfa_registered"))
         capable = flag_of(row.get("mfa_capable"))
+        # One flag that is False settles it, whatever the other one says.
+        if registered is False or capable is False:
+            return False
         if registered is None or capable is None:
             return None
-        return registered and capable
+        return True
 
     return share_of_known(
         ctx.control, members, with_mfa, source.captured_at, "member users with MFA"

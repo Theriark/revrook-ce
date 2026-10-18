@@ -1,8 +1,9 @@
 # Scoring: what part 2 of phase 5 decides, and the sensitivity result
 
 The scoring engine itself (freshness, gate caps, coverage, bounds, bands, snapshots)
-is phase 6. This page records what the check engine hands to it and the result of
-the sensitivity harness, which belongs to phase 5.
+is phase 6 and is described in [scoring-engine.md](scoring-engine.md). This page
+records what the check engine hands to it and the result of the sensitivity harness,
+which belongs to phase 5.
 
 ## What the check engine hands over
 
