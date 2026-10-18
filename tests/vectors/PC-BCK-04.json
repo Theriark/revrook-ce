@@ -1,0 +1,16 @@
+{
+  "control": "PC-BCK-04",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 100, "row": {"immutable": true, "offsite": true}, "start": 0}]}}}}, "expect": {"denominator": 100, "numerator": 100, "reason": null, "status": "pass"}, "name": "all-assets-immutable"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 95, "row": {"immutable": true, "offsite": true}, "start": 0}, {"id_column": "asset", "prefix": "a", "repeat": 5, "row": {"immutable": false, "offsite": true}, "start": 95}]}}}}, "expect": {"denominator": 100, "numerator": 95, "reason": null, "status": "pass"}, "name": "immutable-at-the-share"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 94, "row": {"immutable": true, "offsite": true}, "start": 0}, {"id_column": "asset", "prefix": "a", "repeat": 6, "row": {"immutable": false, "offsite": true}, "start": 94}]}}}}, "expect": {"denominator": 100, "numerator": 94, "reason": null, "status": "partial"}, "name": "just-below-the-share-all-off-site"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 94, "row": {"immutable": true, "offsite": true}, "start": 0}, {"id_column": "asset", "prefix": "a", "repeat": 6, "row": {"immutable": false, "offsite": false}, "start": 94}]}}}}, "expect": {"denominator": 100, "numerator": 94, "reason": null, "status": "fail"}, "name": "just-below-the-share-off-site-short"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 100, "row": {"immutable": false, "offsite": true}, "start": 0}]}}}}, "expect": {"reason": null, "status": "partial"}, "name": "off-site-but-not-immutable"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 100, "row": {"immutable": false, "offsite": false}, "start": 0}]}}}}, "expect": {"reason": null, "status": "fail"}, "name": "neither-immutable-nor-off-site"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 99, "row": {"immutable": true, "offsite": true}, "start": 1}, {"asset": "a0", "immutable": true, "offsite": true}, {"asset": "a0", "immutable": false, "offsite": false}]}}}}, "expect": {"denominator": 100, "numerator": 100, "reason": null, "status": "pass"}, "name": "one-immutable-job-is-enough"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": [{"id_column": "asset", "prefix": "a", "repeat": 5, "row": {"immutable": null, "offsite": true}, "start": 0}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-immutable-not-reported"},
+    {"evidence": {"sources": {"backup-export": {"kinds": {"job": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-job"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}
