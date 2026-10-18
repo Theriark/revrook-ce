@@ -135,7 +135,8 @@ async def test_one_person_has_one_pseudonym_across_the_generic_sources(
             db_engine, ctx, client_id, export(source, by_file[file_name].data)
         )
         found = await facts_of(db_engine, stored.item_id)
-        people[label] = {f.value["user"] for f in found if f.fact_key == key}
+        values = [f.value for f in found if f.fact_key == key]
+        people[label] = {v["user"] for v in values if "user" in v}
     assert len(people["training"]) == 5
     assert people["training"] == people["device"] & people["training"]
     assert all(PSEUDONYM.fullmatch(pseudonym) for pseudonym in people["training"])

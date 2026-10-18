@@ -508,7 +508,7 @@ def test_the_exchange_alerts_are_told_apart_by_kind_and_state() -> None:
     }
 
 
-# --- a saved mapping --------------------------------------------------------------------
+# --- a saved mapping --------------------------------------------------------------
 
 
 def vendor_style(fixture: Fixture) -> tuple[bytes, dict[str, str]]:
