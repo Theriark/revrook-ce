@@ -77,7 +77,9 @@ def spearman(first: Sequence[Fraction], second: Sequence[Fraction]) -> float | N
     left, right = rank(first), rank(second)
     mean_left = sum(left) / len(left)
     mean_right = sum(right) / len(right)
-    covariance = sum((a - mean_left) * (b - mean_right) for a, b in zip(left, right))
+    covariance = sum(
+        (a - mean_left) * (b - mean_right) for a, b in zip(left, right, strict=True)
+    )
     spread_left = sum((a - mean_left) ** 2 for a in left)
     spread_right = sum((b - mean_right) ** 2 for b in right)
     if spread_left == 0 or spread_right == 0:
