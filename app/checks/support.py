@@ -170,11 +170,22 @@ def share_outcome(
     what: str,
     unresolved: int = 0,
 ) -> Outcome:
+    """A share rule over `denominator` rows, `unresolved` of which cannot be told.
+
+    `numerator` rows pass and the unresolved rows are part of the denominator. The
+    share is between numerator / denominator (every unresolved row fails) and
+    (numerator + unresolved) / denominator (every one passes). When the thresholds
+    give the same status at both ends that is the result; otherwise the control is
+    unknown, never the kinder status (the same rule as count_outcome).
+    """
     detail = f"{numerator} of {denominator} {what}"
     if unresolved:
         detail += f"; {unresolved} could not be told from the export"
-    status = share_status(control, numerator, denominator)
-    return decided(status, detail, at, numerator, denominator)
+    worst = share_status(control, numerator, denominator)
+    best = share_status(control, numerator + unresolved, denominator)
+    if best != worst:
+        return Outcome("unknown", UNRESOLVED, detail, numerator, denominator, at)
+    return decided(worst, detail, at, numerator, denominator)
 
 
 def count_outcome(
@@ -210,18 +221,18 @@ def share_of_known(
 ) -> Outcome:
     """A share rule over a population: how many rows pass the test.
 
-    A row whose test cannot be told (None) is left out of the share and counted in
-    the detail. No rows is an empty population (unknown); rows that all cannot be
-    told are an absent field (unknown).
+    A row whose test cannot be told (None) stays in the denominator and is never
+    read kindly: see share_outcome. No rows is an empty population (unknown); rows
+    that all cannot be told are an absent field (unknown).
     """
     if not rows:
         return unknown(EMPTY_POPULATION, f"There are no {what} to measure.", at)
     verdicts = [test(row) for row in rows]
-    known = [verdict for verdict in verdicts if verdict is not None]
-    if not known:
+    unresolved = sum(1 for verdict in verdicts if verdict is None)
+    if unresolved == len(rows):
         return unknown(ABSENT, f"No {what} reports the values this control needs.", at)
-    passing = sum(1 for verdict in known if verdict)
-    return share_outcome(control, passing, len(known), at, what, len(rows) - len(known))
+    passing = sum(1 for verdict in verdicts if verdict)
+    return share_outcome(control, passing, len(rows), at, what, unresolved)
 
 
 def worst_of(

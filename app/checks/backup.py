@@ -71,20 +71,24 @@ def bck_01(ctx: Context) -> Outcome:
         return absent("The backup export has no schedule in hours.")
     factor = Fraction(control.number("schedule_factor"))
 
-    def recent_success(row: Row) -> bool:
-        hours = count_of(row.get("schedule_hours"))
-        if hours is None or row.get("last_result") != "success":
+    def recent_success(row: Row) -> bool | None:
+        if row.get("last_result") != "success":
             return False
+        hours = count_of(row.get("schedule_hours"))
+        if hours is None:
+            return None
         window = factor * hours
         return within_hours(backup.captured_at, row.get("last_success"), window) is True
 
-    protected = sum(
-        1
-        for server in servers
-        if any(recent_success(row) for row in jobs.get(server, []))
-    )
+    protected = unresolved = 0
+    for server in servers:
+        states = [recent_success(row) for row in jobs.get(server, [])]
+        if any(state is True for state in states):
+            protected += 1
+        elif any(state is None for state in states):
+            unresolved += 1
     what = "in-scope servers have a recent backup"
-    return share_outcome(control, protected, len(servers), at, what)
+    return share_outcome(control, protected, len(servers), at, what, unresolved)
 
 
 def bck_03(ctx: Context) -> Outcome:

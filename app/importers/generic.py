@@ -193,7 +193,7 @@ def source_scope(text: str) -> str | None:
     revrook cannot resolve (an address object such as LAN) is unknown, never
     restricted: a control must not pass on it.
     """
-    spaced = re.sub(r"\s*-\s*", "-", text.strip())
+    spaced = "-".join(part.strip() for part in text.strip().split("-"))
     words = [word for word in re.split(r"[,;\s]+", spaced) if word]
     found = {_source_token(word) for word in words}
     if "any" in found or _covers_everything(words):

@@ -61,11 +61,14 @@ def net_01(ctx: Context) -> Outcome:
     partial_days = ctx.control.whole("partial_days")
 
     def state(row: Row) -> Status | None:
+        # A firewall past its end of support fails whatever its firmware date says.
+        support_ends = parse_time(row.get("end_of_support_date"))
+        if support_ends is not None and support_ends < at:
+            return "fail"
         released = within(at, row.get("firmware_release_date"), partial_days)
         if released is None:
             return None
-        support_ends = parse_time(row.get("end_of_support_date"))
-        if released is False or (support_ends is not None and support_ends < at):
+        if released is False:
             return "fail"
         recent = within(at, row.get("firmware_release_date"), pass_days)
         return "pass" if recent else "partial"
@@ -175,7 +178,9 @@ def net_04(ctx: Context) -> Outcome:
     open_network = any(mode in obsolete for mode in modes)
     if open_network or any(flag is False for flag in isolated):
         return decided("fail", detail + "; one is open or not separated", at)
-    if any(mode is None for mode in modes) or any(flag is None for flag in isolated):
+    # `other` is a mode the importer did not recognise: it cannot complete a pass.
+    unclear = any(mode in (None, "other") for mode in modes)
+    if unclear or any(flag is None for flag in isolated):
         return unknown(UNRESOLVED, detail + "; some values are missing", at)
     return decided("pass", detail, at, len(networks), len(networks))
 
