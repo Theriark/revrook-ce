@@ -14,9 +14,11 @@ from tools.vector_support import (
     EMPTY,
     LOS,
     RECENT,
+    UNRESOLVED,
     Vector,
     ago,
     at_least,
+    bounded_share,
     ev,
     of_hundred,
     rep,
@@ -161,11 +163,15 @@ def share_vectors(
     rule: Mapping[str, Any],
     make: Make,
     absent_reason: str = LOS,
+    unresolved_rows: bool = False,
 ) -> list[Vector]:
     """The vectors of a share rule; `make(good, bad, unknown)` builds the evidence.
 
-    Rows that cannot be told are left out of the share; a population of nothing
-    but such rows is an absent field; no row at all is an empty population.
+    With `unresolved_rows` the unknown rows are part of the population and are
+    never read kindly: the result is the status the share gives whether they all
+    pass or all fail, else unknown (see bounded_share). Without it the maker leaves
+    such rows out altogether. A population of nothing but unknown rows is an absent
+    field; no row at all is an empty population.
     """
     top = of_hundred(at_least(rule, "pass"))
     low = of_hundred(at_least(rule, "partial"))
@@ -181,10 +187,36 @@ def share_vectors(
     for name, good in cases:
         status = share_status(rule, good, 100)
         found.append(vec(name, make(good, 100 - good, 0), status, None, good, 100))
-    status = share_status(rule, top, 100)
     left_out = make(top, 100 - top, 10)
+    if unresolved_rows:
+        found += [
+            bounded_share(
+                "unresolved-rows-block-the-pass", left_out, rule, top, 110, 10
+            ),
+            bounded_share(
+                "one-known-the-rest-unresolved", make(1, 0, 99), rule, 1, 100, 99
+            ),
+            bounded_share(
+                "fail-whatever-the-unresolved-rows-are",
+                make(0, 90, 10),
+                rule,
+                0,
+                100,
+                10,
+            ),
+            bounded_share(
+                "pass-whatever-the-unresolved-row-is",
+                make(100, 0, 1),
+                rule,
+                100,
+                101,
+                1,
+            ),
+        ]
+    else:
+        status = share_status(rule, top, 100)
+        found.append(vec("unknown-rows-left-out", left_out, status, None, top, 100))
     found += [
-        vec("unknown-rows-left-out", left_out, status, None, top, 100),
         vec("unknown-field-absent", make(0, 0, 5), "unknown", absent_reason),
         vec("unknown-source-missing", ev(), "unknown", absent_reason),
         vec("empty-population", make(0, 0, 0), "unknown", EMPTY),
@@ -200,7 +232,18 @@ def spec_vectors(control_id: str, rule: Mapping[str, Any]) -> list[Vector]:
             return ev({spec.adapter: src({spec.kind: []})})
         return population(spec, good, bad, unknown)
 
-    return share_vectors(rule, make)
+    found = share_vectors(rule, make, unresolved_rows=True)
+    if control_id == "PC-ACC-01":
+        # 100 members, one with a known answer and 99 whose capability is blank.
+        member = {**spec.base, "mfa_registered": True}
+        users = [
+            rep(1, {**member, "mfa_capable": True}, spec.id_column, "g"),
+            rep(99, {**member, "mfa_capable": None}, spec.id_column, "u"),
+        ]
+        blank = ev({spec.adapter: src({spec.kind: users})})
+        name = "99-members-with-a-blank-mfa-capable"
+        found.append(vec(name, blank, "unknown", UNRESOLVED))
+    return found
 
 
 # --- PC-DEV-01: devices in both exports -------------------------------------------
@@ -306,6 +349,16 @@ def bck_01(control: Mapping[str, Any]) -> list[Vector]:
             "backup-export": src({"job": [rep(1, JOB, "asset", "o")]}),
         }
     )
+    # A successful job without a schedule cannot be told to be recent: unresolved.
+    scheduled = rep(90, JOB, "asset", "s")
+    unscheduled_jobs = rep(10, no_schedule, "asset", "s", 90)
+    unclear = ev(
+        {
+            "device-inventory": src({"device": [rep(100, SERVER, "device", "s")]}),
+            "backup-export": src({"job": [scheduled, unscheduled_jobs]}),
+        }
+    )
+    failed_unscheduled = servers(100, {**failed, "schedule_hours": None})
     found += [
         vec("success-at-1.5-schedules", servers(100, exact), "pass", None, 100, 100),
         vec("success-a-minute-too-old", servers(100, late), "fail", None, 0, 100),
@@ -313,6 +366,8 @@ def bck_01(control: Mapping[str, Any]) -> list[Vector]:
         vec("inactive-servers-not-in-scope", stale, "pass", None, 90, 90),
         vec("unknown-no-schedule", unscheduled, "unknown", LOS),
         vec("unknown-no-form-factor", no_form, "unknown", LOS),
+        vec("unknown-schedule-on-some-jobs", unclear, "unknown", UNRESOLVED),
+        vec("failed-job-without-schedule", failed_unscheduled, "fail", None, 0, 100),
     ]
     return found
 

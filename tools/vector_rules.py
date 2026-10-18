@@ -155,6 +155,7 @@ def net_01(control: Mapping[str, Any]) -> list[Vector]:
     second = whole(control, "partial_days")
     recent = firewall({"days": 100})
     no_support = firewall({"days": 10}, end_of_support_date=ago(days=1))
+    no_date = firewall(None, end_of_support_date=ago(days=1))
     supported = firewall({"days": 10}, end_of_support_date=ago(days=-30))
     aged = firewall({"days": second + 10}, "f2")
     mid = firewall({"days": first + 10}, "f2")
@@ -171,6 +172,7 @@ def net_01(control: Mapping[str, Any]) -> list[Vector]:
         vec("firmware-exactly-at-the-partial-age", at_second, "partial"),
         vec("firmware-a-second-past-the-partial-age", past_second, "fail"),
         vec("past-end-of-support", devices(no_support), "fail"),
+        vec("past-end-of-support-release-date-unknown", devices(no_date), "fail"),
         vec("end-of-support-still-ahead", devices(supported), "pass"),
         vec("one-old-firewall-fails-the-control", devices(recent, aged), "fail"),
         vec("a-pass-and-a-partial", devices(recent, mid), "partial"),
@@ -289,6 +291,8 @@ def net_04(control: Mapping[str, Any]) -> list[Vector]:
     open_guest = wifi("g", guest_ssid=True, guest_isolated=False)
     unsure_guest = wifi_rows(wifi("g", guest_ssid=True))
     unsure_mode = wifi_rows(wifi(), wifi("s2", security_mode=None))
+    # A mode the importer did not recognise is stored as `other`.
+    other_mode = wifi_rows(wifi(security_mode="other"))
     return [
         vec("encrypted-and-guests-isolated", wifi_rows(*plain), "pass", None, 2, 2),
         vec("modern-modes-pass", wifi_rows(*modern), "pass"),
@@ -298,6 +302,7 @@ def net_04(control: Mapping[str, Any]) -> list[Vector]:
         vec("guest-not-isolated", wifi_rows(open_guest), "fail"),
         vec("guest-isolation-unknown", unsure_guest, "unknown", UNRESOLVED),
         vec("mode-unknown", unsure_mode, "unknown", UNRESOLVED),
+        vec("unrecognised-mode", other_mode, "unknown", UNRESOLVED),
         vec("empty-no-wifi-network", wifi_rows(), "unknown", LOS),
         vec("unknown-source-missing", ev(), "unknown", LOS),
     ]
