@@ -1,0 +1,15 @@
+{
+  "control": "PC-EML-06",
+  "ruleset": "PC-RULES 0.1",
+  "vectors": [
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"account_enabled": false, "mailbox": "b0", "recipient_type": "shared"}, {"account_enabled": false, "mailbox": "b1", "recipient_type": "shared"}, {"account_enabled": false, "mailbox": "b2", "recipient_type": "shared"}]}}}}, "expect": {"denominator": 3, "numerator": 0, "reason": null, "status": "pass"}, "name": "no-shared-mailbox-signs-in"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"account_enabled": true, "mailbox": "b0", "recipient_type": "user"}]}}}}, "expect": {"denominator": 0, "numerator": 0, "reason": null, "status": "pass"}, "name": "no-shared-mailbox-at-all"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"account_enabled": true, "mailbox": "b0", "recipient_type": "shared"}, {"account_enabled": false, "mailbox": "b1", "recipient_type": "shared"}]}}}}, "expect": {"denominator": 2, "numerator": 1, "reason": null, "status": "partial"}, "name": "one-can-sign-in"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"account_enabled": true, "mailbox": "b0", "recipient_type": "shared"}, {"account_enabled": true, "mailbox": "b1", "recipient_type": "shared"}, {"account_enabled": false, "mailbox": "b2", "recipient_type": "shared"}]}}}}, "expect": {"denominator": 3, "numerator": 2, "reason": null, "status": "fail"}, "name": "two-can-sign-in"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"account_enabled": false, "mailbox": "b0", "recipient_type": "shared"}, {"account_enabled": null, "mailbox": "b1", "recipient_type": "shared"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "state-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"account_enabled": true, "mailbox": "b0", "recipient_type": "shared"}, {"account_enabled": null, "mailbox": "b1", "recipient_type": "shared"}]}}}}, "expect": {"reason": "unresolved_values", "status": "unknown"}, "name": "one-enabled-one-unknown"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": [{"mailbox": "b1"}]}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "recipient-type-not-reported"},
+    {"evidence": {"sources": {"exchange-export": {"kinds": {"mailbox": []}}}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "empty-no-mailbox"},
+    {"evidence": {"sources": {}}, "expect": {"reason": "licence_or_scope", "status": "unknown"}, "name": "unknown-source-missing"}
+  ]
+}
