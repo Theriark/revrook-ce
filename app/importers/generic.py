@@ -55,10 +55,11 @@ from app.importers.framework import (
     summary_fact,
 )
 from app.importers.microsoft import OS_PREFIXES, clean_version
+from app.pseudonym import normalise_identifier
 
 MAX_IDENTIFIER_LENGTH = 200
 MAX_PORT = 65_535
-ANY_WORDS = frozenset({"any", "*", "all", "internet", "0.0.0.0/0", "::/0"})
+ANY_WORDS = frozenset({"any", "*", "all", "anywhere", "internet", "0.0.0.0/0", "::/0"})
 UNREAD_HEADERS = frozenset({"serial", "serialnumber", "clientname"})
 
 Raw = Mapping[str, object]
@@ -291,7 +292,7 @@ class CsvAdapter:
             summary[count.name] = sum(1 for f in facts if counts_as(f, count))
         for name, target in self.distinct:
             people = {
-                fact.identifiers[target].strip().casefold()
+                normalise_identifier(fact.identifiers[target])
                 for fact in facts
                 if target in fact.identifiers
             }
@@ -509,11 +510,14 @@ NETWORK_KINDS = {
 DIRECTIONS = {
     "inbound": "inbound",
     "in": "inbound",
+    "ingress": "inbound",
+    "incoming": "inbound",
     "outbound": "outbound",
     "out": "outbound",
 }
 ACTIONS = {
     "allow": "allow",
+    "accept": "allow",
     "permit": "allow",
     "deny": "deny",
     "drop": "deny",
