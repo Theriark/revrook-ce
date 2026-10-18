@@ -7,3 +7,4 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 bash "${ROOT}/scripts/e2e/phase_02.sh"
+bash "${ROOT}/scripts/e2e/phase_03.sh"

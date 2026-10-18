@@ -8,6 +8,14 @@ from app.importers.registry import ImporterRegistry, build_default_registry
 
 MAX_ROWS = 100
 HEADER = "user_principal_name,mfa_registered"
+SOURCES = [
+    "conditional-access",
+    "directory-roles",
+    "entra-registration",
+    "intune-devices",
+    "reference-csv",
+    "secure-score",
+]
 
 
 def parse(text: str | bytes, max_rows: int = MAX_ROWS) -> ParseResult:
@@ -100,12 +108,15 @@ def test_a_formula_in_a_user_field_is_only_ever_an_identifier() -> None:
     assert result.facts[0].value == {"mfa_registered": True}
 
 
-def test_the_registry_finds_the_reference_importer() -> None:
+def test_the_registry_finds_the_reference_and_the_microsoft_importers() -> None:
     registry = build_default_registry()
-    assert registry.source_codes() == ["reference-csv"]
+    assert registry.source_codes() == SOURCES
     found = registry.get("reference-csv")
     assert found is not None
     assert found.version == "reference-1"
+    microsoft = registry.get("entra-registration")
+    assert microsoft is not None
+    assert microsoft.version == "entra-registration-1"
     assert registry.get("unknown-source") is None
 
 
