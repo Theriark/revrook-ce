@@ -16,6 +16,5 @@ tests
 tools
 scripts
 docs
-data
 requirements-dev.in
 requirements-dev.txt

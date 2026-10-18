@@ -30,6 +30,7 @@ include = ["app*"]
 [tool.setuptools.package-data]
 "app" = ["static/css/*.css", "static/vendor/*/*", "static/brand/*"]
 "app.ui" = ["templates/*.html"]
+"app.checks" = ["*.json"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -64,6 +65,12 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 check_untyped_defs = true
 no_implicit_optional = true
+
+# PyYAML ships no type information, and jsonschema may not either. The code that
+# uses them is typed on its own side (app.schemacheck, app.checks.library).
+[[tool.mypy.overrides]]
+module = ["yaml", "yaml.*", "jsonschema", "jsonschema.*"]
+ignore_missing_imports = true
 
 # Strict settings for the four packages that carry the product logic
 # (merge gate check 2). "strict" itself cannot be set per module, so the

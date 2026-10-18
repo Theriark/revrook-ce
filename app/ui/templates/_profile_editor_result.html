@@ -145,6 +145,6 @@
 <p class="rv-text-secondary">There is no saved profile for this client and source yet. Save one first.</p>
 {% endif %}
 </fieldset>
-{% else %}
+{% elif not imported %}
 <p class="rv-text-secondary">Choose a client, a source and a file, then read the file to map its columns.</p>
 {% endif %}

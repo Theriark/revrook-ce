@@ -27,6 +27,8 @@ The tables below are laid out by hand, one field or one count to a line, so the
 formatter is switched off around them.
 """
 
+import ipaddress
+import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Self
@@ -104,12 +106,58 @@ def read_configured_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactVa
     return read_text(raw, key) is not None
 
 
+def _source_token(token: str) -> str | None:
+    """`any`, `restricted`, or None when one word of a source cannot be told.
+
+    The whole internet is a word of ANY_WORDS or an address block with no fixed
+    bits (0.0.0.0/0, ::/0, 0.0.0.0/0.0.0.0 and the other spellings of them).
+    Only an address, a block or a range of addresses is known to be restricted.
+    """
+    if token.lower() in ANY_WORDS:
+        return "any"
+    try:
+        network = ipaddress.ip_network(token, strict=False)
+    except ValueError:
+        pass
+    else:
+        return "any" if network.prefixlen == 0 else "restricted"
+    first, dash, last = token.partition("-")
+    if dash:
+        try:
+            low = ipaddress.ip_address(first)
+            high = ipaddress.ip_address(last)
+        except ValueError:
+            return None
+        if low.version != high.version or int(low) > int(high):
+            return None
+        whole = int(high) - int(low) + 1 == 2**low.max_prefixlen
+        return "any" if whole else "restricted"
+    return None
+
+
+def source_scope(text: str) -> str | None:
+    """`any` when a rule's source reaches the whole internet, `restricted` when
+    every word of it is a known address, block or range, else None (unknown).
+
+    A source with several words (comma, semicolon or space separated) is `any` as
+    soon as one word is. A name that revrook cannot resolve (an address object
+    such as LAN) is unknown, never restricted: a control must not pass on it.
+    """
+    words = [word for word in re.split(r"[,;\s]+", text.strip()) if word]
+    found = {_source_token(word) for word in words}
+    if "any" in found:
+        return "any"
+    if words and found == {"restricted"}:
+        return "restricted"
+    return None
+
+
 def read_source_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactValue:
-    """`any` when a rule's source is the whole internet, else `restricted`."""
+    """`any`, `restricted` or None (unknown); see source_scope."""
     text = read_text(raw, key)
     if text is None:
         return None
-    return "any" if text.lower() in ANY_WORDS else "restricted"
+    return source_scope(text)
 
 
 def read_port_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactValue:
