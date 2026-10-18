@@ -9,12 +9,15 @@
     "ruleset": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version", "source", "manual_alternative_quality"],
+      "required": [
+        "id", "version", "source", "manual_alternative_quality", "attestation_quality"
+      ],
       "properties": {
         "id": {"type": "string", "pattern": "^PC-RULES$"},
         "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
         "source": {"type": "string", "minLength": 1},
-        "manual_alternative_quality": {"$ref": "#/$defs/share"}
+        "manual_alternative_quality": {"$ref": "#/$defs/share"},
+        "attestation_quality": {"$ref": "#/$defs/share"}
       }
     },
     "source_codes": {
@@ -76,6 +79,18 @@
     "field_id": {
       "type": "string",
       "pattern": "^[A-Z]\\.[A-Za-z0-9_.]+$"
+    },
+    "param": {
+      "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "string", "pattern": "^[0-9]+(\\.[0-9]{1,4})?$"},
+        {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 0}},
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}
+        }
+      ]
     },
     "threshold": {
       "type": "object",
@@ -170,6 +185,11 @@
         },
         "automatic_unavailable": {"enum": ["licence_or_scope"]},
         "rule": {"$ref": "#/$defs/rule"},
+        "params": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"},
+          "additionalProperties": {"$ref": "#/$defs/param"}
+        },
         "manual_alternative": {"type": "boolean"},
         "artefact": {"type": "string", "minLength": 10},
         "mappings": {"type": "array", "items": {"$ref": "#/$defs/mapping"}}
@@ -183,6 +203,7 @@
               "gate": {"const": false},
               "sources": {"const": ["M"]},
               "fields": {"maxItems": 0},
+              "params": {"maxProperties": 0},
               "manual_alternative": {"const": false},
               "rule": {"properties": {"kind": {"const": "manual"}}},
               "max_age_days": {

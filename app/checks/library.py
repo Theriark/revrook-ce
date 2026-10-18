@@ -34,6 +34,14 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTROLS_PATH = ROOT / "data" / "controls.yaml"
 SCHEMA_PATH = Path(__file__).with_name("controls.schema.json")
 MAX_REPORTED_PROBLEMS = 10
+# The numbers of rnd-report-3 section 3.4: counted, not chosen.
+EXPECTED_COUNTS = {
+    "controls": 51,
+    "domains": 8,
+    "domain weights": 100,
+    "gates": 3,
+    "manual-only controls": 8,
+}
 
 
 class ControlLibraryError(Exception):
@@ -109,8 +117,16 @@ class FieldTarget:
     column: str
 
 
+Param = int | str | tuple[int, ...] | tuple[str, ...]
+
+
 @dataclass(frozen=True)
 class Control:
+    """One control. `params` are the numbers and words a rule uses besides its
+    pass and partial thresholds (a window in days, a list of risky ports); the
+    check engine reads them from here and holds none of its own.
+    """
+
     id: str
     domain: str
     title: str
@@ -125,6 +141,33 @@ class Control:
     manual_alternative: bool
     artefact: str | None
     mappings: tuple[MappingRow, ...]
+    params: Mapping[str, Param]
+
+    def whole(self, name: str) -> int:
+        """A whole-number parameter (KeyError when the control has none)."""
+        value = self.params[name]
+        if isinstance(value, int):
+            return value
+        raise KeyError(f"{self.id}: parameter {name} is not a whole number")
+
+    def number(self, name: str) -> Decimal:
+        """A parameter as an exact decimal (a whole number or a decimal text)."""
+        value = self.params[name]
+        if isinstance(value, int | str):
+            return Decimal(value)
+        raise KeyError(f"{self.id}: parameter {name} is not a number")
+
+    def whole_list(self, name: str) -> tuple[int, ...]:
+        value = self.params[name]
+        if isinstance(value, tuple) and all(isinstance(item, int) for item in value):
+            return cast(tuple[int, ...], value)
+        raise KeyError(f"{self.id}: parameter {name} is not a list of numbers")
+
+    def words(self, name: str) -> tuple[str, ...]:
+        value = self.params[name]
+        if isinstance(value, tuple) and all(isinstance(item, str) for item in value):
+            return cast(tuple[str, ...], value)
+        raise KeyError(f"{self.id}: parameter {name} is not a list of words")
 
 
 @dataclass(frozen=True)
@@ -134,6 +177,7 @@ class Library:
     ruleset_id: str
     version: str
     manual_alternative_quality: Decimal
+    attestation_quality: Decimal
     domains: tuple[Domain, ...]
     controls: tuple[Control, ...]
     field_map: Mapping[str, FieldTarget]
@@ -303,6 +347,14 @@ def _threshold(raw: Mapping[str, Any] | None) -> Threshold | None:
     )
 
 
+def _param(raw: object) -> Param:
+    if isinstance(raw, list):
+        if all(isinstance(item, int) for item in raw):
+            return tuple(cast(list[int], raw))
+        return tuple(cast(list[str], raw))
+    return cast(int | str, raw)
+
+
 def _control(raw: Mapping[str, Any]) -> Control:
     rule = raw["rule"]
     ages = raw["max_age_days"]
@@ -334,6 +386,7 @@ def _control(raw: Mapping[str, Any]) -> Control:
             )
             for row in raw["mappings"]
         ),
+        params={name: _param(value) for name, value in raw.get("params", {}).items()},
     )
 
 
@@ -344,6 +397,7 @@ def build_library(document: Mapping[str, Any]) -> Library:
         ruleset_id=ruleset["id"],
         version=ruleset["version"],
         manual_alternative_quality=Decimal(ruleset["manual_alternative_quality"]),
+        attestation_quality=Decimal(ruleset["attestation_quality"]),
         domains=tuple(
             Domain(item["code"], item["name"], item["weight"])
             for item in document["domains"]
@@ -367,7 +421,7 @@ def load_library(path: Path = CONTROLS_PATH) -> Library:
     """
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as error:
+    except (OSError, ValueError) as error:
         raise ControlLibraryError([f"{path.name} cannot be read: {error}"]) from None
     document = parse_yaml(text)
     problems = validate_document(document)
@@ -390,6 +444,26 @@ def derived_field_list(library: Library) -> dict[str, Any]:
         },
         "unavailable": dict(library.unavailable),
     }
+
+
+def count_problems(library: Library) -> list[str]:
+    """Where the library does not have the numbers of rnd-report-3 section 3.4.
+
+    51 controls in 8 domains whose weights add up to 100, 3 gates and 8
+    manual-only controls. `revrook verify-controls` exits non-zero on any problem.
+    """
+    found = {
+        "controls": len(library.controls),
+        "domains": len(library.domains),
+        "domain weights": library.domain_weight_total,
+        "gates": len(library.gates),
+        "manual-only controls": len(library.manual_only),
+    }
+    return [
+        f"the library has {found[name]} {name}, not {expected}"
+        for name, expected in EXPECTED_COUNTS.items()
+        if found[name] != expected
+    ]
 
 
 def describe(library: Library) -> str:

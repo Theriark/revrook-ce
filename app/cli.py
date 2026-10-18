@@ -18,7 +18,13 @@ import uvicorn
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.checks.library import ControlLibraryError, describe, load_library
+from app.checks.engine import engine_problems
+from app.checks.library import (
+    ControlLibraryError,
+    count_problems,
+    describe,
+    load_library,
+)
 from app.checks.reference import load_reference_names, reference_problems
 from app.db import make_engine
 from app.evidence.chain import ChainResult, verify_all
@@ -122,7 +128,11 @@ def verify_controls_command() -> int:
     except ControlLibraryError as error:
         print(f"revrook verify-controls: {error}")
         return 1
-    problems = reference_problems(library, references)
+    problems = [
+        *count_problems(library),
+        *engine_problems(library),
+        *reference_problems(library, references),
+    ]
     if problems:
         print("revrook verify-controls: " + "; ".join(problems))
         return 1
