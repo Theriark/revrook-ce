@@ -32,12 +32,21 @@
 #                 alternative still applies.
 #   manual_alternative  an automatic control accepts a dated manual artefact of
 #                 the named setting at quality 0.9.
+#   params        (part 2) the numbers and words a rule uses besides its pass and
+#                 partial thresholds: a window in days (active_days is the DV
+#                 window of 14 days), a share, a list of risky ports. The check
+#                 engine reads every one from here and keeps no number of its own;
+#                 each is a number in the rule text above it. A decimal is written
+#                 as text so that it is exact.
+#   attestation_quality  (part 2) the quality factor of an attestation without an
+#                 artefact (rnd-report-3 section 3.5).
 
 ruleset:
   id: PC-RULES
   version: "0.1"
   source: "rnd-report-3 section 3.4 (THE-205, revision 10)"
   manual_alternative_quality: "0.9"
+  attestation_quality: "0.6"
 
 source_codes:
   G: Graph read-only JSON
@@ -238,6 +247,7 @@ controls:
     rule:
       kind: state
       text: "Conditional Access policies (state, users, applications, grantControls) and the security-defaults policy. Pass if security defaults are on or an enabled policy targets all users and all applications with an MFA grant and at most 2 exclusions; partial if report-only or admins only; fail otherwise. A tenant on security defaults has an empty policy list and is shown as security-defaults."
+    params: {max_exclusions: 2}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.AA-03", verified: false}
@@ -281,6 +291,7 @@ controls:
     rule:
       kind: state
       text: "Role assignments for Global Administrator (the unified role-management API is unverified) or a manual admin list. Count of distinct enabled users with a permanent assignment: pass 2 to 4; partial 1 or 5 to 6; fail 7 or more."
+    params: {partial_min: 1, pass_min: 2, pass_max: 4, partial_max: 6}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.AA-05", verified: false}
@@ -378,6 +389,7 @@ controls:
       pass: {at_least: "0.95"}
       partial: {at_least: "0.80"}
       text: "managedDevices id and lastSyncDateTime joined to R device_id; c = devices in both over devices active in either. Pass c at least 0.95; partial 0.80 to under 0.95."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "ID.AM-01", verified: false}
@@ -401,6 +413,7 @@ controls:
       pass: {at_least: "0.95"}
       partial: {at_least: "0.80"}
       text: "last_patch_utc, pending_critical. Share of DV with no pending critical update or a patch within 30 days: pass at least 0.95; partial 0.80 to under 0.95."
+    params: {active_days: 14, patch_days: 30}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.PS-02", verified: false}
@@ -427,6 +440,7 @@ controls:
     rule:
       kind: state
       text: "os, os_build or managedDevices operatingSystem and osVersion, joined to OUR shipped lifecycle table (vendor end-of-support dates as dated plain facts, versioned with the ruleset). Pass count 0; partial share at most 0.05."
+    params: {active_days: 14, partial_share: "0.05"}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "ID.AM-08", verified: false}
@@ -451,6 +465,7 @@ controls:
       pass: {at_least: "0.98"}
       partial: {at_least: "0.85"}
       text: "managedDevices isEncrypted or disk_encrypted. Pass share at least 0.98; partial 0.85 to under 0.98."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-01", verified: false}
@@ -474,6 +489,7 @@ controls:
       pass: {at_least: "0.90"}
       partial: {at_least: "0.70"}
       text: "managedDevices complianceState compliant. Pass at least 0.90; partial 0.70 to under 0.90."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.PS-01", verified: false}
@@ -522,6 +538,7 @@ controls:
       pass: {at_least: "0.90"}
       partial: {at_least: "0.70"}
       text: "local_admin_count at most 2 (managed admin accounts only). Pass share at least 0.90; partial 0.70 to under 0.90."
+    params: {active_days: 14, max_local_admins: 2}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.AA-05", verified: false}
@@ -546,6 +563,7 @@ controls:
       pass: {at_least: "0.98"}
       partial: {at_least: "0.90"}
       text: "av_status or windowsProtectionState real-time and malware flags (inferred names). Pass share of Windows DV at least 0.98; partial 0.90 to under 0.98."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "DE.CM-09", verified: false}
@@ -570,6 +588,7 @@ controls:
       pass: {at_least: "0.95"}
       partial: {at_least: "0.80"}
       text: "av_def_date_utc within 3 days, or signatureUpdateOverdue false. Pass at least 0.95; partial 0.80 to under 0.95."
+    params: {active_days: 14, signature_days: 3}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "DE.CM-09", verified: false}
@@ -619,6 +638,7 @@ controls:
       pass: {at_least: "0.95"}
       partial: {at_least: "0.80"}
       text: "tamper_protection. Pass at least 0.95; partial 0.80 to under 0.95."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.PS-05", verified: false, uncertain: true}
@@ -663,6 +683,7 @@ controls:
     rule:
       kind: state
       text: "TXT at the domain apex (our own public DNS check in CE). Per domain: pass if one v=spf1 record exists ending in a hard or soft fail and including the mail provider; partial if it ends neutral; fail if missing or multiple. Control result: pass if all domains pass; partial if at least half pass; fail below."
+    params: {partial_share: "0.5"}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-02", verified: false, uncertain: true}
@@ -683,6 +704,7 @@ controls:
     rule:
       kind: state
       text: "Get-DkimSigningConfig Domain and Enabled, plus selector CNAME records (the public check tries the selectors the MSP supplies and the common Microsoft selectors selector1 and selector2). Pass all domains enabled with selectors present; partial at least half; fail below."
+    params: {partial_share: "0.5"}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-02", verified: false, uncertain: true}
@@ -744,6 +766,7 @@ controls:
     rule:
       kind: state
       text: "Outbound spam policy AutoForwardingMode and mailbox ForwardingSmtpAddress. Pass if auto-forwarding is off and 0 mailboxes forward externally; partial if the policy is off but 1 mailbox forwards; fail otherwise."
+    params: {partial_mailboxes: 1}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-02", verified: false, uncertain: true}
@@ -817,6 +840,7 @@ controls:
       pass: {at_least: "0.98"}
       partial: {at_least: "0.85"}
       text: "asset_id, schedule_hours, last_success_utc, last_status; in-scope assets from R servers and G licensed mailboxes. Share of in-scope assets whose last success is within 1.5 times schedule_hours of the export time and status success: pass at least 0.98; partial 0.85 to under 0.98; fail below."
+    params: {active_days: 14, schedule_factor: "1.5"}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-11", verified: false}
@@ -858,6 +882,7 @@ controls:
     rule:
       kind: state
       text: "last_restore_test_utc and restore_test_result. Pass if every distinct backup product or asset class has a successful restore test within 100 days; fail if any latest test failed; unknown if none recorded."
+    params: {restore_days: 100}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-11", verified: false}
@@ -878,6 +903,7 @@ controls:
     rule:
       kind: state
       text: "immutable, offsite. Pass if at least 0.95 of assets are immutable or have an offline copy; partial if offsite but not immutable; fail otherwise."
+    params: {share: "0.95"}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-11", verified: false}
@@ -902,6 +928,7 @@ controls:
       pass: {at_least: "0.95"}
       partial: {at_least: "0.70"}
       text: "encrypted, retention_days. Share of jobs encrypted with retention at least 30 days: pass at least 0.95; partial 0.70 to under 0.95."
+    params: {min_retention_days: 30}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.DS-01", verified: false}
@@ -947,6 +974,7 @@ controls:
     rule:
       kind: state
       text: "firmware_release_date and end_of_support_date. Pass if every perimeter firewall has firmware released within 365 days and is not past end of support; partial 366 to 730 days; fail if older or unsupported."
+    params: {pass_days: 365, partial_days: 730}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.PS-02", verified: false}
@@ -977,6 +1005,7 @@ controls:
       pass: {at_most: 0}
       partial: {at_most: 1}
       text: "Rules (enabled, direction, action, source, destination_port). Count of enabled inbound allow rules from any source to our risk list of ports (3389, 445, 23, 5900, unrestricted 22): pass 0; partial 1; fail 2 or more."
+    params: {risk_ports: [3389, 445, 23, 5900, 22]}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.IR-01", verified: false}
@@ -1023,6 +1052,7 @@ controls:
     rule:
       kind: state
       text: "ssid, security_mode, guest_isolated. Pass if no SSID is open or uses an obsolete mode and any guest SSID is isolated; fail otherwise; NA only with a recorded reason (no wireless)."
+    params: {obsolete_modes: [open, wep, wpa]}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.IR-01", verified: false}
@@ -1046,6 +1076,7 @@ controls:
       pass: {at_least: "0.90"}
       partial: {at_least: "0.60"}
       text: "dns_filter_active. Pass share at least 0.90; partial 0.60 to under 0.90."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "DE.CM-01", verified: false, uncertain: true}
@@ -1088,6 +1119,7 @@ controls:
     rule:
       kind: state
       text: "Licence-derived default retention from OUR versioned table (inferred) and a declared archive (manual). effective_retention_days = max of both: pass at least 180; partial 90 to 179; fail below 90."
+    params: {pass_days: 180, partial_days: 90}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.PS-04", verified: false}
@@ -1108,6 +1140,7 @@ controls:
     rule:
       kind: state
       text: "Alert policies with recipients, or RMM alert routing (manual). Pass if at least one enabled alert policy has a recipient and an acknowledged alert exists within 90 days; partial if the policy exists without any acknowledgement; fail if no recipient."
+    params: {ack_days: 90}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "DE.AE-06", verified: false}
@@ -1129,6 +1162,7 @@ controls:
     rule:
       kind: state
       text: "Get-ProtectionAlert (name, category, Disabled). Required set of 3 enabled alerts: new admin role assignment, new mail forwarding rule, risky sign-in. Pass 3; partial 1 to 2; fail 0."
+    params: {required_alerts: 3}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "DE.CM-03", verified: false}
@@ -1175,6 +1209,7 @@ controls:
       pass: {at_least: "0.90"}
       partial: {at_least: "0.50"}
       text: "syslog_target; log forwarding flag. Share of perimeter devices and servers with a target: pass at least 0.90; partial 0.50 to under 0.90."
+    params: {active_days: 14}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "DE.CM-01", verified: false}
@@ -1242,6 +1277,7 @@ controls:
       pass: {at_least: "0.95"}
       partial: {at_least: "0.75"}
       text: "user_id (pseudonymised) joined to U; share with a completion within 365 days: pass at least 0.95; partial 0.75 to under 0.95."
+    params: {training_days: 365}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.AT-01", verified: false}
@@ -1265,6 +1301,7 @@ controls:
       pass: {at_most: 0}
       partial: {at_most: 1}
       text: "user_id and leave_date joined to accountEnabled; leavers still enabled over 3 days after leaving: pass 0; partial 1; fail 2 or more."
+    params: {grace_days: 3}
     manual_alternative: true
     mappings:
       - {framework: csf, id: "PR.AA-01", verified: false}
