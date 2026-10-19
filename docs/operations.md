@@ -149,9 +149,9 @@ Every number below is enforced in code and has a test (`docs/security-review.md`
 
 | What | Limit | Over it |
 | --- | --- | --- |
-| An evidence upload (API or profile editor) | `IMPORT_MAX_BYTES`, 20 MiB by default, plus 64 KiB of form overhead; it must declare its size | 413, or 411 without a size |
+| An evidence upload (API or profile editor) | `IMPORT_MAX_BYTES`, 20 MiB by default, plus 64 KiB of form overhead; it must declare its size in `Content-Length` | 413 over the limit; 411 without a size or with any `Transfer-Encoding` |
 | Rows of one imported file | `IMPORT_MAX_ROWS`, 200,000 | the file is refused |
-| Any other request body (POST, PUT, PATCH, DELETE) | 1 MiB; a body sent in chunks without a size is refused | 413, or 411 |
+| Any other request body (POST, PUT, PATCH, DELETE) | 1 MiB by `Content-Length`; a request with neither `Content-Length` nor `Transfer-Encoding` sends no body | 413 over the limit; 411 with any `Transfer-Encoding`, whatever its `Content-Length` says |
 | An id in an address or a request body | 1 to 9223372036854775807 | 422 (a value the database still refuses is also 422) |
 | A report period | 400 days, and it may not end in the future | 422 |
 | The data export | 256 MiB of CSV text before compression | 413 |
@@ -159,6 +159,13 @@ Every number below is enforced in code and has a test (`docs/security-review.md`
 | Sign-ins checked at once | 4 in one process (each holds a database connection while Argon2 runs) | 429 with `Retry-After: 5`, nothing is checked or written |
 | Failed sign-ins | 5 lock the account for 5 minutes | 429 |
 | A password | 12 to 256 characters | refused |
+
+A request body is refused before it is read. A server frames a chunked body by its
+`Transfer-Encoding` header and ignores the declared length, so any request that carries
+that header is answered with 411 (a client that has a body to send declares its size
+instead), and a `Content-Length` that is not a number is answered with 400. A reverse
+proxy has to forward a request with its `Content-Length`; one that streams a chunked
+request through gets the 411.
 
 Notes typed in the report builder are saved on every change, so the end of a session
 (it lasts 12 hours) loses nothing that was typed before it ended. A save made after the

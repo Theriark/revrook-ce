@@ -244,6 +244,8 @@ request through a real uvicorn socket.
 | P11-10 | XSS | Info | A byte order mark is written as a literal in three files that read or test one | Accepted |
 | P11-12 | Authentication | Low | Four sign-ins at once fill the sign-in gate, so a sender can keep real sign-ins at 429 | Accepted |
 | P11-13 | Extension API | Low | A plugin runs in the process with full rights, and an error it raises as `ExtensionError` is shown as written | Accepted |
+| P11-14 | Resource limits | Low | The temporary file of a data export is closed when it is garbage collected, not at once, if the client disconnects before the answer starts | Accepted |
+| P11-15 | Resource limits | Low | Writes to the temporary file of a data export are synchronous on the event loop | Accepted |
 
 ## Accepted exceptions
 
@@ -267,6 +269,11 @@ request through a real uvicorn socket.
   plugin and the class of an error it raises and drops the error itself from the
   chain, but an `ExtensionError` that a plugin raises on its own is the plugin's text
   and is shown. Install only plugins you trust.
+- **P11-14, P11-15.** Noted by the code review of phase 11 part 1. The export is
+  work that needs a sign-in, on an installation with a handful of users; its size is
+  capped at 256 MiB of CSV text, which bounds both the disk the file can use
+  until the garbage collector closes it and the time a write can block the loop. A
+  streaming writer on a worker thread would remove both and is not needed at this size.
 - **P11-10.** A byte order mark is a real part of how the importers read files, and the
   tests that write one need it. `tests/test_phase11_carryovers.py` allows it in those
   three files only and refuses it, and every hidden or reordering character, anywhere
