@@ -14,5 +14,7 @@ bash "${ROOT}/scripts/e2e/phase_07.sh"
 bash "${ROOT}/scripts/e2e/phase_08.sh"
 bash "${ROOT}/scripts/e2e/phase_09.sh"
 bash "${ROOT}/scripts/e2e/phase_10.sh"
+# The quick start of docs/quick-start.md, timed.
+bash "${ROOT}/scripts/e2e/phase_11.sh"
 # Backup and restore into a second database (docs/operations.md).
 bash "${ROOT}/scripts/restore_check.sh"
