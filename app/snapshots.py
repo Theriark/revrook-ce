@@ -7,8 +7,8 @@ plain JSON with sorted keys and no float. The digest in it is checked whenever a
 report is built, so a row that was edited is refused.
 """
 
-from dataclasses import dataclass
-from datetime import date, datetime
+from dataclasses import dataclass, replace
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +18,7 @@ from app.models import Snapshot
 from app.scoring.snapshot import SnapshotInput, document_bytes, snapshot_document
 
 MAX_LISTED = 20
+DOUBLE_SUBMIT_SECONDS = 30
 
 
 class SnapshotNotFoundError(EvidenceError):
@@ -54,6 +55,37 @@ async def store_snapshot(
     )
     session.add(row)
     await session.flush()
+    return row.id
+
+
+async def recent_twin(
+    session: AsyncSession,
+    client_id: int,
+    snapshot: SnapshotInput,
+    period_start: date,
+    period_end: date,
+) -> int | None:
+    """The id of the snapshot a double submit of the same form just made, or None.
+
+    It is the newest snapshot of the client when it has the same period, was made at
+    most DOUBLE_SUBMIT_SECONDS earlier and holds the same inputs and results once its
+    own moment is used. The caller holds the client's lock, so two posts in flight
+    are serialised and the second finds the first.
+    """
+    found = await session.execute(
+        select(Snapshot)
+        .where(Snapshot.client_id == client_id)
+        .order_by(Snapshot.id.desc())
+        .limit(1)
+    )
+    row = found.scalar_one_or_none()
+    if row is None or (row.period_start, row.period_end) != (period_start, period_end):
+        return None
+    age = snapshot.as_of - row.as_of
+    if not timedelta(0) <= age <= timedelta(seconds=DOUBLE_SUBMIT_SECONDS):
+        return None
+    if snapshot_document(replace(snapshot, as_of=row.as_of)) != row.inputs:
+        return None
     return row.id
 
 

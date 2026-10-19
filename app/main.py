@@ -35,6 +35,11 @@ HX_FORBIDDEN = (
     "Your session has ended or this page is out of date, so nothing was "
     "changed. Reload the page, sign in again if asked, and try again."
 )
+HX_NOT_FOUND = (
+    "What this page refers to no longer exists, so nothing was changed. "
+    "Reload the page."
+)
+HX_MESSAGES = {403: HX_FORBIDDEN, 404: HX_NOT_FOUND}
 REFUSED_HTML = (
     '<div class="rv-errors" role="alert">'
     '<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!'
@@ -95,13 +100,14 @@ def create_app(
         """A refusal of a page request made by htmx is shown as a message.
 
         htmx swaps the body of the response into the page (see base.html), so a
-        403 (an expired session or a stale form) must carry a readable HTML
-        message and not JSON. Every other request keeps FastAPI's JSON answer.
+        403 (an expired session or a stale form) or a 404 must carry a readable
+        HTML message and not JSON. Every other request keeps FastAPI's JSON answer.
         """
-        if request.headers.get("hx-request") == "true" and error.status_code == 403:
+        message = HX_MESSAGES.get(error.status_code)
+        if request.headers.get("hx-request") == "true" and message is not None:
             return HTMLResponse(
-                REFUSED_HTML.format(message=html.escape(HX_FORBIDDEN)),
-                status_code=403,
+                REFUSED_HTML.format(message=html.escape(message)),
+                status_code=error.status_code,
                 headers={"Cache-Control": "no-store"},
             )
         return await http_exception_handler(request, error)

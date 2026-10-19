@@ -19,7 +19,7 @@ from app.models import Setting, draft_key
 from app.reports.completeness import MAX_LIST, MAX_SHORT, MAX_TEXT
 from app.reports.topics import TOPIC_KEYS
 from app.reports.view import Finding
-from app.textcheck import control_character
+from app.textcheck import control_character, normalise_breaks
 
 
 class DraftError(ValueError):
@@ -99,8 +99,11 @@ async def load_draft(session: AsyncSession, client_id: int) -> Draft:
 
 
 def check_text(label: str, value: str, limit: int) -> str:
-    """The text without blank space around it; DraftError if it cannot be saved."""
-    cleaned = value.strip()
+    """The text without blank space around it; DraftError if it cannot be saved.
+
+    Line breaks are counted as LF, as the browser counts them for maxlength.
+    """
+    cleaned = normalise_breaks(value).strip()
     if len(cleaned) > limit:
         raise DraftError(f"{label} is longer than {limit} characters.")
     if control_character(cleaned, allow_breaks=True) is not None:
