@@ -1,14 +1,29 @@
-<ul>
-<li><a class="rv-nav-link" href="/clients"{% if nav == "clients" %} aria-current="page"{% endif %}>Clients</a></li>
-<li><a class="rv-nav-link" href="/imports/profile-editor">Profile editor</a></li>
-<li><a class="rv-nav-link" href="/evidence/integrity">Evidence integrity</a></li>
-<li><a class="rv-nav-link" href="/settings"{% if nav == "settings" %} aria-current="page"{% endif %}>Settings</a></li>
-<li><a class="rv-nav-link" href="/system"{% if nav == "system" %} aria-current="page"{% endif %}>System</a></li>
-<li><a class="rv-nav-link" href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}>Glossary</a></li>
-<li>
+{#- The navigation of the app shell and the signed-in user. The page sets `nav` to mark
+    where it is: home, clients, profile-editor, integrity, settings, system, glossary. -#}
+{% import "_icons.html" as i %}
+<nav class="rv-nav" aria-label="Main">
+<p class="rv-nav-group-label">Work</p>
+<ul class="rv-nav-list">
+<li><a class="rv-nav-link" href="/"{% if nav == "home" %} aria-current="page"{% endif %}>{{ i.icon("home") }}<span class="rv-nav-text">Home</span></a></li>
+<li><a class="rv-nav-link" href="/clients"{% if nav == "clients" %} aria-current="page"{% endif %}>{{ i.icon("clients") }}<span class="rv-nav-text">Clients</span></a></li>
+</ul>
+<p class="rv-nav-group-label">Evidence</p>
+<ul class="rv-nav-list">
+<li><a class="rv-nav-link" href="/imports/profile-editor"{% if nav == "profile-editor" %} aria-current="page"{% endif %}>{{ i.icon("mapping") }}<span class="rv-nav-text">Profile editor</span></a></li>
+<li><a class="rv-nav-link" href="/evidence/integrity"{% if nav == "integrity" %} aria-current="page"{% endif %}>{{ i.icon("chain") }}<span class="rv-nav-text">Evidence integrity</span></a></li>
+</ul>
+<p class="rv-nav-group-label">Administration</p>
+<ul class="rv-nav-list">
+<li><a class="rv-nav-link" href="/settings"{% if nav == "settings" %} aria-current="page"{% endif %}>{{ i.icon("settings") }}<span class="rv-nav-text">Settings</span></a></li>
+<li><a class="rv-nav-link" href="/system"{% if nav == "system" %} aria-current="page"{% endif %}>{{ i.icon("system") }}<span class="rv-nav-text">System</span></a></li>
+<li><a class="rv-nav-link" href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}>{{ i.icon("glossary") }}<span class="rv-nav-text">Glossary</span></a></li>
+</ul>
+</nav>
+<div class="rv-user">
+<span class="rv-avatar" aria-hidden="true">{{ user.username[:1]|upper }}</span>
+<span class="rv-user-text"><span class="rv-user-name">{{ user.username }}</span><span class="rv-user-note">Signed in</span></span>
 <form class="rv-inline-form" method="post" action="/logout">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<button type="submit" class="rv-button-quiet">Sign out</button>
+<button type="submit" class="rv-button-quiet">{{ i.icon("signout", 16) }}<span>Sign out</span></button>
 </form>
-</li>
-</ul>
+</div>

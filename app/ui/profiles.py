@@ -211,6 +211,7 @@ async def _base_context(request: Request, user: AppUser) -> dict[str, Any]:
     limit: int = request.app.state.settings.import_max_bytes
     return {
         "title": EDITOR_TITLE,
+        "nav": "profile-editor",
         "user": user,
         "clients": await _clients(request),
         "sources": [(adapter.source_code, adapter.label) for adapter in sources],

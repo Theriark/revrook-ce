@@ -28,7 +28,7 @@ dependencies = { file = ["requirements.in"] }
 include = ["app*"]
 
 [tool.setuptools.package-data]
-"app" = ["static/css/*.css", "static/vendor/*/*", "static/brand/*"]
+"app" = ["static/css/*.css", "static/js/*.js", "static/vendor/*/*", "static/brand/*"]
 "app.ui" = ["templates/*.html"]
 "app.checks" = ["*.json"]
 "app.reports" = ["*.css", "templates/*.html"]
