@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="revrook">
+<title>Cyber insurance evidence pack - Cedar Dental Group - Harbour IT Services</title>
+<style>
+:root {
+  --rv-charcoal: #2d2f3a;
+  --rv-accent: #4c5bd4;
+  --rv-stone: #d9d6cf;
+  --rv-gray: #8a8f98;
+  --rv-white: #ffffff;
+  --rv-text-secondary: #5a5e6b;
+  --rv-status-protected: #1b6e3c;
+  --rv-status-needs-attention: #8a5a00;
+  --rv-status-not-protected: #b3261e;
+  --rv-status-not-checked: #5a5e6b;
+}
+
+html {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 1rem;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page {
+  box-sizing: border-box;
+  max-width: 210mm;
+  min-height: 250mm;
+  margin: 0 auto 1.5rem;
+  padding: 14mm 14mm 10mm;
+  border: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page-head {
+  margin: 0 0 1rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rv-gray);
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+p {
+  margin: 0 0 0.5rem;
+}
+
+.lead {
+  font-size: 1.125rem;
+}
+
+.secondary {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.cover-title {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dl.facts {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+}
+
+dl.facts dt {
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dl.facts dd {
+  margin: 0;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+table {
+  width: 100%;
+  margin: 0 0 1rem;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+caption {
+  padding: 0 0 0.35rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: bottom;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-stone);
+}
+
+td {
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+.status {
+  display: inline-block;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-protected {
+  color: var(--rv-status-protected);
+  background-color: var(--rv-white);
+}
+
+.status-needs-attention {
+  color: var(--rv-status-needs-attention);
+  background-color: var(--rv-white);
+}
+
+.status-not-protected {
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-white);
+}
+
+.status-not-checked {
+  color: var(--rv-status-not-checked);
+  background-color: var(--rv-white);
+}
+
+.status-not-applicable {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-icon {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.3em;
+  vertical-align: -0.2em;
+}
+
+.note {
+  margin: 0.25rem 0 0;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.finding {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.finding h3 {
+  margin-top: 0;
+}
+
+.summary-lines p {
+  font-size: 1.125rem;
+}
+
+.chart {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 0.5rem;
+}
+
+.chart-track {
+  fill: var(--rv-stone);
+}
+
+.chart-bar {
+  fill: var(--rv-accent);
+}
+
+.chart-label,
+.chart-value {
+  font-size: 13px;
+  fill: var(--rv-charcoal);
+}
+
+.signoff {
+  margin-top: 2rem;
+}
+
+.signoff .line {
+  height: 2rem;
+  border-bottom: 1px solid var(--rv-charcoal);
+}
+
+.disclaimer-full {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--rv-charcoal);
+  font-size: 1.125rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rv-gray);
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.page-footer p {
+  margin: 0 0 0.25rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  left: -10000px;
+}
+
+</style>
+<style media="print">
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+body {
+  padding: 0;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  page-break-after: always;
+  break-after: page;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page:last-of-type {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+thead {
+  display: table-header-group;
+}
+
+tr,
+.finding {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="rv-icon-check" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 8.5l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-alert" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.3v.2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-cross" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-question" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.2a2 2 0 1 1 3 1.7c-.7.4-1 .8-1 1.5M8 11.4v.2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-dash" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+</svg>
+
+<section class="page cover" id="cover" aria-labelledby="cover-title">
+<h1 id="cover-title">Harbour IT Services</h1>
+<p class="cover-title">Cyber insurance evidence pack</p>
+<dl class="facts">
+<dt>Client</dt><dd>Cedar Dental Group</dd>
+<dt>Period</dt><dd>2026-07-01 to 2026-09-30</dd>
+<dt>Prepared by</dt><dd>Sam Technician</dd>
+<dt>Generated</dt><dd>2026-10-17</dd>
+<dt>Pack date</dt><dd>2026-10-17</dd>
+<dt>Data sources</dt>
+<dd><ul><li>Microsoft Entra registration export</li><li>Intune device export</li><li>Backup report</li><li>Public DNS check</li><li>Technician attestations</li></ul></dd>
+<dt>Snapshot</dt><dd>90deac6394590302 (rules PC-RULES 0.1)</dd>
+</dl>
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="summary" aria-labelledby="summary-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="summary-title">Control summary</h2>
+
+<p>One line for each topic that cyber insurance forms commonly ask about. The topics are our own: tick the ones the client's form asks about, and answer the form from the pages that follow.</p>
+<table>
+<caption>Topics, their status and the evidence behind them</caption>
+<thead><tr><th scope="col">Topic</th><th scope="col">Status</th><th scope="col" class="num">Coverage</th><th scope="col">Evidence dated</th><th scope="col">Owner</th><th scope="col">On the form</th></tr></thead>
+<tbody>
+
+<tr><td>Multi-factor authentication for staff</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Privileged access</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Endpoint protection</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Backups and recovery</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Devices and patching</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Email security</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Security awareness training</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Incident response and alerting</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Supplier and guest access</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+<tr><td>Other safeguards</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></td><td class="num">100 percent</td><td>2026-10-17</td><td>Not assigned</td><td>Yes</td></tr>
+
+</tbody>
+</table>
+<p class="note">Met means every control of the topic that applies is Protected, with dated evidence. Partly means some are not. Not met means none is Protected or in need of attention. Not checked means nothing could be verified. Coverage is the share of the topic's controls that were checked. The evidence date is the oldest date among them.</p>
+<h3>Evidence references</h3>
+<p class="note">Snapshot 90deac6394590302, pack date 2026-10-17.
+Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evidence-0003 (00ff00ff00ff).</p>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+
+<section class="page" id="topic-mfa" aria-labelledby="topic-mfa-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-mfa-title">Multi-factor authentication for staff</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Do all staff sign in with more than a password, and is it enforced?</dd>
+<dt>Result</dt><dd><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></dd>
+<dt>Checked</dt><dd>3 of 3 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Every active staff account signs in with more than a password.<p class="note">PC-ACC-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>MFA is enforced by policy, not only registered.<p class="note">PC-ACC-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Legacy sign-in methods that skip MFA are blocked.<p class="note">PC-ACC-04</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-privileged" aria-labelledby="topic-privileged-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-privileged-title">Privileged access</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Are administrators few, personal, protected and reviewed?</dd>
+<dt>Result</dt><dd><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></dd>
+<dt>Checked</dt><dd>4 of 4 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Every administrator uses MFA.<p class="note">PC-ACC-02</p></td><td><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Few, personal, permanent top-level administrators.<p class="note">PC-ACC-05</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON, manual evidence</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Dormant accounts are disabled.<p class="note">PC-ACC-06</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Emergency (break-glass) access is documented and protected.<p class="note">PC-ACC-08</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Attestation</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-endpoint" aria-labelledby="topic-endpoint-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-endpoint-title">Endpoint protection</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Is every device protected against malware, and can users switch it off?</dd>
+<dt>Result</dt><dd><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></dd>
+<dt>Checked</dt><dd>5 of 5 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Anti-malware protection runs on every device.<p class="note">PC-END-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Protection signatures are current.<p class="note">PC-END-02</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Serious detections do not sit unresolved.<p class="note">PC-END-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON, RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Users cannot switch protection off (tamper protection).<p class="note">PC-END-04</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Unapproved remote-access software is absent.<p class="note">PC-END-05</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-backup" aria-labelledby="topic-backup-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-backup-title">Backups and recovery</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Are backups recent, out of reach of an attacker and restore-tested?</dd>
+<dt>Result</dt><dd><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></dd>
+<dt>Checked</dt><dd>6 of 6 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Every in-scope business system has a recent successful backup.<p class="note">PC-BCK-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>backup CSV, RMM device CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Microsoft 365 mail and files are covered by an independent backup.<p class="note">PC-BCK-02</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>backup CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>A restore has actually been tested.<p class="note">PC-BCK-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>backup CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>At least one backup copy is out of reach of a compromised admin account.<p class="note">PC-BCK-04</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>backup CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Backups are encrypted and kept long enough.<p class="note">PC-BCK-05</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>backup CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Recovery targets and a recovery plan are written down.<p class="note">PC-BCK-06</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Manual artefact</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-patching" aria-labelledby="topic-patching-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-patching-title">Devices and patching</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Are devices managed and updated promptly, with no unsupported system?</dd>
+<dt>Result</dt><dd><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></dd>
+<dt>Checked</dt><dd>3 of 3 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Devices are inventoried and managed.<p class="note">PC-DEV-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON, RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Security updates are applied promptly.<p class="note">PC-DEV-02</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>No operating system past vendor support.<p class="note">PC-DEV-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-email" aria-labelledby="topic-email-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-email-title">Email security</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Are SPF, DKIM and DMARC in place and is inbound mail filtered?</dd>
+<dt>Result</dt><dd><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></dd>
+<dt>Checked</dt><dd>7 of 7 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Each mail domain publishes an SPF policy.<p class="note">PC-EML-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>DNS records or our own public DNS check</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Outgoing mail is DKIM-signed.<p class="note">PC-EML-02</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Exchange Online export produced by the MSP admin, DNS records or our own public DNS check</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>DMARC is published and enforced.<p class="note">PC-EML-03</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>DNS records or our own public DNS check</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Inbound mail is filtered for phishing and malicious attachments or links.<p class="note">PC-EML-04</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Exchange Online export produced by the MSP admin</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Automatic forwarding to outside addresses is blocked.<p class="note">PC-EML-05</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Exchange Online export produced by the MSP admin</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Shared mailboxes cannot be signed into directly.<p class="note">PC-EML-06</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Exchange Online export produced by the MSP admin, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Staff have a simple way to report suspicious email.<p class="note">PC-EML-07</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Manual artefact</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-training" aria-labelledby="topic-training-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-training-title">Security awareness training</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Do staff complete security awareness training every year?</dd>
+<dt>Result</dt><dd><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></dd>
+<dt>Checked</dt><dd>1 of 1 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Staff complete security awareness training yearly.<p class="note">PC-GOV-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>training CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-incident" aria-labelledby="topic-incident-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-incident-title">Incident response and alerting</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Is there an incident response plan that was exercised, and do alerts reach a named person?</dd>
+<dt>Result</dt><dd><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></dd>
+<dt>Checked</dt><dd>2 of 2 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>An incident response plan with contacts exists and was exercised.<p class="note">PC-GOV-05</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>manual evidence</td><td>2026-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>Security alerts reach a named person.<p class="note">PC-LOG-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Exchange Online export produced by the MSP admin, manual evidence</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-vendors" aria-labelledby="topic-vendors-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-vendors-title">Supplier and guest access</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Are third-party apps, suppliers and guest accounts reviewed?</dd>
+<dt>Result</dt><dd><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Met</span></dd>
+<dt>Checked</dt><dd>2 of 2 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Third-party app access and suppliers are reviewed.<p class="note">PC-GOV-06</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON, manual evidence</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Guest and external access is reviewed.<p class="note">PC-ACC-07</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="topic-other" aria-labelledby="topic-other-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="topic-other-title">Other safeguards</h2>
+
+<dl class="facts">
+<dt>Question</dt><dd>Device settings, network, logging and governance controls that insurer forms ask about in other words.</dd>
+<dt>Result</dt><dd><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Partly</span></dd>
+<dt>Checked</dt><dd>18 of 18 controls, oldest evidence dated 2026-10-17</dd>
+<dt>Artefact reference</dt><dd>Snapshot 90deac6394590302; evidence-0001; evidence-0002; evidence-0003</dd>
+</dl>
+<table>
+<caption>What was checked, how and when</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Disk encryption is on.<p class="note">PC-DEV-04</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON, RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Devices meet a managed compliance baseline.<p class="note">PC-DEV-05</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Screens lock after inactivity.<p class="note">PC-DEV-06</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Graph read-only JSON</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Users do not run as local administrators.<p class="note">PC-DEV-07</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Perimeter firewall firmware is supported and reasonably recent.<p class="note">PC-NET-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>network export CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Risky services are not open to the whole internet.<p class="note">PC-NET-02</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>network export CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Firewall management is not exposed to the internet and has no default login.<p class="note">PC-NET-03</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>network export CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Wi-Fi is encrypted and guests are separated.<p class="note">PC-NET-04</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>network export CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Web or DNS filtering is active on devices.<p class="note">PC-NET-05</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Audit logging is on for the tenant and mailboxes.<p class="note">PC-LOG-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>Exchange Online export produced by the MSP admin</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Logs are kept long enough to investigate.<p class="note">PC-LOG-02</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>manual evidence</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Alerts exist for the riskiest changes.<p class="note">PC-LOG-04</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Exchange Online export produced by the MSP admin</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Someone reviews security logs or reports monthly.<p class="note">PC-LOG-05</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Attestation</td></tr>
+
+<tr><td>Firewall and server logs go to a central place.<p class="note">PC-LOG-06</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>network export CSV, RMM device CSV</td><td>2026-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>A named person owns security and a short written policy exists.<p class="note">PC-GOV-01</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>Risks are assessed and written down.<p class="note">PC-GOV-02</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>Leavers lose access promptly.<p class="note">PC-GOV-04</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>leavers CSV, Graph read-only JSON</td><td>2026-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>The business knows where important and personal data lives.<p class="note">PC-GOV-07</p></td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>manual evidence</td><td>2026-10-17</td><td>Attestation</td></tr>
+
+</tbody>
+</table>
+
+
+<p class="note">No exception is open for this topic.</p>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+
+<section class="page" id="exceptions" aria-labelledby="exceptions-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="exceptions-title">Exception register</h2>
+
+
+<p>There are no open exceptions.</p>
+
+<p class="note">An exception never changes a status and never raises the score.</p>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="actions" aria-labelledby="actions-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="actions-title">Open actions</h2>
+
+
+<table>
+<caption>What is not yet Protected, in order of urgency</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">What we recommend</th><th scope="col">What we need</th><th scope="col">By when</th></tr></thead>
+<tbody>
+
+<tr><td>Every administrator uses MFA.<p class="note">PC-ACC-02</p></td><td><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span></td><td>Enrol that administrator today.</td><td>Fifteen minutes with the administrator.</td><td>2026-10-24</td></tr>
+
+<tr><td>DMARC is published and enforced.<p class="note">PC-EML-03</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+<tr><td>Dormant accounts are disabled.<p class="note">PC-ACC-06</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+<tr><td>At least one backup copy is out of reach of a compromised admin account.<p class="note">PC-BCK-04</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+<tr><td>Devices meet a managed compliance baseline.<p class="note">PC-DEV-05</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+<tr><td>An incident response plan with contacts exists and was exercised.<p class="note">PC-GOV-05</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+<tr><td>Logs are kept long enough to investigate.<p class="note">PC-LOG-02</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+<tr><td>Alerts exist for the riskiest changes.<p class="note">PC-LOG-04</p></td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>Not yet entered</td><td>Not yet entered</td><td>Not yet entered</td></tr>
+
+</tbody>
+</table>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="notice" aria-labelledby="notice-title">
+<p class="page-head">Harbour IT Services &middot; Cedar Dental Group &middot; Cyber insurance evidence pack</p>
+<h2 id="notice-title">Important notice and sign-off</h2>
+<p class="disclaimer-full">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="note">Prepared by Sam Technician for Cedar Dental Group. Pack date 2026-10-17.</p>
+<div class="signoff">
+<h3>Client sign-off</h3>
+<p>I have read this report and the notice above.</p>
+<table>
+<caption>Sign-off</caption>
+<tbody>
+<tr><th scope="row">Name</th><td><div class="line"></div></td></tr>
+<tr><th scope="row">Role</th><td><div class="line"></div></td></tr>
+<tr><th scope="row">Signature</th><td><div class="line"></div></td></tr>
+<tr><th scope="row">Date</th><td><div class="line"></div></td></tr>
+</tbody>
+</table>
+</div>
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+</body>
+</html>
