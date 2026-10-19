@@ -27,7 +27,8 @@ another port; the default is 8080.
 
 ## The worker
 
-The worker writes a heartbeat row every 5 seconds. One worker at a time holds an
+The worker writes a heartbeat row every 5 seconds, also while a job runs (a job may
+take minutes; the heartbeat does not wait for it). One worker at a time holds an
 advisory lock in the database and runs the schedules; a second worker stands by and
 takes over when the first one stops. A schedule is claimed by one `UPDATE` of its own
 row (`next_run_at` moves forward and `last_run_at` is set) before it runs, so a due
@@ -85,8 +86,11 @@ when it is below half the life of the item, so an automatic export that is stale
 
 A reminder is sent once per threshold crossing. The pair (item, threshold) is a primary
 key in `reminder_sent` and is inserted before the message goes out; if the message
-cannot be sent the rows are removed and the next run tries again. One run sends one
-message to one address, with client names, source names and dates only.
+cannot be sent the rows are removed and the next run tries again. When an item is
+renewed (a new revision of a manual artefact or an attestation moves its expiry), the
+rows sent before the revision are dropped and its thresholds are reminded again for the
+new expiry. One run sends one message to one address, with client names, source names
+and dates only.
 
 To turn reminders on:
 
@@ -134,7 +138,9 @@ evidence, facts, reports, exports, kept files and pseudonym key go; the audit en
 ## Watching it
 
 **Metrics.** Set `METRICS_TOKEN` to turn on `GET /metrics` (Prometheus text format,
-`Authorization: Bearer <token>`); without the token the path answers 404. Only totals
+`Authorization: Bearer <token>`); without the token the path answers 404. Use a long
+random value (at least 32 random characters, for example `openssl rand -hex 32`): the
+path has no rate limit, so the length of the token is its only protection. Only totals
 are exported, never a client name or identifier:
 
 | Metric | Type | Meaning |
@@ -153,7 +159,8 @@ are exported, never a client name or identifier:
 Alert on `revrook_worker_up == 0` and on `revrook_schedules_overdue > 0`.
 
 **Outside heartbeat.** Set `HEARTBEAT_URL` to an `http://` or `https://` address of a
-dead-man's-switch service. The worker that holds the lock sends one plain `GET` a minute
+dead-man's-switch service (an address with a space, a control character or a port
+that is not a number is refused and logged once; the worker keeps running). The worker that holds the lock sends one plain `GET` a minute
 while it is healthy: no body, no data, a fixed user agent. The URL may hold a secret, so
 it is never logged.
 
