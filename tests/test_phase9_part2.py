@@ -59,6 +59,8 @@ REPORT_PATHS = ("/preview/", "/download")
 # 2000 characters when a line break is LF, as the browser counts for maxlength, and
 # 2666 when the form sends each break as CRLF.
 LONG_NOTE = "ab\r\n" * 666 + "ab"
+# The stylesheet link carries the asset version (?v=<digest>), see app/ui/brand.py.
+STYLESHEET_LINK = 'href="/static/css/revrook.css?v='
 
 
 def view_of(name: str = "A", **context_changes: Any) -> ReportView:
@@ -156,7 +158,7 @@ def test_the_public_pages_are_well_formed(name: str, value: str) -> None:
         title="Sign in",
         errors=[value] if value else [],
         username=value,
-        csrf_token="synthetic",
+        csrf_token="***REDACTED***",
         brand_files=frozenset(BRAND_FILES),
     )
     assert structure_problems(text) == []
@@ -231,7 +233,7 @@ async def test_every_page_is_well_formed_with_normal_and_hostile_data(
             assert RAW_MARKUP not in answer.text, path
             if not any(part in path for part in REPORT_PATHS):
                 assert title_of(answer.text).endswith(" - revrook"), path
-                assert 'href="/static/css/revrook.css"' in answer.text, path
+                assert STYLESHEET_LINK in answer.text, path
             checked.append(path)
     assert len(checked) >= 2 * (len(page_routes("GET")) + len(EARLIER_PAGES))
 
