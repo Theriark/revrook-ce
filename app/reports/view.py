@@ -354,9 +354,19 @@ def _register(
     )
 
 
-def _signed(value: Fraction, places: int) -> str:
-    text = format_fixed(value, places)
-    return text if text.startswith("-") or value == 0 else f"+{text}"
+def _plural(count: int, one: str, many: str) -> str:
+    """The count with the word that fits it: 1 is, 2 are."""
+    return f"{count} {one if count == 1 else many}"
+
+
+def _movement(what: str, value: Fraction, places: int) -> str:
+    """How a number moved, in words: rose by 1 point, fell by 2.5 points."""
+    text = format_fixed(abs(value), places)
+    if text.strip("0.") == "":
+        return f"{what} did not change"
+    unit = "point" if text == "1" else "points"
+    direction = "rose" if value > 0 else "fell"
+    return f"{what} {direction} by {text} {unit}"
 
 
 def _summary_lines(
@@ -377,16 +387,17 @@ def _summary_lines(
                 "so the two scores are not compared."
             )
         else:
-            second = (
-                f"Since the report of {since} the score changed by "
-                f"{_signed(change.score_change, 1)} points and the evidence coverage "
-                f"by {_signed(change.coverage_change * 100, 0)} points."
+            score = _movement("the score", change.score_change, 1)
+            coverage = _movement(
+                "the evidence coverage", change.coverage_change * 100, 0
             )
+            second = f"Since the report of {since} {score} and {coverage}."
     third = (
-        f"Of {total} controls, {by_label[PROTECTED]} are Protected, "
-        f"{by_label[NEEDS_ATTENTION]} need attention, "
-        f"{by_label[NOT_PROTECTED]} are not protected and "
-        f"{by_label[NOT_CHECKED]} were not checked."
+        f"Of {_plural(total, 'control', 'controls')}, "
+        f"{_plural(by_label[PROTECTED], 'is', 'are')} Protected, "
+        f"{_plural(by_label[NEEDS_ATTENTION], 'needs', 'need')} attention, "
+        f"{_plural(by_label[NOT_PROTECTED], 'is', 'are')} not protected and "
+        f"{_plural(by_label[NOT_CHECKED], 'was', 'were')} not checked."
     )
     return (headline(result) + ".", second, third)
 

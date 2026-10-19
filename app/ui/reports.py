@@ -29,7 +29,13 @@ from app.reports.render import INSURANCE, KINDS, QBR, REPORT_NAMES, render_repor
 from app.reports.topics import TOPIC_KEYS, TOPICS, Topic
 from app.reports.view import ReportContext, ReportError, ReportView
 from app.scoring.snapshot import SnapshotError, parse_snapshot
-from app.snapshots import earlier_bytes, list_snapshots, load_snapshot, store_snapshot
+from app.snapshots import (
+    earlier_bytes,
+    list_snapshots,
+    load_snapshot,
+    recent_twin,
+    store_snapshot,
+)
 from app.sources import source_name
 from app.ui.auth import redirect
 from app.ui.common import (
@@ -206,6 +212,10 @@ async def make_snapshot(
         async with session_factory(request)() as session, session.begin():
             await lock_client(session, client_id)
             live = await load_live(session, library_of(request), client_id, now)
+            # A second click of the same button opens the report the first made.
+            twin = await recent_twin(session, client_id, live.snapshot, start, end)
+            if twin is not None:
+                return redirect(f"/clients/{client_id}/reports/{twin}")
             snapshot_id = await store_snapshot(
                 session, client_id, live.snapshot, start, end
             )

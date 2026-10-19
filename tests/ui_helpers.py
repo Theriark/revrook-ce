@@ -3,18 +3,37 @@
 The fixtures that use them (`ui_settings`, `ui_ctx`, `ui_browser`) are in conftest.py.
 """
 
+import base64
 import re
+from collections.abc import Mapping
 from datetime import timedelta
 
 import httpx
+from fastapi import FastAPI
+from fastapi.routing import APIRoute
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app.clients import create_client
+from app.db import make_engine
 from app.evidence.assurance import Assurance
 from app.evidence.service import EvidenceContext, NewEvidence
+from app.main import create_app
+from app.settings import load_settings
 from helpers import NOW, create_admin, create_test_client, get_csrf, login, upload
 from tools import make_generic_fixtures
 
+UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
+# The modules of the client pages of phase 9; their routes are read from the app.
+PAGE_MODULES = frozenset({"app.ui.clients", "app.ui.reports", "app.ui.site"})
+SAMPLE_VALUES = {
+    "client_id": "1",
+    "snapshot_id": "1",
+    "export_id": "1",
+    "exception_id": "1",
+    "control_id": "PC-ACC-01",
+    "kind": "qbr",
+}
+PARAMETER = re.compile(r"\{([a-z_]+)\}")
 NAME = "Synthetic Client Ltd"
 QUARTER = ("2026-07-01", "2026-09-30")
 TITLE = re.compile(r"<title>(.*?)</title>")
@@ -54,12 +73,72 @@ async def seed_client(
     return client_id
 
 
-async def many_clients(engine: AsyncEngine, ctx: EvidenceContext, count: int) -> None:
-    """`count` clients with no evidence, made in one transaction."""
+async def many_clients(
+    engine: AsyncEngine, ctx: EvidenceContext, count: int, evidence: bool = False
+) -> None:
+    """`count` clients made in one transaction.
+
+    With `evidence`, each gets one generic fixture as evidence, the six sources taken
+    in turn, so the client list and the overview read evidence rows for every client.
+    """
     factory = async_sessionmaker(engine, expire_on_commit=False)
+    made: list[int] = []
     async with factory() as session, session.begin():
         for number in range(count):
-            await create_client(session, ctx.cipher, f"Bulk client {number:03d}")
+            name = f"Bulk client {number:03d}"
+            made.append((await create_client(session, ctx.cipher, name)).id)
+    if not evidence:
+        return
+    fixtures = make_generic_fixtures.generic_fixtures()
+    for number, client_id in enumerate(made):
+        fixture = fixtures[number % len(fixtures)]
+        item = NewEvidence(
+            source_code=fixture.source_code,
+            assurance=Assurance.AUTOMATIC_EXPORT,
+            captured_at=NOW - timedelta(days=2 + number % 60),
+            data=fixture.data,
+        )
+        await upload(engine, ctx, client_id, item, NOW)
+
+
+def route_app() -> FastAPI:
+    """The application with a database it never reaches, to read its routes."""
+    settings = load_settings(
+        {
+            "DATABASE_URL": UNREACHABLE,
+            "SECRET_KEY": "test-only-secret-key-0123456789",
+            "FERNET_KEY": base64.urlsafe_b64encode(bytes(32)).decode(),
+        }
+    )
+    return create_app(settings, engine=make_engine(UNREACHABLE))
+
+
+def page_routes(method: str) -> tuple[str, ...]:
+    """The paths of the phase 9 pages that answer `method`, as the app routes them."""
+    found = {
+        route.path
+        for route in route_app().routes
+        if isinstance(route, APIRoute)
+        and method in route.methods
+        and route.endpoint.__module__ in PAGE_MODULES
+    }
+    return tuple(sorted(found))
+
+
+def sample_path(template: str, values: Mapping[str, str] = SAMPLE_VALUES) -> str:
+    """A route path with a value for each of its parameters.
+
+    A parameter without a value is an error, so a new route with a new parameter
+    has to be given one here before the tests run.
+    """
+
+    def fill(match: re.Match[str]) -> str:
+        name = match.group(1)
+        if name not in values:
+            raise KeyError(f"no sample value for {{{name}}} in {template}")
+        return values[name]
+
+    return PARAMETER.sub(fill, template)
 
 
 async def make_report(
