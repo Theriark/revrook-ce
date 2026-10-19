@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<h1>Clients</h1>
+{% include "_errors.html" %}
+{% if rows %}
+<table id="clients">
+<caption>Your clients and the date of their newest evidence</caption>
+<thead>
+<tr>
+<th scope="col">Client</th>
+<th scope="col">Exports imported</th>
+<th scope="col">Newest evidence</th>
+<th scope="col">Open</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr>
+<th scope="row"><a href="/clients/{{ row.id }}">{{ row.name }}</a></th>
+<td>{{ row.exports }}</td>
+<td>{% if row.newest %}{{ row.newest.strftime("%Y-%m-%d") }} ({{ row.days_old }} days ago){% else %}<span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> No evidence yet</span>{% endif %}</td>
+<td><a href="/clients/{{ row.id }}/checklist">Checklist</a> &middot; <a href="/clients/{{ row.id }}/evidence">Evidence</a> &middot; <a href="/clients/{{ row.id }}/reports">Reports</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p class="rv-text-secondary">There are no clients yet. Add the first one below.</p>
+{% endif %}
+<h2>Add a client</h2>
+<form method="post" action="/clients">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="name">Client name</label>
+<input id="name" name="name" type="text" maxlength="200" required value="{{ name }}">
+<button type="submit">Add client</button>
+</form>
+{% endblock %}

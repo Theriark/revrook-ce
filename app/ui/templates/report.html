@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>Preview and export</h2>
+<p class="rv-text-secondary">Period {{ view.context.period_start.isoformat() }} to {{ view.context.period_end.isoformat() }}. Pack date {{ s.day(view.snapshot.as_of) }}.</p>
+<div id="summary">
+{% for line in view.summary_lines %}
+<p>{{ line }}</p>
+{% endfor %}
+</div>
+
+<h3>Before you export</h3>
+{% if problems %}
+<div id="problems" class="rv-errors" role="alert">
+<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!</span> {{ problems|length }} thing{% if problems|length != 1 %}s{% endif %} to fix first</p>
+<ul>
+{% for item in problems %}
+<li>{{ item }}</li>
+{% endfor %}
+</ul>
+</div>
+{% else %}
+<p id="problems" class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Nothing stops this report from being exported.</p>
+{% endif %}
+
+<h3>The reports</h3>
+<ul id="kinds">
+{% for kind, name in kinds %}
+<li>
+<strong>{{ name }}</strong>:
+<a href="/clients/{{ client_id }}/reports/{{ snapshot_id }}/preview/{{ kind }}">Preview</a>
+<form class="rv-inline-form" method="post" action="/clients/{{ client_id }}/reports/{{ snapshot_id }}/export">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="kind" value="{{ kind }}">
+<button type="submit">Export the {{ name|lower }}</button>
+</form>
+</li>
+{% endfor %}
+</ul>
+<p>An export keeps an unchangeable copy of the file and its hash. See the <a href="/clients/{{ client_id }}/exports">export history</a>.</p>
+{% endblock %}

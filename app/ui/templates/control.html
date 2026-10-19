@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>{{ control.title }}</h2>
+<p class="rv-text-secondary">{{ control.id }}{% if control.gate %} &middot; gate control{% endif %} &middot; weight {{ control.weight }}</p>
+<p><a href="/clients/{{ client_id }}/checklist">Back to the checklist</a></p>
+
+<h3>Status</h3>
+<dl id="control-status">
+<dt>Status</dt><dd>{{ s.status(row.label) }}</dd>
+<dt>Evidence dated</dt><dd>{{ s.day(row.evidence_at) }}</dd>
+<dt>State of the evidence</dt><dd>{{ row.evidence_state }}</dd>
+<dt>Evidence type</dt><dd>{{ row.assurance }}</dd>
+<dt>Coverage</dt><dd>{{ coverage }}</dd>
+</dl>
+
+<h3>What was checked</h3>
+<p>{{ control.rule.text }}</p>
+<p>{{ result.detail }}</p>
+{% if reason %}<p class="rv-text-secondary">{{ reason }}</p>{% endif %}
+{% if result.notes %}
+<ul>
+{% for note in result.notes %}
+<li>{{ note }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+<h3>Exceptions for this control</h3>
+{% if exceptions %}
+<ul id="control-exceptions">
+{% for entry, overdue in exceptions %}
+<li>{{ entry.owner }}: {{ entry.reason }} Review by {{ entry.review_date.isoformat() }}.{% if overdue %} <span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Overdue</span>{% endif %}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>There is no open exception. <a href="/clients/{{ client_id }}/exceptions">Add one on the exceptions page</a>.</p>
+{% endif %}
+
+<h3>Your notes</h3>
+<p class="rv-text-secondary">Suggested wording: <span id="suggestion">{{ suggestion }}</span></p>
+<form id="note-form" method="post" action="/clients/{{ client_id }}/controls/{{ control.id }}/note" hx-post="/clients/{{ client_id }}/controls/{{ control.id }}/note" hx-trigger="input changed delay:1s, change" hx-target="#note-status" hx-swap="innerHTML">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="did">What we did</label>
+<textarea id="did" name="did" rows="3" maxlength="2000">{{ finding.did }}</textarea>
+<label for="recommend">What we recommend</label>
+<textarea id="recommend" name="recommend" rows="3" maxlength="2000">{{ finding.recommend }}</textarea>
+<label for="need">What we need from you</label>
+<textarea id="need" name="need" rows="3" maxlength="2000">{{ finding.need }}</textarea>
+<label for="by_when">By when</label>
+<input id="by_when" name="by_when" type="text" maxlength="2000" value="{{ finding.by_when }}">
+<button type="submit">Save notes</button>
+<p id="note-status" class="rv-text-secondary" aria-live="polite">Notes are saved as you type.</p>
+</form>
+<p>To add evidence for this client, use the <a href="/imports/profile-editor">profile editor</a> or the API.</p>
+{% endblock %}

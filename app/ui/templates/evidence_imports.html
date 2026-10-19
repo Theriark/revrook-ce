@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>Evidence and imports</h2>
+<p>Evidence is the export of a tool, with the time it was captured. An export that is out of date counts for less, and for nothing at twice its age. Import a fresh file with the <a href="/imports/profile-editor">profile editor</a>, or through the API.</p>
+
+<h3>Refresh these exports</h3>
+{% if refresh %}
+<ol id="refresh-list">
+{% for row in refresh %}
+<li><strong>{{ row.name }}</strong>: {{ s.status(row.state) }}{% if row.captured_at %}, newest export {{ s.day(row.captured_at) }}{% endif %}. {{ row.refresh }}</li>
+{% endfor %}
+</ol>
+{% else %}
+<p id="refresh-list">Every export is current. Nothing to refresh.</p>
+{% endif %}
+
+<h3>Sources</h3>
+<table id="sources">
+<caption>The newest export of every source</caption>
+<thead>
+<tr>
+<th scope="col">Source</th>
+<th scope="col">State</th>
+<th scope="col">Newest export</th>
+<th scope="col">Stale after</th>
+<th scope="col">Exports kept</th>
+</tr>
+</thead>
+<tbody>
+{% for row in sources %}
+<tr>
+<th scope="row">{{ row.name }}</th>
+<td>{{ s.status(row.state) }}</td>
+<td>{{ s.day(row.captured_at) }}</td>
+<td>{{ s.day(row.expires_at) }}</td>
+<td>{{ row.exports }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h3>Everything imported</h3>
+{% if items %}
+<table id="items">
+<caption>Every evidence item of this client, newest first</caption>
+<thead>
+<tr>
+<th scope="col">Source</th>
+<th scope="col">Type</th>
+<th scope="col">Captured</th>
+<th scope="col">State</th>
+<th scope="col">Revisions</th>
+<th scope="col">Size in bytes</th>
+</tr>
+</thead>
+<tbody>
+{% for view, state, name in items %}
+<tr>
+<th scope="row">{{ name }}</th>
+<td>{{ view.assurance.label }}</td>
+<td>{{ s.day(view.captured_at) }}</td>
+<td>{{ s.status(state) }}</td>
+<td>{{ view.revisions }}</td>
+<td>{{ view.size_bytes }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Nothing has been imported for this client yet.</p>
+{% endif %}
+{% endblock %}

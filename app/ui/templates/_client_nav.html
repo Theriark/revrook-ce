@@ -1,0 +1,11 @@
+<h1>{{ client_name }}</h1>
+<nav aria-label="This client">
+<ul>
+<li><a class="rv-nav-link" href="/clients/{{ client_id }}"{% if section == "overview" %} aria-current="page"{% endif %}>Overview</a></li>
+<li><a class="rv-nav-link" href="/clients/{{ client_id }}/checklist"{% if section == "checklist" %} aria-current="page"{% endif %}>Checklist</a></li>
+<li><a class="rv-nav-link" href="/clients/{{ client_id }}/evidence"{% if section == "evidence" %} aria-current="page"{% endif %}>Evidence and imports</a></li>
+<li><a class="rv-nav-link" href="/clients/{{ client_id }}/exceptions"{% if section == "exceptions" %} aria-current="page"{% endif %}>Exceptions</a></li>
+<li><a class="rv-nav-link" href="/clients/{{ client_id }}/reports"{% if section == "reports" %} aria-current="page"{% endif %}>Reports</a></li>
+<li><a class="rv-nav-link" href="/clients/{{ client_id }}/exports"{% if section == "exports" %} aria-current="page"{% endif %}>Export history</a></li>
+</ul>
+</nav>
