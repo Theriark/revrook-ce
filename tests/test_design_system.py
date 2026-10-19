@@ -93,12 +93,12 @@ def render(name: str, brand_files: frozenset[str] = frozenset(BRAND_FILES)) -> s
         title="Sign in",
         errors=[],
         username="",
-        csrf_token="synthetic",
+        csrf_token="***REDACTED***",
         brand_files=brand_files,
     )
 
 
-# --- the stylesheet ---------------------------------------------------------------------
+# --- the stylesheet ---------------------------------------------------------
 
 
 @pytest.mark.parametrize(("token", "value"), sorted(DERIVED_TOKENS.items()))
@@ -142,7 +142,7 @@ def test_motion_is_short_and_respects_reduced_motion() -> None:
     assert "@media (prefers-reduced-motion: reduce)" in CSS
 
 
-# --- the shell ------------------------------------------------------------------------
+# --- the shell --------------------------------------------------------------
 
 
 def test_the_navigation_names_every_page_once_and_only_real_routes() -> None:
