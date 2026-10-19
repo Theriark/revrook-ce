@@ -26,7 +26,8 @@ touches the network.
 
 import json
 import re
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol
@@ -41,6 +42,7 @@ MAX_QUERIES = 400
 MAX_NAME_LENGTH = 253
 MAX_ANSWERS = 50
 MAX_TEXT_LENGTH = 8192
+MAX_RUN_SECONDS = 60.0
 DEFAULT_SELECTORS = ("selector1", "selector2")
 DEFAULT_PROVIDERS = ("spf.protection.outlook.com",)
 
@@ -49,7 +51,18 @@ TIMEOUT = "timeout"
 SERVFAIL = "servfail"
 RESOLVER_ERROR = "resolver_error"
 QUERY_LIMIT = "query_limit"
-FAILURE_REASONS = frozenset({TIMEOUT, SERVFAIL, RESOLVER_ERROR, QUERY_LIMIT})
+TOO_MANY_ANSWERS = "too_many_answers"
+ANSWER_TOO_LARGE = "answer_too_large"
+FAILURE_REASONS = frozenset(
+    {
+        TIMEOUT,
+        SERVFAIL,
+        RESOLVER_ERROR,
+        QUERY_LIMIT,
+        TOO_MANY_ANSWERS,
+        ANSWER_TOO_LARGE,
+    }
+)
 
 SPF_ENDINGS = frozenset({"fail", "softfail", "neutral", "pass"})
 DMARC_POLICIES = frozenset({"none", "quarantine", "reject"})
@@ -90,18 +103,49 @@ class Resolver(Protocol):
 
 
 class Queries:
-    """The resolver behind a budget: one run asks for at most `limit` names."""
+    """The resolver behind a budget: one run asks for at most `limit` names.
 
-    def __init__(self, resolver: Resolver, limit: int = MAX_QUERIES) -> None:
+    A run also has a deadline (`seconds` from the start, by `clock`): once it has
+    passed, every further question is a timeout, so a resolver that is down cannot
+    keep a run busy for minutes.
+    """
+
+    def __init__(
+        self,
+        resolver: Resolver,
+        limit: int = MAX_QUERIES,
+        seconds: float | None = None,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         self._resolver = resolver
         self._left = limit
+        self._clock = clock
+        self._deadline = None if seconds is None else clock() + seconds
 
     def ask(self, name: str, rdtype: str) -> tuple[str, ...]:
+        """The texts at a name, never a part of what the name publishes.
+
+        More than `MAX_ANSWERS` records, or a record this check reads (SPF, DMARC, a
+        DKIM key) longer than `MAX_TEXT_LENGTH`, would hide what the domain says, so
+        it is a failed lookup (unknown) and never a record that is missing. An
+        over-long text of any other kind is cut: nothing here reads it.
+        """
         if self._left <= 0:
             raise LookupFailure(QUERY_LIMIT)
+        if self._deadline is not None and self._clock() >= self._deadline:
+            raise LookupFailure(TIMEOUT)
         self._left -= 1
-        answers = list(self._resolver.lookup(name, rdtype))[:MAX_ANSWERS]
+        answers = list(self._resolver.lookup(name, rdtype))
+        if len(answers) > MAX_ANSWERS:
+            raise LookupFailure(TOO_MANY_ANSWERS)
+        for text in answers:
+            if len(text) > MAX_TEXT_LENGTH and _is_read(name, text):
+                raise LookupFailure(ANSWER_TOO_LARGE)
         return tuple(text[:MAX_TEXT_LENGTH] for text in answers)
+
+
+def _is_read(name: str, text: str) -> bool:
+    return is_spf(text) or is_dmarc(text) or "._domainkey." in name
 
 
 # --- names -------------------------------------------------------------------------
@@ -275,12 +319,21 @@ class _OverLimit(Exception):
 
 
 class _SpfWalk:
-    """Follows the include and redirect targets of one record, counting lookups."""
+    """Follows the include and redirect targets of one record, counting lookups.
 
-    def __init__(self, queries: Queries, providers: Sequence[str]) -> None:
+    A receiver counts a term every time it evaluates it, so an include that appears
+    twice (or in two included records) is counted twice, and the record behind its
+    name is asked for once. A name that is being followed already is a loop and is
+    not entered again.
+    """
+
+    def __init__(
+        self, queries: Queries, providers: Sequence[str], domain: str
+    ) -> None:
         self._queries = queries
         self._providers = providers
-        self._seen: set[str] = set()
+        self._records: dict[str, ParsedSpf | None] = {}
+        self._active: set[str] = {domain}
         self.lookups = 0
         self.complete = True
         self.provider = False
@@ -303,19 +356,33 @@ class _SpfWalk:
             self.provider = True
         return name
 
-    def _follow(self, name: str) -> ParsedSpf | None:
-        if name in self._seen:
+    def _record(self, name: str) -> ParsedSpf | None:
+        """The one SPF record at a name (asked once), or None."""
+        if name not in self._records:
+            try:
+                texts = self._queries.ask(name, "TXT")
+            except LookupFailure:
+                self.complete = False
+                self._records[name] = None
+            else:
+                found = [text for text in texts if is_spf(text)]
+                self._records[name] = (
+                    parse_spf_record(found[0]) if len(found) == 1 else None
+                )
+        return self._records[name]
+
+    def _enter(self, name: str) -> str | None:
+        """Follow one name: count what its record asks for, return how it ends."""
+        if name in self._active:
             return None
-        self._seen.add(name)
+        child = self._record(name)
+        if child is None:
+            return None
+        self._active.add(name)
         try:
-            texts = self._queries.ask(name, "TXT")
-        except LookupFailure:
-            self.complete = False
-            return None
-        records = [text for text in texts if is_spf(text)]
-        if len(records) != 1:
-            return None
-        return parse_spf_record(records[0])
+            return self.expand(child)
+        finally:
+            self._active.discard(name)
 
     def expand(self, parsed: ParsedSpf) -> str | None:
         """Count every term that asks the DNS and follow includes and the redirect.
@@ -326,17 +393,12 @@ class _SpfWalk:
             name = self._name(term.target) if term.kind == "include" else None
             self._count()
             if name is not None:
-                child = self._follow(name)
-                if child is not None:
-                    self.expand(child)
+                self._enter(name)
         if parsed.redirect is None:
             return parsed.ending
         name = self._name(parsed.redirect)
         self._count()
-        if name is None:
-            return None
-        child = self._follow(name)
-        return None if child is None else self.expand(child)
+        return None if name is None else self._enter(name)
 
 
 def evaluate_spf(
@@ -347,7 +409,7 @@ def evaluate_spf(
     if len(records) != 1:
         return SpfResult(records=len(records))
     parsed = parse_spf_record(records[0])
-    walk = _SpfWalk(queries, providers)
+    walk = _SpfWalk(queries, providers, domain)
     ending = parsed.ending
     try:
         ending = walk.expand(parsed)
@@ -559,13 +621,17 @@ def run_checks(
     *,
     captured_at: datetime,
     max_queries: int = MAX_QUERIES,
+    max_seconds: float = MAX_RUN_SECONDS,
+    clock: Callable[[], float] = time.monotonic,
 ) -> DnsCheck:
     """Check the mail domains of one client.
 
     Raises ValueError for a naive `captured_at`, a domain, selector or provider that
     is not valid, or too many of them: nothing is looked up then. The capture time is
     the time the run started. Lookups share one budget of `max_queries` questions; a
-    domain reached after it is spent is stored as lookup_failed (query_limit).
+    domain reached after it is spent is stored as lookup_failed (query_limit). The run
+    has a deadline of `max_seconds` too: a question asked after it has passed is a
+    timeout, so the run ends within the deadline plus one lookup.
     """
     stamp = require_aware(captured_at, "captured_at")
     names = clean_domains(domains)
@@ -575,7 +641,7 @@ def run_checks(
         for selector in chosen:
             if len(f"{selector}._domainkey.{name}") > MAX_NAME_LENGTH:
                 raise ValueError(f"the selector {_shown(selector)!r} is too long")
-    queries = Queries(resolver, max_queries)
+    queries = Queries(resolver, max_queries, max_seconds, clock)
     results = tuple(check_domain(queries, name, chosen, named) for name in names)
     return DnsCheck(captured_at=stamp.astimezone(UTC), domains=results)
 
