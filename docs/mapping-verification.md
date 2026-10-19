@@ -34,7 +34,7 @@ repository.
 ## Where things stand
 
 At the release candidate there are 321 mapping rows: csf 67, sp800-171 47, cis 61,
-iso27001 63, cyber-essentials 28, nis2 55. None is verified, and 64 of them are marked
+iso27001 63, cyber-essentials 28, nis2 55. None is verified, and 63 of them are marked
 uncertain. No report prints any of them. The release candidate does not need verified
 rows (the README says that mappings are unverified unless marked); whether a later
 release waits for some is a decision for the maintainers.
