@@ -246,7 +246,12 @@ def snapshot_document(snapshot: SnapshotInput) -> Json:
 
 def render_snapshot(snapshot: SnapshotInput) -> bytes:
     """The canonical bytes of a snapshot."""
-    return _canonical(snapshot_document(snapshot)) + b"\n"
+    return document_bytes(snapshot_document(snapshot))
+
+
+def document_bytes(document: Json) -> bytes:
+    """The canonical bytes of a snapshot document, also one read back from storage."""
+    return _canonical(document) + b"\n"
 
 
 # --- reading ----------------------------------------------------------------------
