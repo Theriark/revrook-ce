@@ -167,10 +167,16 @@ def test_a_failure_is_a_lookup_failure_with_a_reason(
     assert caught.value.reason == reason
 
 
-def test_a_real_lookup_is_stopped_by_the_test_guard() -> None:
+def test_a_real_lookup_is_stopped_by_the_test_guard(
+    forbid_real_network: list[str],
+) -> None:
     resolver = DnsPythonResolver(nameserver="192.0.2.53", lifetime=0.2)
+    # dnspython turns any error of the socket into a failed lookup, so the guard's
+    # own record is what proves that the packet was refused, and for which host.
     with pytest.raises((RuntimeError, LookupFailure)):
         resolver.lookup("client.example", "TXT")
+    assert forbid_real_network
+    assert set(forbid_real_network) == {"192.0.2.53"}
 
 
 # --- DNS over HTTPS ------------------------------------------------------------------
