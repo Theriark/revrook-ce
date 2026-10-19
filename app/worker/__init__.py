@@ -10,9 +10,11 @@ import asyncio
 import contextlib
 import logging
 import signal
+from collections.abc import Mapping
+from typing import Any
 
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app import __version__
 from app.clock import Clock, utcnow
@@ -30,6 +32,26 @@ async def _sleep(stop: asyncio.Event, seconds: float) -> None:
     """Sleep up to the given time, waking early when stop is set."""
     with contextlib.suppress(TimeoutError):
         await asyncio.wait_for(stop.wait(), timeout=seconds)
+
+
+async def _keep_beating(
+    factory: async_sessionmaker[AsyncSession],
+    name: str,
+    clock: Clock,
+    detail: Mapping[str, Any],
+    every: float,
+) -> None:
+    """Write the heartbeat every `every` seconds until cancelled.
+
+    A tick writes its heartbeat first and then runs the jobs, which may take up to
+    JOB_TIMEOUT_SECONDS each, far longer than STALE_AFTER. This task keeps the beat
+    fresh while they run, so a busy worker is not reported as a stopped one. A beat
+    that cannot be written is skipped; the loop itself handles a lost database.
+    """
+    while True:
+        await asyncio.sleep(every)
+        with contextlib.suppress(SQLAlchemyError, OSError):
+            await beat(factory, name, clock(), detail)
 
 
 async def run_worker(
@@ -63,9 +85,18 @@ async def run_worker(
                             logger.info("advisory lock held; running schedules")
                             await ensure_default_schedules(factory, now)
                         leader = True
-                        await start_unscheduled(factory, now)
-                        await run_due(factory, jobs, now)
-                        await pinger.ping_if_due()
+                        # A job may run for minutes: the beat goes on meanwhile.
+                        keeper = asyncio.create_task(
+                            _keep_beating(factory, name, clock, detail, interval)
+                        )
+                        try:
+                            await start_unscheduled(factory, now)
+                            await run_due(factory, jobs, now)
+                            await pinger.ping_if_due()
+                        finally:
+                            keeper.cancel()
+                            with contextlib.suppress(asyncio.CancelledError):
+                                await keeper
                     else:
                         if leader is not False:
                             logger.info("advisory lock busy; standing by")
