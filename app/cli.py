@@ -1,7 +1,7 @@
 """Command line entry point.
 
 Subcommands: web, worker, all, migrate, verify-chain, verify-controls,
-make-fixtures.
+verify-mappings, make-fixtures.
 Without a subcommand the ROLE setting (web, worker or all; default all) decides.
 """
 
@@ -13,6 +13,7 @@ import subprocess
 import sys
 import threading
 from collections.abc import Callable, Sequence
+from pathlib import Path
 
 import uvicorn
 from sqlalchemy.exc import SQLAlchemyError
@@ -24,6 +25,17 @@ from app.checks.library import (
     count_problems,
     describe,
     load_library,
+)
+from app.checks.mappings import (
+    REGISTER_PATH,
+    parse_register,
+    register_problems,
+    resolve_nist_rows,
+    source_problems,
+    summary_lines,
+    unpinned_frameworks,
+    unverified,
+    unverified_lines,
 )
 from app.checks.reference import load_reference_names, reference_problems
 from app.db import make_engine
@@ -142,6 +154,63 @@ def verify_controls_command() -> int:
     return 0
 
 
+def verify_mappings_command(
+    show_rows: bool = False,
+    strict: bool = False,
+    register_path: Path = REGISTER_PATH,
+) -> int:
+    """List the mapping rows nobody has verified and check the register.
+
+    Reads data/controls.yaml, data/nist and docs/mapping-verification.md (it needs
+    no database and no keys). Exit 1 when the files disagree: a row marked verified
+    without a register line, a register line without a verified row, a NIST
+    identifier its pinned dataset does not know, or a source version the document
+    does not name. With `strict` it also exits 1 while any row is unverified, which
+    is the answer a release gate wants. Exit 2 when the register cannot be read (the
+    image carries no docs folder; run it from a checkout).
+    """
+    try:
+        library = load_library()
+        references = load_reference_names()
+    except ControlLibraryError as error:
+        print(f"revrook verify-mappings: {error}")
+        return 1
+    try:
+        text = register_path.read_text(encoding="utf-8")
+    except OSError:
+        print(f"revrook verify-mappings: {register_path.name} cannot be read")
+        return 2
+    rows, problems = parse_register(text)
+    problems.extend(register_problems(library, rows))
+    problems.extend(source_problems(references, text))
+    problems.extend(reference_problems(library, references))
+    waiting = unverified(library)
+    print(f"{len(waiting)} mapping rows are still unverified")
+    for line in summary_lines(library):
+        print(line)
+    for resolution in resolve_nist_rows(library, references):
+        source = references[resolution.framework].source
+        framework = references[resolution.framework].framework
+        found = f"{resolution.resolved} of {resolution.rows}"
+        print(f"{framework}: {found} identifiers are in the pinned source")
+        commit = source["commit"][:12]
+        print(f"  commit {commit}, catalog version {source['catalog_version']}")
+    others = unpinned_frameworks(library)
+    if others:
+        print(f"no pinned primary source for: {', '.join(others)}")
+    if show_rows:
+        for line in unverified_lines(library):
+            print(line)
+    for problem in problems:
+        print(f"revrook verify-mappings: {problem}")
+    if problems:
+        return 1
+    if strict and waiting:
+        print(f"revrook verify-mappings: strict: {len(waiting)} rows are unverified")
+        return 1
+    return 0
+
+
 def _serve_web(settings: Settings, port: int) -> int:  # pragma: no cover
     # The first-run page needs the tables, so the web role brings the schema up
     # to date before it listens (a locked, one-at-a-time step; see app.migrate).
@@ -194,6 +263,21 @@ def _build_parser() -> argparse.ArgumentParser:
     subcommands.add_parser(
         "verify-controls", help="check the control library and the NIST names"
     )
+    mappings = subcommands.add_parser(
+        "verify-mappings",
+        help="list the unverified mapping rows and check the register",
+    )
+    mappings.add_argument(
+        "--list",
+        action="store_true",
+        dest="show_rows",
+        help="print every unverified row",
+    )
+    mappings.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 1 while any row is unverified (a release gate)",
+    )
     for name, reason in STUBS.items():
         subcommands.add_parser(name, help=reason)
     return parser
@@ -206,6 +290,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     if args.command == "verify-controls":
         return verify_controls_command()
+    if args.command == "verify-mappings":
+        return verify_mappings_command(args.show_rows, args.strict)
     try:
         settings = load_settings()
     except SettingsError as error:
