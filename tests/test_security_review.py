@@ -20,6 +20,8 @@ import pytest
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
+from app import api as api_module
+from app import api_ops, metrics
 from app.api import API_RATE_LIMIT, API_RATE_WINDOW_SECONDS
 from app.auth import LOCKOUT_THRESHOLD, MAX_PASSWORD_LENGTH
 from app.dataexport import MAX_EXPORT_BYTES, cell
@@ -31,6 +33,13 @@ from app.main import MAX_PARALLEL_LOGINS, create_app
 from app.ratelimit import ConcurrencyGate, SlidingWindowLimiter
 from app.security import hash_api_token
 from app.settings import Settings, SettingsError, load_settings
+from app.ui import auth as ui_auth
+from app.ui import clients as ui_clients
+from app.ui import evidence as ui_evidence
+from app.ui import profiles as ui_profiles
+from app.ui import reports as ui_reports
+from app.ui import site as ui_site
+from app.ui import system as ui_system
 from app.ui.common import MAX_PERIOD_DAYS
 from helpers import (
     NOW,
@@ -52,7 +61,7 @@ from helpers import (
     users_csv,
 )
 from repo_files import ROOT, source_files
-from ui_helpers import make_report, route_app, seed_client, sign_in
+from ui_helpers import app_answers, make_report, route_app, seed_client, sign_in
 
 DOCUMENT = ROOT / "docs" / "security-review.md"
 ITEMS = [
@@ -67,6 +76,18 @@ ITEMS = [
     "Rate limits",
     "Resource limits",
 ]
+ROUTERS = (
+    ui_auth.router,
+    ui_clients.router,
+    ui_evidence.router,
+    ui_profiles.router,
+    ui_reports.router,
+    ui_site.router,
+    ui_system.router,
+    api_module.router,
+    api_ops.router,
+    metrics.router,
+)
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 PARAMETER = re.compile(r"\{[a-z_]+\}")
 SAMPLE = {"{control_id}": "PC-ACC-01", "{kind}": "qbr"}
@@ -86,15 +107,23 @@ def fill(path: str) -> str:
 
 
 def routes(api: bool, methods: set[str]) -> list[tuple[str, str]]:
-    """(method, path) of the routes of the application, API or pages."""
+    """(method, path) of the routes of the application, API or pages.
+
+    The routers are read directly, because FastAPI keeps an included router lazily
+    and `app.routes` then holds no path for it. A route counts only when the
+    application answers it, so a router that is declared but not included fails the
+    length checks.
+    """
+    app = route_app()
     found: set[tuple[str, str]] = set()
-    for route in route_app().routes:
-        path: str = getattr(route, "path", "")
-        if path.startswith("/api/") is not api:
-            continue
-        for method in getattr(route, "methods", None) or ():
-            if method in methods:
-                found.add((method, path))
+    for source in (app, *ROUTERS):
+        for route in source.routes:
+            path: str = getattr(route, "path", "")
+            if not path or path.startswith("/api/") is not api:
+                continue
+            for method in getattr(route, "methods", None) or ():
+                if method in methods and app_answers(app, fill(path), method):
+                    found.add((method, path))
     return sorted(found)
 
 
