@@ -10,8 +10,9 @@ from datetime import timedelta
 
 import httpx
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from starlette.routing import Match
+from starlette.types import Scope
 
 from app.clients import create_client
 from app.db import make_engine
@@ -19,12 +20,15 @@ from app.evidence.assurance import Assurance
 from app.evidence.service import EvidenceContext, NewEvidence
 from app.main import create_app
 from app.settings import load_settings
+from app.ui import clients as ui_clients
+from app.ui import reports as ui_reports
+from app.ui import site as ui_site
 from helpers import NOW, create_admin, create_test_client, get_csrf, login, upload
 from tools import make_generic_fixtures
 
 UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
-# The modules of the client pages of phase 9; their routes are read from the app.
-PAGE_MODULES = frozenset({"app.ui.clients", "app.ui.reports", "app.ui.site"})
+# The routers of the client pages of phase 9; each route is checked against the app.
+PAGE_ROUTERS = (ui_clients.router, ui_reports.router, ui_site.router)
 SAMPLE_VALUES = {
     "client_id": "1",
     "snapshot_id": "1",
@@ -113,15 +117,37 @@ def route_app() -> FastAPI:
     return create_app(settings, engine=make_engine(UNREACHABLE))
 
 
-def page_routes(method: str) -> tuple[str, ...]:
-    """The paths of the phase 9 pages that answer `method`, as the app routes them."""
-    found = {
-        route.path
-        for route in route_app().routes
-        if isinstance(route, APIRoute)
-        and method in route.methods
-        and route.endpoint.__module__ in PAGE_MODULES
+def app_answers(app: FastAPI, path: str, method: str) -> bool:
+    """Whether a route of the application fully matches `method` on `path`.
+
+    Starlette's own matching is used, so the answer does not depend on how the
+    application stores an included router in `app.routes`.
+    """
+    scope: Scope = {
+        "type": "http",
+        "method": method,
+        "path": path,
+        "root_path": "",
+        "headers": [],
+        "query_string": b"",
     }
+    return any(route.matches(scope)[0] is Match.FULL for route in app.routes)
+
+
+def page_routes(method: str) -> tuple[str, ...]:
+    """The paths of the phase 9 pages that answer `method`, as the app routes them.
+
+    Every route of the page modules is kept only when the application answers it,
+    so a route that is declared but not included fails the length checks.
+    """
+    app = route_app()
+    found: set[str] = set()
+    for router in PAGE_ROUTERS:
+        for route in router.routes:
+            path: str = getattr(route, "path", "")
+            methods = getattr(route, "methods", None) or ()
+            if method in methods and app_answers(app, sample_path(path), method):
+                found.add(path)
     return tuple(sorted(found))
 
 
