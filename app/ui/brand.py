@@ -1,4 +1,4 @@
-"""The approved brand files the layout may link to.
+"""The approved brand files the layout may link to, and the version of the assets.
 
 The files in app/static/brand are exact copies of the approved Nextcloud assets
 (/Theriark/Revrook/Assets); they are never redrawn or regenerated here. The
@@ -6,6 +6,7 @@ layout links a file only when it is present, so a missing copy shows the text
 wordmark instead of a broken image.
 """
 
+import hashlib
 from pathlib import Path
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -32,8 +33,32 @@ BRAND_FILES = (
     "wordmark-1200x300.png",
     "wordmark-dark-1200x300.png",
 )
+# The stylesheets and scripts base.html links, under app/static. Their addresses
+# carry asset_version() as the `v` query, so a changed file has a new address.
+ASSET_FILES = (
+    "vendor/pico/pico.min.css",
+    "css/revrook.css",
+    "vendor/htmx/htmx.min.js",
+    "js/revrook.js",
+)
 
 
 def available_brand_files(brand_dir: Path = BRAND_DIR) -> frozenset[str]:
     """The names of BRAND_FILES that exist in brand_dir."""
     return frozenset(name for name in BRAND_FILES if (brand_dir / name).is_file())
+
+
+def asset_version(static_dir: Path = STATIC_DIR) -> str:
+    """A 12-character digest of ASSET_FILES, the `v` query of their links.
+
+    A browser, and any cache in front of the installation, keeps a static file for
+    hours. With the digest in the address a new version of a stylesheet or script
+    has a new address, so no page is shown with the old one after an upgrade. A
+    missing file counts as empty, so the layout still renders without it.
+    """
+    digest = hashlib.sha256()
+    for name in ASSET_FILES:
+        path = static_dir / name
+        digest.update(name.encode("utf-8"))
+        digest.update(path.read_bytes() if path.is_file() else b"")
+    return digest.hexdigest()[:12]
