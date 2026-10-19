@@ -8,9 +8,12 @@
 #   bash scripts/demo.sh USERNAME
 #
 # USERNAME is the account you made on the first-run page (/setup). The script asks the
-# web container for an API token for that account (nothing is printed or stored), makes
-# the client through the API and uploads the six files. Everything in the files is
-# invented: no real customer, tenant, device or person.
+# web container for an API token for that account and keeps it only in a shell variable;
+# the token is never printed. It is stored, though: each run leaves one API credential
+# named "demo data" (as a hash) on the account, and it stays after the demo client is
+# deleted (docs/quick-start.md, step 6). The script then makes the client through the
+# API and uploads the six files. Everything in the files is invented: no real customer,
+# tenant, device or person.
 #
 # Needs docker, curl, jq and Python 3.11 or newer on this machine (the file generator
 # uses only the standard library). BASE_URL (default http://localhost:8080),

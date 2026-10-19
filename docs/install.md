@@ -36,10 +36,14 @@ never reuse them. Make your own, once, and keep them somewhere other than the se
 cp .env.example .env
 SECRET_KEY="$(openssl rand -hex 32)"
 FERNET_KEY="$(openssl rand -base64 32 | tr '+/' '-_')"
+echo "SECRET_KEY=${SECRET_KEY}"
+echo "FERNET_KEY=${FERNET_KEY}"
 ```
 
-then put the two values on the `SECRET_KEY=` and `FERNET_KEY=` lines of `.env` with an
-editor (do not paste them into a shared terminal log or a ticket).
+The last two commands print the two lines you need, once, on your own terminal. Copy
+each one over the `SECRET_KEY=` or `FERNET_KEY=` line of `.env` with an editor (do not
+paste them into a shared terminal log or a ticket), then close that terminal or clear
+it.
 
 - `SECRET_KEY` signs the session cookie. At least 16 characters.
 - `FERNET_KEY` encrypts the pseudonym key of every client. It must be a URL-safe base64

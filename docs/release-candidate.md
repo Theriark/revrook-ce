@@ -8,8 +8,8 @@ released, and writing it authorises none of that.
 ## Status
 
 - No version is released: there is no tag, no GitHub release and no published image.
-  `pyproject.toml` says `0.0.0.dev0` and the [CHANGELOG](../CHANGELOG.md) has only an
-  Unreleased section.
+  `pyproject.toml` and `app/__init__.py` both say `0.0.0.dev0` and the
+  [CHANGELOG](../CHANGELOG.md) has only an Unreleased section.
 - A release is a separate step with its own authorisation from the founders. The
   workflow that would run it fails closed until that approval enables it (finding R1).
 - The Development environment runs the code of `development`. Stage and production are
@@ -70,10 +70,13 @@ Findings. None is fixed here: the workflow files belong to the platform engineer
   `PRODUCTION_ENABLED` is `false`. This matches `docs/ci-cd.md`. The deployment step is
   written when production is authorised.
 - **R2, the version is not checked.** The workflow checks the shape of the version input
-  only. The version the application reports comes from `pyproject.toml` at the built
-  commit. Dispatched as `0.1.0` while the commit still says `0.0.0.dev0`, it would tag an
-  image whose `revrook_build_info` says `0.0.0.dev0`. Suggested: a guard step that reads
-  `pyproject.toml` at the source commit and fails when it differs from the input.
+  only. The version of the package is in `pyproject.toml`, but the version the
+  application reports comes from a separate constant, `__version__` in
+  `app/__init__.py`, and that is what `revrook_build_info` shows. `tests/test_packages.py`
+  pins both to `0.0.0.dev0` and fails when they differ. Dispatched as `0.1.0` while the
+  commit still says `0.0.0.dev0` in these files, it would tag an image whose
+  `revrook_build_info` says `0.0.0.dev0`. Suggested: a guard step that reads both files
+  at the source commit and fails when either differs from the input.
 - **R3, no `release.yml`.** The repository has exactly three workflows by decision, so
   the build, the digest and the tag live in `ci.yml`, `promote-stage.yml` and
   `promote-production.yml`. No change needed.
@@ -107,7 +110,9 @@ Findings. None is fixed here: the workflow files belong to the platform engineer
 4. The `production` environment is created with required reviewers before
    `PRODUCTION_ENABLED` is set to `true` (R9).
 5. `docs/licences.md` is brought up to date (R8).
-6. The version is set in `pyproject.toml` in a reviewed change, and the Unreleased
-   section of the [CHANGELOG](../CHANGELOG.md) becomes the section of that version.
+6. The version is set in both `pyproject.toml` and `app/__init__.py` (the application
+   reports the second; `tests/test_packages.py` pins both, so that test changes with
+   them) in a reviewed change, and the Unreleased section of the
+   [CHANGELOG](../CHANGELOG.md) becomes the section of that version.
 7. `Promote - Stage` is run from `development` with the digest that CI recorded, the
    human QA of the product follows, and only then the production workflow.

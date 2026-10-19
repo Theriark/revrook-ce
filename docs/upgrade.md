@@ -85,6 +85,9 @@ They do not run an old image against a new schema; the rule above is what promis
 
 ## The version number
 
-The version in `pyproject.toml` is `0.0.0.dev0` until a release is authorised, and
-`revrook_build_info{version}` on the [metrics](operations.md#watching-it) page shows it.
-The release that sets it to `0.1.0` is a separate step ([release-candidate.md](release-candidate.md)).
+The version of the package in `pyproject.toml` and the constant `__version__` in
+`app/__init__.py` are both `0.0.0.dev0` until a release is authorised.
+`revrook_build_info{version}` on the [metrics](operations.md#watching-it) page shows the
+second one, not `pyproject.toml`, and `tests/test_packages.py` pins both and fails when
+they differ. The release that sets both to `0.1.0` is a separate step, and it changes
+that test with them ([release-candidate.md](release-candidate.md)).

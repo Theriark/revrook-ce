@@ -4,6 +4,9 @@ The names of NIST CSF 2.0 subcategories and NIST SP 800-171 Rev 3 requirements
 come from the NIST OSCAL content repository, which is in the public domain and
 dedicated worldwide under CC0 1.0. The two datasets under data/nist carry their
 credit, source file, commit and licence; a row for each is in LICENSES-CONTENT.md.
+Each is a names extract: it holds only the identifiers that the control file maps,
+so checking the mapped identifiers against it (`verify-mappings`) is a consistency
+check, not a comparison with the full NIST catalog.
 
 A name is looked up by the identifier of a mapping row. It is shown only for a row
 a person has verified (see app.checks.library.visible_mappings): until then no

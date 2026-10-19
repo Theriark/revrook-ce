@@ -226,7 +226,9 @@ def test_the_changelog_follows_keep_a_changelog() -> None:
 @pytest.mark.parametrize(
     "name",
     (
+        "app/cli.py",
         "app/checks/mappings.py",
+        "app/checks/reference.py",
         "docs/mapping-verification.md",
         "docs/release-candidate.md",
         "CHANGELOG.md",
@@ -241,6 +243,21 @@ def test_the_nist_check_is_described_as_a_names_extract_consistency_check(
     assert "pinned copy of its primary source" not in text
     assert "pinned copy of the nist catalog" not in text
     assert "the one nist publishes" not in text
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "app/cli.py",
+        "app/checks/mappings.py",
+        "app/checks/reference.py",
+        "tests/test_mapping_verification.py",
+    ),
+)
+def test_the_code_does_not_claim_a_check_against_a_primary_source(name: str) -> None:
+    text = " ".join(read(ROOT / name).lower().split())
+    assert "primary source" not in text
+    assert "in the pinned source" not in text
 
 
 # --- the quick start ------------------------------------------------------------------

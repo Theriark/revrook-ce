@@ -55,7 +55,8 @@ Use the name you chose in step 2. The script makes one client, **Demo Client (sy
 data)**, and uploads six invented example files for it (device inventory, backup jobs,
 network, training, leavers and a mail export), captured now. It prints the address of
 the client. It never prints the API token it uses, and every name inside the files is a
-placeholder.
+placeholder. It does leave that token stored (as a hash) on your account, under the name
+"demo data"; step 6 says what that means.
 
 ## 4. Look around
 
@@ -91,6 +92,13 @@ docker compose down
 ```
 
 To stop it and delete the database and the evidence volume as well, add `-v`.
+
+Deleting the client does not delete the API credential named "demo data" that the script
+made for your account each time you ran it. Nobody has seen its value (the script keeps
+it in a shell variable and never prints it), but the web interface cannot list or revoke
+it yet ([security.md](security.md#api-tokens)); on an installation you keep, run the
+script only once, and on a trial stack `docker compose down -v` removes it with the
+database.
 
 ## Real data
 

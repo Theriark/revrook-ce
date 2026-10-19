@@ -48,6 +48,10 @@ PORT = 8080
 STUBS = {
     "make-fixtures": "not available until phase 3 (synthetic fixtures)",
 }
+CONSISTENCY_NOTE = (
+    "  a consistency check with the pinned names extract, not a comparison with "
+    "the full NIST catalog"
+)
 
 Spawner = Callable[[list[str]], "subprocess.Popen[bytes]"]
 
@@ -164,10 +168,13 @@ def verify_mappings_command(
     Reads data/controls.yaml, data/nist and docs/mapping-verification.md (it needs
     no database and no keys). Exit 1 when the files disagree: a row marked verified
     without a register line, a register line without a verified row, a NIST
-    identifier its pinned dataset does not know, or a source version the document
-    does not name. With `strict` it also exits 1 while any row is unverified, which
-    is the answer a release gate wants. Exit 2 when the register cannot be read (the
-    image carries no docs folder; run it from a checkout).
+    identifier its pinned names extract does not know, or a source version the
+    document does not name. The NIST check is a consistency check with the extract,
+    which holds only the identifiers that the control file maps; it is not a comparison
+    with the full NIST catalog. With `strict` it also exits 1 while any row is
+    unverified, which is the answer a release gate wants. Exit 2 when the register
+    cannot be read (it is missing, is not UTF-8 text, or the image carries no docs
+    folder; run it from a checkout).
     """
     try:
         library = load_library()
@@ -177,7 +184,7 @@ def verify_mappings_command(
         return 1
     try:
         text = register_path.read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         print(f"revrook verify-mappings: {register_path.name} cannot be read")
         return 2
     rows, problems = parse_register(text)
@@ -188,16 +195,19 @@ def verify_mappings_command(
     print(f"{len(waiting)} mapping rows are still unverified")
     for line in summary_lines(library):
         print(line)
-    for resolution in resolve_nist_rows(library, references):
+    resolutions = resolve_nist_rows(library, references)
+    for resolution in resolutions:
         source = references[resolution.framework].source
         framework = references[resolution.framework].framework
         found = f"{resolution.resolved} of {resolution.rows}"
-        print(f"{framework}: {found} identifiers are in the pinned source")
+        print(f"{framework}: {found} identifiers are in the pinned names extract")
         commit = source["commit"][:12]
         print(f"  commit {commit}, catalog version {source['catalog_version']}")
+    if resolutions:
+        print(CONSISTENCY_NOTE)
     others = unpinned_frameworks(library)
     if others:
-        print(f"no pinned primary source for: {', '.join(others)}")
+        print(f"no pinned names extract for: {', '.join(others)}")
     if show_rows:
         for line in unverified_lines(library):
             print(line)

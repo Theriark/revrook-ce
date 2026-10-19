@@ -71,7 +71,7 @@ who verifies the row.
 register below.
 
 For CIS, ISO/IEC 27001, Cyber Essentials and NIS2 the repository holds no copy of the
-source, so the command says that no primary source is pinned. A person reads the
+source, so the command says that no names extract is pinned. A person reads the
 publisher's own page and records its version in the register.
 
 ## Source versions

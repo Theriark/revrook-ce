@@ -33,7 +33,7 @@ No version has been released: there is no tag, no GitHub release and no publishe
 
 - A request with `Transfer-Encoding: chunked` and a small `Content-Length` passed the body size check; any `Transfer-Encoding` is now refused with 411.
 - A plugin that fails to load no longer chains its own error into the message; only its name and the class of the error are reported.
-- A bearer token on a page no longer skips the CSRF check; only paths under `/api/` do.
+- A bearer header on a page no longer skips the CSRF check; only paths under `/api/` do.
 - An API id past 2^63 - 1 gave a 500; it is now refused with 422.
 
 ### Security

@@ -1,7 +1,8 @@
 """Mapping verification (phase 11): unverified rows, the register and the reports.
 
 `revrook verify-mappings` lists the mapping rows nobody has verified, checks every
-NIST identifier against the pinned primary source, and keeps the register of
+NIST identifier against the pinned names extract (a consistency check, not a
+comparison with the full NIST catalog), and keeps the register of
 docs/mapping-verification.md equal to the rows marked verified. A report never
 prints an unverified identifier.
 """
@@ -98,7 +99,7 @@ def test_the_frameworks_without_a_pinned_source_are_named() -> None:
     ]
 
 
-def test_every_nist_identifier_is_in_the_pinned_primary_source() -> None:
+def test_every_nist_identifier_is_in_the_pinned_names_extract() -> None:
     found = resolve_nist_rows(LIBRARY, REFERENCES)
     assert [item.framework for item in found] == ["csf", "sp800-171"]
     for item in found:
@@ -107,7 +108,7 @@ def test_every_nist_identifier_is_in_the_pinned_primary_source() -> None:
         assert item.resolved == item.rows
 
 
-def test_an_identifier_the_pinned_source_lacks_is_reported() -> None:
+def test_an_identifier_the_pinned_names_extract_lacks_is_reported() -> None:
     csf = REFERENCES["csf"]
     names = {key: name for key, name in csf.names.items() if key != "PR.AA-03"}
     references = {**REFERENCES, "csf": dataclasses.replace(csf, names=names)}
@@ -210,9 +211,10 @@ def test_the_command_passes_and_prints_counts_and_source_versions(
     assert "NIST CSF 2.0: " in out and ", 0 verified, " in out
     csf = REFERENCES["csf"]
     assert f"{csf.framework}: " in out
-    assert "identifiers are in the pinned source" in out
+    assert "identifiers are in the pinned names extract" in out
+    assert "not a comparison with the full NIST catalog" in out
     assert f"commit {csf.source['commit'][:12]}, catalog version 1.2.0" in out
-    unpinned = "no pinned primary source for: cis, cyber-essentials, iso27001, nis2"
+    unpinned = "no pinned names extract for: cis, cyber-essentials, iso27001, nis2"
     assert unpinned in out
 
 
@@ -249,6 +251,19 @@ def test_the_command_exits_2_when_the_register_cannot_be_read(
 ) -> None:
     assert cli.verify_mappings_command(register_path=tmp_path / "missing.md") == 2
     assert "missing.md cannot be read" in capsys.readouterr().out
+
+
+def test_the_command_exits_2_when_the_register_is_not_utf_8_text(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "register.md"
+    path.write_bytes(b"# register\n\xff\xfe\xc3(\n")
+    assert cli.verify_mappings_command(register_path=path) == 2
+    out = capsys.readouterr().out
+    assert "register.md cannot be read" in out
+    assert str(tmp_path) not in out
+    assert "codec" not in out
+    assert "0xff" not in out
 
 
 def test_the_command_exits_1_when_the_register_and_the_file_disagree(
