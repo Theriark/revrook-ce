@@ -83,14 +83,22 @@ def _is_ip_literal(host: str) -> bool:
 
 
 @pytest.fixture(autouse=True)
-def forbid_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
+def forbid_real_network(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Stops every attempt to leave the machine; the value lists what it stopped.
+
+    A library may catch the error (dnspython turns it into a failed lookup), so a
+    test that must be sure a packet was refused reads the list of blocked hosts.
+    """
     allowed = allowed_hosts()
+    blocked: list[str] = []
     real_connect = socket.socket.connect
     real_connect_ex = socket.socket.connect_ex
+    real_sendto = socket.socket.sendto
     real_getaddrinfo = socket.getaddrinfo
 
     def check_address(family: int, address: Any) -> None:
         if family in (socket.AF_INET, socket.AF_INET6) and address[0] not in allowed:
+            blocked.append(address[0])
             raise NetworkBlockedError(
                 f"real network access is blocked in tests: {address[0]}"
             )
@@ -103,8 +111,14 @@ def forbid_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
         check_address(self.family, address)
         return real_connect_ex(self, address)
 
+    def sendto(self: socket.socket, data: Any, *args: Any) -> int:
+        # sendto(data, address) or sendto(data, flags, address)
+        check_address(self.family, args[-1])
+        return real_sendto(self, data, *args)
+
     def getaddrinfo(host: Any, *args: Any, **kwargs: Any) -> Any:
         if isinstance(host, str) and host not in allowed and not _is_ip_literal(host):
+            blocked.append(host)
             raise NetworkBlockedError(
                 f"real name resolution is blocked in tests: {host}"
             )
@@ -112,7 +126,9 @@ def forbid_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(socket.socket, "connect", connect)
     monkeypatch.setattr(socket.socket, "connect_ex", connect_ex)
+    monkeypatch.setattr(socket.socket, "sendto", sendto)
     monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+    return blocked
 
 
 def pytest_terminal_summary(terminalreporter: Any) -> None:
