@@ -18,7 +18,12 @@ from app.checks.dnscheck import (
 from app.checks.library import Library
 from app.checks.model import ControlResult
 from app.clients import create_client
-from app.dns_service import dns_controls, run_dns_check
+from app.dns_service import (
+    dns_controls,
+    look_up_dns,
+    require_client,
+    store_dns_check,
+)
 from app.evidence.assurance import Assurance
 from app.evidence.chain import verify_chain
 from app.evidence.deletion import delete_client
@@ -437,17 +442,23 @@ async def post_dns_check(
     as evidence; a lookup that failed is stored as unknown, never as a fail.
     """
     resolver: Resolver = request.app.state.dns_resolver
+    now = clock_of(request)()
     try:
+        # No database connection is held while the DNS answers: the client is checked
+        # in a short session, the lookups run with none open, and the transaction
+        # opens only to store the result.
+        async with session_factory(request)() as session:
+            await require_client(session, client_id)
+        check = await look_up_dns(
+            resolver, body.domains, body.selectors, body.providers, now=now
+        )
         async with session_factory(request)() as session, session.begin():
-            stored = await run_dns_check(
+            stored = await store_dns_check(
                 session,
                 evidence_context(request),
                 client_id,
-                resolver,
-                body.domains,
-                body.selectors,
-                body.providers,
-                now=clock_of(request)(),
+                check,
+                now=now,
                 actor_user_id=user.id,
             )
     except EvidenceError as error:

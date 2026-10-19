@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="revrook">
+<title>Quarterly security review - Alder and Finch Ltd - Harbour IT Services</title>
+<style>
+:root {
+  --rv-charcoal: #2d2f3a;
+  --rv-accent: #4c5bd4;
+  --rv-stone: #d9d6cf;
+  --rv-gray: #8a8f98;
+  --rv-white: #ffffff;
+  --rv-text-secondary: #5a5e6b;
+  --rv-status-protected: #1b6e3c;
+  --rv-status-needs-attention: #8a5a00;
+  --rv-status-not-protected: #b3261e;
+  --rv-status-not-checked: #5a5e6b;
+}
+
+html {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 1rem;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page {
+  box-sizing: border-box;
+  max-width: 210mm;
+  min-height: 250mm;
+  margin: 0 auto 1.5rem;
+  padding: 14mm 14mm 10mm;
+  border: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page-head {
+  margin: 0 0 1rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rv-gray);
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+p {
+  margin: 0 0 0.5rem;
+}
+
+.lead {
+  font-size: 1.125rem;
+}
+
+.secondary {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.cover-title {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dl.facts {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+}
+
+dl.facts dt {
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dl.facts dd {
+  margin: 0;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+table {
+  width: 100%;
+  margin: 0 0 1rem;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+caption {
+  padding: 0 0 0.35rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: bottom;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-stone);
+}
+
+td {
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+.status {
+  display: inline-block;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-protected {
+  color: var(--rv-status-protected);
+  background-color: var(--rv-white);
+}
+
+.status-needs-attention {
+  color: var(--rv-status-needs-attention);
+  background-color: var(--rv-white);
+}
+
+.status-not-protected {
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-white);
+}
+
+.status-not-checked {
+  color: var(--rv-status-not-checked);
+  background-color: var(--rv-white);
+}
+
+.status-not-applicable {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-icon {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.3em;
+  vertical-align: -0.2em;
+}
+
+.note {
+  margin: 0.25rem 0 0;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.finding {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.finding h3 {
+  margin-top: 0;
+}
+
+.summary-lines p {
+  font-size: 1.125rem;
+}
+
+.chart {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 0.5rem;
+}
+
+.chart-track {
+  fill: var(--rv-stone);
+}
+
+.chart-bar {
+  fill: var(--rv-accent);
+}
+
+.chart-label,
+.chart-value {
+  font-size: 13px;
+  fill: var(--rv-charcoal);
+}
+
+.signoff {
+  margin-top: 2rem;
+}
+
+.signoff .line {
+  height: 2rem;
+  border-bottom: 1px solid var(--rv-charcoal);
+}
+
+.disclaimer-full {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--rv-charcoal);
+  font-size: 1.125rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rv-gray);
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.page-footer p {
+  margin: 0 0 0.25rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  left: -10000px;
+}
+
+</style>
+<style media="print">
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+body {
+  padding: 0;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  page-break-after: always;
+  break-after: page;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page:last-of-type {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+thead {
+  display: table-header-group;
+}
+
+tr,
+.finding {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="rv-icon-check" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 8.5l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-alert" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.3v.2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-cross" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-question" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.2a2 2 0 1 1 3 1.7c-.7.4-1 .8-1 1.5M8 11.4v.2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-dash" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+</svg>
+
+<section class="page cover" id="cover" aria-labelledby="cover-title">
+<h1 id="cover-title">Harbour IT Services</h1>
+<p class="cover-title">Quarterly security review</p>
+<dl class="facts">
+<dt>Client</dt><dd>Alder and Finch Ltd</dd>
+<dt>Period</dt><dd>2026-07-01 to 2026-09-30</dd>
+<dt>Prepared by</dt><dd>Sam Technician</dd>
+<dt>Generated</dt><dd>2026-10-17</dd>
+<dt>Pack date</dt><dd>2026-10-17</dd>
+<dt>Data sources</dt>
+<dd><ul><li>Microsoft Entra registration export</li><li>Intune device export</li><li>Backup report</li><li>Public DNS check</li><li>Technician attestations</li></ul></dd>
+<dt>Snapshot</dt><dd>f14164a059c7fa8e (rules PC-RULES 0.1)</dd>
+</dl>
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="summary" aria-labelledby="summary-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="summary-title">Summary</h2>
+
+<div class="summary-lines">
+
+<p>Score 89.5 (best case 90.5), band Strong, evidence coverage 99 percent.</p>
+
+<p>Since the report of 2026-07-17 the score changed by +40.5 points and the evidence coverage by -1 points.</p>
+
+<p>Of 50 controls, 42 are Protected, 7 need attention, 0 are not protected and 1 were not checked.</p>
+
+</div>
+<dl class="facts">
+<dt>Score</dt><dd>89.5 out of 100</dd>
+<dt>Best case</dt><dd>90.5 if every control that is not checked passed</dd>
+<dt>Evidence coverage</dt><dd>99 percent</dd>
+<dt>Band</dt><dd>Strong</dd>
+</dl>
+
+<table>
+<caption>Controls by status</caption>
+<thead><tr><th scope="col">Status</th><th scope="col" class="num">Controls</th></tr></thead>
+<tbody>
+
+<tr><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td class="num">42</td></tr>
+
+<tr><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td class="num">7</td></tr>
+
+<tr><td><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span></td><td class="num">0</td></tr>
+
+<tr><td><span class="status status-not-checked"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-question"/></svg>Not checked</span></td><td class="num">1</td></tr>
+
+</tbody>
+</table>
+<p class="note">The score is a configuration evidence summary. It is not a certification. Evidence coverage is shown beside it so that better evidence is not read as better security.</p>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="coverage" aria-labelledby="coverage-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="coverage-title">Control coverage by domain</h2>
+
+<svg class="chart" role="img" viewBox="0 0 640 256" width="640" height="256" xmlns="http://www.w3.org/2000/svg" aria-labelledby="domain-chart-title domain-chart-desc"><title id="domain-chart-title">Score by domain</title><desc id="domain-chart-desc">Bars from 0 to 100, one for each domain. Identity and MFA 91.8; Devices and patching 86.7; Endpoint protection 100.0; Email security 87.7; Backup and recovery 90.8; Network 100.0; Logging and monitoring 78.2; Governance and people 82.5.</desc><text class="chart-label" x="0" y="21">Identity and MFA</text><rect class="chart-track" x="230" y="8" width="300" height="16"/><rect class="chart-bar" x="230" y="8" width="275" height="16"/><text class="chart-value" x="540" y="21">91.8</text><text class="chart-label" x="0" y="51">Devices and patching</text><rect class="chart-track" x="230" y="38" width="300" height="16"/><rect class="chart-bar" x="230" y="38" width="260" height="16"/><text class="chart-value" x="540" y="51">86.7</text><text class="chart-label" x="0" y="81">Endpoint protection</text><rect class="chart-track" x="230" y="68" width="300" height="16"/><rect class="chart-bar" x="230" y="68" width="300" height="16"/><text class="chart-value" x="540" y="81">100.0</text><text class="chart-label" x="0" y="111">Email security</text><rect class="chart-track" x="230" y="98" width="300" height="16"/><rect class="chart-bar" x="230" y="98" width="263" height="16"/><text class="chart-value" x="540" y="111">87.7</text><text class="chart-label" x="0" y="141">Backup and recovery</text><rect class="chart-track" x="230" y="128" width="300" height="16"/><rect class="chart-bar" x="230" y="128" width="272" height="16"/><text class="chart-value" x="540" y="141">90.8</text><text class="chart-label" x="0" y="171">Network</text><rect class="chart-track" x="230" y="158" width="300" height="16"/><rect class="chart-bar" x="230" y="158" width="300" height="16"/><text class="chart-value" x="540" y="171">100.0</text><text class="chart-label" x="0" y="201">Logging and monitoring</text><rect class="chart-track" x="230" y="188" width="300" height="16"/><rect class="chart-bar" x="230" y="188" width="234" height="16"/><text class="chart-value" x="540" y="201">78.2</text><text class="chart-label" x="0" y="231">Governance and people</text><rect class="chart-track" x="230" y="218" width="300" height="16"/><rect class="chart-bar" x="230" y="218" width="247" height="16"/><text class="chart-value" x="540" y="231">82.5</text></svg>
+<table>
+<caption>Data for the chart: score by domain, and the controls in each status</caption>
+<thead>
+<tr><th scope="col">Domain</th><th scope="col" class="num">Weight</th><th scope="col" class="num">Score</th>
+<th scope="col" class="num">Protected</th><th scope="col" class="num">Needs attention</th><th scope="col" class="num">Not protected</th><th scope="col" class="num">Not checked</th></tr>
+</thead>
+<tbody>
+
+<tr><th scope="row">Identity and MFA</th><td class="num">22</td><td class="num">91.8</td>
+<td class="num">7</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+
+<tr><th scope="row">Devices and patching</th><td class="num">14</td><td class="num">86.7</td>
+<td class="num">5</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
+
+<tr><th scope="row">Endpoint protection</th><td class="num">10</td><td class="num">100.0</td>
+<td class="num">5</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+
+<tr><th scope="row">Email security</th><td class="num">12</td><td class="num">87.7</td>
+<td class="num">6</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+
+<tr><th scope="row">Backup and recovery</th><td class="num">16</td><td class="num">90.8</td>
+<td class="num">5</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+
+<tr><th scope="row">Network</th><td class="num">6</td><td class="num">100.0</td>
+<td class="num">4</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+
+<tr><th scope="row">Logging and monitoring</th><td class="num">8</td><td class="num">78.2</td>
+<td class="num">4</td><td class="num">2</td><td class="num">0</td><td class="num">0</td></tr>
+
+<tr><th scope="row">Governance and people</th><td class="num">12</td><td class="num">82.5</td>
+<td class="num">6</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="findings" aria-labelledby="findings-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="findings-title">Top findings</h2>
+
+
+
+<article class="finding" aria-labelledby="finding-1">
+<h3 id="finding-1">1. DMARC is published and enforced.</h3>
+<p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-EML-03 &middot; Email security</span></p>
+<dl class="facts">
+<dt>What we did</dt><dd>Published a DMARC record in monitoring mode.</dd>
+<dt>What we recommend</dt><dd>Move the DMARC policy to quarantine once reports are clean.</dd>
+<dt>What we need from you</dt><dd>A decision on the date to enforce.</dd>
+<dt>By when</dt><dd>2026-11-30</dd>
+</dl>
+</article>
+
+<article class="finding" aria-labelledby="finding-2">
+<h3 id="finding-2">2. Dormant accounts are disabled.</h3>
+<p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-ACC-06 &middot; Identity and MFA</span></p>
+<dl class="facts">
+<dt>What we did</dt><dd>Disabled two dormant accounts.</dd>
+<dt>What we recommend</dt><dd>Not yet entered</dd>
+<dt>What we need from you</dt><dd>Not yet entered</dd>
+<dt>By when</dt><dd>Not yet entered</dd>
+</dl>
+</article>
+
+<article class="finding" aria-labelledby="finding-3">
+<h3 id="finding-3">3. At least one backup copy is out of reach of a compromised admin account.</h3>
+<p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-BCK-04 &middot; Backup and recovery</span></p>
+<dl class="facts">
+<dt>What we did</dt><dd>Not yet entered</dd>
+<dt>What we recommend</dt><dd>Keep one backup copy where an administrator account cannot delete it.</dd>
+<dt>What we need from you</dt><dd>Approval of the extra storage.</dd>
+<dt>By when</dt><dd>2026-12-15</dd>
+</dl>
+</article>
+
+<article class="finding" aria-labelledby="finding-4">
+<h3 id="finding-4">4. Devices meet a managed compliance baseline.</h3>
+<p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-DEV-05 &middot; Devices and patching</span></p>
+<dl class="facts">
+<dt>What we did</dt><dd>Not yet entered</dd>
+<dt>What we recommend</dt><dd>Not yet entered</dd>
+<dt>What we need from you</dt><dd>Not yet entered</dd>
+<dt>By when</dt><dd>Not yet entered</dd>
+</dl>
+</article>
+
+<article class="finding" aria-labelledby="finding-5">
+<h3 id="finding-5">5. An incident response plan with contacts exists and was exercised.</h3>
+<p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-GOV-05 &middot; Governance and people</span></p>
+<dl class="facts">
+<dt>What we did</dt><dd>Not yet entered</dd>
+<dt>What we recommend</dt><dd>Not yet entered</dd>
+<dt>What we need from you</dt><dd>Not yet entered</dd>
+<dt>By when</dt><dd>Not yet entered</dd>
+</dl>
+</article>
+
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="roadmap" aria-labelledby="roadmap-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="roadmap-title">Remediation roadmap and next quarter</h2>
+
+<h3>Roadmap</h3>
+
+<table>
+<caption>Actions in order of urgency</caption>
+<thead><tr><th scope="col">Priority</th><th scope="col">Control</th><th scope="col">Action</th><th scope="col">By when</th></tr></thead>
+<tbody>
+
+<tr><td>Next</td><td>DMARC is published and enforced.<p class="note">PC-EML-03</p></td><td>Move the DMARC policy to quarantine once reports are clean.</td><td>2026-11-30</td></tr>
+
+<tr><td>Next</td><td>At least one backup copy is out of reach of a compromised admin account.<p class="note">PC-BCK-04</p></td><td>Keep one backup copy where an administrator account cannot delete it.</td><td>2026-12-15</td></tr>
+
+</tbody>
+</table>
+
+<h3>Plan for next quarter</h3>
+
+<ol><li>Review the evidence that expires first.</li><li>Re-run the public DNS check after any mail change.</li><li>Agree the dates in the table of actions with the client.</li></ol>
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="evidence" aria-labelledby="evidence-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="evidence-title">Evidence status and expiry</h2>
+
+<table>
+<caption>Controls by state of their evidence</caption>
+<thead><tr><th scope="col">State of the evidence</th><th scope="col" class="num">Controls</th></tr></thead>
+<tbody>
+
+<tr><td>Current</td><td class="num">37</td></tr>
+
+<tr><td>Expires within 30 days</td><td class="num">12</td></tr>
+
+<tr><td>Expired</td><td class="num">0</td></tr>
+
+<tr><td>No dated evidence</td><td class="num">1</td></tr>
+
+</tbody>
+</table>
+
+<table>
+<caption>Evidence that has expired or expires within 30 days</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">State</th></tr></thead>
+<tbody>
+
+<tr><td>Every in-scope business system has a recent successful backup.<p class="note">PC-BCK-01</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Microsoft 365 mail and files are covered by an independent backup.<p class="note">PC-BCK-02</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>At least one backup copy is out of reach of a compromised admin account.<p class="note">PC-BCK-04</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Devices are inventoried and managed.<p class="note">PC-DEV-01</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Security updates are applied promptly.<p class="note">PC-DEV-02</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>No operating system past vendor support.<p class="note">PC-DEV-03</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Disk encryption is on.<p class="note">PC-DEV-04</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Devices meet a managed compliance baseline.<p class="note">PC-DEV-05</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Users do not run as local administrators.<p class="note">PC-DEV-07</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Anti-malware protection runs on every device.<p class="note">PC-END-01</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Protection signatures are current.<p class="note">PC-END-02</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+<tr><td>Serious detections do not sit unresolved.<p class="note">PC-END-03</p></td><td>2026-10-17</td><td>2026-10-24</td><td>Expires within 30 days</td></tr>
+
+</tbody>
+</table>
+
+
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="exceptions" aria-labelledby="exceptions-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="exceptions-title">Exceptions register</h2>
+
+
+<table>
+<caption>Open exceptions: a control that is knowingly not met, and why</caption>
+<thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
+<tbody>
+
+<tr><td>Devices meet a managed compliance baseline.<p class="note">PC-DEV-05</p></td><td>Office manager</td><td>One reception laptop cannot meet the baseline until it is replaced.</td><td>The laptop holds no client data and is reimaged every month.</td><td>2026-12-01</td></tr>
+
+</tbody>
+</table>
+
+<p class="note">An exception never changes a status and never raises the score.</p>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+
+<section class="page" id="appendix-acc" aria-labelledby="appendix-acc-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-acc-title">Appendix: Identity and MFA</h2>
+
+<table>
+<caption>Identity and MFA: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Every active staff account signs in with more than a password.<p class="note">PC-ACC-01 &middot; gate control</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Every administrator uses MFA.<p class="note">PC-ACC-02 &middot; gate control</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>MFA is enforced by policy, not only registered.<p class="note">PC-ACC-03</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Legacy sign-in methods that skip MFA are blocked.<p class="note">PC-ACC-04</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Few, personal, permanent top-level administrators.<p class="note">PC-ACC-05</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Dormant accounts are disabled.<p class="note">PC-ACC-06</p></td><td class="num">2</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Guest and external access is reviewed.<p class="note">PC-ACC-07</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Emergency (break-glass) access is documented and protected.<p class="note">PC-ACC-08</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Attestation</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-dev" aria-labelledby="appendix-dev-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-dev-title">Appendix: Devices and patching</h2>
+
+<table>
+<caption>Devices and patching: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Devices are inventoried and managed.<p class="note">PC-DEV-01</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Security updates are applied promptly.<p class="note">PC-DEV-02</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>No operating system past vendor support.<p class="note">PC-DEV-03</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Disk encryption is on.<p class="note">PC-DEV-04</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Devices meet a managed compliance baseline.<p class="note">PC-DEV-05</p></td><td class="num">2</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Screens lock after inactivity.<p class="note">PC-DEV-06</p></td><td class="num">1</td><td><span class="status status-not-checked"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-question"/></svg>Not checked</span></td><td>No date</td><td>No date</td><td>No evidence</td></tr>
+
+<tr><td>Users do not run as local administrators.<p class="note">PC-DEV-07</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-end" aria-labelledby="appendix-end-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-end-title">Appendix: Endpoint protection</h2>
+
+<table>
+<caption>Endpoint protection: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Anti-malware protection runs on every device.<p class="note">PC-END-01</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Protection signatures are current.<p class="note">PC-END-02</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Serious detections do not sit unresolved.<p class="note">PC-END-03</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Users cannot switch protection off (tamper protection).<p class="note">PC-END-04</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Unapproved remote-access software is absent.<p class="note">PC-END-05</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-eml" aria-labelledby="appendix-eml-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-eml-title">Appendix: Email security</h2>
+
+<table>
+<caption>Email security: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Each mail domain publishes an SPF policy.<p class="note">PC-EML-01</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Outgoing mail is DKIM-signed.<p class="note">PC-EML-02</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>DMARC is published and enforced.<p class="note">PC-EML-03</p></td><td class="num">3</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Inbound mail is filtered for phishing and malicious attachments or links.<p class="note">PC-EML-04</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Automatic forwarding to outside addresses is blocked.<p class="note">PC-EML-05</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Shared mailboxes cannot be signed into directly.<p class="note">PC-EML-06</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Staff have a simple way to report suspicious email.<p class="note">PC-EML-07</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Manual artefact</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-bck" aria-labelledby="appendix-bck-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-bck-title">Appendix: Backup and recovery</h2>
+
+<table>
+<caption>Backup and recovery: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Every in-scope business system has a recent successful backup.<p class="note">PC-BCK-01 &middot; gate control</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Microsoft 365 mail and files are covered by an independent backup.<p class="note">PC-BCK-02</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>A restore has actually been tested.<p class="note">PC-BCK-03</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-01-25</td><td>Automatic export</td></tr>
+
+<tr><td>At least one backup copy is out of reach of a compromised admin account.<p class="note">PC-BCK-04</p></td><td class="num">2</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2026-10-24</td><td>Automatic export</td></tr>
+
+<tr><td>Backups are encrypted and kept long enough.<p class="note">PC-BCK-05</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Recovery targets and a recovery plan are written down.<p class="note">PC-BCK-06</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Manual artefact</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-net" aria-labelledby="appendix-net-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-net-title">Appendix: Network</h2>
+
+<table>
+<caption>Network: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Perimeter firewall firmware is supported and reasonably recent.<p class="note">PC-NET-01</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Risky services are not open to the whole internet.<p class="note">PC-NET-02</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Firewall management is not exposed to the internet and has no default login.<p class="note">PC-NET-03</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Wi-Fi is encrypted and guests are separated.<p class="note">PC-NET-04</p><p class="note">Not applicable: The office has no wireless network. (Sam Technician)</p></td><td class="num">1</td><td><span class="status status-not-applicable"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dash"/></svg>Not applicable</span></td><td>No date</td><td>No date</td><td>No evidence</td></tr>
+
+<tr><td>Web or DNS filtering is active on devices.<p class="note">PC-NET-05</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-log" aria-labelledby="appendix-log-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-log-title">Appendix: Logging and monitoring</h2>
+
+<table>
+<caption>Logging and monitoring: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>Audit logging is on for the tenant and mailboxes.<p class="note">PC-LOG-01</p></td><td class="num">3</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Logs are kept long enough to investigate.<p class="note">PC-LOG-02</p></td><td class="num">2</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Security alerts reach a named person.<p class="note">PC-LOG-03</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Alerts exist for the riskiest changes.<p class="note">PC-LOG-04</p></td><td class="num">2</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>Someone reviews security logs or reports monthly.<p class="note">PC-LOG-05</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Attestation</td></tr>
+
+<tr><td>Firewall and server logs go to a central place.<p class="note">PC-LOG-06</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+<section class="page" id="appendix-gov" aria-labelledby="appendix-gov-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="appendix-gov-title">Appendix: Governance and people</h2>
+
+<table>
+<caption>Governance and people: every control, its status and its evidence</caption>
+<thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
+<tbody>
+
+<tr><td>A named person owns security and a short written policy exists.<p class="note">PC-GOV-01</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>Risks are assessed and written down.<p class="note">PC-GOV-02</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>Staff complete security awareness training yearly.<p class="note">PC-GOV-03</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Automatic export</td></tr>
+
+<tr><td>Leavers lose access promptly.<p class="note">PC-GOV-04</p></td><td class="num">2</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>An incident response plan with contacts exists and was exercised.<p class="note">PC-GOV-05</p></td><td class="num">2</td><td><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Manual artefact</td></tr>
+
+<tr><td>Third-party app access and suppliers are reviewed.<p class="note">PC-GOV-06</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2026-11-21</td><td>Automatic export</td></tr>
+
+<tr><td>The business knows where important and personal data lives.<p class="note">PC-GOV-07</p></td><td class="num">1</td><td><span class="status status-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-check"/></svg>Protected</span></td><td>2026-10-17</td><td>2027-10-17</td><td>Attestation</td></tr>
+
+</tbody>
+</table>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+
+<section class="page" id="notice" aria-labelledby="notice-title">
+<p class="page-head">Harbour IT Services &middot; Alder and Finch Ltd &middot; Quarterly security review</p>
+<h2 id="notice-title">Important notice</h2>
+<p class="disclaimer-full">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="note">Prepared by Sam Technician for Alder and Finch Ltd. Pack date 2026-10-17.</p>
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+</body>
+</html>

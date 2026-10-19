@@ -64,6 +64,7 @@ choose another resolution.
 | openpyxl | phase 3 or 4 (XLSX import) | LICENSE file NOT read. Its source lives on foss.heptapod.net, which the phase 0 run could not read. Read it before adding the dependency. |
 | httpx | development tests now; possibly runtime later | Direct dependency of the development group only, see the decision below. LICENSE (BSD-3-Clause) read in encode/httpx `LICENSE.md` on 2026-10-17. |
 | hypothesis | phase 2 (development only) | Not added yet. LICENSE file not read. |
+| WeasyPrint, Pango, Pyphen and the other libraries a PDF needs, Noto Sans | phase 8 spike | **Not added, and not read.** The PDF gates failed (see `docs/pdf-spike.md`): their licence files were not opened and the font cannot be committed by the crew, so CE ships HTML with a print stylesheet and none of them is a dependency. A throwaway image in check 9 installs some of them only to measure size, memory and time; it is never shipped. |
 
 ## Open licence decision for R&D: httpx pulls in certifi (MPL-2.0)
 

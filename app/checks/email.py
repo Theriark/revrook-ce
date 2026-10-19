@@ -80,6 +80,17 @@ def _dmarc_state(row: Row) -> Status | None:
     return "partial" if reporting else "fail"
 
 
+def _dmarc_reason(rows: Sequence[Row]) -> str:
+    """Why a DMARC state is unknown: a failed lookup, or a record it cannot read.
+
+    A malformed record (no valid `p=`, a `pct` that is not 0 to 100) is not a failed
+    lookup: the DNS answered, with a value the check does not understand, so the
+    reason says the values are unresolved.
+    """
+    failed = any(row.get("lookup_failed") is True for row in rows)
+    return LOOKUP_FAILED if failed else UNRESOLVED
+
+
 def _half_rule(
     control: Control,
     states: Sequence[Status | None],
@@ -159,7 +170,7 @@ def eml_03(ctx: Context) -> Outcome:
         return absent("The DNS check has no mail domain for this client.")
     states = [_dmarc_state(row) for row in rows]
     what = "mail domains enforce DMARC"
-    return worst_of(states, dns.captured_at, what, LOOKUP_FAILED)
+    return worst_of(states, dns.captured_at, what, _dmarc_reason(rows))
 
 
 def eml_04(ctx: Context) -> Outcome:

@@ -22,7 +22,13 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.checks.dnscheck import Resolver, render_document, require_aware, run_checks
+from app.checks.dnscheck import (
+    DnsCheck,
+    Resolver,
+    render_document,
+    require_aware,
+    run_checks,
+)
 from app.checks.engine import evaluate_control
 from app.checks.library import Library
 from app.checks.model import ControlResult, Evidence, SourceFacts
@@ -43,6 +49,58 @@ EXCHANGE_SOURCE = "exchange-export"
 DNS_CONTROLS = ("PC-EML-01", "PC-EML-02", "PC-EML-03")
 
 
+async def require_client(session: AsyncSession, client_id: int) -> None:
+    """Raises ClientNotFoundError unless the client exists."""
+    if await session.get(Client, client_id) is None:
+        raise ClientNotFoundError("There is no client with this id.")
+
+
+async def look_up_dns(
+    resolver: Resolver,
+    domains: Sequence[str],
+    selectors: Sequence[str] = (),
+    providers: Sequence[str] = (),
+    *,
+    now: datetime,
+) -> DnsCheck:
+    """Ask the DNS for the mail domains of one client. No database is used.
+
+    Raises ValueError for a naive `now` or an invalid domain, selector or provider;
+    nothing is looked up then. The lookups run in a thread, so the event loop is not
+    blocked while the DNS answers, and the run has a deadline (see `run_checks`).
+    """
+    require_aware(now, "now")
+    run = functools.partial(
+        run_checks, resolver, domains, selectors, providers, captured_at=now
+    )
+    return await asyncio.to_thread(run)
+
+
+async def store_dns_check(
+    session: AsyncSession,
+    ctx: EvidenceContext,
+    client_id: int,
+    check: DnsCheck,
+    *,
+    now: datetime,
+    actor_user_id: int | None = None,
+) -> StoredEvidence:
+    """Store a run as evidence of the client (ClientNotFoundError if it is gone)."""
+    await require_client(session, client_id)
+    registry = ImporterRegistry()
+    registry.register(DnsCheckImporter())
+    evidence = NewEvidence(
+        source_code=DNS_SOURCE,
+        assurance=Assurance.AUTOMATIC_EXPORT,
+        captured_at=check.captured_at,
+        data=render_document(check),
+        uploader_id=actor_user_id,
+    )
+    return await add_evidence(
+        session, replace(ctx, importers=registry), client_id, evidence, now
+    )
+
+
 async def run_dns_check(
     session: AsyncSession,
     ctx: EvidenceContext,
@@ -58,27 +116,18 @@ async def run_dns_check(
     """Check the mail domains of one client and store the result as evidence.
 
     Raises ValueError for a naive `now` or an invalid domain, selector or provider,
-    and ClientNotFoundError for an unknown client; nothing is looked up then. The
-    lookups run in a thread, so the event loop is not blocked while the DNS answers.
+    and ClientNotFoundError for an unknown client; nothing is looked up then.
+
+    The caller's session stays open while the DNS answers, so a caller that must not
+    hold a database connection that long (the API, the scheduler of phase 10) calls
+    `require_client`, `look_up_dns` and `store_dns_check` itself, opening its
+    transaction only for the last.
     """
     require_aware(now, "now")
-    if await session.get(Client, client_id) is None:
-        raise ClientNotFoundError("There is no client with this id.")
-    run = functools.partial(
-        run_checks, resolver, domains, selectors, providers, captured_at=now
-    )
-    check = await asyncio.to_thread(run)
-    registry = ImporterRegistry()
-    registry.register(DnsCheckImporter())
-    evidence = NewEvidence(
-        source_code=DNS_SOURCE,
-        assurance=Assurance.AUTOMATIC_EXPORT,
-        captured_at=check.captured_at,
-        data=render_document(check),
-        uploader_id=actor_user_id,
-    )
-    return await add_evidence(
-        session, replace(ctx, importers=registry), client_id, evidence, now
+    await require_client(session, client_id)
+    check = await look_up_dns(resolver, domains, selectors, providers, now=now)
+    return await store_dns_check(
+        session, ctx, client_id, check, now=now, actor_user_id=actor_user_id
     )
 
 

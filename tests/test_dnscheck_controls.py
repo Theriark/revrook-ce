@@ -157,7 +157,8 @@ def test_pc_eml_03_fails_for_a_missing_or_a_doubled_record() -> None:
 def test_pc_eml_03_is_unknown_for_a_policy_or_percentage_it_cannot_read() -> None:
     for record in ("v=DMARC1; p=bogus; " + RUA, "v=DMARC1; p=reject; pct=abc; " + RUA):
         result = results(evidence_of(check_of(with_dmarc([record]))))["PC-EML-03"]
-        assert (result.status, result.reason) == ("unknown", "lookup_failed"), record
+        reading = (result.status, result.reason)
+        assert reading == ("unknown", "unresolved_values"), record
 
 
 # --- PC-EML-02: DKIM ------------------------------------------------------------------

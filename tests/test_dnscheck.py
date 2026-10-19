@@ -434,13 +434,22 @@ def test_the_query_budget_is_shared_and_a_spent_budget_is_a_failed_lookup() -> N
     assert len(resolver.queries) == 1, "a spent budget asks nothing more"
 
 
-def test_answers_are_bounded_in_number_and_length() -> None:
+def test_a_text_nothing_reads_is_cut_to_the_maximum_length() -> None:
     long_text = "x" * (MAX_TEXT_LENGTH + 100)
-    many = [f"record {n}" for n in range(MAX_ANSWERS + 20)]
-    resolver = StaticResolver({("a.example", "TXT"): [long_text, *many]})
+    resolver = StaticResolver({("a.example", "TXT"): [long_text, "record"]})
     answers = Queries(resolver).ask("a.example", "TXT")
-    assert len(answers) == MAX_ANSWERS
+    assert len(answers) == 2
     assert len(answers[0]) == MAX_TEXT_LENGTH
+
+
+def test_more_answers_than_the_maximum_are_a_failed_lookup_not_a_cut_answer() -> None:
+    many = [f"record {n}" for n in range(MAX_ANSWERS + 20)]
+    resolver = StaticResolver({("a.example", "TXT"): many})
+    with pytest.raises(LookupFailure) as caught:
+        Queries(resolver).ask("a.example", "TXT")
+    assert caught.value.reason == "too_many_answers"
+    exactly = StaticResolver({("a.example", "TXT"): many[:MAX_ANSWERS]})
+    assert len(Queries(exactly).ask("a.example", "TXT")) == MAX_ANSWERS
 
 
 # --- only the entered domain is asked about ---------------------------------------

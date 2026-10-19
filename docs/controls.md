@@ -213,8 +213,10 @@ to are included. A NIST name is shown only for a verified row, with the credit
   must pass an aware `as_of`; the phase 6 scoring step builds it and is the place
   to reject a naive one with a clear error.
 - The reason and the reviewer of a not-applicable decision (`NaReview`) have no
-  length limit and the reason is copied into `result.detail`. Phase 8 must escape it
-  when it renders HTML or a PDF, and should cap it where it is saved.
+  length limit and the reason is copied into `result.detail`. Phase 8 escapes it when
+  it renders HTML (Jinja2 autoescape; `tests/test_reports.py` prints a hostile reason
+  and finds it as text) and its completeness check refuses a reason, a reviewer or a
+  second reviewer longer than 2000 characters before a report is exported.
 - A firewall rule source such as `0.0.0.0/0 - LAN` (an address and a name around a
   spaced dash) is read as one word and is unknown. This is not fail-open (an unknown
   source never counts as restricted), but it is less exact than before the spaces

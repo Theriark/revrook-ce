@@ -158,11 +158,16 @@ def engine_problems(library: Library) -> list[str]:
 
 def na_problem(control: Control, review: NaReview) -> str | None:
     """Why a not-applicable decision is refused; None when it stands."""
+    return na_review_problem(control.gate, review)
+
+
+def na_review_problem(gate: bool, review: NaReview) -> str | None:
+    """`na_problem` for a control known only by whether it is a gate (a report)."""
     if not review.reason.strip():
         return "the reason is empty"
     if not review.reviewer.strip():
         return "no reviewer is named"
-    if control.gate:
+    if gate:
         second = (review.second_reviewer or "").strip()
         if not second:
             return "a gate control needs a second reviewer"
