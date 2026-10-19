@@ -145,6 +145,11 @@ def _plugin_of(loaded: object, label: str) -> Plugin:
             f"{label} was written for extension API {plugin.api_version}; "
             f"this revrook speaks version {EXTENSION_API_VERSION}."
         )
+    name: object = plugin.name
+    if not isinstance(name, str) or NAME_PATTERN.match(name) is None:
+        raise ExtensionError(
+            f"{label} needs a name of lower-case letters, digits and dashes."
+        )
     return plugin
 
 
@@ -156,16 +161,21 @@ def load_plugins(points: Iterable[EntryPointLike] | None = None) -> ExtensionReg
     """
     registry = ExtensionRegistry()
     for point in discover_entry_points() if points is None else points:
-        refused = f"The plugin {point.name} was refused"
+        # The failure is raised after the try block, not inside its handlers: the
+        # plugin's own error, whose text could hold a secret, is then neither the
+        # cause nor the context of the error that reaches the start-up log.
+        failure: str | None = None
         try:
             plugin = _plugin_of(point.load(), point.name)
             if plugin.name in registry.plugins:
                 raise ExtensionError(f"There is already a plugin named {plugin.name}.")
             plugin.register(registry)
         except ExtensionError as error:
-            raise ExtensionError(f"{refused}: {error}") from error
+            failure = str(error)
         except Exception as error:
-            reason = type(error).__name__
-            raise ExtensionError(f"{refused}: it raised {reason}.") from error
+            failure = f"it raised {type(error).__name__}."
+        if failure is not None:
+            refused = f"The plugin {point.name} was refused: {failure}"
+            raise ExtensionError(refused) from None
         registry.plugins.append(plugin.name)
     return registry

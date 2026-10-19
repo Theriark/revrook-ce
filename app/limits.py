@@ -7,7 +7,8 @@ look at it, so a body is refused by its declared size first.
   IMPORT_MAX_BYTES plus FORM_OVERHEAD_BYTES. It must declare its size (411).
 * Every other POST, PUT, PATCH and DELETE takes at most MAX_BODY_BYTES (1 MiB), which
   is far more than a JSON body or a form of this application needs. Over it is 413.
-  A body sent in chunks without a size is 411; a request that sends no body passes.
+  A body sent in chunks (any Transfer-Encoding, whatever Content-Length says) is 411;
+  a request that sends no body passes.
 """
 
 import re
@@ -39,8 +40,9 @@ class UploadSizeLimitMiddleware:
 
     An upload may be as large as the import limit; any other body is capped at
     `max_body_bytes`. A client that sends an upload without Content-Length, or any
-    body in chunks (Transfer-Encoding without Content-Length), is refused with 411
-    for the same reason. A request that carries neither header has no body.
+    request with a Transfer-Encoding header (a chunked body, with or without a
+    Content-Length next to it), is refused with 411 for the same reason. A request
+    that carries neither header has no body.
     """
 
     def __init__(
@@ -64,14 +66,17 @@ class UploadSizeLimitMiddleware:
         )
         declared = headers.get(b"content-length")
         limit = self.upload_limit if upload else self.body_limit
-        if declared is None:
-            if not upload and b"transfer-encoding" not in headers:
-                await self.app(scope, receive, send)
-                return
+        # A server frames a body by Transfer-Encoding before Content-Length (h11 does),
+        # so a request that carries both can send any number of bytes whatever the
+        # declared size says. Any Transfer-Encoding is refused for that reason.
+        if b"transfer-encoding" in headers or (declared is None and upload):
             refusal = JSONResponse(
                 {"detail": "The request must declare its size (Content-Length)."},
                 status_code=411,
             )
+        elif declared is None:
+            await self.app(scope, receive, send)
+            return
         elif not declared.isdigit():
             refusal = JSONResponse(
                 {"detail": "The Content-Length header is not valid."}, status_code=400

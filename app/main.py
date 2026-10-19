@@ -1,6 +1,7 @@
 """FastAPI application: health endpoints, sign-in pages and the token API."""
 
 import html
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -52,6 +53,7 @@ REFUSED_HTML = (
     "</span> The request was refused</p><p>{message}</p></div>"
 )
 OUT_OF_RANGE = "A value in the request is outside what revrook can store."
+logger = logging.getLogger("revrook.web")
 # At most this many sign-ins are checked at once (each holds a database connection
 # while Argon2 runs); the others are told to retry.
 MAX_PARALLEL_LOGINS = 4
@@ -134,8 +136,14 @@ def create_app(
         """A value the database cannot hold is a 422, never a 500.
 
         The routes bound their ids, so this is the net under them: an id or a number
-        past what a column stores reaches the database as a data error.
+        past what a column stores reaches the database as a data error. A real schema
+        bug would also show here as a 422, so the class of the error is logged; its
+        text and statement are not, because they can hold the value that was sent.
         """
+        logger.warning(
+            "A database data error was refused with 422: %s",
+            type(error.orig or error).__name__,
+        )
         if request.headers.get("hx-request") == "true":
             return HTMLResponse(
                 REFUSED_HTML.format(message=html.escape(OUT_OF_RANGE)),
