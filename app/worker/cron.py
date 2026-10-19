@@ -138,10 +138,14 @@ def is_once(text: str) -> bool:
 
 
 def validate_cron(text: str) -> str:
-    """The expression as it is stored (trimmed), or CronError. `@once` is valid."""
+    """The expression as it is stored (trimmed), or CronError. `@once` is valid.
+
+    An expression that reads well but never meets a real date (`0 0 31 2 *`) is
+    refused too: it has no next run, so a schedule on it could never be started.
+    """
     cleaned = text.strip()
     if cleaned != ONCE:
-        parse_cron(cleaned)
+        next_run(parse_cron(cleaned), datetime.now(UTC))
     return cleaned
 
 

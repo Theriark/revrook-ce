@@ -10,9 +10,10 @@ LINE_BREAKS = "\n\r\t"
 #
 # Three format characters are real parts of writing and stay allowed: the
 # zero-width non-joiner U+200C and the zero-width joiner U+200D (Persian, Indic
-# scripts and emoji sequences) and the soft hyphen U+00AD. They are written as
-# escapes so that no editor or transport can drop them.
-ALLOWED_FORMAT = frozenset({"‌", "‍", "­"})
+# scripts and emoji sequences) and the soft hyphen U+00AD. They are written from
+# their code points, never as the invisible character itself, so that no editor
+# or transport can drop them.
+ALLOWED_FORMAT = frozenset({chr(0x200C), chr(0x200D), chr(0x00AD)})
 # The line and paragraph separators U+2028 and U+2029 are not a normal line break;
 # a name may not hold them (a note keeps the behaviour it had).
 NAME_ONLY_REFUSED = frozenset({"Zl", "Zp"})
