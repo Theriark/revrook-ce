@@ -30,7 +30,7 @@ from app.reports.completeness import MAX_SHORT, MAX_TEXT
 from app.reports.view import ControlRow, Finding, ReportContext, ReportView, iso_date
 from app.snapshots import earlier_bytes
 from app.sources import source_name
-from app.textcheck import control_character
+from app.textcheck import control_character, normalise_breaks
 from app.ui.auth import redirect
 from app.ui.common import (
     ControlIdPath,
@@ -438,8 +438,8 @@ async def exceptions_add(
         form = {
             "control_id": control_id.strip(),
             "owner": owner.strip(),
-            "reason": reason.strip(),
-            "compensating_control": compensating_control.strip(),
+            "reason": normalise_breaks(reason).strip(),
+            "compensating_control": normalise_breaks(compensating_control).strip(),
             "review_date": review_date.strip(),
         }
         problems: list[str] = []

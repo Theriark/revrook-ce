@@ -35,7 +35,7 @@
 {% endfor %}
 </fieldset>
 <button type="submit">Save the details</button>
-<p id="details-status" class="rv-text-secondary" aria-live="polite">{% if saved_at %}Last saved {{ saved_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% else %}Nothing saved yet.{% endif %}</p>
+<div id="details-status" class="rv-text-secondary" aria-live="polite">{% if saved_at %}Last saved {{ saved_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% else %}Nothing saved yet.{% endif %}</div>
 </form>
 
 <h3>3. Make the report</h3>

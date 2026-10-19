@@ -5,6 +5,7 @@ synthetic data only and no network.
 """
 
 import hashlib
+import os
 import re
 import time
 from datetime import date, timedelta
@@ -16,7 +17,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app.checks.library import load_library
 from app.evidence.service import EvidenceContext
-from app.models import Client, ExceptionRecord, ReportExport, Setting, Snapshot
+from app.models import (
+    Client,
+    EvidenceItem,
+    ExceptionRecord,
+    ReportExport,
+    Setting,
+    Snapshot,
+)
 from helpers import NOW, create_admin, get_csrf
 from ui_helpers import (
     NAME,
@@ -26,8 +34,10 @@ from ui_helpers import (
     exported_id,
     make_report,
     many_clients,
+    page_routes,
     post_export,
     rows_of,
+    sample_path,
     seed_client,
     sign_in,
     title_of,
@@ -37,31 +47,29 @@ CONTROLS = len(load_library().controls)
 CONTROL = "PC-ACC-01"
 REFRESH_FIRST = re.compile(r'<ol id="refresh-list">\s*<li><strong>(.*?)</strong>')
 MAX_SECONDS = 0.5
-GET_PAGES = (
-    "/clients",
-    "/clients/1",
-    "/clients/1/checklist",
-    f"/clients/1/controls/{CONTROL}",
-    "/clients/1/evidence",
-    "/clients/1/exceptions",
-    "/clients/1/reports",
-    "/clients/1/reports/1",
-    "/clients/1/reports/1/preview/qbr",
-    "/clients/1/exports",
-    "/clients/1/exports/1/download",
-    "/settings",
-    "/glossary",
-)
-POSTS = (
-    ("/clients", {"name": "Posted Client"}),
-    ("/clients/1/controls/PC-ACC-01/note", {"did": "A note"}),
-    ("/clients/1/exceptions", {"control_id": "PC-ACC-01"}),
-    ("/clients/1/exceptions/1/close", {}),
-    ("/clients/1/reports/details", {"plan": "A line"}),
-    ("/clients/1/reports/snapshot", {}),
-    ("/clients/1/reports/1/export", {"kind": "qbr"}),
-    ("/settings", {"msp_name": "Posted MSP"}),
-)
+# The routes are read from the application, so a new page or form of these modules
+# is tested here without being added by hand. A form may be given fields below.
+GET_ROUTES = page_routes("GET")
+POST_ROUTES = page_routes("POST")
+POST_FIELDS: dict[str, dict[str, str]] = {
+    "/clients": {"name": "Posted Client"},
+    "/clients/{client_id}/controls/{control_id}/note": {"did": "A note"},
+    "/clients/{client_id}/exceptions": {"control_id": CONTROL},
+    "/clients/{client_id}/reports/details": {"plan": "A line"},
+    "/clients/{client_id}/reports/{snapshot_id}/export": {"kind": "qbr"},
+    "/settings": {"msp_name": "Posted MSP"},
+}
+GET_PAGES = tuple(sample_path(path) for path in GET_ROUTES)
+POSTS = tuple((sample_path(path), POST_FIELDS.get(path, {})) for path in POST_ROUTES)
+
+
+def test_the_route_lists_are_read_from_the_application() -> None:
+    assert len(GET_ROUTES) >= 13 and len(POST_ROUTES) >= 8
+    assert "/clients/{client_id}/reports/{snapshot_id}/preview/{kind}" in GET_ROUTES
+    assert "/clients/{client_id}/exports/{export_id}/download" in GET_ROUTES
+    assert "/clients/{client_id}/reports/snapshot" in POST_ROUTES
+    assert set(POST_FIELDS) <= set(POST_ROUTES)
+    assert all("{" not in path for path in GET_PAGES)
 
 
 async def count(engine: AsyncEngine, model: type) -> int:
@@ -319,8 +327,9 @@ async def test_page_render_stays_under_half_a_second_with_100_clients(
 ) -> None:
     csrf = await sign_in(ui_browser, db_engine)
     client_id = await seed_client(db_engine, ui_ctx)
-    await many_clients(db_engine, ui_ctx, 99)
+    await many_clients(db_engine, ui_ctx, 99, evidence=True)
     assert await count(db_engine, Client) == 100
+    assert await count(db_engine, EvidenceItem) == 99 + 6
     report = await make_report(ui_browser, csrf, client_id)
     paths = (
         "/clients",
@@ -338,9 +347,18 @@ async def test_page_render_stays_under_half_a_second_with_100_clients(
         answer = await ui_browser.get(path)
         timings[path] = time.perf_counter() - started
         assert answer.status_code == 200
+    runner = os.environ.get("RUNNER_NAME", "local")
+    slowest = max(timings.items(), key=lambda item: item[1])
+    line = (
+        f"phase 9, 100 clients, 105 evidence items: slowest page {slowest[0]} "
+        f"{slowest[1]:.3f} s on {runner}"
+    )
     with capsys.disabled():
-        slowest = max(timings.items(), key=lambda item: item[1])
-        print(f"\nphase 9, 100 clients: slowest page {slowest[0]} {slowest[1]:.3f} s")
+        print(f"\n{line}")
+        for path, seconds in timings.items():
+            print(f"phase 9 page time {path} {seconds:.3f} s")
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            print(f"::notice title=Page render time::{line}")
     for path, seconds in timings.items():
         assert seconds < MAX_SECONDS, f"{path} took {seconds:.3f} s"
 

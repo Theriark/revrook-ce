@@ -246,4 +246,4 @@ async def test_an_htmx_request_that_is_refused_gets_a_message_not_json(
     assert plain.status_code == 403
     assert plain.headers["content-type"].startswith("application/json")
     page = await browser.get(EDITOR)
-    assert "(403|409|413|422|500)" in page.text
+    assert "(403|404|409|413|422|500)" in page.text
