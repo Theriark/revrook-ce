@@ -7,13 +7,12 @@ upgrade test without a test failing. Files only: no database.
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-
 from test_upgrade import ROOT, SEEDED_REVISIONS, newest_revision
 
 BASELINE = "0001"
 
 
-def test_the_seeded_revisions_are_every_revision_but_the_baseline_and_the_head() -> None:
+def test_seeded_revisions_are_all_but_the_baseline_and_the_head() -> None:
     config = Config(str(ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(ROOT / "alembic"))
     script = ScriptDirectory.from_config(config)
