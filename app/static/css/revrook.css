@@ -241,7 +241,8 @@ main a:not([role="button"]) {
   background-color: var(--rv-white);
 }
 
-.rv-status-not-checked {
+.rv-status-not-checked,
+.rv-status-not-applicable {
   color: var(--rv-status-not-checked);
   background-color: var(--rv-white);
 }
