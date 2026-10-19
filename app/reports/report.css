@@ -1,0 +1,275 @@
+/*
+ * Report stylesheet (phase 8). It is inlined into every report, so a report is one
+ * file that loads nothing from outside. System fonts only; the brand tokens of
+ * app/static/css/revrook.css and its contrast rules:
+ *   - every rule that sets a text colour also sets its background-color, so
+ *     tests/test_report_contrast.py reads each foreground and background pair here;
+ *   - status colours and secondary text appear on white only, always with an icon
+ *     and the words of the status;
+ *   - gray is never text; violet-blue is never text on charcoal.
+ * No revrook logo appears on a report page (client-facing pages carry the MSP name).
+ */
+
+:root {
+  --rv-charcoal: #2d2f3a;
+  --rv-accent: #4c5bd4;
+  --rv-stone: #d9d6cf;
+  --rv-gray: #8a8f98;
+  --rv-white: #ffffff;
+  --rv-text-secondary: #5a5e6b;
+  --rv-status-protected: #1b6e3c;
+  --rv-status-needs-attention: #8a5a00;
+  --rv-status-not-protected: #b3261e;
+  --rv-status-not-checked: #5a5e6b;
+}
+
+html {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 1rem;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page {
+  box-sizing: border-box;
+  max-width: 210mm;
+  min-height: 250mm;
+  margin: 0 auto 1.5rem;
+  padding: 14mm 14mm 10mm;
+  border: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page-head {
+  margin: 0 0 1rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rv-gray);
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+p {
+  margin: 0 0 0.5rem;
+}
+
+.lead {
+  font-size: 1.125rem;
+}
+
+.secondary {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.cover-title {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dl.facts {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+}
+
+dl.facts dt {
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dl.facts dd {
+  margin: 0;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+table {
+  width: 100%;
+  margin: 0 0 1rem;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+caption {
+  padding: 0 0 0.35rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: bottom;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-stone);
+}
+
+td {
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+.status {
+  display: inline-block;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-protected {
+  color: var(--rv-status-protected);
+  background-color: var(--rv-white);
+}
+
+.status-needs-attention {
+  color: var(--rv-status-needs-attention);
+  background-color: var(--rv-white);
+}
+
+.status-not-protected {
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-white);
+}
+
+.status-not-checked {
+  color: var(--rv-status-not-checked);
+  background-color: var(--rv-white);
+}
+
+.status-not-applicable {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-icon {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.3em;
+  vertical-align: -0.2em;
+}
+
+.note {
+  margin: 0.25rem 0 0;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.finding {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rv-gray);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.finding h3 {
+  margin-top: 0;
+}
+
+.summary-lines p {
+  font-size: 1.125rem;
+}
+
+.chart {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 0.5rem;
+}
+
+.chart-track {
+  fill: var(--rv-stone);
+}
+
+.chart-bar {
+  fill: var(--rv-accent);
+}
+
+.chart-label,
+.chart-value {
+  font-size: 13px;
+  fill: var(--rv-charcoal);
+}
+
+.signoff {
+  margin-top: 2rem;
+}
+
+.signoff .line {
+  height: 2rem;
+  border-bottom: 1px solid var(--rv-charcoal);
+}
+
+.disclaimer-full {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--rv-charcoal);
+  font-size: 1.125rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.page-footer {
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rv-gray);
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.page-footer p {
+  margin: 0 0 0.25rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  left: -10000px;
+}

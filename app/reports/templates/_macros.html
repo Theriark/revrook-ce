@@ -1,0 +1,70 @@
+{#- Shared pieces of the reports. Imported with context: `ctx`, `report_name`, `disclaimer` and `generated_with` are set by app/reports/render.py. -#}
+
+{#- Each icon is drawn once, in the symbols of base.html, and used by id. -#}
+{% macro icon(name) -%}
+<svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-{{ name if name in ('check', 'alert', 'cross', 'question') else 'dash' }}"/></svg>
+{%- endmacro %}
+
+{#- A status is always an icon and its words, never a colour alone. -#}
+{% macro status(label) -%}
+<span class="status status-{{ label.key }}">{{ icon(label.icon) }}{{ label.text }}</span>
+{%- endmacro %}
+
+{% macro footer() -%}
+<footer class="page-footer">
+<p class="disclaimer">{{ disclaimer }}</p>
+<p class="generated">{{ generated_with }}</p>
+</footer>
+{%- endmacro %}
+
+{% macro page(page_id, title) -%}
+<section class="page" id="{{ page_id }}" aria-labelledby="{{ page_id }}-title">
+<p class="page-head">{{ ctx.msp_name }} &middot; {{ ctx.client_name }} &middot; {{ report_name }}</p>
+<h2 id="{{ page_id }}-title">{{ title }}</h2>
+{{ caller() }}
+{{ footer() }}
+</section>
+{%- endmacro %}
+
+{% macro cover(subtitle) -%}
+<section class="page cover" id="cover" aria-labelledby="cover-title">
+<h1 id="cover-title">{{ ctx.msp_name }}</h1>
+<p class="cover-title">{{ subtitle }}</p>
+<dl class="facts">
+<dt>Client</dt><dd>{{ ctx.client_name }}</dd>
+<dt>Period</dt><dd>{{ ctx.period_start.isoformat() }} to {{ ctx.period_end.isoformat() }}</dd>
+<dt>Prepared by</dt><dd>{{ ctx.prepared_by }}</dd>
+<dt>Generated</dt><dd>{{ ctx.generated_on.isoformat() }}</dd>
+<dt>Pack date</dt><dd>{{ view.snapshot.as_of|day }}</dd>
+<dt>Data sources</dt>
+<dd>{% if ctx.data_sources %}<ul>{% for source in ctx.data_sources %}<li>{{ source }}</li>{% endfor %}</ul>{% else %}None entered{% endif %}</dd>
+<dt>Snapshot</dt><dd>{{ view.snapshot_sha256[:16] }} (rules {{ view.snapshot.ruleset_id }} {{ view.snapshot.ruleset_version }})</dd>
+</dl>
+{{ footer() }}
+</section>
+{%- endmacro %}
+
+{% macro notice(title, signoff=False) -%}
+<section class="page" id="notice" aria-labelledby="notice-title">
+<p class="page-head">{{ ctx.msp_name }} &middot; {{ ctx.client_name }} &middot; {{ report_name }}</p>
+<h2 id="notice-title">{{ title }}</h2>
+<p class="disclaimer-full">{{ disclaimer }}</p>
+<p class="note">Prepared by {{ ctx.prepared_by }} for {{ ctx.client_name }}. Pack date {{ view.snapshot.as_of|day }}.</p>
+{% if signoff -%}
+<div class="signoff">
+<h3>Client sign-off</h3>
+<p>I have read this report and the notice above.</p>
+<table>
+<caption>Sign-off</caption>
+<tbody>
+<tr><th scope="row">Name</th><td><div class="line"></div></td></tr>
+<tr><th scope="row">Role</th><td><div class="line"></div></td></tr>
+<tr><th scope="row">Signature</th><td><div class="line"></div></td></tr>
+<tr><th scope="row">Date</th><td><div class="line"></div></td></tr>
+</tbody>
+</table>
+</div>
+{%- endif %}
+{{ footer() }}
+</section>
+{%- endmacro %}
