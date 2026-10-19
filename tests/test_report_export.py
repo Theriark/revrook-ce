@@ -85,11 +85,13 @@ async def test_an_export_keeps_an_immutable_copy_and_its_hash(
         assert stored.storage_key == record.storage_key
         audited = (
             await session.execute(
-                select(AuditEvent).where(AuditEvent.action == "report.export")
+                select(AuditEvent).where(
+                    AuditEvent.action == "report.export",
+                    AuditEvent.target_id == str(record.id),
+                )
             )
         ).scalar_one()
         assert audited.detail["sha256"] == record.sha256
-        assert audited.target_id == str(record.id)
 
 
 async def test_the_same_report_exported_twice_is_two_lines_and_one_file(

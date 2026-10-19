@@ -173,6 +173,15 @@ async def test_a_client_goes_from_a_period_to_an_exported_review(
     assert preview.status_code == 200
     assert preview.headers["content-security-policy"].startswith("default-src 'none'")
     assert "<script" not in preview.text.lower()
+    # Only the top findings carry notes; write one on the first of them.
+    top = re.search(r'<span class="secondary">(PC-[A-Z]+-\d+)', preview.text)
+    assert top is not None
+    await ui_browser.post(
+        f"/clients/{client_id}/controls/{top.group(1)}/note",
+        data={"did": "Enforced it", "recommend": "Keep it on"},
+        headers={"HX-Request": "true", "X-CSRF-Token": csrf},
+    )
+    preview = await ui_browser.get(f"{report}/preview/qbr")
     assert "Enforced it" in preview.text
 
     exported = await post_export(ui_browser, csrf, report, "qbr")
