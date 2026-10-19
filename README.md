@@ -47,6 +47,7 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 | [docs/extension-api.md](docs/extension-api.md) | Extension API version 1 |
 | [docs/licences.md](docs/licences.md) | Licences of the dependencies |
 | [docs/development.md](docs/development.md) | Development guide |
+| [docs/design-system.md](docs/design-system.md) | Tokens, shell and components of the web interface |
 | [docs/testing.md](docs/testing.md) | Testing notes |
 | [docs/ci-cd.md](docs/ci-cd.md) | CI/CD flow and known gaps |
 | [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |

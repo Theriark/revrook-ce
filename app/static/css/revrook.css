@@ -1,17 +1,22 @@
 /*
- * revrook brand layer on top of the vendored Pico CSS (dev-work-plan section 4).
- * One file, no build chain, system fonts only, light theme only (no dark mode).
+ * revrook design system (docs/design-system.md), one file on top of the vendored
+ * Pico CSS, which is kept only as a reset and for element defaults. No build
+ * chain, system fonts only, light theme only, nothing loaded from outside.
  *
  * Contrast convention, enforced by tests/test_brand_contrast.py: every rule that
  * sets a text colour also sets its background-color, so each foreground and
  * background pair is declared here explicitly. Text of 24px (1.5rem) or larger
  * declares that font-size in the same rule. Gray (--rv-gray) is never text on
- * white or stone; violet-blue (--rv-accent) is never text on charcoal.
+ * white or stone; violet-blue (--rv-accent) is never text on charcoal; the status
+ * colours and secondary text are text on white only.
+ *
+ * Scale: type 12, 13, 14, 15, 16, 20, 28; spacing 4, 8, 12, 16, 24, 32, 48;
+ * radius 8 (controls) and 12 (cards); two elevations; motion 150ms ease-out.
  */
 
 :root:not([data-theme="dark"]),
 [data-theme="light"] {
-  /* Brand palette */
+  /* Brand palette (approved brand guide, never changed here) */
   --rv-charcoal: #2d2f3a;
   --rv-accent: #4c5bd4;
   --rv-stone: #d9d6cf;
@@ -19,26 +24,48 @@
   --rv-white: #ffffff;
   --rv-text-secondary: #5a5e6b;
 
+  /* Derived surfaces and lines, all checked against the text they carry */
+  --rv-canvas: #f4f3ef;
+  --rv-line: #e4e2db;
+  --rv-charcoal-deep: #22242d;
+  --rv-charcoal-soft: #3a3d4b;
+  --rv-stone-dim: #a9a69e;
+  --rv-accent-deep: #3a47b5;
+  --rv-accent-tint: #eceefa;
+
   /* Status colours: text on white only, always with an icon and a text label */
   --rv-status-protected: #1b6e3c;
   --rv-status-needs-attention: #8a5a00;
   --rv-status-not-protected: #b3261e;
   --rv-status-not-checked: #5a5e6b;
 
-  /* Pico CSS variables */
+  /* Elevation and motion */
+  --rv-shadow-1: 0 1px 2px rgba(45, 47, 58, 0.06), 0 1px 1px rgba(45, 47, 58, 0.04);
+  --rv-shadow-2: 0 12px 32px rgba(45, 47, 58, 0.18), 0 2px 6px rgba(45, 47, 58, 0.08);
+  --rv-motion: 150ms ease-out;
+
+  /* Pico CSS variables: the reset follows the same tokens */
   color-scheme: light;
   --pico-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
   --pico-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas,
     monospace;
   --pico-font-size: 100%;
+  --pico-line-height: 1.5;
+  --pico-spacing: 1rem;
+  --pico-typography-spacing-vertical: 1rem;
+  --pico-border-radius: 8px;
+  --pico-form-element-spacing-vertical: 0.5rem;
+  --pico-form-element-spacing-horizontal: 0.75rem;
+  --pico-transition: 150ms ease-out;
   --pico-background-color: var(--rv-white);
   --pico-color: var(--rv-charcoal);
   --pico-h1-color: var(--rv-charcoal);
   --pico-h2-color: var(--rv-charcoal);
   --pico-h3-color: var(--rv-charcoal);
   --pico-muted-color: var(--rv-text-secondary);
-  --pico-muted-border-color: var(--rv-gray);
+  --pico-muted-border-color: var(--rv-line);
+  --pico-table-border-color: var(--rv-line);
   --pico-primary: var(--rv-accent);
   --pico-primary-background: var(--rv-accent);
   --pico-primary-border: var(--rv-accent);
@@ -52,24 +79,111 @@
   --pico-form-element-background-color: var(--rv-white);
   --pico-form-element-color: var(--rv-charcoal);
   --pico-form-element-border-color: var(--rv-gray);
-  --pico-form-element-focus-color: var(--rv-accent);
+  --pico-form-element-active-border-color: var(--rv-accent);
+  --pico-form-element-focus-color: transparent;
   --pico-form-element-placeholder-color: var(--rv-text-secondary);
+
+  /* Pico draws its control icons as images encoded in the stylesheet, which the
+     content security policy (img-src falls back to 'self') blocks. Every one is
+     switched off and the native control is shown instead (select, date, checkbox,
+     radio below). */
+  --pico-icon-checkbox: none;
+  --pico-icon-minus: none;
+  --pico-icon-chevron: none;
+  --pico-icon-date: none;
+  --pico-icon-time: none;
+  --pico-icon-search: none;
+  --pico-icon-close: none;
+  --pico-icon-loading: none;
+  --pico-icon-valid: none;
+  --pico-icon-invalid: none;
+}
+
+/* ---------- Base type ---------- */
+
+html {
+  height: 100%;
 }
 
 body {
-  font-size: 16px;
+  margin: 0;
+  min-height: 100%;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  -webkit-font-smoothing: antialiased;
+}
+
+body > header,
+body > main,
+body > footer {
+  padding-block: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.01em;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 h1 {
-  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 28px;
   font-weight: 700;
+  line-height: 1.2;
+}
+
+h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+h4 {
+  margin-bottom: 0.5rem;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+p,
+ul,
+ol,
+dl {
+  margin-bottom: 0.75rem;
 }
 
 small,
 .rv-caption {
   font-size: 13px;
+}
+
+code,
+kbd,
+samp {
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+hr {
+  margin: 1.5rem 0;
+  border-color: var(--rv-line);
 }
 
 /* Visible focus ring: 3px charcoal with a 2px offset on every focusable control */
@@ -78,42 +192,74 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible 
   outline-offset: 2px;
 }
 
+/* The ring turns light on the charcoal surfaces */
+.rv-header :is(a, button, input, select, summary):focus-visible,
+.rv-auth-panel :is(a, button):focus-visible {
+  outline-color: var(--rv-white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+}
+
 /* Skip link, shown when it receives keyboard focus */
 .rv-skip-link {
   position: absolute;
   left: -10000px;
   top: 0.5rem;
+  z-index: 20;
   padding: 0.5rem 1rem;
+  border-radius: 8px;
   color: var(--rv-white);
   background-color: var(--rv-charcoal);
 }
 
 .rv-skip-link:focus {
   left: 0.5rem;
-  z-index: 10;
 }
 
-/* Header: white, gray bottom border, horizontal logo at 36px height */
-.rv-header {
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-  border-bottom: 1px solid var(--rv-gray);
+/* ---------- App shell: charcoal rail on the left, white page ---------- */
+
+body.rv-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
 }
 
-.rv-header nav {
+.rv-app .rv-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "brand user"
+    "nav nav";
   align-items: center;
+  gap: 8px 16px;
+  padding: 10px 16px 8px;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
 }
 
 .rv-brand {
+  grid-area: brand;
   display: inline-flex;
   align-items: center;
+  gap: 12px;
+  min-width: 0;
   text-decoration: none;
 }
 
-.rv-logo {
+.rv-logo,
+.rv-logo-dark {
   display: block;
-  height: 36px;
   width: auto;
+  height: 40px;
 }
 
 /* Text wordmark: rev in charcoal, rook in violet-blue, bold Helvetica or Arial */
@@ -122,6 +268,7 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible 
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 36px;
+  white-space: nowrap;
 }
 
 .rv-wordmark .rv-wordmark-rev {
@@ -134,44 +281,422 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible 
   background-color: var(--rv-white);
 }
 
-/* Navigation: the active item has a 3px violet-blue underline */
-.rv-nav-link {
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-  text-decoration: none;
-  border-bottom: 3px solid transparent;
-  border-radius: 0;
+/* On charcoal the wordmark is stone and gray, large text only (gray 4.09) */
+.rv-header .rv-wordmark .rv-wordmark-rev {
+  font-size: 1.75rem;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
 }
 
-.rv-nav-link[aria-current="page"] {
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-  border-bottom-color: var(--rv-accent);
+.rv-header .rv-wordmark .rv-wordmark-rook {
+  font-size: 1.75rem;
+  color: var(--rv-gray);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-edition {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid var(--rv-charcoal-soft);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+/* Navigation: grouped links with an icon; the active one carries the violet rail */
+.rv-header nav,
+.rv-nav {
+  grid-area: nav;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 -16px;
+  padding: 0 16px 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.rv-header nav ul,
+.rv-nav-list {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-header nav ul:first-of-type,
+.rv-header nav ul:last-of-type {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.rv-header nav li {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-nav-group-label {
+  display: none;
+  margin: 12px 10px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--rv-stone-dim);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-header .rv-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+  transition: background-color var(--rv-motion), color var(--rv-motion);
+}
+
+.rv-header .rv-nav-link:hover {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal-soft);
+}
+
+.rv-header .rv-nav-link[aria-current="page"] {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal-deep);
+  box-shadow: inset 3px 0 0 var(--rv-accent);
+}
+
+.rv-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+/* Who is signed in, and the way out */
+.rv-user {
+  grid-area: user;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rv-avatar {
+  display: none;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal-soft);
+}
+
+.rv-user-text {
+  display: none;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.rv-user-name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-user-note {
+  font-size: 12px;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
 }
 
 .rv-inline-form {
   margin: 0;
 }
 
-/* Buttons: primary violet-blue with white text; quiet buttons charcoal on white */
-:is(button, [type="submit"], [role="button"]):not(.rv-button-quiet) {
-  color: var(--rv-white);
-  background-color: var(--rv-accent);
-  border-color: var(--rv-accent);
+.rv-header .rv-button-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--rv-charcoal-soft);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
 }
 
-:is(button, [type="submit"], [role="button"]):not(.rv-button-quiet):hover {
+.rv-header .rv-button-quiet:hover {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal-soft);
+  border-color: var(--rv-charcoal-soft);
+}
+
+@media (min-width: 768px) {
+  .rv-avatar,
+  .rv-user-text {
+    display: flex;
+  }
+
+  .rv-avatar {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  body.rv-app {
+    grid-template-columns: 248px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .rv-app .rv-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    height: 100vh;
+    padding: 20px 14px 16px;
+    overflow-y: auto;
+  }
+
+  .rv-app .rv-brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0 8px;
+  }
+
+  .rv-logo-dark {
+    height: 48px;
+  }
+
+  .rv-header nav,
+  .rv-nav {
+    display: block;
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .rv-header nav ul,
+  .rv-nav-list {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .rv-header nav li {
+    margin-bottom: 2px;
+  }
+
+  .rv-nav-group-label {
+    display: block;
+  }
+
+  .rv-nav-group-label:first-child {
+    margin-top: 0;
+  }
+
+  .rv-user {
+    padding: 14px 6px 0;
+    border-top: 1px solid var(--rv-charcoal-soft);
+  }
+
+  .rv-user-text {
+    flex: 1;
+  }
+}
+
+/* The page column */
+.rv-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100%;
+}
+
+.rv-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  padding: 24px 16px 40px;
+}
+
+.rv-banner {
+  padding: 16px 16px 0;
+}
+
+@media (min-width: 768px) {
+  .rv-content {
+    padding: 32px 32px 48px;
+  }
+
+  .rv-banner {
+    padding: 24px 32px 0;
+  }
+}
+
+/* Page header: title, one-line purpose and the actions of the page */
+.rv-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-page-header h1 {
+  margin: 0;
+}
+
+.rv-page-purpose {
+  max-width: 44rem;
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rv-text-secondary {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* Links on white */
+main a:not([role="button"]) {
+  color: var(--rv-accent);
+  background-color: var(--rv-white);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rv-stone);
+  text-underline-offset: 3px;
+  transition: color var(--rv-motion), text-decoration-color var(--rv-motion);
+}
+
+main a:not([role="button"]):hover {
+  color: var(--rv-accent-deep);
+  background-color: var(--rv-white);
+  text-decoration-color: var(--rv-accent-deep);
+}
+
+/* Section tabs (the pages of one client) */
+main nav {
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--rv-line);
+  overflow-x: auto;
+}
+
+main nav ul {
+  gap: 4px;
+}
+
+main nav li {
+  padding: 0;
+}
+
+main .rv-nav-link {
+  display: inline-block;
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+main .rv-nav-link:hover {
+  color: var(--rv-accent-deep);
+  background-color: var(--rv-white);
+}
+
+main .rv-nav-link[aria-current="page"] {
+  border-bottom-color: var(--rv-accent);
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+/* ---------- Buttons ---------- */
+
+:is(button, [type="submit"], [type="button"], [type="reset"], [role="button"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--rv-accent);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  color: var(--rv-white);
+  background-color: var(--rv-accent);
+  transition: background-color var(--rv-motion), border-color var(--rv-motion),
+    color var(--rv-motion);
+}
+
+:is(button, [type="submit"], [type="button"], [role="button"]):hover {
   color: var(--rv-white);
   background-color: var(--rv-charcoal);
   border-color: var(--rv-charcoal);
 }
 
-.rv-button-quiet {
-  margin: 0;
-  padding: 0.375rem 0.875rem;
+:is(button, [type="submit"], [type="button"])[disabled],
+:is(button, [type="submit"], [type="button"])[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Quiet (secondary) buttons: charcoal on white with a gray border */
+.rv-button-quiet,
+.rv-button-quiet:not(:hover) {
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
-  border: 1px solid var(--rv-gray);
+  border-color: var(--rv-gray);
 }
 
 .rv-button-quiet:hover {
@@ -180,43 +705,363 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible 
   border-color: var(--rv-charcoal);
 }
 
-/* Links on white */
-main a:not([role="button"]) {
-  color: var(--rv-accent);
+/* Danger buttons: for deletions, next to a confirmation */
+.rv-button-danger,
+.rv-button-danger:not(:hover) {
+  color: var(--rv-white);
+  background-color: var(--rv-status-not-protected);
+  border-color: var(--rv-status-not-protected);
+}
+
+.rv-button-danger:hover {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}
+
+.rv-button-small {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.rv-button-block {
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 15px;
+}
+
+.rv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Forms ---------- */
+
+label,
+fieldset legend {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
-.rv-text-secondary {
+input:not([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"]),
+select,
+textarea {
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  border-radius: 8px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  transition: border-color var(--rv-motion);
+}
+
+input:not([type="checkbox"], [type="radio"], [type="file"]):focus,
+select:focus,
+textarea:focus {
+  box-shadow: none;
+}
+
+textarea {
+  min-height: 6rem;
+}
+
+/* The native select arrow and date picker replace the blocked Pico icons */
+select:not([multiple], [size]) {
+  appearance: auto;
+  padding-right: 0.75rem;
+  background-image: none;
+}
+
+[type="date"],
+[type="datetime-local"],
+[type="month"],
+[type="time"],
+[type="week"] {
+  padding-right: 0.75rem;
+  background-image: none;
+}
+
+[type="date"]::-webkit-calendar-picker-indicator,
+[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[type="month"]::-webkit-calendar-picker-indicator,
+[type="time"]::-webkit-calendar-picker-indicator,
+[type="week"]::-webkit-calendar-picker-indicator {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  opacity: 1;
+  cursor: pointer;
+}
+
+[type="search"] {
+  padding-left: 0.75rem;
+  background-image: none;
+}
+
+[type="checkbox"],
+[type="radio"] {
+  appearance: auto;
+  width: 16px;
+  height: 16px;
+  margin: 0 8px 0 0;
+  border: 0;
+  background-image: none;
+  accent-color: var(--rv-accent);
+  vertical-align: -2px;
+}
+
+[type="checkbox"]:checked,
+[type="checkbox"]:indeterminate,
+[type="radio"]:checked {
+  background-image: none;
+}
+
+[type="file"] {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+[aria-invalid="true"]:not([type="checkbox"], [type="radio"]) {
+  background-image: none;
+  border-color: var(--rv-status-not-protected);
+}
+
+fieldset {
+  margin: 0 0 24px;
+  padding: 16px 20px 4px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+}
+
+fieldset legend {
+  padding: 0 6px;
+  margin-bottom: 8px;
+}
+
+/* One field: label, control, help or error */
+.rv-field {
+  margin-bottom: 16px;
+}
+
+.rv-field input:not([type="checkbox"], [type="radio"]),
+.rv-field select,
+.rv-field textarea {
+  margin-bottom: 0;
+}
+
+.rv-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.rv-field-row > .rv-field {
+  flex: 1 1 14rem;
+}
+
+.rv-help {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--rv-text-secondary);
   background-color: var(--rv-white);
 }
 
-/* Sign-in and first-run pages */
-.rv-auth {
-  max-width: 28rem;
-  margin: 2rem auto;
-}
-
-/* Form errors: charcoal text on white with a not-protected marker */
-.rv-errors {
-  margin-bottom: 1.5rem;
-  padding: 0.75rem 1rem;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-  border: 1px solid var(--rv-gray);
-  border-left: 4px solid var(--rv-status-not-protected);
-}
-
-.rv-errors ul {
-  margin-bottom: 0;
-}
-
-.rv-errors-title {
-  margin-bottom: 0.5rem;
-  font-weight: 700;
+.rv-field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--rv-status-not-protected);
   background-color: var(--rv-white);
 }
+
+.rv-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rv-check [type="checkbox"],
+.rv-check [type="radio"] {
+  margin-top: 3px;
+}
+
+/* ---------- Tables ---------- */
+
+main table {
+  width: 100%;
+  margin-bottom: 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+main table caption {
+  padding: 0 0 8px;
+  text-align: left;
+  caption-side: top;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+main table th,
+main table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rv-line);
+  vertical-align: top;
+  text-align: left;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+main table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+main table thead th:first-child {
+  border-top-left-radius: 12px;
+}
+
+main table thead th:last-child {
+  border-top-right-radius: 12px;
+}
+
+main table tbody th {
+  font-weight: 600;
+}
+
+main table tbody tr:last-child > th,
+main table tbody tr:last-child > td {
+  border-bottom: 0;
+}
+
+main table tbody tr:hover > td,
+main table tbody tr:hover > th {
+  background-color: var(--rv-canvas);
+}
+
+main table td > p:last-child,
+main table td > ul:last-child {
+  margin-bottom: 0;
+}
+
+main table td .rv-text-secondary,
+main table th .rv-text-secondary {
+  font-size: 13px;
+}
+
+.rv-table-scroll {
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.rv-table-scroll table {
+  margin-bottom: 0;
+}
+
+.rv-table-scroll td {
+  max-width: 20rem;
+  overflow-wrap: anywhere;
+}
+
+.rv-numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rv-pseudonym {
+  font-family: var(--pico-font-family-monospace);
+  font-size: 13px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-utc-flag {
+  display: block;
+  font-size: 13px;
+}
+
+/* ---------- Cards and stats ---------- */
+
+.rv-card {
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-card > :last-child {
+  margin-bottom: 0;
+}
+
+.rv-card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rv-card-subtitle {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin-bottom: 24px;
+}
+
+.rv-grid > .rv-card {
+  margin-bottom: 0;
+}
+
+.rv-stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-stat-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* ---------- Status: icon plus words, never colour alone, on white only ---------- */
 
 .rv-status-icon {
   display: inline-block;
@@ -225,7 +1070,6 @@ main a:not([role="button"]) {
   text-align: center;
 }
 
-/* Status labels: icon plus text, never colour alone, on white only */
 .rv-status-protected {
   color: var(--rv-status-protected);
   background-color: var(--rv-white);
@@ -247,68 +1091,519 @@ main a:not([role="button"]) {
   background-color: var(--rv-white);
 }
 
-/* Profile editor: column choices in a grid, and a preview table that scrolls */
+/* As a badge (span): a pill with a border in the status colour */
+span.rv-status-protected,
+span.rv-status-needs-attention,
+span.rv-status-not-protected,
+span.rv-status-not-checked,
+span.rv-status-not-applicable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 10px 1px 7px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* As a message (p): a strip with the status colour as its left rail */
+p.rv-status-protected,
+p.rv-status-needs-attention,
+p.rv-status-not-protected,
+p.rv-status-not-checked,
+p.rv-status-not-applicable,
+.rv-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line);
+  border-left: 4px solid;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+p.rv-status-protected a,
+p.rv-status-needs-attention a,
+p.rv-status-not-protected a {
+  font-weight: 600;
+}
+
+/* Alerts: the same strip with a title, for messages that are not one status */
+.rv-alert {
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 400;
+  border-left-color: var(--rv-accent);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-alert-success {
+  border-left-color: var(--rv-status-protected);
+}
+
+.rv-alert-warning {
+  border-left-color: var(--rv-status-needs-attention);
+}
+
+.rv-alert-danger {
+  border-left-color: var(--rv-status-not-protected);
+}
+
+.rv-alert-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.rv-alert p:last-child,
+.rv-alert ul:last-child {
+  margin-bottom: 0;
+}
+
+/* Form errors: charcoal text on white with a not-protected rail */
+.rv-errors {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line);
+  border-left: 4px solid var(--rv-status-not-protected);
+  border-radius: 8px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-errors ul {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
+.rv-errors p:last-child {
+  margin-bottom: 0;
+}
+
+.rv-errors-title {
+  margin-bottom: 4px;
+  font-weight: 700;
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-white);
+}
+
+/* ---------- Empty states ---------- */
+
+.rv-empty {
+  margin-bottom: 24px;
+  padding: 40px 24px;
+  border: 1px dashed var(--rv-stone);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-empty .rv-icon {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 8px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-empty-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rv-empty-text {
+  max-width: 36rem;
+  margin: 0 auto 16px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-empty > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Drag-and-drop import area ---------- */
+
+.rv-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 160px;
+  margin-bottom: 16px;
+  padding: 24px;
+  border: 2px dashed var(--rv-gray);
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+  transition: border-color var(--rv-motion), background-color var(--rv-motion);
+}
+
+.rv-dropzone:hover,
+.rv-dropzone:focus-within,
+.rv-dropzone.is-dragover {
+  border-color: var(--rv-accent);
+  background-color: var(--rv-accent-tint);
+}
+
+.rv-dropzone [type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.rv-dropzone .rv-icon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+}
+
+.rv-dropzone-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.rv-dropzone-hint {
+  font-size: 13px;
+}
+
+.rv-dropzone-file {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rv-dropzone-file:empty {
+  display: none;
+}
+
+/* ---------- Confirmation: inline (details) or a dialog ---------- */
+
+details.rv-confirm {
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+details.rv-confirm > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--rv-gray);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  list-style: none;
+  cursor: pointer;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+details.rv-confirm > summary::-webkit-details-marker,
+details.rv-confirm > summary::after {
+  display: none;
+}
+
+details.rv-confirm > summary:hover {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}
+
+.rv-confirm-body {
+  max-width: 32rem;
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line);
+  border-left: 4px solid var(--rv-status-not-protected);
+  border-radius: 8px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-confirm-body > :last-child {
+  margin-bottom: 0;
+}
+
+dialog.rv-dialog {
+  width: calc(100% - 32px);
+  max-width: 32rem;
+  padding: 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-2);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dialog.rv-dialog::backdrop {
+  background-color: rgba(45, 47, 58, 0.55);
+}
+
+.rv-dialog h2 {
+  margin-top: 0;
+}
+
+.rv-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ---------- Loading ---------- */
+
+.rv-skeleton {
+  display: block;
+  height: 1em;
+  border-radius: 6px;
+  background-color: var(--rv-line);
+  animation: rv-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes rv-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.rv-busy {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--rv-stone);
+  border-top-color: var(--rv-accent);
+  border-radius: 50%;
+  vertical-align: -3px;
+  animation: rv-spin 0.8s linear infinite;
+}
+
+@keyframes rv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Profile editor: column choices in a grid */
 .rv-mapping {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   column-gap: 1.5rem;
 }
 
-.rv-table-scroll {
-  overflow-x: auto;
-  margin-bottom: 1.5rem;
+/* ---------- Footer ---------- */
+
+.rv-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--rv-line);
+  font-size: 13px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
 }
 
-.rv-table-scroll td {
-  max-width: 20rem;
-  overflow-wrap: anywhere;
+.rv-footer p {
+  margin-bottom: 4px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
 }
 
-.rv-pseudonym {
-  font-family: var(--pico-font-family-monospace);
+.rv-footer p:last-child {
+  margin-bottom: 0;
+}
+
+.rv-footer .rv-disclaimer {
+  max-width: 64rem;
+  font-size: 13px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-footer-product {
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .rv-footer {
+    padding: 16px 32px;
+  }
+}
+
+/* ---------- Signed-out pages: the rook panel and the form ---------- */
+
+body.rv-signed-out {
+  min-height: 100vh;
+}
+
+.rv-auth-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.rv-auth-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 24px 20px;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-auth-logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+
+.rv-auth-tagline {
+  max-width: 22rem;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-auth-points {
+  display: none;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-auth-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  max-width: 24rem;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--rv-stone);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-auth-points .rv-icon {
+  margin-top: 3px;
+}
+
+.rv-auth-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rv-signed-out .rv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
-.rv-utc-flag {
-  display: block;
-  font-size: 13px;
+.rv-signed-out .rv-edition {
+  border-color: var(--rv-line);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
 }
 
-/* Footer: charcoal with stone text and the short report disclaimer */
-.rv-footer {
-  margin-top: 3rem;
-  padding: 1.5rem 0;
-  color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+.rv-signed-out .rv-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: none;
+  padding: 24px 24px 40px;
 }
 
-.rv-footer p {
-  margin-bottom: 0.5rem;
-  color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+.rv-auth {
+  width: 100%;
+  max-width: 26rem;
+  margin: 0;
 }
 
-.rv-footer .rv-disclaimer {
-  font-size: 13px;
-  color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+.rv-auth h1 {
+  margin-bottom: 8px;
 }
 
-/* On charcoal the wordmark is stone and gray, large text only (gray 4.09) */
-.rv-footer-wordmark {
-  font-family: Helvetica, Arial, sans-serif;
-  font-weight: 700;
+.rv-auth-lead {
+  margin-bottom: 24px;
+  font-size: 15px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
 }
 
-.rv-footer .rv-footer-wordmark .rv-wordmark-rev {
-  font-size: 1.5rem;
-  color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+.rv-auth form {
+  margin-bottom: 0;
 }
 
-.rv-footer .rv-footer-wordmark .rv-wordmark-rook {
-  font-size: 1.5rem;
-  color: var(--rv-gray);
-  background-color: var(--rv-charcoal);
+.rv-auth .rv-button-block {
+  margin-top: 8px;
+}
+
+@media (min-width: 768px) {
+  .rv-auth-layout {
+    grid-template-columns: minmax(280px, 40%) minmax(0, 1fr);
+  }
+
+  .rv-auth-panel {
+    gap: 24px;
+    padding: 48px 40px;
+  }
+
+  .rv-auth-logo {
+    width: 200px;
+    height: 200px;
+  }
+
+  .rv-auth-tagline {
+    font-size: 24px;
+    color: var(--rv-white);
+    background-color: var(--rv-charcoal);
+  }
+
+  .rv-auth-points {
+    display: block;
+  }
+
+  .rv-signed-out .rv-header {
+    padding: 24px 40px;
+  }
+
+  .rv-signed-out .rv-logo {
+    height: 44px;
+  }
+
+  .rv-signed-out .rv-content {
+    align-items: center;
+    padding: 24px 40px 64px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .rv-auth-layout {
+    grid-template-columns: minmax(320px, 44%) minmax(0, 1fr);
+  }
 }

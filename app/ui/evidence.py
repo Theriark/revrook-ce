@@ -46,7 +46,13 @@ def _row(result: ChainResult, names: dict[int, str]) -> ChainRow:
 
 def _context(user: AppUser, rows: list[ChainRow] | None) -> dict[str, Any]:
     failed = 0 if rows is None else sum(1 for row in rows if not row.ok)
-    return {"title": INTEGRITY_TITLE, "user": user, "rows": rows, "failed": failed}
+    return {
+        "title": INTEGRITY_TITLE,
+        "nav": "integrity",
+        "user": user,
+        "rows": rows,
+        "failed": failed,
+    }
 
 
 @router.get("/evidence/integrity")

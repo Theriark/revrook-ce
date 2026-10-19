@@ -26,11 +26,13 @@ No version has been released: there is no tag, no GitHub release and no publishe
 
 ### Changed
 
+- The web interface has a design system ([docs/design-system.md](docs/design-system.md)): tokens for colour, type, spacing and radius; an app shell with a charcoal navigation rail, grouped links with icons and the signed-in user; redesigned sign-in and first-run pages with the logo at a proper size; and the buttons, fields, tables, cards, status pills, alerts, empty states, import area and confirmation patterns the other pages will adopt. No behaviour, data or evidence rule changed.
 - `docs/operations.md` states how request bodies are framed: a body must declare its size in `Content-Length`, and any `Transfer-Encoding` is answered with 411.
 - The compose smoke test runs the quick start (`scripts/e2e/phase_11.sh`) and fails if it takes ten minutes or more. The script is for CI only: it leaves a fixed-password administrator account behind, so the quick start does not tell users to run it.
 
 ### Fixed
 
+- The arrow of a select, the date picker icon and the check mark of a checkbox were `data:` images of Pico CSS, which the content security policy blocks; the native controls are shown instead and the stylesheet loads no image at all.
 - A request with `Transfer-Encoding: chunked` and a small `Content-Length` passed the body size check; any `Transfer-Encoding` is now refused with 411.
 - A plugin that fails to load no longer chains its own error into the message; only its name and the class of the error are reported.
 - A bearer header on a page no longer skips the CSRF check; only paths under `/api/` do.

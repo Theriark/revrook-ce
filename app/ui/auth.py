@@ -67,7 +67,8 @@ async def home(request: Request) -> Response:
             user = await get_user(db, session.user_id)
     if user is None:
         return redirect("/login")
-    return render(request, "home.html", {"title": "Home", "user": user}, session)
+    context: dict[str, Any] = {"title": "Home", "nav": "home", "user": user}
+    return render(request, "home.html", context, session)
 
 
 @router.get("/setup")

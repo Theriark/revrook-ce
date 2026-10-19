@@ -2,23 +2,24 @@
 {% block content %}
 <section class="rv-auth">
 <h1>Create the administrator</h1>
-<p>This is the first start. Create the one administrator account of this installation.</p>
+<p class="rv-auth-lead">This is the first start. Create the one administrator account of this installation; it signs in on every later visit.</p>
 {% include "_errors.html" %}
 <form method="post" action="/setup">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<p>
+<div class="rv-field">
 <label for="username">Username</label>
-<input id="username" name="username" type="text" value="{{ username }}" autocomplete="username" required>
-</p>
-<p>
-<label for="password">Password (at least 12 characters)</label>
-<input id="password" name="password" type="password" autocomplete="new-password" required>
-</p>
-<p>
+<input id="username" name="username" type="text" value="{{ username }}" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+</div>
+<div class="rv-field">
+<label for="password">Password</label>
+<input id="password" name="password" type="password" autocomplete="new-password" aria-describedby="password-help" required>
+<small class="rv-help" id="password-help">At least 12 characters. A long phrase of several words is easiest to remember.</small>
+</div>
+<div class="rv-field">
 <label for="confirm_password">Repeat the password</label>
 <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
-</p>
-<p><button type="submit">Create administrator</button></p>
+</div>
+<button type="submit" class="rv-button-block">Create administrator</button>
 </form>
 </section>
 {% endblock %}
