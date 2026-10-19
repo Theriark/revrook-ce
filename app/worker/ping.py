@@ -8,6 +8,7 @@ beyond a fixed user agent. The URL may hold a secret, so it is never logged.
 """
 
 import asyncio
+import http.client
 import logging
 import time
 import urllib.error
@@ -22,9 +23,23 @@ USER_AGENT = "revrook-heartbeat"
 
 
 def valid_heartbeat_url(url: str) -> bool:
-    """Only an http:// or https:// address with a host is used."""
-    parts = urlsplit(url)
-    return parts.scheme in ("http", "https") and bool(parts.hostname)
+    """Only an http:// or https:// address with a host is used.
+
+    A space or control character, or a port that is not a number, cannot be sent:
+    urllib refuses such an address when it opens it, so it is refused here.
+    """
+    if any(ord(character) <= 0x20 or ord(character) == 0x7F for character in url):
+        return False
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        return False
+    return (
+        parts.scheme in ("http", "https")
+        and bool(parts.hostname)
+        and (port is None or port > 0)
+    )
 
 
 def _get(url: str) -> bool:
@@ -34,7 +49,16 @@ def _get(url: str) -> bool:
     try:
         with urllib.request.urlopen(request, timeout=PING_TIMEOUT_SECONDS) as response:
             return bool(200 <= response.status < 300)
-    except (urllib.error.URLError, OSError, ValueError):
+    except (
+        urllib.error.URLError,
+        http.client.HTTPException,
+        OSError,
+        ValueError,
+        OverflowError,
+    ):
+        # InvalidURL (a bad port or a character urllib will not send) is an
+        # HTTPException and a port above 65535 an OverflowError: neither may stop
+        # the worker over an optional setting.
         return False
 
 

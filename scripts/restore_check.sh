@@ -47,7 +47,14 @@ sql_in() { docker exec "${db}" psql -U revrook -d "$1" -tA -c "$2"; }
 
 live_url="$(docker exec "${web}" printenv DATABASE_URL)"
 [[ -n "${live_url}" ]] || fail "the web container has no DATABASE_URL"
-restore_url="${live_url%/*}/${RESTORE_DB}"
+# The database name is the last path part; a query string (?ssl=...) is kept as is.
+live_query=""
+live_path="${live_url}"
+if [[ "${live_url}" == *"?"* ]]; then
+  live_query="?${live_url#*\?}"
+  live_path="${live_url%%\?*}"
+fi
+restore_url="${live_path%/*}/${RESTORE_DB}${live_query}"
 
 chains_of() { docker exec -e DATABASE_URL="$1" "${web}" python -m app.cli verify-chain; }
 
