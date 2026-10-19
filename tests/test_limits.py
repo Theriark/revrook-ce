@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from starlette.types import Message, Receive, Scope, Send
 
-from app.limits import FORM_OVERHEAD_BYTES, UploadSizeLimitMiddleware
+from app.limits import FORM_OVERHEAD_BYTES, MAX_BODY_BYTES, UploadSizeLimitMiddleware
 
 UPLOAD_PATH = "/api/v1/clients/3/evidence"
 REVISION_PATH = "/api/v1/clients/3/evidence/9/revisions"
@@ -98,6 +98,67 @@ async def test_a_size_that_is_not_a_number_is_refused_with_400() -> None:
 )
 async def test_other_requests_are_not_checked(path: str, method: str) -> None:
     inner, sent = await run(path, [], method=method)
+    assert inner.called
+    assert status_of(sent) == 204
+
+
+@pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
+@pytest.mark.parametrize("path", ["/api/v1/clients", "/login", "/system/export"])
+async def test_a_body_over_the_general_limit_is_refused_with_413(
+    path: str, method: str
+) -> None:
+    size = str(MAX_BODY_BYTES + 1).encode()
+    inner, sent = await run(path, [(b"content-length", size)], method=method)
+    assert not inner.called
+    assert status_of(sent) == 413
+
+
+@pytest.mark.parametrize("method", ["POST", "DELETE"])
+async def test_a_body_at_the_general_limit_passes_through(method: str) -> None:
+    size = str(MAX_BODY_BYTES).encode()
+    inner, sent = await run("/api/v1/clients", [(b"content-length", size)], method)
+    assert inner.called
+    assert status_of(sent) == 204
+
+
+async def test_an_upload_route_keeps_its_own_larger_limit() -> None:
+    inner = Recorder()
+    middleware = UploadSizeLimitMiddleware(inner, 5 * MAX_BODY_BYTES)
+    sent: list[Message] = []
+
+    async def receive() -> Message:
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message: Message) -> None:
+        sent.append(message)
+
+    size = str(2 * MAX_BODY_BYTES).encode()
+    scope: dict[str, Any] = {
+        "type": "http",
+        "method": "POST",
+        "path": UPLOAD_PATH,
+        "headers": [(b"content-length", size)],
+    }
+    await middleware(scope, receive, send)
+    assert inner.called
+    assert status_of(sent) == 204
+
+
+async def test_a_body_sent_in_chunks_is_refused_with_411_on_any_route() -> None:
+    inner, sent = await run("/api/v1/clients", [(b"transfer-encoding", b"chunked")])
+    assert not inner.called
+    assert status_of(sent) == 411
+
+
+async def test_a_size_that_is_not_a_number_is_refused_with_400_on_any_route() -> None:
+    inner, sent = await run("/login", [(b"content-length", b"1e3")])
+    assert not inner.called
+    assert status_of(sent) == 400
+
+
+async def test_a_get_is_never_checked_for_its_body() -> None:
+    size = str(10 * MAX_BODY_BYTES).encode()
+    inner, sent = await run("/clients", [(b"content-length", size)], method="GET")
     assert inner.called
     assert status_of(sent) == 204
 
