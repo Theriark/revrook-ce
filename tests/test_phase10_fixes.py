@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.checks.library import load_library
+from app.clock import Clock
 from app.evidence.assurance import Assurance
 from app.evidence.service import EvidenceContext, NewEvidence, add_revision
 from app.main import create_app
@@ -174,7 +175,11 @@ class Mailbox:
 
 
 def make_jobs(
-    settings: Settings, ctx: EvidenceContext, engine: AsyncEngine, mailer: Mailbox
+    settings: Settings,
+    ctx: EvidenceContext,
+    engine: AsyncEngine,
+    mailer: Mailbox,
+    clock: Clock | None = None,
 ) -> dict[str, Job]:
     relay = {
         "smtp_host": "127.0.0.1",
@@ -188,6 +193,7 @@ def make_jobs(
         library=load_library(),
         resolver=StaticResolver(),
         mailer=mailer,
+        clock=clock,
     )
     return build_jobs(context)
 
@@ -261,3 +267,92 @@ async def test_a_renewed_attestation_is_reminded_again_the_next_year(
     await cycle(revised.expires_at)
     assert len(mailbox.sent) == 6
     assert await reminder_rows(db_engine) == {(item, 30), (item, 7), (item, 0)}
+
+
+# --- phase 11: a correction is not a renewal, and a claim has the time it was made ---
+
+
+async def attested(
+    ctx: EvidenceContext, engine: AsyncEngine, name: str
+) -> tuple[int, int, datetime]:
+    """An attestation: the client id, the item id and the moment it goes stale."""
+    client_id = await create_test_client(engine, ctx, name)
+    first = NewEvidence(
+        source_code="training-statement",
+        assurance=Assurance.ATTESTATION,
+        captured_at=NOW - timedelta(days=1),
+        reviewer="Sam Reviewer",
+        reviewed_on=date(2026, 10, 16),
+        note="Staff training was completed",
+    )
+    stored = await upload(engine, ctx, client_id, first, NOW)
+    async with factory_of(engine)() as session, session.begin():
+        await set_reminder_recipient(
+            session, "owner@msp.example", user_id=None, now=NOW
+        )
+    return client_id, stored.item_id, stored.expires_at
+
+
+async def test_a_correction_with_the_same_expiry_is_not_reminded_again(
+    settings: Settings, ui_ctx: EvidenceContext, db_engine: AsyncEngine
+) -> None:
+    client_id, item, expires_at = await attested(ui_ctx, db_engine, "Correction Ltd")
+    mailbox = Mailbox()
+    jobs = make_jobs(settings, ui_ctx, db_engine, mailbox)
+    moment = expires_at - timedelta(days=6)
+    assert await remind(jobs, moment) == "sent 1 reminders in one message"
+    assert await reminder_rows(db_engine) == {(item, 30), (item, 7)}
+
+    # A typing mistake in the note is corrected an hour after the reminder went out
+    # (a correction made at the same moment would not tell the old rule from the new
+    # one); the expiry stays as it was.
+    later = moment + timedelta(hours=1)
+    correction = NewEvidence(
+        source_code="training-statement",
+        assurance=Assurance.ATTESTATION,
+        captured_at=NOW - timedelta(days=1),
+        expires_at=expires_at,
+        reviewer="Sam Reviewer",
+        reviewed_on=date(2026, 10, 16),
+        note="Staff training was completed (date corrected)",
+    )
+    async with factory_of(db_engine)() as session, session.begin():
+        revised = await add_revision(
+            session, ui_ctx, client_id, item, correction, later
+        )
+    assert revised.expires_at == expires_at
+    assert await remind(jobs, later) == "nothing is due"
+    assert await reminder_rows(db_engine) == {(item, 30), (item, 7)}
+    assert len(mailbox.sent) == 1
+
+    # The threshold that has not been sent yet still goes out when it is reached.
+    assert await remind(jobs, expires_at) == "sent 1 reminders in one message"
+    assert await reminder_rows(db_engine) == {(item, 30), (item, 7), (item, 0)}
+    assert len(mailbox.sent) == 2
+
+
+async def test_a_threshold_crossed_a_day_early_is_not_dropped_as_old(
+    settings: Settings, ui_ctx: EvidenceContext, db_engine: AsyncEngine
+) -> None:
+    _, item, expires_at = await attested(ui_ctx, db_engine, "Early Ltd")
+    mailbox = Mailbox()
+    jobs = make_jobs(settings, ui_ctx, db_engine, mailbox)
+    # Days are rounded down: with 7.9 days left, 7 days is already crossed.
+    moment = expires_at - timedelta(days=7, hours=22)
+    assert await remind(jobs, moment) == "sent 1 reminders in one message"
+    assert (item, 7) in await reminder_rows(db_engine)
+    assert await remind(jobs, moment + timedelta(days=1)) == "nothing is due"
+    assert len(mailbox.sent) == 1
+
+
+async def test_the_reminder_rows_carry_the_time_of_the_claim(
+    settings: Settings, ui_ctx: EvidenceContext, db_engine: AsyncEngine
+) -> None:
+    _, _, expires_at = await attested(ui_ctx, db_engine, "Claim Time Ltd")
+    tick = expires_at - timedelta(days=6)
+    claimed = tick + timedelta(minutes=45)
+    jobs = make_jobs(settings, ui_ctx, db_engine, Mailbox(), clock=lambda: claimed)
+    assert await remind(jobs, tick) == "sent 1 reminders in one message"
+    async with factory_of(db_engine)() as session:
+        stamps = (await session.execute(select(ReminderSent.sent_at))).scalars()
+        assert set(stamps) == {claimed}

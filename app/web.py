@@ -19,6 +19,7 @@ from app.security import (
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 CSRF_HEADER = "x-csrf-token"
 CSRF_FIELD = "csrf_token"
+API_PREFIX = "/api/"
 
 
 def session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
@@ -93,12 +94,14 @@ async def csrf_protect(request: Request) -> None:
     """Reject a state-changing request that lacks the session's CSRF token.
 
     The token comes from the X-CSRF-Token header (htmx, API clients) or the
-    csrf_token form field. A request that authenticates with a Bearer token has
-    no ambient credential for a third-party page to abuse, so it is exempt.
+    csrf_token form field. A request to the API that authenticates with a Bearer
+    token has no ambient credential for a third-party page to abuse, so it is
+    exempt. A Bearer header on any other path (a page that uses the cookie) is not.
     """
     if request.method in SAFE_METHODS:
         return
-    if request.headers.get("authorization", "").lower().startswith("bearer "):
+    bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
+    if bearer and request.url.path.startswith(API_PREFIX):
         return
     session = load_session(request)
     supplied = request.headers.get(CSRF_HEADER)

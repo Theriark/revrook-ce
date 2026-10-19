@@ -43,6 +43,7 @@ from app.evidence.service import (
     list_evidence,
 )
 from app.importers.profiles import save_profile
+from app.limits import RowId
 from app.models import ApiToken, AppUser, Client
 from app.ratelimit import SlidingWindowLimiter
 from app.web import cipher_of, clock_of, evidence_context, files_of, session_factory
@@ -136,7 +137,7 @@ class ProfileCreate(BaseModel):
 
 @router.post("/clients/{client_id}/import-profiles", status_code=201)
 async def post_import_profile(
-    request: Request, client_id: int, body: ProfileCreate, user: CurrentUser
+    request: Request, client_id: RowId, body: ProfileCreate, user: CurrentUser
 ) -> dict[str, object]:
     """Save a column mapping for one client and source (vendor header to column)."""
     try:
@@ -291,7 +292,7 @@ def stored_json(stored: StoredEvidence) -> dict[str, object]:
 
 @router.post("/clients/{client_id}/evidence", status_code=201)
 async def post_evidence(
-    request: Request, client_id: int, user: CurrentUser
+    request: Request, client_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
     """Upload one evidence file (multipart: file, source_code, captured_at, ...)."""
     evidence = await read_evidence_form(request, user, revision=False)
@@ -311,7 +312,7 @@ async def post_evidence(
 
 @router.post("/clients/{client_id}/evidence/{item_id}/revisions", status_code=201)
 async def post_revision(
-    request: Request, client_id: int, item_id: int, user: CurrentUser
+    request: Request, client_id: RowId, item_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
     """Add a revision to a manual evidence item (same form as an upload)."""
     evidence = await read_evidence_form(request, user, revision=True)
@@ -332,7 +333,7 @@ async def post_revision(
 
 @router.get("/clients/{client_id}/evidence")
 async def get_evidence(
-    request: Request, client_id: int, user: CurrentUser
+    request: Request, client_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
     """The client's evidence items with their freshness today."""
     try:
@@ -362,7 +363,7 @@ async def get_evidence(
 
 @router.get("/clients/{client_id}/evidence/chain")
 async def get_chain(
-    request: Request, client_id: int, user: CurrentUser
+    request: Request, client_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
     """Verify the hash chain of one client."""
     async with session_factory(request)() as session:
@@ -381,7 +382,7 @@ async def get_chain(
 
 @router.delete("/clients/{client_id}")
 async def remove_client(
-    request: Request, client_id: int, user: CurrentUser, confirm: str = ""
+    request: Request, client_id: RowId, user: CurrentUser, confirm: str = ""
 ) -> dict[str, object]:
     """Delete a client and everything of it. `confirm` must be the client name."""
     try:
@@ -434,7 +435,7 @@ def control_json(result: ControlResult) -> dict[str, object]:
 
 @router.post("/clients/{client_id}/dns-check", status_code=201)
 async def post_dns_check(
-    request: Request, client_id: int, body: DnsCheckRequest, user: CurrentUser
+    request: Request, client_id: RowId, body: DnsCheckRequest, user: CurrentUser
 ) -> dict[str, object]:
     """Check the public SPF, DKIM and DMARC records of the client's mail domains.
 
@@ -470,7 +471,7 @@ async def post_dns_check(
 
 @router.get("/clients/{client_id}/dns-check")
 async def get_dns_check(
-    request: Request, client_id: int, user: CurrentUser
+    request: Request, client_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
     """PC-EML-01 to PC-EML-03 of one client, each with its capture time."""
     library: Library = request.app.state.library

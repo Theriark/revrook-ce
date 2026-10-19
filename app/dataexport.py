@@ -17,18 +17,28 @@ included: it is the business the MSP serves and the only way to read the rest.
 
 A cell that begins with `=`, `+`, `-`, `@`, a tab or a carriage return would be run
 as a formula by a spreadsheet. Such a text cell gets a leading apostrophe.
+
+The export is built as a stream: each table is read from a server-side cursor and
+written to the zip through a buffer of CHUNK_BYTES, into a temporary file that stays
+in memory up to SPOOL_BYTES and goes to disk beyond that. Memory use is therefore
+about SPOOL_BYTES plus one chunk whatever the size of the data. The CSV text of one
+export is capped at MAX_EXPORT_BYTES (256 MiB, before compression); an installation
+with more is refused with 413 and takes a database backup instead.
 """
 
 import csv
 import io
 import json
 import zipfile
+from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any
+from tempfile import SpooledTemporaryFile
+from typing import IO, Any
 
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.evidence.errors import EvidenceTooLargeError
 from app.models import (
     AuditEvent,
     Client,
@@ -44,6 +54,10 @@ from app.models import (
 )
 
 FORMULA_STARTS = ("=", "+", "-", "@", "\t", "\r")
+MEBIBYTE = 1024 * 1024
+MAX_EXPORT_BYTES = 256 * MEBIBYTE
+SPOOL_BYTES = 8 * MEBIBYTE
+CHUNK_BYTES = 64 * 1024
 README = """revrook data export
 
 Generated at {generated} by revrook {version}.
@@ -224,16 +238,61 @@ def cell(value: object) -> str:
     return text
 
 
-async def _table_csv(session: AsyncSession, query: Select[Any]) -> tuple[bytes, int]:
+class ExportTooLargeError(EvidenceTooLargeError):
+    """The export would hold more than MAX_EXPORT_BYTES of CSV text."""
+
+
+@dataclass
+class _Budget:
+    """The CSV bytes written so far, against the most one export may hold."""
+
+    limit: int
+    spent: int = 0
+
+    def spend(self, size: int) -> None:
+        self.spent += size
+        if self.spent > self.limit:
+            raise ExportTooLargeError(
+                f"The export would hold more than {self.limit / MEBIBYTE:g} MiB of "
+                "data. Take a database backup instead (see docs/operations.md)."
+            )
+
+
+def _flush(buffer: io.StringIO, entry: IO[bytes], budget: _Budget) -> None:
+    """Write what the buffer holds to the zip entry and empty the buffer."""
+    data = buffer.getvalue().encode("utf-8")
+    budget.spend(len(data))
+    entry.write(data)
+    buffer.seek(0)
+    buffer.truncate(0)
+
+
+async def _write_table(
+    session: AsyncSession,
+    archive: zipfile.ZipFile,
+    name: str,
+    query: Select[Any],
+    now: datetime,
+    budget: _Budget,
+) -> int:
+    """Stream one query into the zip as a CSV file; returns its number of rows.
+
+    Rows are read from a server-side cursor and written out every CHUNK_BYTES, so
+    the memory held is one chunk and not the table.
+    """
     buffer = io.StringIO(newline="")
     writer = csv.writer(buffer, lineterminator="\r\n")
     writer.writerow(list(query.selected_columns.keys()))
     rows = 0
     result = await session.stream(query)
-    async for row in result:
-        writer.writerow([cell(value) for value in row])
-        rows += 1
-    return buffer.getvalue().encode("utf-8"), rows
+    with archive.open(_entry(f"{name}.csv", now), "w") as entry:
+        async for row in result:
+            writer.writerow([cell(value) for value in row])
+            rows += 1
+            if buffer.tell() >= CHUNK_BYTES:
+                _flush(buffer, entry, budget)
+        _flush(buffer, entry, budget)
+    return rows
 
 
 def _entry(name: str, moment: datetime) -> zipfile.ZipInfo:
@@ -245,25 +304,48 @@ def _entry(name: str, moment: datetime) -> zipfile.ZipInfo:
 
 
 async def build_export(
-    session: AsyncSession, now: datetime, version: str
-) -> tuple[bytes, dict[str, int]]:
-    """The zip and the number of rows of each table.
+    session: AsyncSession,
+    now: datetime,
+    version: str,
+    max_bytes: int = MAX_EXPORT_BYTES,
+) -> tuple[SpooledTemporaryFile[bytes], dict[str, int]]:
+    """The zip, as a file positioned at its start, and the rows of each table.
+
+    The zip is built as it is read: every table is streamed through a small buffer
+    into a temporary file that stays in memory up to SPOOL_BYTES and then goes to
+    disk. The caller closes the file. The CSV text of the whole export is capped at
+    `max_bytes` (MAX_EXPORT_BYTES); past it ExportTooLargeError is raised and
+    nothing is kept.
 
     `now` must not be earlier than 1980, the oldest date a zip file can hold.
     """
-    output = io.BytesIO()
+    output: SpooledTemporaryFile[bytes] = SpooledTemporaryFile(max_size=SPOOL_BYTES)
+    budget = _Budget(max_bytes)
     counts: dict[str, int] = {}
-    with zipfile.ZipFile(output, "w") as archive:
-        for name, query in export_tables():
-            data, rows = await _table_csv(session, query)
-            archive.writestr(_entry(f"{name}.csv", now), data)
-            counts[name] = rows
-        manifest = io.StringIO(newline="")
-        writer = csv.writer(manifest, lineterminator="\r\n")
-        writer.writerow(["file", "rows"])
-        for name, rows in counts.items():
-            writer.writerow([f"{name}.csv", rows])
-        archive.writestr(_entry("manifest.csv", now), manifest.getvalue())
-        readme = README.format(generated=now.isoformat(), version=version)
-        archive.writestr(_entry("README.txt", now), readme)
-    return output.getvalue(), counts
+    try:
+        with zipfile.ZipFile(output, "w") as archive:
+            for name, query in export_tables():
+                counts[name] = await _write_table(
+                    session, archive, name, query, now, budget
+                )
+            manifest = io.StringIO(newline="")
+            writer = csv.writer(manifest, lineterminator="\r\n")
+            writer.writerow(["file", "rows"])
+            for name, rows in counts.items():
+                writer.writerow([f"{name}.csv", rows])
+            archive.writestr(_entry("manifest.csv", now), manifest.getvalue())
+            readme = README.format(generated=now.isoformat(), version=version)
+            archive.writestr(_entry("README.txt", now), readme)
+    except BaseException:
+        output.close()
+        raise
+    output.seek(0)
+    return output, counts
+
+
+def file_size(file: SpooledTemporaryFile[bytes]) -> int:
+    """The size of a file in bytes; the position goes back to the start."""
+    file.seek(0, io.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    return size

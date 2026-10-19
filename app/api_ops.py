@@ -11,10 +11,15 @@ Same authentication as `app.api` (a Bearer API token, rate limited per token).
 * `GET /system`: whether a worker is reporting.
 """
 
+import asyncio
+import secrets
+from collections.abc import AsyncIterator
 from datetime import datetime
+from tempfile import SpooledTemporaryFile
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -32,8 +37,10 @@ from app.checks.dnscheck import (
     clean_providers,
     clean_selectors,
 )
-from app.dataexport import build_export
-from app.evidence.errors import ClientNotFoundError
+from app.dataexport import build_export, file_size
+from app.evidence.errors import ClientNotFoundError, EvidenceError
+from app.evidence.locking import lock_client
+from app.limits import MAX_ID, RowId
 from app.models import Client, Schedule
 from app.system import ScheduleLine, load_schedules
 from app.textcheck import control_character
@@ -51,6 +58,7 @@ from app.worker.scheduler import (
 router = APIRouter(prefix="/api/v1")
 
 MAX_NAME = 100
+EXPORT_CHUNK_BYTES = 256 * 1024
 Domain = Annotated[str, Field(max_length=MAX_NAME_LENGTH)]
 
 
@@ -59,7 +67,7 @@ class ScheduleCreate(BaseModel):
 
     kind: str
     cron: str
-    client_id: int | None = None
+    client_id: int | None = Field(default=None, ge=1, le=MAX_ID)
     name: str | None = None
     domains: list[Domain] = Field(default_factory=list, max_length=MAX_DOMAINS)
     selectors: list[Domain] = Field(default_factory=list, max_length=MAX_SELECTORS)
@@ -123,6 +131,38 @@ async def _require_client(session: AsyncSession, client_id: int) -> None:
         raise http_error(ClientNotFoundError("There is no client with this id."))
 
 
+async def _insert_schedule(
+    session: AsyncSession,
+    user_id: int,
+    name: str,
+    kind: str,
+    cron: str,
+    client_id: int | None,
+    config: dict[str, list[str]],
+    first: datetime | None,
+) -> int:
+    """Add the row and its audit event to the open transaction; returns its id."""
+    row = Schedule(
+        name=name,
+        kind=kind,
+        cron=cron,
+        client_id=client_id,
+        next_run_at=first,
+        config=config,
+    )
+    session.add(row)
+    await session.flush()
+    add_audit_event(
+        session,
+        "schedule.created",
+        actor_user_id=user_id,
+        target_type="schedule",
+        target_id=row.id,
+        detail={"kind": kind, "client_id": client_id},
+    )
+    return row.id
+
+
 async def _add_schedule(
     request: Request,
     user_id: int,
@@ -138,25 +178,9 @@ async def _add_schedule(
         async with session_factory(request)() as session, session.begin():
             if client_id is not None:
                 await _require_client(session, client_id)
-            row = Schedule(
-                name=name,
-                kind=kind,
-                cron=cron,
-                client_id=client_id,
-                next_run_at=first,
-                config=config,
+            schedule_id = await _insert_schedule(
+                session, user_id, name, kind, cron, client_id, config, first
             )
-            session.add(row)
-            await session.flush()
-            add_audit_event(
-                session,
-                "schedule.created",
-                actor_user_id=user_id,
-                target_type="schedule",
-                target_id=row.id,
-                detail={"kind": kind, "client_id": client_id},
-            )
-            schedule_id = row.id
     except IntegrityError:
         raise _refuse("A schedule with this name already exists.", 409) from None
     return schedule_id, first
@@ -197,7 +221,7 @@ async def post_schedule(
 
 @router.delete("/schedules/{schedule_id}")
 async def delete_schedule(
-    request: Request, schedule_id: int, user: CurrentUser
+    request: Request, schedule_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
     async with session_factory(request)() as session, session.begin():
         row = await session.get(Schedule, schedule_id)
@@ -217,53 +241,79 @@ async def delete_schedule(
 
 @router.post("/clients/{client_id}/snapshot-requests", status_code=202)
 async def post_snapshot_request(
-    request: Request, client_id: int, user: CurrentUser
+    request: Request, client_id: RowId, user: CurrentUser
 ) -> dict[str, object]:
-    """Ask the worker to build a snapshot of the client (last full quarter)."""
+    """Ask the worker to build a snapshot of the client (last full quarter).
+
+    The check for a request that is already waiting and the insert of a new one
+    are one transaction under the lock of the client, so two requests at once
+    queue one snapshot: the second waits for the lock, finds the first and returns it.
+    """
     now = clock_of(request)()
-    async with session_factory(request)() as session:
-        await _require_client(session, client_id)
-        waiting = await session.execute(
-            select(Schedule.id).where(
-                Schedule.kind == SNAPSHOT_BUILD,
-                Schedule.client_id == client_id,
-                Schedule.cron == ONCE,
-                Schedule.enabled.is_(True),
-            )
-        )
-        existing = waiting.scalars().first()
-    if existing is not None:
-        return {"id": existing, "queued": False}
     stamp = now.strftime("%Y%m%dT%H%M%S")
-    schedule_id, _ = await _add_schedule(
-        request,
-        user.id,
-        f"snapshot-request-{client_id}-{stamp}",
-        SNAPSHOT_BUILD,
-        ONCE,
-        client_id,
-        {},
-    )
+    name = f"snapshot-request-{client_id}-{stamp}-{secrets.token_hex(3)}"
+    try:
+        async with session_factory(request)() as session, session.begin():
+            try:
+                await lock_client(session, client_id)
+            except ClientNotFoundError as error:
+                raise http_error(error) from None
+            waiting = await session.execute(
+                select(Schedule.id).where(
+                    Schedule.kind == SNAPSHOT_BUILD,
+                    Schedule.client_id == client_id,
+                    Schedule.cron == ONCE,
+                    Schedule.enabled.is_(True),
+                )
+            )
+            existing = waiting.scalars().first()
+            if existing is not None:
+                return {"id": existing, "queued": False}
+            schedule_id = await _insert_schedule(
+                session, user.id, name, SNAPSHOT_BUILD, ONCE, client_id, {}, now
+            )
+    except IntegrityError:
+        raise _refuse("A schedule with this name already exists.", 409) from None
     return {"id": schedule_id, "queued": True}
 
 
+async def _chunks(file: SpooledTemporaryFile[bytes]) -> AsyncIterator[bytes]:
+    """The file in pieces, read off the event loop; closes it when done."""
+    try:
+        while piece := await asyncio.to_thread(file.read, EXPORT_CHUNK_BYTES):
+            yield piece
+    finally:
+        file.close()
+
+
 async def export_response(request: Request, user_id: int) -> Response:
-    """The data export as a download, audited (API and System page)."""
+    """The data export as a download, audited (API and System page).
+
+    The zip is built in a temporary file (see `app.dataexport`) and sent from it in
+    pieces. An export over the size cap raises ExportTooLargeError (413).
+    """
     now = clock_of(request)()
-    async with session_factory(request)() as session, session.begin():
-        data, counts = await build_export(session, now, __version__)
-        add_audit_event(
-            session,
-            "data.exported",
-            actor_user_id=user_id,
-            detail={"files": len(counts), "rows": sum(counts.values())},
-        )
+    async with session_factory(request)() as session:
+        spool, counts = await build_export(session, now, __version__)
+        try:
+            add_audit_event(
+                session,
+                "data.exported",
+                actor_user_id=user_id,
+                detail={"files": len(counts), "rows": sum(counts.values())},
+            )
+            await session.commit()
+            size = file_size(spool)
+        except BaseException:
+            spool.close()
+            raise
     name = f"revrook-export-{now.strftime('%Y%m%d')}.zip"
-    return Response(
-        data,
+    return StreamingResponse(
+        _chunks(spool),
         media_type="application/zip",
         headers={
             "Content-Disposition": f'attachment; filename="{name}"',
+            "Content-Length": str(size),
             "Cache-Control": "no-store",
         },
     )
@@ -272,7 +322,10 @@ async def export_response(request: Request, user_id: int) -> Response:
 @router.get("/export")
 async def get_export(request: Request, user: CurrentUser) -> Response:
     """Everything revrook holds as a zip of CSV files, with no personal identifiers."""
-    return await export_response(request, user.id)
+    try:
+        return await export_response(request, user.id)
+    except EvidenceError as error:
+        raise http_error(error) from None
 
 
 @router.get("/system")

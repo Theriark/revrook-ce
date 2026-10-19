@@ -29,8 +29,10 @@ before the first start.
 
 Every POST, PUT, PATCH and DELETE needs the session's CSRF token, in the
 `csrf_token` form field or the `X-CSRF-Token` header (htmx sends the header).
-Otherwise the answer is 403. A request that carries an `Authorization: Bearer`
-header is exempt because it uses no cookie (`app/web.py`, `tests/test_web_security.py`).
+Otherwise the answer is 403. A request to a path under `/api/` that carries an
+`Authorization: Bearer` header is exempt because it uses no cookie. A Bearer header on
+any other path (a page that uses the session cookie) does not exempt it
+(`app/web.py`, `tests/test_web_security.py`, `tests/test_security_review.py`).
 
 ## Response headers
 
@@ -123,10 +125,14 @@ An importer reads a file the MSP exported from a tool. The file is untrusted.
 - Internal server errors (500) are produced outside the middleware stack and do
   not carry the security headers.
 - Evidence uploads are capped (`IMPORT_MAX_BYTES`, refused before the body is
-  read); other request bodies are not size-capped yet.
-- N2, for phase 11: account existence can be learned from the lockout (a known
-  account answers as locked after five failures, an unknown name never does).
-- N3, for phase 11: a database connection is held while Argon2 checks a password
-  and no throttle sits in front of it, so many parallel sign-ins can use up the pool.
-- N5, for phase 11: every request with an `Authorization: Bearer` header skips the
-  CSRF check, not only the API routes.
+  read) and since phase 11 every other POST, PUT, PATCH and DELETE body is capped at
+  1 MiB the same way (`app/limits.py`).
+- N2, accepted (low): account existence can be learned from the lockout (a known
+  account answers as locked after five failures, an unknown name never does). The
+  installation has a handful of accounts that the MSP created itself, so the name is
+  not a secret; see `docs/security-review.md`.
+- N3, fixed in phase 11: at most four sign-ins are checked at once per process; the
+  others get 429 with `Retry-After: 5` and nothing is checked or written
+  (`app/ratelimit.py`, `app/ui/auth.py`).
+- N5, fixed in phase 11: only a request under `/api/` skips the CSRF check with a
+  Bearer header.

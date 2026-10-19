@@ -26,6 +26,7 @@ from app.evidence.errors import (
     EvidenceTooLargeError,
     ItemNotFoundError,
 )
+from app.limits import RowId as RowId
 from app.models import AppUser
 from app.reports.completeness import ExportBlockedError
 from app.reports.export import ExportIntegrityError, ExportNotFoundError
@@ -34,9 +35,7 @@ from app.snapshots import SnapshotNotFoundError
 from app.ui.auth import redirect, render
 from app.web import current_session, session_factory
 
-MAX_ID = 9_223_372_036_854_775_807
 MAX_PERIOD_DAYS = 400
-RowId = Annotated[int, Path(ge=1, le=MAX_ID)]
 ControlIdPath = Annotated[str, Path(pattern=r"^PC-[A-Z]{3}-[0-9]{2}$")]
 STORE_FAILED = "The evidence store failed. Nothing was changed."
 FRAGMENT = (

@@ -109,13 +109,15 @@ async def test_get_requests_need_no_csrf_token(settings: Settings) -> None:
     assert response.status_code == 200
 
 
-async def test_a_bearer_request_skips_the_csrf_check(settings: Settings) -> None:
-    # POST /logout without a session only redirects, so it needs no database:
-    # 303 shows the CSRF check was passed over, 403 that it was applied.
+async def test_a_bearer_header_does_not_skip_the_csrf_check_of_a_page(
+    settings: Settings,
+) -> None:
+    # POST /logout is a page that uses the cookie. A Bearer header does not make it
+    # exempt (phase 10 review N5): both requests are refused for the missing token.
     async with make_client(offline_app(settings)) as client:
         bearer = await client.post(
             "/logout", headers={"Authorization": "Bearer rvk_synthetic"}
         )
         cookie_only = await client.post("/logout")
-    assert bearer.status_code == 303
+    assert bearer.status_code == 403
     assert cookie_only.status_code == 403
