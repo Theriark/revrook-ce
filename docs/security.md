@@ -80,9 +80,9 @@ own them when that matters.
   file that no row points to; it holds only what the client uploaded and goes
   when the client is deleted.
 - `purge_expired_raw` (`app/evidence/retention.py`) deletes raw files whose
-  retention date has passed. Nothing calls it yet: the worker schedules it from
-  phase 10, so until then a raw file kept with `RAW_RETENTION_DAYS` above zero
-  stays on disk until the client is deleted.
+  retention date has passed. Since phase 10 the `retention-purge` schedule of the
+  worker calls it every night (03:30 UTC), together with the removal of packs past
+  `PACK_RETENTION_MONTHS`; every removal is an audit event (see `docs/operations.md`).
 - The capture time and the expiry given with an upload must lie between the year
   2000 and the year 2199, and a capture time found inside a file must also not be
   in the future.

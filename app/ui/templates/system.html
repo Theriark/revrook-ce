@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<h1>System</h1>
+{% if deleted %}
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> The client and everything of it was deleted. Only the audit entry remains.</p>
+{% endif %}
+{% include "_errors.html" %}
+<p class="rv-text-secondary">revrook {{ version }}, role {{ role }}.</p>
+
+<h2>Worker</h2>
+<p id="worker-status">{{ s.status(worker_label) }}</p>
+{% if worker.last_beat %}
+<p>The newest heartbeat was {{ worker.last_beat.strftime("%Y-%m-%d %H:%M:%S") }} UTC, {{ age }} ago.</p>
+{% endif %}
+<p>The worker runs the schedules below, sends the expiry reminders and removes what has passed its retention time. When no worker has reported for {{ stale_seconds }} seconds, every page shows a banner.</p>
+
+<h2>Schedules</h2>
+{% if schedules %}
+<table id="schedules">
+<caption>What the worker runs, all times UTC</caption>
+<thead>
+<tr>
+<th scope="col">Name</th>
+<th scope="col">Kind</th>
+<th scope="col">Client</th>
+<th scope="col">When</th>
+<th scope="col">On</th>
+<th scope="col">Last run</th>
+<th scope="col">Next run</th>
+</tr>
+</thead>
+<tbody>
+{% for line in schedules %}
+<tr>
+<th scope="row">{{ line.name }}</th>
+<td>{{ line.kind }}</td>
+<td>{{ line.client_name or "All" }}</td>
+<td><code>{{ line.cron }}</code></td>
+<td>{{ "Yes" if line.enabled else "No" }}</td>
+<td>{% if line.last_run_at %}{{ line.last_run_at.strftime("%Y-%m-%d %H:%M") }}{% else %}Never{% endif %}</td>
+<td>{% if line.next_run_at %}{{ line.next_run_at.strftime("%Y-%m-%d %H:%M") }}{% else %}None{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>There are no schedules yet. The worker adds the daily reminder and clean-up schedules when it starts.</p>
+{% endif %}
+
+<h2>Reminders and outside services</h2>
+<ul>
+<li>{% if mail_relay %}A mail relay is set (SMTP_HOST).{% else %}No mail relay is set, so no reminder is sent (SMTP_HOST and SMTP_FROM).{% endif %}</li>
+<li>{% if reminder_set %}A reminder address is set in <a href="/settings">Settings</a>.{% else %}No reminder address is set in <a href="/settings">Settings</a>.{% endif %}</li>
+<li>{% if heartbeat_url %}The worker sends a heartbeat to HEARTBEAT_URL once a minute.{% else %}No outside heartbeat is set (HEARTBEAT_URL).{% endif %}</li>
+<li>{% if metrics %}Metrics are on at /metrics, behind the token of METRICS_TOKEN.{% else %}Metrics are off (METRICS_TOKEN is not set).{% endif %}</li>
+</ul>
+
+<h2>Your data</h2>
+<p>The export is one zip of CSV files with everything revrook holds, without user accounts, names typed by people or the kept files. For a full backup that can be restored, copy the database and the evidence folder as described in the backup guide.</p>
+<form id="export-form" method="post" action="/system/export">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit">Download all data as CSV files</button>
+</form>
+<p><a href="/evidence/integrity">Check the evidence hash chains</a></p>
+
+<h2>Delete a client</h2>
+<p>Deleting a client removes its evidence, facts, reports, exports, kept files and its pseudonym key for good. Only the audit entry and the hash chain remain. This cannot be undone.</p>
+{% if clients %}
+<ul id="clients">
+{% for client in clients %}
+<li>
+<form method="post" action="/system/clients/{{ client.id }}/delete">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="confirm-{{ client.id }}">To delete {{ client.name }}, type its name</label>
+<input id="confirm-{{ client.id }}" name="confirm" type="text" maxlength="200" required autocomplete="off">
+<button type="submit">Delete {{ client.name }}</button>
+</form>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>There are no clients.</p>
+{% endif %}
+{% endblock %}

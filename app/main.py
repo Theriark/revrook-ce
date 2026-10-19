@@ -8,10 +8,11 @@ from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app import __version__, api
+from app import __version__, api, api_ops, metrics
 from app.checks.library import load_library
 from app.clock import Clock, utcnow
 from app.crypto import FieldCipher
@@ -22,14 +23,17 @@ from app.importers.registry import build_default_registry
 from app.limits import UploadSizeLimitMiddleware
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
+from app.system import worker_banner
 from app.ui import auth as ui_auth
 from app.ui import clients as ui_clients
 from app.ui import evidence as ui_evidence
 from app.ui import profiles as ui_profiles
 from app.ui import reports as ui_reports
 from app.ui import site as ui_site
+from app.ui import system as ui_system
 from app.ui.brand import STATIC_DIR
-from app.web import csrf_protect
+from app.web import clock_of, csrf_protect, session_factory
+from app.worker.heartbeat import read_status
 
 HX_FORBIDDEN = (
     "Your session has ended or this page is out of date, so nothing was "
@@ -72,8 +76,9 @@ def create_app(
         redoc_url=None,
         openapi_url=None,
         lifespan=lifespan,
-        # Every state-changing request needs the CSRF token (or a Bearer token).
-        dependencies=[Depends(csrf_protect)],
+        # Every state-changing request needs the CSRF token (or a Bearer token). A
+        # page request notes whether the worker has stopped reporting (the banner).
+        dependencies=[Depends(csrf_protect), Depends(worker_banner)],
     )
     app.state.settings = resolved
     app.state.engine = db_engine
@@ -119,11 +124,26 @@ def create_app(
 
     @app.get("/readyz")
     async def readyz(request: Request, response: Response) -> dict[str, str]:
-        """Readiness: 200 when the database answers, 503 otherwise."""
-        if await check_database(request.app.state.engine):
+        """Readiness: 200 when the database answers, 503 otherwise.
+
+        With ROLE=all this container is the whole product, so it is also not ready
+        while its worker has not reported a heartbeat in the last 90 seconds (I3).
+        The web role alone does not look at the worker: it may run elsewhere.
+        """
+        if not await check_database(request.app.state.engine):
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {"status": "not ready", "database": "unavailable"}
+        if request.app.state.settings.role != "all":
             return {"status": "ready", "database": "ok"}
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        return {"status": "not ready", "database": "unavailable"}
+        try:
+            async with session_factory(request)() as session:
+                worker = (await read_status(session, clock_of(request)())).state
+        except (SQLAlchemyError, OSError):
+            worker = "unknown"
+        if worker != "running":
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {"status": "not ready", "database": "ok", "worker": worker}
+        return {"status": "ready", "database": "ok", "worker": worker}
 
     app.include_router(ui_auth.router)
     app.include_router(ui_clients.router)
@@ -131,7 +151,10 @@ def create_app(
     app.include_router(ui_profiles.router)
     app.include_router(ui_reports.router)
     app.include_router(ui_site.router)
+    app.include_router(ui_system.router)
     app.include_router(api.router)
+    app.include_router(api_ops.router)
+    app.include_router(metrics.router)
     # Stylesheets, vendored scripts and brand files, served from the same origin
     # (CSP default-src 'self').
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

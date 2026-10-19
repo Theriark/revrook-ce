@@ -23,11 +23,13 @@ PHASE_1_TABLES = {
     "schedule",
     "worker_heartbeat",
 }
+# Phase 10 adds the table that makes "one reminder per threshold" a database rule.
+PHASE_10_TABLES = {"reminder_sent"}
 
 
-def test_the_metadata_holds_exactly_the_phase_1_tables() -> None:
+def test_the_metadata_holds_exactly_the_tables_of_phases_1_and_10() -> None:
     assert models.AppUser.__table__.metadata is Base.metadata
-    assert set(Base.metadata.tables) == PHASE_1_TABLES
+    assert set(Base.metadata.tables) == PHASE_1_TABLES | PHASE_10_TABLES
 
 
 def test_key_columns_are_bigint_so_alembic_check_stays_clean() -> None:

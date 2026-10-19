@@ -305,6 +305,19 @@ def test_a_name_may_not_hold_an_invisible_or_reordering_character(
     character: str,
 ) -> None:
     assert control_character(f"Alder{character}Finch") == character
+
+
+@pytest.mark.parametrize("character", INVISIBLE[:3])
+def test_a_note_may_not_hold_one_either_phase_10_carry_over_o_5(
+    character: str,
+) -> None:
+    # The bidi override, the zero-width space and the byte order mark are refused in
+    # every text that can reach a report, notes and owners included.
+    assert control_character(f"Alder{character}Finch", allow_breaks=True) == character
+
+
+@pytest.mark.parametrize("character", INVISIBLE[3:])
+def test_a_note_keeps_the_line_and_paragraph_separators(character: str) -> None:
     assert control_character(f"Alder{character}Finch", allow_breaks=True) is None
 
 
