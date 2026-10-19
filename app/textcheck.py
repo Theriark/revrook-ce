@@ -10,7 +10,8 @@ LINE_BREAKS = "\n\r\t"
 #
 # Three format characters are real parts of writing and stay allowed: the
 # zero-width non-joiner U+200C and the zero-width joiner U+200D (Persian, Indic
-# scripts and emoji sequences) and the soft hyphen U+00AD.
+# scripts and emoji sequences) and the soft hyphen U+00AD. They are written as
+# escapes so that no editor or transport can drop them.
 ALLOWED_FORMAT = frozenset({"‌", "‍", "­"})
 # The line and paragraph separators U+2028 and U+2029 are not a normal line break;
 # a name may not hold them (a note keeps the behaviour it had).

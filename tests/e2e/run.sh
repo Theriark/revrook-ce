@@ -13,3 +13,6 @@ bash "${ROOT}/scripts/e2e/phase_05.sh"
 bash "${ROOT}/scripts/e2e/phase_07.sh"
 bash "${ROOT}/scripts/e2e/phase_08.sh"
 bash "${ROOT}/scripts/e2e/phase_09.sh"
+bash "${ROOT}/scripts/e2e/phase_10.sh"
+# Backup and restore into a second database (docs/operations.md).
+bash "${ROOT}/scripts/restore_check.sh"

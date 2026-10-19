@@ -23,12 +23,18 @@ from app.settings import load_settings
 from app.ui import clients as ui_clients
 from app.ui import reports as ui_reports
 from app.ui import site as ui_site
+from app.ui import system as ui_system
 from helpers import NOW, create_admin, create_test_client, get_csrf, login, upload
 from tools import make_generic_fixtures
 
 UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
-# The routers of the client pages of phase 9; each route is checked against the app.
-PAGE_ROUTERS = (ui_clients.router, ui_reports.router, ui_site.router)
+# The routers of the pages of phases 9 and 10; each route is checked against the app.
+PAGE_ROUTERS = (
+    ui_clients.router,
+    ui_reports.router,
+    ui_site.router,
+    ui_system.router,
+)
 SAMPLE_VALUES = {
     "client_id": "1",
     "snapshot_id": "1",

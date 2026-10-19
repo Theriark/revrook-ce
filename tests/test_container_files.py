@@ -85,6 +85,8 @@ def test_no_service_depends_on_a_service_without_a_health_check() -> None:
     [
         "scripts/e2e/phase_00.sh",
         "scripts/e2e/phase_05.sh",
+        "scripts/e2e/phase_10.sh",
+        "scripts/restore_check.sh",
         "scripts/check_image_packages.sh",
     ],
 )
