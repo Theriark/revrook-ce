@@ -295,7 +295,9 @@ def test_a_count_takes_the_word_that_fits_it() -> None:
 # --- N-1: invisible and reordering characters in names ------------------------------
 
 
-INVISIBLE = ["\\u202e", "\\u200b", "\\ufeff", "\\u2028", "\\u2029"]
+# Bidi override, zero-width space, byte order mark, line and paragraph separator,
+# written with chr() so that no editor or transport can change them.
+INVISIBLE = [chr(0x202E), chr(0x200B), chr(0xFEFF), chr(0x2028), chr(0x2029)]
 
 
 @pytest.mark.parametrize("character", INVISIBLE)
@@ -311,11 +313,12 @@ async def test_a_client_named_with_a_bidi_override_is_refused(
 ) -> None:
     csrf = await sign_in(ui_browser, db_engine)
     refused = await ui_browser.post(
-        "/clients", data={"csrf_token": csrf, "name": "Alder\\u202eFinch"}
+        "/clients", data={"csrf_token": csrf, "name": "Alder" + chr(0x202E) + "Finch"}
     )
     assert refused.status_code == 422 and "U+202E" in refused.text
     msp = await ui_browser.post(
-        "/settings", data={"csrf_token": csrf, "msp_name": "Zero\\u200bWidth"}
+        "/settings",
+        data={"csrf_token": csrf, "msp_name": "Zero" + chr(0x200B) + "Width"},
     )
     assert msp.status_code == 422
     assert await count(db_engine, Client) == 0
