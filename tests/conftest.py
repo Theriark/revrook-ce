@@ -14,6 +14,7 @@ import socket
 import subprocess
 import sys
 from collections.abc import AsyncIterator
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -25,9 +26,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.db import make_engine
+from app.evidence.service import EvidenceContext
 from app.main import create_app
 from app.settings import Settings, load_settings
-from helpers import FakeClock
+from helpers import FakeClock, make_context
 from tools import sensitivity
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -212,6 +214,31 @@ def web_app(settings: Settings, db_engine: AsyncEngine, clock: FakeClock) -> Fas
 @pytest.fixture
 async def client(web_app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
     transport = httpx.ASGITransport(app=web_app)
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://testserver"
+    ) as http_client:
+        yield http_client
+
+
+@pytest.fixture
+def ui_settings(settings: Settings, tmp_path: Path) -> Settings:
+    """Settings whose evidence directory is private to the test (page tests)."""
+    return replace(settings, evidence_dir=str(tmp_path / "evidence"))
+
+
+@pytest.fixture
+def ui_ctx(ui_settings: Settings) -> EvidenceContext:
+    """An evidence context on the directory of the app, for seeding data around it."""
+    return make_context(ui_settings, Path(ui_settings.evidence_dir))
+
+
+@pytest.fixture
+async def ui_browser(
+    ui_settings: Settings, db_engine: AsyncEngine, clock: FakeClock
+) -> AsyncIterator[httpx.AsyncClient]:
+    """A browser (cookies kept) on an application that has the test's settings."""
+    app: FastAPI = create_app(ui_settings, engine=db_engine, clock=clock)
+    transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport, base_url="http://testserver"
     ) as http_client:
