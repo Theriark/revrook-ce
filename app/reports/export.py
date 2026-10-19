@@ -10,6 +10,11 @@ against the stored hash every time it is read, so a copy that was altered on dis
 reported, never sent.
 
 The copy is what was sent. Nothing is rendered again to answer a download.
+
+An export takes the client's row lock before it writes anything (the same lock
+delete-per-client takes), so a client that is being deleted is waited for and the
+export then fails with ClientNotFoundError: no file is left behind without a row. A
+download names the client, and an export of another client is "not found".
 """
 
 import asyncio
@@ -23,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit import add_audit_event
 from app.evidence.errors import EvidenceError, EvidenceStorageError
 from app.evidence.files import FileStore, sha256_hex
+from app.evidence.locking import lock_client
 from app.models import ReportExport
 from app.reports.completeness import ensure_complete
 from app.reports.render import KINDS, render_report
@@ -33,6 +39,10 @@ MAX_SLUG = 40
 
 class ExportIntegrityError(EvidenceError):
     """The stored copy of an export is missing or does not match its hash."""
+
+
+class ExportNotFoundError(EvidenceError):
+    """There is no export with this id for this client."""
 
 
 @dataclass(frozen=True)
@@ -48,6 +58,7 @@ class ExportRecord:
     size_bytes: int
     storage_key: str
     exported_at: datetime
+    exported_by_id: int | None = None
 
 
 def _record(row: ReportExport) -> ExportRecord:
@@ -61,6 +72,7 @@ def _record(row: ReportExport) -> ExportRecord:
         size_bytes=row.size_bytes,
         storage_key=row.storage_key,
         exported_at=row.exported_at,
+        exported_by_id=row.exported_by_id,
     )
 
 
@@ -84,13 +96,15 @@ async def export_report(
     """Check, render and record one report. Returns the history line and the file.
 
     Raises ExportBlockedError (with every problem named) when the report claims more
-    than its evidence shows, ValueError for an unknown kind and EvidenceStorageError
-    when the copy cannot be written (nothing is recorded then). The caller's
-    transaction holds the row, so a rolled back export leaves no history line (the
-    copy is named by its hash and harmless on its own).
+    than its evidence shows, ValueError for an unknown kind, ClientNotFoundError when
+    the client is gone and EvidenceStorageError when the copy cannot be written
+    (nothing is recorded then). The caller's transaction holds the row, so a rolled
+    back export leaves no history line (the copy is named by its hash and harmless on
+    its own). The client's row lock is held from here to the end of that transaction.
     """
     if kind not in KINDS:
         raise ValueError(f"{kind!r} is not a kind of report; use one of {KINDS}")
+    await lock_client(session, client_id)
     ensure_complete(view)
     data = render_report(kind, view)
     digest = sha256_hex(data)
@@ -130,16 +144,17 @@ async def list_exports(session: AsyncSession, client_id: int) -> list[ExportReco
 
 
 async def read_export(
-    session: AsyncSession, files: FileStore, export_id: int
+    session: AsyncSession, files: FileStore, client_id: int, export_id: int
 ) -> tuple[ExportRecord, bytes]:
     """The history line and the stored copy, after checking the copy against its hash.
 
-    Raises ExportIntegrityError when there is no such export, the copy is missing or
-    the bytes do not hash to the recorded value.
+    Raises ExportNotFoundError when this client has no such export (an export of
+    another client is not found either) and ExportIntegrityError when the copy is
+    missing or the bytes do not hash to the recorded value.
     """
     row = await session.get(ReportExport, export_id)
-    if row is None:
-        raise ExportIntegrityError("There is no export with this id.")
+    if row is None or row.client_id != client_id:
+        raise ExportNotFoundError("There is no export with this id for this client.")
     try:
         data = await asyncio.to_thread(files.read, row.storage_key)
     except EvidenceStorageError:

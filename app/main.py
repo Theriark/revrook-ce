@@ -23,8 +23,11 @@ from app.limits import UploadSizeLimitMiddleware
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
 from app.ui import auth as ui_auth
+from app.ui import clients as ui_clients
 from app.ui import evidence as ui_evidence
 from app.ui import profiles as ui_profiles
+from app.ui import reports as ui_reports
+from app.ui import site as ui_site
 from app.ui.brand import STATIC_DIR
 from app.web import csrf_protect
 
@@ -117,8 +120,11 @@ def create_app(
         return {"status": "not ready", "database": "unavailable"}
 
     app.include_router(ui_auth.router)
+    app.include_router(ui_clients.router)
     app.include_router(ui_evidence.router)
     app.include_router(ui_profiles.router)
+    app.include_router(ui_reports.router)
+    app.include_router(ui_site.router)
     app.include_router(api.router)
     # Stylesheets, vendored scripts and brand files, served from the same origin
     # (CSP default-src 'self').

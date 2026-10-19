@@ -1,8 +1,8 @@
 """The disclaimer every report prints (rnd-report-3 section 3.8).
 
-It is printed in the footer of every page and in full on the last page. The wording is
-a draft to be reviewed by counsel before a release; changing it is a change of this
-file and of the golden reports.
+It is printed in the footer of every section and in full on the last page. The
+wording is a draft to be reviewed by counsel before a release; changing it is a
+change of this file and of the golden reports.
 """
 
 DISCLAIMER = (

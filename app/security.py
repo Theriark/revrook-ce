@@ -139,6 +139,10 @@ class SecurityHeadersMiddleware:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
                 for name, value in self.headers.items():
+                    if name == "Content-Security-Policy" and name in headers:
+                        # A route may set a policy of its own (the report preview
+                        # needs inline styles and forbids everything else).
+                        continue
                     headers[name] = value
             await send(message)
 
