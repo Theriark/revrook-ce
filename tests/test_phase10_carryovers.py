@@ -44,12 +44,19 @@ LEGITIMATE_NAMES = [
     "株式会社テスト",
     "شركة النور للتقنية",
     "חברת אור בע״מ",
-    "شرکت می‌خواهم",
-    "Mo­ore Ltd",
+    "شرکت می" + chr(0x200C) + "خواهم",
+    "Mo" + chr(0x00AD) + "ore Ltd",
     "Zoë O’Brien-Łukasiewicz",
 ]
 # Bidi controls, zero-width space, word joiner and the byte order mark (O-5).
-REFUSED_IN_TEXT = ["‮", "​", "⁠", "﻿", "‏", "⁦"]
+REFUSED_IN_TEXT = [
+    chr(0x202E),
+    chr(0x200B),
+    chr(0x2060),
+    chr(0xFEFF),
+    chr(0x200F),
+    chr(0x2066),
+]
 
 
 async def count(engine: AsyncEngine, model: type) -> int:
