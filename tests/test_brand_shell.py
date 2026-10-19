@@ -19,6 +19,7 @@ TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "app/ui/templates"
 TEMPLATE_NAMES = sorted(path.name for path in TEMPLATE_DIR.glob("*.html"))
 UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
 LINK_ATTRIBUTE = re.compile(r'\b(?:src|href|srcset|action)="([^"]*)"')
+TEMPLATE_EXPRESSION = re.compile(r"\{\{.*?\}\}")
 TITLE = re.compile(r"<title>(.*?)</title>")
 DENSITIES = frozenset({"1x", "2x"})
 LOGO_TAG = '<img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"'
@@ -76,6 +77,8 @@ def test_templates_load_nothing_from_another_origin(name: str) -> None:
     assert "http://" not in source
     assert "https://" not in source
     for value in LINK_ATTRIBUTE.findall(source):
+        # A template expression is one placeholder, so its spaces do not split a path.
+        value = TEMPLATE_EXPRESSION.sub("0", value)
         for url in value.replace(",", " ").split():
             if url in DENSITIES:
                 continue
