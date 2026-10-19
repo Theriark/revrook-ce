@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.audit import add_audit_event
 from app.checks.dnscheck import Resolver
 from app.checks.library import Library, load_library
+from app.clock import Clock, utcnow
 from app.crypto import FieldCipher
 from app.dns_resolver import make_resolver
 from app.dns_service import look_up_dns, require_client, store_dns_check
@@ -66,6 +67,10 @@ class JobContext:
     library: Library
     resolver: Resolver
     mailer: Mailer
+    # The time of a claim is read when it is made, not taken from the start of the
+    # run: a job may start long after the run did. Without a clock the run time
+    # is used (tests that fix the time).
+    clock: Clock | None = None
 
 
 def make_job_context(
@@ -84,6 +89,7 @@ def make_job_context(
         library=load_library(),
         resolver=make_resolver(settings.dns_resolver),
         mailer=send_mail,
+        clock=utcnow,
     )
 
 
@@ -131,9 +137,9 @@ def build_jobs(ctx: JobContext) -> dict[str, Job]:
         if recipient is None or not mail_configured(ctx.settings):
             return "skipped: no reminder address or no mail relay is set"
         async with ctx.session_factory() as session, session.begin():
-            claimed = await claim_reminders(
-                session, await due_reminders(session, now), now
-            )
+            due_now = await due_reminders(session, now)
+            claimed_at = now if ctx.clock is None else ctx.clock()
+            claimed = await claim_reminders(session, due_now, claimed_at)
         if not claimed:
             return "nothing is due"
         try:

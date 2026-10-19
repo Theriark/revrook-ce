@@ -17,6 +17,7 @@ from app.auth import (
     validate_new_credentials,
 )
 from app.models import AppUser
+from app.ratelimit import ConcurrencyGate
 from app.security import SessionData, new_csrf_token
 from app.ui.brand import available_brand_files
 from app.web import clock_of, current_session, session_factory, set_session_cookie
@@ -28,6 +29,8 @@ router = APIRouter()
 SETUP_TITLE = "Create the administrator"
 INVALID_LOGIN = "The username or password is not correct."
 SETUP_CLOSED = "Setup is closed: an administrator already exists. Sign in instead."
+LOGIN_BUSY = "Many sign-ins are being checked. Wait a few seconds, then retry."
+LOGIN_BUSY_RETRY_SECONDS = 5
 
 
 def redirect(url: str) -> RedirectResponse:
@@ -128,8 +131,25 @@ async def login_submit(
     password: Annotated[str, Form()] = "",
 ) -> Response:
     session = current_session(request)
-    async with session_factory(request)() as db, db.begin():
-        result = await authenticate(db, username, password, clock_of(request)())
+    # A sign-in holds a database connection while Argon2 checks the password, so a
+    # burst of parallel sign-ins could use up the pool. Only a few run at once; the
+    # others are told to wait, and nothing about them is checked or written.
+    gate: ConcurrencyGate = request.app.state.login_gate
+    if not gate.try_enter():
+        busy = render(
+            request,
+            "login.html",
+            {"title": "Sign in", "errors": [LOGIN_BUSY], "username": username},
+            session,
+            status_code=429,
+        )
+        busy.headers["Retry-After"] = str(LOGIN_BUSY_RETRY_SECONDS)
+        return busy
+    try:
+        async with session_factory(request)() as db, db.begin():
+            result = await authenticate(db, username, password, clock_of(request)())
+    finally:
+        gate.leave()
     if result.outcome == "ok" and result.user is not None:
         signed_in = redirect("/")
         set_session_cookie(

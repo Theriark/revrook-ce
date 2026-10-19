@@ -59,6 +59,8 @@ known-first-party = [
     "dns_helpers",
     "helpers",
     "html_structure",
+    "ref_plugin",
+    "repo_files",
     "tools",
     "ui_helpers",
 ]

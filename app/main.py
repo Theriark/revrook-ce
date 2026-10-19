@@ -6,9 +6,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import DataError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -19,8 +19,10 @@ from app.crypto import FieldCipher
 from app.db import check_database, make_engine
 from app.dns_resolver import make_resolver
 from app.evidence.files import FileStore
+from app.ext.registry import ExtensionRegistry, load_plugins
 from app.importers.registry import build_default_registry
 from app.limits import UploadSizeLimitMiddleware
+from app.ratelimit import ConcurrencyGate
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
 from app.system import worker_banner
@@ -49,17 +51,25 @@ REFUSED_HTML = (
     '<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!'
     "</span> The request was refused</p><p>{message}</p></div>"
 )
+OUT_OF_RANGE = "A value in the request is outside what revrook can store."
+# At most this many sign-ins are checked at once (each holds a database connection
+# while Argon2 runs); the others are told to retry.
+MAX_PARALLEL_LOGINS = 4
 
 
 def create_app(
     settings: Settings | None = None,
     engine: AsyncEngine | None = None,
     clock: Clock | None = None,
+    extensions: ExtensionRegistry | None = None,
 ) -> FastAPI:
     """Build the application.
 
     Without arguments it reads the environment, so a missing SECRET_KEY or
-    FERNET_KEY stops the process at startup (uvicorn --factory).
+    FERNET_KEY stops the process at startup (uvicorn --factory). The plugins of the
+    entry point group are loaded as well: a plugin that cannot be loaded stops the
+    start-up too, and with none installed (the Community Edition) there is nothing
+    to load.
     """
     resolved = settings or get_settings()
     db_engine = engine or make_engine(resolved.database_url)
@@ -87,6 +97,8 @@ def create_app(
     app.state.cipher = FieldCipher(resolved.fernet_key)
     app.state.session_codec = SessionCodec(resolved.secret_key)
     app.state.api_limiter = api.make_api_limiter()
+    app.state.login_gate = ConcurrencyGate(MAX_PARALLEL_LOGINS)
+    app.state.extensions = load_plugins() if extensions is None else extensions
     app.state.files = FileStore(resolved.evidence_dir)
     app.state.importers = build_default_registry()
     app.state.library = load_library()
@@ -116,6 +128,21 @@ def create_app(
                 headers={"Cache-Control": "no-store"},
             )
         return await http_exception_handler(request, error)
+
+    @app.exception_handler(DataError)
+    async def out_of_range(request: Request, error: DataError) -> Response:
+        """A value the database cannot hold is a 422, never a 500.
+
+        The routes bound their ids, so this is the net under them: an id or a number
+        past what a column stores reaches the database as a data error.
+        """
+        if request.headers.get("hx-request") == "true":
+            return HTMLResponse(
+                REFUSED_HTML.format(message=html.escape(OUT_OF_RANGE)),
+                status_code=422,
+                headers={"Cache-Control": "no-store"},
+            )
+        return JSONResponse({"detail": OUT_OF_RANGE}, status_code=422)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:

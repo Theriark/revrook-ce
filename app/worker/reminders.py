@@ -7,9 +7,11 @@ days and 0 days (the day it goes stale) before `expires_at`
 threshold crossing: the row (item, threshold) of `reminder_sent` is inserted before
 the message goes out, and the primary key refuses a second insert, so two runs, two
 workers or a retry cannot send the same reminder twice. When the message cannot be
-sent the rows are removed again and the next run tries once more. A revision of an
-item (a renewal that keeps the item and moves `expires_at`) starts a new cycle: the
-rows sent before the revision are dropped, so the next year is reminded again.
+sent the rows are removed again and the next run tries once more. `sent_at` is the
+time the rows were claimed. A renewal (a revision that moves `expires_at`) starts a
+new cycle: a row sent more than its threshold plus a day before `expires_at` belongs
+to an earlier expiry and is dropped, so the next year is reminded again. A correction
+that keeps the same expiry does not clear anything.
 
 An item seen for the first time at 5 days left has crossed 30 and 7: one line, with
 both thresholds recorded. A run sends one message with every client, not one per
@@ -18,14 +20,14 @@ item, and the message holds client names, source names and dates only.
 
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from sqlalchemy import delete, func, select, tuple_
+from sqlalchemy import delete, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.evidence.expiry import days_left, reminder_thresholds_due
-from app.models import Client, EvidenceItem, EvidenceRevision, ReminderSent
+from app.models import Client, EvidenceItem, ReminderSent
 
 SUBJECT = "revrook: evidence is about to expire or has expired"
 MAX_LINES = 200
@@ -73,28 +75,32 @@ async def due_reminders(session: AsyncSession, now: datetime) -> list[Reminder]:
     if not candidates:
         return []
     item_ids = [row.id for row in candidates]
-    # A revision keeps the item and moves its expiry: it starts a new cycle. A
-    # reminder row sent before the newest revision belongs to the old expiry, so
-    # it is dropped here (inside the transaction of the claim) and the thresholds
-    # of the new expiry can be sent again.
-    newest_revision = (
-        select(func.max(EvidenceRevision.created_at))
-        .where(EvidenceRevision.item_id == ReminderSent.item_id)
-        .correlate(ReminderSent)
-        .scalar_subquery()
-    )
-    await session.execute(
-        delete(ReminderSent).where(
-            ReminderSent.item_id.in_(item_ids),
-            ReminderSent.sent_at < newest_revision,
-        )
-    )
+    expiry = {row.id: row.expires_at for row in candidates}
+    # A renewal keeps the item and moves its expiry: it starts a new cycle. A
+    # threshold is crossed when fewer than threshold + 1 whole days are left (days
+    # are rounded down), so it is never sent earlier than that before the expiry. A
+    # row with sent_at before that moment was sent for an earlier expiry. It is
+    # dropped here (inside the transaction of the claim) and the thresholds of the
+    # new expiry can be sent again. A correction that keeps the expiry leaves the
+    # rows alone, so nothing is mailed twice.
     sent_rows = await session.execute(
-        select(ReminderSent.item_id, ReminderSent.threshold_days).where(
-            ReminderSent.item_id.in_(item_ids)
-        )
+        select(
+            ReminderSent.item_id, ReminderSent.threshold_days, ReminderSent.sent_at
+        ).where(ReminderSent.item_id.in_(item_ids))
     )
-    sent = {(item_id, threshold) for item_id, threshold in sent_rows.all()}
+    sent: set[tuple[int, int]] = set()
+    old: list[tuple[int, int]] = []
+    for item_id, threshold, sent_at in sent_rows.all():
+        if sent_at < expiry[item_id] - timedelta(days=threshold + 1):
+            old.append((item_id, threshold))
+        else:
+            sent.add((item_id, threshold))
+    if old:
+        await session.execute(
+            delete(ReminderSent).where(
+                tuple_(ReminderSent.item_id, ReminderSent.threshold_days).in_(old)
+            )
+        )
     reminders: list[Reminder] = []
     for row in candidates:
         crossed = reminder_thresholds_due(row.expires_at, now)

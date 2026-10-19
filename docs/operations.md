@@ -63,7 +63,8 @@ GET    /api/v1/export                              the data export (see below)
 
 A snapshot request is a one-time schedule (`@once`) that the worker runs at its next
 look, normally within seconds. Asking again while one is waiting returns the waiting
-one.
+one. The look for a waiting request and the insert of a new one are one transaction
+under the lock of the client, so two requests at once queue one snapshot.
 
 ## System page and the stale-worker banner
 
@@ -86,11 +87,13 @@ when it is below half the life of the item, so an automatic export that is stale
 
 A reminder is sent once per threshold crossing. The pair (item, threshold) is a primary
 key in `reminder_sent` and is inserted before the message goes out; if the message
-cannot be sent the rows are removed and the next run tries again. When an item is
-renewed (a new revision of a manual artefact or an attestation moves its expiry), the
-rows sent before the revision are dropped and its thresholds are reminded again for the
-new expiry. One run sends one message to one address, with client names, source names
-and dates only.
+cannot be sent the rows are removed and the next run tries again. `sent_at` is the time
+the rows were claimed, read when the claim is made. When an item is renewed (a new
+revision of a manual artefact or an attestation moves its expiry later), the rows sent
+for the old expiry are dropped and its thresholds are reminded again for the new expiry.
+A correction that keeps the same expiry is not a renewal: nothing is cleared and
+nothing is mailed twice. One run sends one message to one address, with client names,
+source names and dates only.
 
 To turn reminders on:
 
@@ -130,6 +133,37 @@ apostrophe so a spreadsheet does not run it. Each export is an audit event (`dat
 
 The export is for reading and moving data, not for restoring: use the backup below for
 that.
+
+The export is built as a stream. Each table is read from a cursor and written into the
+zip through a buffer of 64 KiB, in a temporary file that stays in memory up to 8 MiB
+and then goes to `/tmp`, and the answer is sent from that file in pieces. Memory use
+is therefore about 8 MiB plus one buffer, whatever the size of the data (the compose
+stack mounts `/tmp` as a tmpfs, so a large export uses memory there until it has been
+sent). The CSV text of one export may not exceed 256 MiB before compression: past that
+the export is refused with 413 and nothing is audited. An installation that large takes
+a database backup instead (below).
+
+## Limits
+
+Every number below is enforced in code and has a test (`docs/security-review.md`).
+
+| What | Limit | Over it |
+| --- | --- | --- |
+| An evidence upload (API or profile editor) | `IMPORT_MAX_BYTES`, 20 MiB by default, plus 64 KiB of form overhead; it must declare its size | 413, or 411 without a size |
+| Rows of one imported file | `IMPORT_MAX_ROWS`, 200,000 | the file is refused |
+| Any other request body (POST, PUT, PATCH, DELETE) | 1 MiB; a body sent in chunks without a size is refused | 413, or 411 |
+| An id in an address or a request body | 1 to 9223372036854775807 | 422 (a value the database still refuses is also 422) |
+| A report period | 400 days, and it may not end in the future | 422 |
+| The data export | 256 MiB of CSV text before compression | 413 |
+| API requests | 120 requests a minute per token | 429 with `Retry-After` |
+| Sign-ins checked at once | 4 in one process (each holds a database connection while Argon2 runs) | 429 with `Retry-After: 5`, nothing is checked or written |
+| Failed sign-ins | 5 lock the account for 5 minutes | 429 |
+| A password | 12 to 256 characters | refused |
+
+Notes typed in the report builder are saved on every change, so the end of a session
+(it lasts 12 hours) loses nothing that was typed before it ended. A save made after the
+session ended is refused with 403 and a message that asks for a reload; sign in again
+and the earlier notes are there.
 
 To delete one client, open `/system`, type its exact name and press the button. Its
 evidence, facts, reports, exports, kept files and pseudonym key go; the audit entry
@@ -225,6 +259,13 @@ copy equals the folder, and (5) runs `verify-chain` against the restored databas
 requires the same chains, record counts and head hashes as the live database. It needs
 `docker`, a running stack (the same one `tests/e2e/run.sh` uses), and takes about half a
 minute. It never reads or writes anything of the live database except the dump.
+
+The script gives the database URL, password included, to the web container as an
+environment argument of `docker exec -e DATABASE_URL=...` (it runs `verify-chain` twice
+against the live database and once against the restored one). While a check runs, any
+user who can list processes on the Docker host can read that URL in the process list.
+Run the check on a host you administer alone, or with a database user whose password
+you change afterwards.
 
 A restore that has never been tried is not a backup: run the check after every change
 to the database schema, and the restore itself once on another machine before you rely
