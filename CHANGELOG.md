@@ -20,20 +20,20 @@ No version has been released: there is no tag, no GitHub release and no publishe
 - Operations: a scheduler, expiry reminders by mail, retention purge, a full data export without personal identifiers, deletion per client, optional Prometheus metrics, a system page with a stale-worker banner, an optional outside heartbeat, and a backup and restore guide with a script that proves a restore.
 - Extension API version 1 with seven extension points and plugin loading through an entry point group ([docs/extension-api.md](docs/extension-api.md)).
 - Documentation: quick start, install, configuration, upgrade, security review and a mapping policy, with an index in the README. `scripts/demo.sh` loads one synthetic client so that a new installation has something to look at.
-- `verify-mappings` command: lists the mapping rows nobody has verified, checks every NIST identifier against the pinned copy of its primary source and keeps the register of verified rows equal to the control file.
+- `verify-mappings` command: lists the mapping rows nobody has verified, checks every NIST identifier against the pinned names extract (a consistency check against the 32 CSF and 26 SP 800-171 identifiers transcribed from the catalog at the recorded commit; it is not a comparison with the full catalog) and keeps the register of verified rows equal to the control file.
 - An upgrade test that seeds a database at each earlier schema revision, upgrades it to the newest and checks that no row is lost.
 - `tests/test_docs.py`: links between pages, the configuration table against the settings, the README statements and the format of this file.
 
 ### Changed
 
 - `docs/operations.md` states how request bodies are framed: a body must declare its size in `Content-Length`, and any `Transfer-Encoding` is answered with 411.
-- The compose smoke test runs the quick start (`scripts/e2e/phase_11.sh`) and fails if it takes ten minutes or more.
+- The compose smoke test runs the quick start (`scripts/e2e/phase_11.sh`) and fails if it takes ten minutes or more. The script is for CI only: it leaves a fixed-password administrator account behind, so the quick start does not tell users to run it.
 
 ### Fixed
 
 - A request with `Transfer-Encoding: chunked` and a small `Content-Length` passed the body size check; any `Transfer-Encoding` is now refused with 411.
 - A plugin that fails to load no longer chains its own error into the message; only its name and the class of the error are reported.
-- A bearer header on a page no longer skips the CSRF check; only paths under `/api/` do.
+- A bearer token on a page no longer skips the CSRF check; only paths under `/api/` do.
 - An API id past 2^63 - 1 gave a 500; it is now refused with 422.
 
 ### Security

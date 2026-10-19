@@ -74,6 +74,7 @@ SETTING_ROW = re.compile(r"^\| `([A-Z][A-Z0-9_]+)` \| ([^|]+) \|", re.MULTILINE)
 EDITION_NAMES = re.compile(
     r"revrook[-_.]ee|enterprise edition|ee[-_]only", re.IGNORECASE
 )
+EDITION_ABBREVIATION = re.compile(r"\bEE\b")
 RELEASED = re.compile(r"^\[\d+\.\d+\.\d+\] - \d{4}-\d{2}-\d{2}$")
 TOKEN_OUTPUT = re.compile(r"(echo|printf|fail)\b[^|]*\$\{token\}")
 
@@ -200,9 +201,11 @@ def test_the_readme_makes_the_statements_the_plan_asks_for() -> None:
     assert [statement for statement in STATEMENTS if statement not in text] == []
 
 
-@pytest.mark.parametrize("name", CHECKED)
-def test_no_page_names_a_later_edition(name: str) -> None:
-    assert EDITION_NAMES.search(read(ROOT / name)) is None
+@pytest.mark.parametrize("page", PAGES, ids=PAGE_IDS)
+def test_no_page_names_a_later_edition(page: Path) -> None:
+    text = read(page)
+    assert EDITION_NAMES.search(text) is None
+    assert EDITION_ABBREVIATION.search(text) is None
 
 
 def test_the_changelog_follows_keep_a_changelog() -> None:
@@ -217,6 +220,29 @@ def test_the_changelog_follows_keep_a_changelog() -> None:
     assert set(kinds) <= CHANGELOG_KINDS
 
 
+# --- the NIST check and the mapping documents -----------------------------------------
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        "app/checks/mappings.py",
+        "docs/mapping-verification.md",
+        "docs/release-candidate.md",
+        "CHANGELOG.md",
+    ),
+)
+def test_the_nist_check_is_described_as_a_names_extract_consistency_check(
+    name: str,
+) -> None:
+    text = " ".join(read(ROOT / name).lower().split())
+    assert "names extract" in text
+    assert "not a comparison with the full" in text
+    assert "pinned copy of its primary source" not in text
+    assert "pinned copy of the nist catalog" not in text
+    assert "the one nist publishes" not in text
+
+
 # --- the quick start ------------------------------------------------------------------
 
 
@@ -227,6 +253,18 @@ def test_the_compose_smoke_test_runs_the_quick_start() -> None:
     assert "scripts/demo.sh" in flow
     assert "LIMIT_SECONDS=600" in flow
     assert "bash scripts/demo.sh" in read(DOCS / "quick-start.md")
+
+
+@pytest.mark.parametrize("name", CHECKED)
+def test_no_page_tells_a_user_to_run_the_ci_flow(name: str) -> None:
+    # The flow leaves an administrator with a password written in the repository.
+    assert "bash scripts/e2e/phase_11.sh" not in read(ROOT / name)
+
+
+def test_the_quick_start_says_the_ci_flow_is_not_for_an_installation() -> None:
+    text = " ".join(read(DOCS / "quick-start.md").split())
+    assert "CI is the only place that runs it" in text
+    assert "Do not run it against a stack you keep" in text
 
 
 def test_the_demo_script_never_prints_its_token() -> None:

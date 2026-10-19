@@ -2,8 +2,9 @@
 
 revrook reads its settings once, from environment variables, when a role starts. A
 value that is not valid stops the start with a message that names every variable at
-fault and never prints a value. `tests/test_docs.py` fails when this page and
-`app/settings.py` disagree about a variable or a default.
+fault and never prints a value (`DNS_RESOLVER` is the one exception, see
+[Reading a start error](#reading-a-start-error)). `tests/test_docs.py` fails when this
+page and `app/settings.py` disagree about a variable or a default.
 
 Anything about people (the business name on the reports, the address that gets the
 reminders) is set in the web interface under **Settings**, not here.
@@ -78,3 +79,10 @@ The role exits with code 2 and one line such as
 `invalid configuration: SECRET_KEY is required; FERNET_KEY must be a URL-safe base64
 encoded 32-byte key`. Under compose, `docker compose logs web` shows it. The value of a
 variable is never in the line.
+
+The exception is `DNS_RESOLVER`. Its text is checked later, when the web role builds the
+application, and not when the settings are read. A value that is neither an IP address
+nor an `https://` address therefore stops the start with a Python traceback that ends in
+a `ValueError` (`DNS_RESOLVER must be an IP address or an https:// URL`, or a line about
+the DNS-over-HTTPS URL), not with the line above and not with exit code 2. The error
+text names the variable and does not repeat the value.

@@ -41,8 +41,8 @@ release waits for some is a decision for the maintainers.
 
 ## The two checks
 
-`python -m app.cli verify-mappings` reads the control file, the two NIST datasets and
-this page. It needs no database, no key and no network.
+`python -m app.cli verify-mappings` reads the control file, the two NIST names extracts
+and this page. It needs no database, no key and no network.
 
 ```bash
 python -m app.cli verify-mappings            # counts, source versions, problems
@@ -50,12 +50,22 @@ python -m app.cli verify-mappings --list     # also every unverified row
 python -m app.cli verify-mappings --strict   # exit 1 while any row is unverified
 ```
 
-**The primary-source check** covers the two NIST frameworks. Every identifier of every
-row is looked up in the pinned copy of the NIST catalog under `data/nist`, and the
-command prints how many of them the catalog knows, with the commit and the catalog
-version of the copy. This proves that an identifier exists in the version we cite and
-that its name is the one NIST publishes there. It does not prove that the control
-belongs under it; that is the judgement of the person who verifies the row.
+The command reads the control file, the extracts and this page from the repository, so
+run it in a checkout of the repository with its dependencies installed. The container
+image holds no `docs` folder, so inside the image the command exits 2.
+
+**The names-extract check** covers the two NIST frameworks. Every identifier of every
+row is looked up in the pinned names extract under `data/nist`: the 32 CSF 2.0
+subcategories and the 26 SP 800-171 Rev 3 requirements that the control file maps to,
+with their names, transcribed from the NIST OSCAL catalogs at the commit recorded below.
+The command prints how many identifiers the extract knows, with the commit and the
+catalog version of the extract. This is a consistency check: the extract holds only the
+identifiers that are mapped, so it shows that every mapped identifier has a name and that
+the control file and the extract agree. It is not a comparison with the full NIST
+catalog, and the command does not re-check that the extract matches the catalog; the
+person who verifies a row reads the identifier at the publisher's source. Nor does it
+prove that the control belongs under the identifier; that is the judgement of the person
+who verifies the row.
 
 **The register check** compares the verified rows of the control file with the
 register below.
@@ -71,9 +81,10 @@ publisher's own page and records its version in the register.
 | NIST CSF 2.0 | `nist.gov/CSF/v2.0/json/NIST_CSF_v2.0_catalog-min.json` | commit `78650f02ad9321bb7b817846f8fbd4f2bcd620de` of github.com/usnistgov/oscal-content | 1.2.0 (OSCAL v1.2.2) |
 | NIST SP 800-171 Rev 3 | `nist.gov/SP800-171/rev3/json/NIST_SP800-171_rev3_catalog-min.json` | commit `78650f02ad9321bb7b817846f8fbd4f2bcd620de` of github.com/usnistgov/oscal-content | 1.1.0 (OSCAL v1.2.2) |
 
-The licence of both datasets is CC0 1.0 (a work of the US government); the rows of
-`LICENSES-CONTENT.md` give the date the licence text was read and the SHA-256 of each
-file. The command fails when this page stops naming the commit or the version of a
+The names extracts under `data/nist` were transcribed from these catalog files at the
+commit shown. The licence of both datasets is CC0 1.0 (a work of the US government); the
+rows of `LICENSES-CONTENT.md` give the date the licence text was read and the SHA-256 of
+each file. The command fails when this page stops naming the commit or the version of a
 dataset, so a new pin cannot be made without recording it here.
 
 ## Verifying a row

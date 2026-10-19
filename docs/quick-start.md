@@ -110,6 +110,9 @@ the **Profile editor** in the top bar. Plan the installation first: [install.md]
 | `scripts/demo.sh` says the example files could not be made | Python 3.11 or newer is needed on this machine. |
 | The page says the background worker has not reported | The worker container is not running: `docker compose ps`, then `docker compose logs worker`. |
 
-`bash scripts/e2e/phase_11.sh` runs steps 3 to 6 against a running stack and fails if
-the whole flow takes ten minutes or more. The compose smoke test of the merge gate runs
-it on every change.
+## Not for your installation
+
+`scripts/e2e/phase_11.sh` repeats steps 3 to 6 for the compose smoke test of the merge
+gate, and CI is the only place that runs it. Do not run it against a stack you keep: it
+creates an administrator account whose password is written in the repository, never
+removes it, and replaces the business name in **Settings**.

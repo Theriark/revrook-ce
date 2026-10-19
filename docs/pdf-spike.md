@@ -4,13 +4,14 @@ Question: can the Community Edition ship PDF reports made by WeasyPrint, with a 
 Noto Sans font, inside the `python:3.12-slim` image?
 
 **Decision for now: CE ships HTML with a print stylesheet only, and the PDF code is not
-in this repository.** The plan says "if ANY gate fails, CE ships HTML with print CSS only,
-the PDF code is not merged, and docs/pdf-spike.md records the evidence so R&D can decide
-the EE path (ReportLab)". No gate was shown to fail. Two gates could not be assessed by
-this work package (see the table) and the other four were never measured in a run whose
-numbers are recorded, so every gate is **not assessed**. HTML only is the safe shipping
-format while that is so. Whether a gate that was not assessed counts as failed is a
-question for R&D, and so is who reads the licences; this document does not answer it.
+in this repository.** The plan says that if any gate fails, CE ships HTML with print CSS
+only, the PDF code is not merged, and this page records the evidence so that R&D can
+decide the PDF path for a later edition (ReportLab). No gate was shown to fail. Two gates
+could not be assessed by this work package (see the table) and the other four were never
+measured in a run whose numbers are recorded, so every gate is **not assessed**. HTML only
+is the safe shipping format while that is so. Whether a gate that was not assessed counts
+as failed is a question for R&D, and so is who reads the licences; this document does not
+answer it.
 
 ## The gates
 
@@ -57,8 +58,8 @@ warning, never a failure.
 
 None is recorded. The script was not run in a run whose log is kept with the change that
 introduced it, and no figure is quoted here. Run it, then record the `SPIKE` lines, the
-date and the machine in this section. The numbers would inform the EE decision; the
-licence and font gates would still need to be assessed.
+date and the machine in this section. The numbers would inform the decision for a later
+edition; the licence and font gates would still need to be assessed.
 
 ## What CE ships instead
 
@@ -72,7 +73,7 @@ licence and font gates would still need to be assessed.
   every section of both reports by `tests/test_reports.py`). A PDF text-extraction test
   is not written: there is no PDF to extract from.
 
-## What R&D needs to decide for EE
+## What R&D needs to decide for a later edition
 
 1. Whether a gate that was not assessed counts as failed, and who reads the primary
    licence files (WeasyPrint, Pango, HarfBuzz and the other libraries it loads, and the

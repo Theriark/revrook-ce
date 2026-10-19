@@ -6,9 +6,13 @@ an external identifier only for a row that a person marked verified
 keeps a marked row honest:
 
 * it lists the rows that are still unverified, framework by framework;
-* for the two NIST frameworks it checks every identifier against the pinned copy of
-  the primary source (the OSCAL catalogs under data/nist, each with its commit and
-  catalog version) and reports those versions;
+* for the two NIST frameworks it checks every identifier against the pinned names
+  extract (data/nist: the 32 CSF subcategories and the 26 SP 800-171 requirements
+  that the control file maps to, with their names, transcribed from the OSCAL
+  catalogs at the recorded commit) and reports the commit and catalog version of the
+  extract. This is a consistency check between the control file and the extract, not
+  a comparison with the full catalog; whether the extract matches the catalog is not
+  re-checked here;
 * it requires every row marked verified to have a line in the register of
   docs/mapping-verification.md (the source and its version, the date it was read and
   the person who read it), and every line of the register to match a verified row.
@@ -83,7 +87,7 @@ class RegisterRow:
 
 @dataclass(frozen=True)
 class Resolution:
-    """How many identifiers of one NIST framework the pinned source knows."""
+    """How many identifiers of one NIST framework the pinned extract knows."""
 
     framework: str
     rows: int
@@ -107,7 +111,7 @@ def unverified(library: Library) -> tuple[Entry, ...]:
 
 
 def unpinned_frameworks(library: Library) -> list[str]:
-    """Frameworks with rows but no pinned primary-source dataset in the repository."""
+    """Frameworks with rows but no pinned names extract in the repository."""
     used = {entry.key.framework for entry in entries(library)}
     return sorted(used - set(DATASETS))
 
@@ -143,10 +147,13 @@ def unverified_lines(library: Library) -> list[str]:
 def resolve_nist_rows(
     library: Library, references: Mapping[str, ReferenceSet]
 ) -> list[Resolution]:
-    """For each NIST framework: how many mapped identifiers the pinned source knows.
+    """For each NIST framework: how many mapped identifiers the pinned extract knows.
 
-    This is the identifier-level primary-source check. Whether a control belongs
-    under an identifier is a judgement that only a person who read the source makes.
+    This is a consistency check between the control file and the pinned names
+    extract, which holds only the identifiers that the control file maps. It is not
+    a comparison with the full NIST catalog, and it does not re-check that the
+    extract matches the catalog. Whether a control belongs under an identifier is a
+    judgement that only a person who read the source makes.
     """
     found: list[Resolution] = []
     for key in DATASETS:

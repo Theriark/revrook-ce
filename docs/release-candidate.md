@@ -34,13 +34,16 @@ The plan also asks for an upgrade test from the previous tag. No tag exists, so
 
 There are 321 mapping rows and none is verified, so no report prints an outside
 identifier. `python -m app.cli verify-mappings` shows the state, and checks every NIST
-identifier against the pinned copy of its primary source. CIS, ISO/IEC 27001, Cyber
-Essentials and NIS2 have no pinned source and need a person to read the publisher's page
-([mapping-verification.md](mapping-verification.md)). The plan says the crew marks the
-rows it confirmed. This phase built the command and the register and marked no row,
-because a row is marked by someone who has read the source against the control. Whether a
-first release waits for some verified rows is a decision for the maintainers, and
-`verify-mappings --strict` is the gate if they want one.
+identifier against the pinned names extract. That is a consistency check, not a
+comparison with the full NIST catalog: the extract holds the 32 CSF and 26 SP 800-171
+identifiers that the control file maps, transcribed from the catalog at the recorded
+commit, and its fidelity to the catalog is not re-checked here. CIS, ISO/IEC 27001,
+Cyber Essentials and NIS2 have no pinned source and need a person to read the
+publisher's page ([mapping-verification.md](mapping-verification.md)). The plan says the
+crew marks the rows it confirmed. This phase built the command and the register and
+marked no row, because a row is marked by someone who has read the source against the
+control. Whether a first release waits for some verified rows is a decision for the
+maintainers, and `verify-mappings --strict` is the gate if they want one.
 
 ## Release workflow check
 
@@ -89,6 +92,11 @@ Findings. None is fixed here: the workflow files belong to the platform engineer
 - **R8, the licence page is behind.** `docs/licences.md` still lists packages as not read
   (for example openpyxl, hypothesis and the PDF libraries) and an open decision about
   certifi. Bring it up to date or close each item before a release.
+- **R9, the `production` environment must be protected before the switch.**
+  `promote-production.yml` runs in the GitHub environment `production`. GitHub creates a
+  missing environment without any protection rule the first time a workflow uses it, so
+  create the environment with required reviewers before `PRODUCTION_ENABLED` is set to
+  `true`; otherwise the workflow would run without a human approval.
 
 ## Before a first release
 
@@ -96,8 +104,10 @@ Findings. None is fixed here: the workflow files belong to the platform engineer
 2. The maintainers decide whether some mapping rows must be verified first.
 3. The platform engineer adds the version guard (R2) and the production deployment step
    (R1) when production is authorised.
-4. `docs/licences.md` is brought up to date (R8).
-5. The version is set in `pyproject.toml` in a reviewed change, and the Unreleased
+4. The `production` environment is created with required reviewers before
+   `PRODUCTION_ENABLED` is set to `true` (R9).
+5. `docs/licences.md` is brought up to date (R8).
+6. The version is set in `pyproject.toml` in a reviewed change, and the Unreleased
    section of the [CHANGELOG](../CHANGELOG.md) becomes the section of that version.
-6. `Promote - Stage` is run from `development` with the digest that CI recorded, the
+7. `Promote - Stage` is run from `development` with the digest that CI recorded, the
    human QA of the product follows, and only then the production workflow.

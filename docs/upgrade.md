@@ -46,7 +46,9 @@ curl -fsS http://localhost:8080/readyz
 database and the evidence volume alone. The log of the web role shows the migrations it
 ran. `verify-chain` reads the hash chain of every client and must say `intact` for each
 ([operations.md](operations.md#restore) explains the output). `/readyz` is the last
-word: it answers 200 only when the database answers and a worker has reported.
+word: it answers 200 when the database answers. A process that runs both roles
+(`ROLE=all`) also needs a worker to have reported; the compose web service runs
+`ROLE=web` and does not wait for one, so check the worker with `docker compose ps`.
 
 With a different setup the steps are the same in spirit: stop the old container, start
 the new image with the same environment and the same volumes, watch the log, run
