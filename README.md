@@ -17,3 +17,7 @@ Revrook produces a configuration evidence summary. It is not a certification, au
 - Contribution rules: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Reporting a vulnerability: [SECURITY.md](SECURITY.md)
 - CI/CD flow and known gaps: [docs/ci-cd.md](docs/ci-cd.md)
+
+## Running it
+
+- Worker, reminders, retention, metrics, backup and restore: [docs/operations.md](docs/operations.md)

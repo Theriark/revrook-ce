@@ -11,6 +11,9 @@
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <label for="msp_name">The name printed on the cover of every report</label>
 <input id="msp_name" name="msp_name" type="text" maxlength="100" required value="{{ msp_name }}">
+<label for="reminder_email">Send the evidence expiry reminders to this email address (empty means no reminders)</label>
+<input id="reminder_email" name="reminder_email" type="email" maxlength="254" autocomplete="off" aria-describedby="reminder-help" value="{{ reminder_email }}">
+<small id="reminder-help">{% if mail_relay %}A mail relay is set, so reminders can be sent.{% else %}No mail relay is set (SMTP_HOST and SMTP_FROM), so no reminder is sent yet.{% endif %}</small>
 <button type="submit">Save</button>
 </form>
 

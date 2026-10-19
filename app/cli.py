@@ -142,7 +142,7 @@ def verify_controls_command() -> int:
     return 0
 
 
-def _serve_web(settings: Settings) -> int:  # pragma: no cover
+def _serve_web(settings: Settings, port: int) -> int:  # pragma: no cover
     # The first-run page needs the tables, so the web role brings the schema up
     # to date before it listens (a locked, one-at-a-time step; see app.migrate).
     upgrade_to_head()
@@ -150,7 +150,7 @@ def _serve_web(settings: Settings) -> int:  # pragma: no cover
         "app.main:create_app",
         factory=True,
         host="0.0.0.0",
-        port=PORT,
+        port=port,
         log_level=settings.log_level,
     )
     return 0
@@ -161,20 +161,34 @@ def _serve_worker(settings: Settings) -> int:  # pragma: no cover
     return 0
 
 
-def _serve_all() -> int:  # pragma: no cover
+def all_commands(port: int) -> list[list[str]]:
+    """The two commands of ROLE=all: the web role on `port` and the worker."""
+    base = [sys.executable, "-m", "app.cli"]
+    return [[*base, "web", "--port", str(port)], [*base, "worker"]]
+
+
+def _serve_all(port: int) -> int:  # pragma: no cover
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     signal.signal(signal.SIGINT, lambda *_: stop.set())
-    base = [sys.executable, "-m", "app.cli"]
-    return supervise([[*base, "web"], [*base, "worker"]], stop=stop)
+    return supervise(all_commands(port), stop=stop)
+
+
+def _add_port(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=PORT,
+        help=f"the port of the web interface (default {PORT})",
+    )
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="revrook")
     subcommands = parser.add_subparsers(dest="command")
-    subcommands.add_parser("web", help="serve the web interface on port 8080")
+    _add_port(subcommands.add_parser("web", help="serve the web interface"))
     subcommands.add_parser("worker", help="run the background worker")
-    subcommands.add_parser("all", help="run web and worker as two processes")
+    _add_port(subcommands.add_parser("all", help="run web and worker together"))
     subcommands.add_parser("migrate", help="bring the database schema up to date")
     subcommands.add_parser("verify-chain", help="verify the evidence hash chains")
     subcommands.add_parser(
@@ -202,16 +216,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
     command = args.command or settings.role
+    port = getattr(args, "port", PORT)
     if command == "migrate":
         upgrade_to_head()
         return 0
     if command == "verify-chain":
         return verify_chain_command(settings)
     if command == "web":
-        return _serve_web(settings)
+        return _serve_web(settings, port)
     if command == "worker":
         return _serve_worker(settings)
-    return _serve_all()
+    return _serve_all(port)
 
 
 if __name__ == "__main__":

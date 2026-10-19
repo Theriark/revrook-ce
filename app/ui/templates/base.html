@@ -36,6 +36,11 @@
 {% block nav %}{% endblock %}
 </nav>
 </header>
+{% if request.state.worker_stale %}
+<div class="container" id="worker-banner">
+<p class="rv-status-needs-attention" role="alert"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> The background worker has not reported for more than {{ request.state.worker_minutes }} minute{% if request.state.worker_minutes != 1 %}s{% endif %}. Scheduled checks, reminders and clean-up are paused. See <a href="/system">System</a>.</p>
+</div>
+{% endif %}
 <main id="main" class="container">
 {% block content %}{% endblock %}
 </main>

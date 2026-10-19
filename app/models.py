@@ -348,6 +348,27 @@ class Schedule(Base):
     last_run_at: Mapped[datetime | None] = optional_timestamp()
     next_run_at: Mapped[datetime | None] = optional_timestamp()
     created_at: Mapped[datetime] = timestamp_column()
+    # What the job needs besides its client: the mail domains of a DNS check.
+    config: Mapped[dict[str, Any]] = json_column()
+
+
+class ReminderSent(Base):
+    """An expiry reminder that was sent: one row per evidence item and threshold.
+
+    The primary key makes "once per threshold crossing" a database fact: a second
+    claim of the same item and threshold cannot be inserted. Deleting the item (or
+    its client) deletes its rows.
+    """
+
+    __tablename__ = "reminder_sent"
+
+    item_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("evidence_item.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    threshold_days: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sent_at: Mapped[datetime] = timestamp_column()
 
 
 class WorkerHeartbeat(Base):
