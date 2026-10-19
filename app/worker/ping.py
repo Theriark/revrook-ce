@@ -33,7 +33,7 @@ def _get(url: str) -> bool:
     )
     try:
         with urllib.request.urlopen(request, timeout=PING_TIMEOUT_SECONDS) as response:
-            return 200 <= response.status < 300
+            return bool(200 <= response.status < 300)
     except (urllib.error.URLError, OSError, ValueError):
         return False
 

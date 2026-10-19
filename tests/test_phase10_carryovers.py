@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONTROL = "PC-ACC-01"
 # Letters that are real writing and stay allowed in a name: accents, Chinese,
 # Arabic, Hebrew, and Persian with the zero-width non-joiner (U+200C) and a soft
-# hyphen (U+00AD) inside the word. Written as escapes so no editor can drop them.
+# hyphen (U+00AD) inside the word.
 LEGITIMATE_NAMES = [
     "José Álvarez & Hijos S.L.",
     "株式会社テスト",
@@ -58,7 +58,7 @@ async def count(engine: AsyncEngine, model: type) -> int:
         return int((await session.execute(query)).scalar_one())
 
 
-# --- N-1 / O-4: legitimate names stay allowed ------------------------------------------
+# --- N-1 / O-4: legitimate names stay allowed ---
 
 
 @pytest.mark.parametrize("name", LEGITIMATE_NAMES)
@@ -80,7 +80,7 @@ async def test_a_client_with_a_legitimate_non_ascii_name_is_created(
         assert list(stored.scalars()) == [name]
 
 
-# --- O-5: no invisible or reordering character in any text of a report ----------------------
+# --- O-5: no invisible or reordering character in any text of a report ---
 
 
 @pytest.mark.parametrize("character", REFUSED_IN_TEXT)
@@ -141,7 +141,7 @@ async def test_an_exception_owner_reason_and_control_refuse_invisible_characters
     assert await count(db_engine, ExceptionRecord) == 1
 
 
-# --- N-2: the signed-out pages go through the structure check ----------------------------------
+# --- N-2: the signed-out pages go through the structure check ---
 
 
 async def test_the_first_run_page_has_a_sound_structure_when_no_user_exists(
@@ -169,7 +169,7 @@ async def test_the_sign_in_page_has_a_sound_structure_once_a_user_exists(
     assert setup.status_code == 303 and setup.headers["location"] == "/login"
 
 
-# --- N-4: the 30 second twin of a snapshot belongs to one client and one state --------------------
+# --- N-4: the 30 second twin of a snapshot belongs to one client and one state ---
 
 
 async def test_another_client_with_the_same_state_gets_its_own_snapshot(
@@ -219,7 +219,7 @@ async def test_new_evidence_within_30_seconds_makes_a_new_snapshot(
     assert await count(db_engine, Snapshot) == 2
 
 
-# --- check 7: ROLE=all starts web and worker, and /readyz reflects the heartbeat -------------------
+# --- check 7: ROLE=all starts web and worker, and /readyz reflects the heartbeat ---
 
 
 def test_the_all_role_runs_the_web_role_and_the_worker_as_two_commands() -> None:
