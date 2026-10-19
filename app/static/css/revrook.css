@@ -307,6 +307,14 @@ body.rv-app {
   background-color: var(--rv-charcoal);
 }
 
+/* On a narrow phone the bar has no room for the badge next to the sign-out
+   button (they overlapped at 390px); the footer still names the edition */
+@media (max-width: 599px) {
+  .rv-app .rv-edition {
+    display: none;
+  }
+}
+
 /* Navigation: grouped links with an icon; the active one carries the violet rail */
 .rv-header nav,
 .rv-nav {
@@ -428,6 +436,7 @@ body.rv-app {
 
 .rv-user-note {
   font-size: 12px;
+  white-space: nowrap;
   color: var(--rv-stone);
   background-color: var(--rv-charcoal);
 }
@@ -525,13 +534,26 @@ body.rv-app {
     margin-top: 0;
   }
 
+  /* In the rail the name gets the whole width and the sign-out button its own
+     line, so a long user name is not cut short next to the button */
   .rv-user {
+    flex-wrap: wrap;
+    gap: 10px;
     padding: 14px 6px 0;
     border-top: 1px solid var(--rv-charcoal-soft);
   }
 
   .rv-user-text {
     flex: 1;
+  }
+
+  .rv-user .rv-inline-form {
+    flex-basis: 100%;
+  }
+
+  .rv-user .rv-button-quiet {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -1578,12 +1600,6 @@ body.rv-signed-out {
     height: 200px;
   }
 
-  .rv-auth-tagline {
-    font-size: 24px;
-    color: var(--rv-white);
-    background-color: var(--rv-charcoal);
-  }
-
   .rv-auth-points {
     display: block;
   }
@@ -1599,6 +1615,16 @@ body.rv-signed-out {
   .rv-signed-out .rv-content {
     align-items: center;
     padding: 24px 40px 64px;
+  }
+}
+
+/* The tagline grows to 24px only once the panel is wide enough for it (at 768px
+   the panel is about 300px and 24px text broke into five lines) */
+@media (min-width: 1024px) {
+  .rv-auth-tagline {
+    font-size: 24px;
+    color: var(--rv-white);
+    background-color: var(--rv-charcoal);
   }
 }
 

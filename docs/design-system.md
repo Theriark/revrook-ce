@@ -63,8 +63,10 @@ its context gets the app shell: the charcoal rail (`header.rv-header`) with the 
 logo, the "Community Edition" badge, the grouped navigation of `_nav.html` and the
 signed-in user with the sign-out button; then the page column with the stale-worker
 banner, `main.rv-content` and the footer with the disclaimer. From 1024 px the rail is
-a 248 px sidebar that stays in view; below that it is a charcoal bar with the
-navigation as a scrolling strip, so no menu is ever hidden behind a button.
+a 248 px sidebar that stays in view, with the sign-out button on its own line under the
+user name; below that it is a charcoal bar with the navigation as a scrolling strip, so
+no menu is ever hidden behind a button, and below 600 px the bar drops the edition
+badge (the footer still names the edition) so it never meets the sign-out button.
 
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
 panel with the stacked logo and three lines about the product on the left, the light
@@ -83,6 +85,14 @@ or a data: URL: the content security policy (`default-src 'self'`) blocks `data:
 images, which is why the control icons of Pico (select arrow, date picker, checkbox
 mark) were blank. The stylesheet switches every Pico icon variable off and shows the
 native controls instead, with `accent-color` for checkboxes and radios.
+
+Static files and caches. The two stylesheets and the two scripts are linked with a
+version query: `?v=` followed by `asset_version()` of `app/ui/brand.py`, a 12-character
+digest of the four files read once at start-up. A browser, and any cache in front of
+the installation, keeps a static file for hours; with the digest in the address a new
+version of a file has a new address, so a page is never shown with the stylesheet of
+the release before it. The brand files are not versioned: they are copies of the
+approved assets and do not change between releases.
 
 ## Components
 

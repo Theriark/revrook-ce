@@ -93,7 +93,7 @@ def render(name: str, brand_files: frozenset[str] = frozenset(BRAND_FILES)) -> s
         title="Sign in",
         errors=[],
         username="",
-        csrf_token="***REDACTED***",
+        csrf_token="synthetic-csrf-token",
         brand_files=brand_files,
     )
 
@@ -142,6 +142,21 @@ def test_motion_is_short_and_respects_reduced_motion() -> None:
     assert "@media (prefers-reduced-motion: reduce)" in CSS
 
 
+def test_the_narrow_bar_and_the_rail_make_room_for_the_sign_out_button() -> None:
+    # Seen on Development at 390px: the edition badge overlapped the sign-out
+    # button; at 1440px the button beside the name cut the user name short.
+    narrow = re.search(
+        r"@media \(max-width: 599px\) \{\n  \.rv-app \.rv-edition \{([^}]*)\}", CSS
+    )
+    assert narrow is not None and "display: none" in narrow.group(1)
+    rail = re.search(r"@media \(min-width: 1024px\) \{(.*?)\n\}\n", CSS, re.DOTALL)
+    assert rail is not None
+    block = rail.group(1)
+    assert re.search(r"\.rv-user \{[^}]*flex-wrap: wrap;", block)
+    assert re.search(r"\.rv-user \.rv-inline-form \{[^}]*flex-basis: 100%;", block)
+    assert re.search(r"\.rv-user \.rv-button-quiet \{[^}]*width: 100%;", block)
+
+
 # --- the shell --------------------------------------------------------------
 
 
@@ -165,7 +180,8 @@ def test_every_icon_the_templates_use_is_drawn_without_a_namespace() -> None:
 
 
 def test_the_shell_script_is_linked_and_plain() -> None:
-    assert '<script src="/static/js/revrook.js" defer></script>' in BASE
+    script = '<script src="/static/js/revrook.js?v={{ asset_version }}" defer></script>'
+    assert script in BASE
     for forbidden in ("eval(", "http", "fetch(", "XMLHttpRequest", "innerHTML"):
         assert forbidden not in SCRIPT, forbidden
     assert '"use strict"' in SCRIPT

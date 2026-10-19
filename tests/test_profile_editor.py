@@ -134,7 +134,8 @@ async def test_the_page_uses_the_brand_layout(
     assert match is not None
     assert match.group(1) == "Profile editor - revrook"
     assert 'class="rv-header"' in page.text
-    assert 'href="/static/css/revrook.css"' in page.text
+    # The stylesheet link carries the asset version (?v=<digest>), see brand.py.
+    assert 'href="/static/css/revrook.css?v=' in page.text
     assert 'alt="revrook"' in page.text or 'class="rv-wordmark"' in page.text
     assert 'href="/imports/profile-editor" aria-current="page"' in page.text
     assert 'name="csrf_token"' in page.text
