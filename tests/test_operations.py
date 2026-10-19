@@ -1,4 +1,4 @@
-"""Reminders, mail, purge, export, deletion, metrics and the outside heartbeat (phase 10).
+"""Reminders, mail, purge, export, deletion, metrics, outside heartbeat (phase 10).
 
 These tests need PostgreSQL (DATABASE_URL). The mail relay is a fake one on 127.0.0.1
 with a throwaway certificate, the heartbeat target is a local web server, the
@@ -91,7 +91,7 @@ def later(days: float) -> datetime:
     return NOW + timedelta(days=days)
 
 
-# --- the expiry reminders -----------------------------------------------------------------
+# --- the expiry reminders ---
 
 
 class Mailbox:
@@ -266,7 +266,7 @@ async def test_a_reminder_address_must_be_one_plain_address(
             await set_reminder_recipient(session, address, user_id=None, now=NOW)
 
 
-# --- mail: STARTTLS, always --------------------------------------------------------------
+# --- mail: STARTTLS, always ---
 
 
 class LineReader:
@@ -512,7 +512,7 @@ async def test_the_reminder_job_sends_through_the_relay_with_starttls(
     assert len(relay.messages) == 1 and CLIENT_NAME in relay.messages[0]
 
 
-# --- the outside heartbeat ---------------------------------------------------------------
+# --- the outside heartbeat ---
 
 
 @pytest.fixture
@@ -564,7 +564,7 @@ async def test_no_heartbeat_is_sent_without_an_address_or_with_a_wrong_one(
     assert seen == []
 
 
-# --- the retention purge -------------------------------------------------------------------
+# --- the retention purge ---
 
 
 def snapshot_row(client_id: int, created_at: datetime) -> Snapshot:
@@ -681,7 +681,7 @@ async def test_a_purge_of_an_empty_installation_is_quiet(
     assert await audit_since(db_engine, baseline) == []
 
 
-# --- the data export -------------------------------------------------------------------------
+# --- the data export ---
 
 TABLES = {
     "clients",
@@ -806,7 +806,7 @@ async def test_a_name_that_looks_like_a_formula_is_defused_in_the_export(
     assert rows_of(files["clients.csv"])[0]["name"] == "'=HYPERLINK(1+1)"
 
 
-# --- deleting one client ------------------------------------------------------------------------
+# --- deleting one client ---
 
 
 async def test_deleting_a_client_from_the_system_page_removes_it_and_is_audited(
@@ -846,7 +846,7 @@ async def test_deleting_a_client_from_the_system_page_removes_it_and_is_audited(
     assert survivors == ["Other Client Ltd"]
 
 
-# --- Prometheus metrics ------------------------------------------------------------------------
+# --- Prometheus metrics ---
 
 # The snapshot: a dashboard or an alert breaks when one of these names changes.
 METRIC_SNAPSHOT = [

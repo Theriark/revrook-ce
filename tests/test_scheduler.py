@@ -88,7 +88,7 @@ async def row_of(engine: AsyncEngine, schedule_id: int) -> Schedule:
     return row
 
 
-# --- check 1: each due schedule runs exactly once ------------------------------------
+# --- check 1: each due schedule runs exactly once ---
 
 
 async def test_a_due_schedule_runs_once_and_is_moved_forward(
@@ -248,7 +248,7 @@ async def test_the_default_schedules_are_created_once_and_never_overwritten(
     assert purge.cron == "0 5 * * *" and purge.enabled is False
 
 
-# --- the worker loop -------------------------------------------------------------------
+# --- the worker loop ---
 
 
 async def run_for(
@@ -306,7 +306,7 @@ async def test_the_heartbeat_goes_stale_after_ninety_seconds(
     assert after.age_seconds == pytest.approx(STALE_AFTER.total_seconds() + 1)
 
 
-# --- check 4: stopping the worker raises the banner within 3 minutes ----------------------
+# --- check 4: stopping the worker raises the banner within 3 minutes ---
 
 
 async def test_stopping_the_worker_raises_the_banner_within_three_minutes(
@@ -351,7 +351,7 @@ async def test_the_system_page_shows_the_worker_and_the_schedules(
     assert "Worker not reporting" in (await ui_browser.get("/system")).text
 
 
-# --- the schedules API ---------------------------------------------------------------------
+# --- the schedules API ---
 
 
 async def start(
