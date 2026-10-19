@@ -31,7 +31,9 @@ The object is a plugin instance, or a class that takes no arguments. It has:
 another API version, registers an object that does not implement its point, repeats a
 name, or raises while registering stops the start-up with `ExtensionError` and a message
 that names the plugin and the class of the error (never the text of the error, which
-could hold a secret).
+could hold a secret; the error itself is not chained to `ExtensionError`, so it does not
+reach the start-up log either). The plugin `name` must match the pattern above, or the
+load is refused. An `ExtensionError` that a plugin raises on its own is shown as written.
 
 ## The seven extension points
 

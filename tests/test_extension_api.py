@@ -9,6 +9,7 @@ import dataclasses
 import inspect
 import re
 import tomllib
+import traceback
 from dataclasses import dataclass
 from datetime import datetime
 from importlib.metadata import EntryPoint, entry_points
@@ -334,6 +335,14 @@ def test_a_plugin_that_cannot_be_used_stops_the_load_and_is_named(
     assert reason in str(raised.value)
 
 
+@pytest.mark.parametrize("bad", ["Bad Name", "", "1start", "x" * 41, "ünï", 5, None])
+def test_a_plugin_name_must_match_the_name_pattern(bad: object) -> None:
+    plugin = type("Named", (Quiet,), {"name": bad})
+    with pytest.raises(ExtensionError, match="odd needs a name") as raised:
+        load_plugins([FakePoint("odd", plugin)])
+    assert "lower-case letters, digits and dashes" in str(raised.value)
+
+
 def test_a_plugin_that_registers_a_bad_object_is_refused_by_name() -> None:
     class Greedy(Quiet):
         name = "greedy"
@@ -356,7 +365,46 @@ def test_a_plugin_that_raises_while_registering_is_refused_by_name() -> None:
         load_plugins([FakePoint("failing", Failing())])
     # The reason names the class of the error and never repeats its text.
     assert "RuntimeError" in str(raised.value)
-    assert "hunter2" not in str(raised.value)
+    assert_no_trace_of(raised.value, "hunter2")
+
+
+def assert_no_trace_of(error: BaseException, text: str) -> None:
+    """The text is in neither the message nor any error chained to it, as a log
+    would print the whole chain."""
+    assert error.__cause__ is None and error.__context__ is None
+    seen: BaseException | None = error
+    while seen is not None:
+        assert text not in str(seen) and text not in repr(seen)
+        seen = seen.__cause__ or seen.__context__
+
+
+@pytest.mark.parametrize(
+    "secret_error", [ImportError("token=hunter2"), RuntimeError("token=hunter2")]
+)
+def test_a_plugin_error_never_reaches_the_log_through_the_chain(
+    secret_error: Exception,
+) -> None:
+    class Failing(Quiet):
+        name = "failing"
+
+        def register(self, registry: ExtensionRegistry) -> None:
+            raise secret_error
+
+    with pytest.raises(ExtensionError) as register_failed:
+        load_plugins([FakePoint("failing", Failing())])
+    with pytest.raises(ExtensionError) as import_failed:
+        load_plugins([FakePoint("broken", error=secret_error)])
+    for raised in (register_failed.value, import_failed.value):
+        assert_no_trace_of(raised, "hunter2")
+        # What a start-up log prints for the error, chain included.
+        assert "hunter2" not in "".join(traceback.format_exception(raised))
+
+
+def test_a_plugin_error_without_a_chain_still_names_the_plugin() -> None:
+    with pytest.raises(ExtensionError, match="The plugin broken was refused") as raised:
+        load_plugins([FakePoint("broken", error=ImportError("token=hunter2"))])
+    assert str(raised.value).endswith("it raised ImportError.")
+    assert raised.value.__suppress_context__ is True
 
 
 def test_two_plugins_may_not_share_a_name() -> None:

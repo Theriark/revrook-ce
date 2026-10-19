@@ -303,7 +303,10 @@ async def test_a_correction_with_the_same_expiry_is_not_reminded_again(
     assert await remind(jobs, moment) == "sent 1 reminders in one message"
     assert await reminder_rows(db_engine) == {(item, 30), (item, 7)}
 
-    # A typing mistake in the note is corrected; the expiry stays as it was.
+    # A typing mistake in the note is corrected an hour after the reminder went out
+    # (a correction made at the same moment would not tell the old rule from the new
+    # one); the expiry stays as it was.
+    later = moment + timedelta(hours=1)
     correction = NewEvidence(
         source_code="training-statement",
         assurance=Assurance.ATTESTATION,
@@ -315,10 +318,10 @@ async def test_a_correction_with_the_same_expiry_is_not_reminded_again(
     )
     async with factory_of(db_engine)() as session, session.begin():
         revised = await add_revision(
-            session, ui_ctx, client_id, item, correction, moment
+            session, ui_ctx, client_id, item, correction, later
         )
     assert revised.expires_at == expires_at
-    assert await remind(jobs, moment) == "nothing is due"
+    assert await remind(jobs, later) == "nothing is due"
     assert await reminder_rows(db_engine) == {(item, 30), (item, 7)}
     assert len(mailbox.sent) == 1
 

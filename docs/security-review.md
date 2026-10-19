@@ -192,7 +192,7 @@ enforced and refused with a readable status:
 | --- | --- |
 | An evidence upload | 20 MiB by default (`IMPORT_MAX_BYTES`), refused before it is read |
 | Rows of one imported file | 200,000 |
-| Any other request body | 1 MiB (413; chunked without a size is 411) |
+| Any other request body | 1 MiB (413; any Transfer-Encoding, with or without a Content-Length, is 411) |
 | An id in an address or a body | 1 to 9223372036854775807, else 422; a value the database still refuses is 422 |
 | A report period | 400 days, not in the future (422) |
 | The data export | 256 MiB of CSV text before compression, streamed (413) |
@@ -205,8 +205,13 @@ other POST body could be as large as the sender liked (now 1 MiB for every POST,
 PATCH and DELETE); the data export was built whole in memory (now streamed through a
 64 KiB buffer into a temporary file and capped at 256 MiB). Low, fixed: an API id
 past 2^63 - 1 reached the database and gave a 500 (now bounded in the route, with a
-handler that turns a database data error into 422 as a net). A report period over 400
-days is refused with 422 and is now tested over HTTP.
+handler that turns a database data error into 422 as a net, and logs only the class of
+the error). A report period over 400 days is refused with 422 and is now tested over
+HTTP. Medium, fixed after the independent review (P11-11): a request that carried
+`Transfer-Encoding: chunked` next to a small `Content-Length` passed the size check,
+because the HTTP parser (h11) frames the body by Transfer-Encoding and uvicorn hands
+both headers on; any Transfer-Encoding is now refused with 411, and the test sends the
+request through a real uvicorn socket.
 
 **Test:** `tests/test_security_review.py::test_the_resource_limits_are_the_documented_numbers`,
 `tests/test_phase11_carryovers.py::test_an_id_past_the_database_range_is_refused_never_a_500`,
@@ -215,7 +220,9 @@ days is refused with 422 and is now tested over HTTP.
 `tests/test_phase11_carryovers.py::test_the_export_is_the_same_when_it_spills_to_disk_in_tiny_chunks`,
 `tests/test_phase11_carryovers.py::test_an_export_over_the_cap_is_413_and_is_not_audited`,
 `tests/test_phase11_carryovers.py::test_a_report_period_over_400_days_is_422_and_400_days_is_not`,
-`tests/test_limits.py::test_a_body_over_the_general_limit_is_refused_with_413`.
+`tests/test_limits.py::test_a_body_over_the_general_limit_is_refused_with_413`,
+`tests/test_limits.py::test_a_chunked_body_with_a_content_length_is_refused_over_a_socket`,
+`tests/test_limits.py::test_a_transfer_encoding_is_refused_with_411_whatever_the_length_says`.
 
 ## Findings
 
@@ -225,6 +232,7 @@ days is refused with 422 and is now tested over HTTP.
 | P11-1 | Resource limits | Medium | Request bodies other than uploads had no size cap | Fixed |
 | P11-2 | Resource limits | Medium | The data export was built whole in memory | Fixed |
 | P11-3 | Resource limits | Low | An API id past 2^63 - 1 gave a 500 | Fixed |
+| P11-11 | Resource limits | Medium | A chunked body with a small Content-Length passed the size check | Fixed |
 | N5 | CSRF | Low | A Bearer header on a page skipped the CSRF check | Fixed |
 | N2 | Authentication | Low | An account name can be told from the lockout | Accepted |
 | P11-4 | Authentication | Low | A signed cookie cannot be revoked before it expires (12 hours) | Accepted |
@@ -234,6 +242,8 @@ days is refused with 422 and is now tested over HTTP.
 | P11-8 | Secrets | Low | `scripts/restore_check.sh` shows the database URL in the host process list while it runs | Documented |
 | P11-9 | Secrets | Low | `GET /metrics` has no rate limit; its token length is its protection | Documented |
 | P11-10 | XSS | Info | A byte order mark is written as a literal in three files that read or test one | Accepted |
+| P11-12 | Authentication | Low | Four sign-ins at once fill the sign-in gate, so a sender can keep real sign-ins at 429 | Accepted |
+| P11-13 | Extension API | Low | A plugin runs in the process with full rights, and an error it raises as `ExtensionError` is shown as written | Accepted |
 
 ## Accepted exceptions
 
@@ -247,6 +257,16 @@ days is refused with 422 and is now tested over HTTP.
 - **P11-7.** Starlette answers an unhandled error from outside the middleware; the body
   is a fixed text with no data in it. No handler was added because the error is already
   the failure path.
+- **P11-12.** The gate (4 sign-ins checked at once per process) protects the database
+  connections from Argon2 work. A sender who keeps four sign-ins running can make real
+  sign-ins wait and get 429, but cannot get in, read data or lock an account. Closing it
+  needs a limit per address or a queue, which belong with a reverse proxy or the later
+  edition.
+- **P11-13.** A plugin is installed by the person who runs revrook and runs in the same
+  process with the same rights; nothing in Python can isolate it. The loader names the
+  plugin and the class of an error it raises and drops the error itself from the
+  chain, but an `ExtensionError` that a plugin raises on its own is the plugin's text
+  and is shown. Install only plugins you trust.
 - **P11-10.** A byte order mark is a real part of how the importers read files, and the
   tests that write one need it. `tests/test_phase11_carryovers.py` allows it in those
   three files only and refuses it, and every hidden or reordering character, anywhere

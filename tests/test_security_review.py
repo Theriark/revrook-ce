@@ -31,7 +31,7 @@ from app.evidence.service import EvidenceContext
 from app.limits import FORM_OVERHEAD_BYTES, MAX_BODY_BYTES
 from app.main import MAX_PARALLEL_LOGINS, create_app
 from app.ratelimit import ConcurrencyGate, SlidingWindowLimiter
-from app.security import hash_api_token
+from app.security import hash_api_token, verify_password
 from app.settings import Settings, SettingsError, load_settings
 from app.ui import auth as ui_auth
 from app.ui import clients as ui_clients
@@ -171,11 +171,27 @@ async def test_five_wrong_passwords_lock_the_account_even_for_the_right_one(
 
 
 async def test_a_password_over_the_length_limit_is_refused_without_a_hash(
-    client: httpx.AsyncClient, db_engine: AsyncEngine
+    client: httpx.AsyncClient,
+    db_engine: AsyncEngine,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     await create_admin(db_engine)
+    hashed: list[int] = []
+
+    def counting_verify(stored_hash: str, password: str) -> bool:
+        hashed.append(len(password))
+        return verify_password(stored_hash, password)
+
+    monkeypatch.setattr("app.auth.verify_password", counting_verify)
+    # A wrong password within the limit runs one Argon2 check, so the counter works.
+    short = await login(client, password=WRONG_PASSWORD)
+    assert short.status_code == 401
+    assert hashed == [len(WRONG_PASSWORD)]
+    hashed.clear()
+    # Over the limit it is a 401 as well, and no Argon2 check runs at all.
     answer = await login(client, password="x" * (MAX_PASSWORD_LENGTH + 1))
     assert answer.status_code == 401
+    assert hashed == []
 
 
 def test_the_gate_lets_in_up_to_its_limit_and_frees_a_place_on_leave() -> None:

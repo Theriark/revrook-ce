@@ -6,6 +6,7 @@ ones that read files. They use synthetic data only; nothing here leaves the mach
 
 import asyncio
 import io
+import logging
 import zipfile
 from functools import partial
 
@@ -36,17 +37,22 @@ from ui_helpers import make_report, seed_client, sign_in
 
 CONTROL = "PC-ACC-01"
 OVER_RANGE = [2**63, 99_999_999_999_999_999_999]
-# Characters that hide or reorder text: the soft hyphen, the zero-width and direction
-# marks, the bidi embeddings and overrides, the invisible operators and the bidi
-# isolates. Written as code points so that this file holds none of them itself.
+# Characters that hide or reorder text: the soft hyphen, the Arabic letter mark, the
+# Mongolian vowel separator, the zero-width and direction marks, the line and
+# paragraph separators, the bidi embeddings and overrides, the invisible operators,
+# the bidi isolates and the tag characters. Written as code points so that this file
+# holds none of them itself.
 INVISIBLE = tuple(
     chr(point)
     for point in (
         0x00AD,
+        0x061C,
+        0x180E,
         *range(0x200B, 0x2010),
-        *range(0x202A, 0x202F),
+        *range(0x2028, 0x202F),
         *range(0x2060, 0x2065),
         *range(0x2066, 0x206A),
+        *range(0xE0000, 0xE0080),
     )
 )
 BYTE_ORDER_MARK = chr(0xFEFF)
@@ -116,15 +122,22 @@ async def test_the_largest_id_is_a_404_not_an_error(
 
 
 async def test_a_data_error_that_gets_through_is_422_not_500(
-    web_app: FastAPI, client: httpx.AsyncClient
+    web_app: FastAPI, client: httpx.AsyncClient, caplog: pytest.LogCaptureFixture
 ) -> None:
     async def boom() -> None:
         raise DataError("SELECT 1", {}, Exception("value out of range"))
 
     web_app.add_api_route("/boom", boom)
-    answer = await client.get("/boom")
+    with caplog.at_level(logging.WARNING, logger="revrook.web"):
+        answer = await client.get("/boom")
     assert answer.status_code == 422
     assert answer.json() == {"detail": OUT_OF_RANGE}
+    # The class of the error is logged, so a schema bug is not silent; its text and
+    # statement are not, because they can hold the value that was sent.
+    logged = [r.getMessage() for r in caplog.records if r.name == "revrook.web"]
+    assert logged == ["A database data error was refused with 422: Exception"]
+    assert "value out of range" not in caplog.text
+    assert "SELECT 1" not in caplog.text
     page = await client.get("/boom", headers={"HX-Request": "true"})
     assert page.status_code == 422
     assert "outside what revrook can store" in page.text
