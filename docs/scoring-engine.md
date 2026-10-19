@@ -82,7 +82,7 @@ cases are drawn with `random.Random` and a fixed seed.
 ## Limits
 
 - The reason of a not-applicable decision is not escaped here; the reports of phase 8
-  escape every text they print.
+  escape every text they print (`docs/reports.md`, tested with a hostile reason).
 - Freshness is measured from the evidence time to the pack date in exact time, so a
   control can be stale for less than a day (`age_days` of the check engine is whole
   days).
