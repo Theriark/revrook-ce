@@ -51,6 +51,9 @@ HUNDRED = Fraction(100)
 ZERO = Fraction(0)
 ONE = Fraction(1)
 COVERED_STATUSES = frozenset({"pass", "partial", "fail"})
+# A maximum age beyond one hundred years is a mistake, not a policy; it also keeps
+# every date calculation far from the limits of a timedelta.
+MAX_AGE_DAYS = 36500
 
 
 def require_aware(value: datetime, name: str) -> datetime:
@@ -165,9 +168,15 @@ def band_of(score: Fraction, thresholds: Thresholds) -> str:
     return thresholds.lowest_band
 
 
-def _check_inputs(
+def check_inputs(
     inputs: Sequence[ControlInput], domains: Sequence[DomainWeight]
 ) -> None:
+    """Raise ValueError for inputs the engine cannot score faithfully.
+
+    A maximum age is checked here, before any date arithmetic: a negative one has no
+    meaning, and one beyond `MAX_AGE_DAYS` would overflow a timedelta (OverflowError)
+    on the way to a score.
+    """
     codes = [item.code for item in domains]
     if len(set(codes)) != len(codes):
         raise ValueError("a domain is listed twice")
@@ -179,6 +188,11 @@ def _check_inputs(
             raise ValueError(f"{item.control_id}: there is no domain {item.domain}")
         if item.weight < 0 or not 0 <= item.quality <= 1:
             raise ValueError(f"{item.control_id}: weight or quality out of range")
+        limit = item.max_age_days
+        if limit is not None and not 0 <= limit <= MAX_AGE_DAYS:
+            raise ValueError(
+                f"{item.control_id}: max_age_days must be 0 to {MAX_AGE_DAYS}"
+            )
     if any(item.weight < 0 for item in domains):
         raise ValueError("a domain weight is negative")
 
@@ -235,7 +249,7 @@ def score_inputs(
     unknown domain, or a duplicate: a control can never be left out silently.
     """
     require_aware(as_of, "as_of")
-    _check_inputs(inputs, domains)
+    check_inputs(inputs, domains)
     state = _assess(inputs, domains, as_of, thresholds)
     completed = [_completed(item, as_of) for item in inputs]
     best = _assess(completed, domains, as_of, thresholds)

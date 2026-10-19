@@ -4,11 +4,21 @@ from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.datastructures import FormData, UploadFile
 
 from app.auth import user_for_api_token
+from app.checks.dnscheck import (
+    MAX_DOMAINS,
+    MAX_NAME_LENGTH,
+    MAX_PROVIDERS,
+    MAX_SELECTORS,
+    Resolver,
+)
+from app.checks.library import Library
+from app.checks.model import ControlResult
 from app.clients import create_client
+from app.dns_service import dns_controls, run_dns_check
 from app.evidence.assurance import Assurance
 from app.evidence.chain import verify_chain
 from app.evidence.deletion import delete_client
@@ -388,3 +398,73 @@ async def remove_client(
         "packs": report.packs,
         "files": report.files,
     }
+
+
+class DnsCheckRequest(BaseModel):
+    """The mail domains to check, and optional extra DKIM selectors and providers."""
+
+    domains: list[Annotated[str, Field(max_length=MAX_NAME_LENGTH)]] = Field(
+        max_length=MAX_DOMAINS
+    )
+    selectors: list[Annotated[str, Field(max_length=MAX_NAME_LENGTH)]] = Field(
+        default_factory=list, max_length=MAX_SELECTORS
+    )
+    providers: list[Annotated[str, Field(max_length=MAX_NAME_LENGTH)]] = Field(
+        default_factory=list, max_length=MAX_PROVIDERS
+    )
+
+
+def control_json(result: ControlResult) -> dict[str, object]:
+    """One control result, with the time its evidence was captured (UTC)."""
+    return {
+        "control_id": result.control_id,
+        "status": result.status,
+        "reason": result.reason,
+        "detail": result.detail,
+        "evidence_at": result.evidence_at.isoformat() if result.evidence_at else None,
+        "age_days": result.age_days,
+        "stale": result.stale,
+    }
+
+
+@router.post("/clients/{client_id}/dns-check", status_code=201)
+async def post_dns_check(
+    request: Request, client_id: int, body: DnsCheckRequest, user: CurrentUser
+) -> dict[str, object]:
+    """Check the public SPF, DKIM and DMARC records of the client's mail domains.
+
+    Only DNS questions about these domains leave the instance. The answer is stored
+    as evidence; a lookup that failed is stored as unknown, never as a fail.
+    """
+    resolver: Resolver = request.app.state.dns_resolver
+    try:
+        async with session_factory(request)() as session, session.begin():
+            stored = await run_dns_check(
+                session,
+                evidence_context(request),
+                client_id,
+                resolver,
+                body.domains,
+                body.selectors,
+                body.providers,
+                now=clock_of(request)(),
+                actor_user_id=user.id,
+            )
+    except EvidenceError as error:
+        raise http_error(error) from None
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+    return stored_json(stored)
+
+
+@router.get("/clients/{client_id}/dns-check")
+async def get_dns_check(
+    request: Request, client_id: int, user: CurrentUser
+) -> dict[str, object]:
+    """PC-EML-01 to PC-EML-03 of one client, each with its capture time."""
+    library: Library = request.app.state.library
+    async with session_factory(request)() as session:
+        if await session.get(Client, client_id) is None:
+            raise http_error(ClientNotFoundError("There is no client with this id."))
+        results = await dns_controls(session, library, client_id, clock_of(request)())
+    return {"controls": [control_json(item) for item in results.values()]}
