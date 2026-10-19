@@ -2,9 +2,10 @@
 
 HTML is the shipping format (docs/pdf-spike.md): one file with its stylesheet inlined,
 a print stylesheet for "Save as PDF" from a browser, inline SVG charts with a table
-of the same numbers, and the disclaimer in the footer of every page and in full on
-the last. Every text that came from a person (names, reasons, notes) goes through
-Jinja2 autoescape, so a hostile client name or exception text is printed as text.
+of the same numbers, and the disclaimer in the footer of every section (a page of the
+HTML) and in full on the last. Every text that came from a person (names, reasons,
+notes) goes through Jinja2 autoescape, so a hostile client name or exception text is
+printed as text.
 
 The output depends on the view alone: no clock, no random value, no dictionary
 order that is not fixed. The same view is the same bytes.
@@ -107,10 +108,10 @@ def _numbers(view: ReportView) -> dict[str, str]:
     cap_text = ""
     if result.capped and result.cap is not None:
         cap = result.cap
+        title = titles[cap.control_id].rstrip(".")
         cap_text = (
             f"The score of {format_fixed(result.raw)} is held at {cap.limit} because "
-            f"{titles[cap.control_id]} ({cap.control_id}) "
-            f"{CAP_REASONS.get(cap.reason, 'limits it')}."
+            f"{cap.control_id} {CAP_REASONS.get(cap.reason, 'limits it')} ({title})."
         )
     return {
         "score": format_fixed(result.score),

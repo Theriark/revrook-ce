@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit import add_audit_event
 from app.crypto import FieldCipher, new_pseudonym_key
 from app.models import Client
+from app.textcheck import control_character, describe
 
 MAX_CLIENT_NAME_LENGTH = 200
 
@@ -25,8 +26,11 @@ async def create_client(
         raise ValueError(
             f"client name must be 1 to {MAX_CLIENT_NAME_LENGTH} characters"
         )
-    if "\x00" in cleaned:
-        raise ValueError("client name must not contain a NUL character")
+    bad = control_character(cleaned)
+    if bad is not None:
+        raise ValueError(
+            f"client name must not contain a control character ({describe(bad)})"
+        )
     client = Client(
         name=cleaned,
         pseudonym_key_encrypted=cipher.encrypt(new_pseudonym_key()),

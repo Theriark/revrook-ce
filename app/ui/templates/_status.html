@@ -1,0 +1,8 @@
+{#- Shared pieces of the client pages. A status is always an icon and its words, never a colour alone. -#}
+{% macro status(label) -%}
+<span class="rv-status-{{ label.key }}"><span class="rv-status-icon" aria-hidden="true">{% if label.icon == "check" %}&#10003;{% elif label.icon == "alert" %}&#9650;{% elif label.icon == "cross" %}&#10007;{% elif label.icon == "question" %}?{% else %}&#8211;{% endif %}</span> {{ label.text }}</span>
+{%- endmacro %}
+
+{% macro day(value) -%}
+{% if value %}{{ value.strftime("%Y-%m-%d") }}{% else %}No date{% endif %}
+{%- endmacro %}

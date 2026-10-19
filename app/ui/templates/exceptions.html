@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>Exceptions register</h2>
+<p>An exception records that a control is knowingly not met, who owns that decision and when it must be looked at again. It never changes a status and never raises the score.</p>
+{% if rows %}
+<table id="exceptions">
+<caption>Exceptions, open first</caption>
+<thead>
+<tr>
+<th scope="col">Control</th>
+<th scope="col">Owner</th>
+<th scope="col">Reason</th>
+<th scope="col">Compensating control</th>
+<th scope="col">Review date</th>
+<th scope="col">State</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr>
+<th scope="row"><a href="/clients/{{ client_id }}/controls/{{ row.control_id }}">{{ row.title }}</a> <span class="rv-text-secondary">{{ row.control_id }}</span></th>
+<td>{{ row.owner }}</td>
+<td>{{ row.reason }}</td>
+<td>{{ row.compensating_control or "None" }}</td>
+<td>{{ row.review_date.isoformat() }}</td>
+<td>
+{% if row.closed %}
+<span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Closed</span>
+{% else %}
+{% if row.overdue %}<span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Overdue</span>{% else %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Open</span>{% endif %}
+<form class="rv-inline-form" method="post" action="/clients/{{ client_id }}/exceptions/{{ row.id }}/close">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">Close this exception</button>
+</form>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>There are no exceptions for this client.</p>
+{% endif %}
+
+<h3>Add an exception</h3>
+{% include "_errors.html" %}
+<form id="exception-form" method="post" action="/clients/{{ client_id }}/exceptions">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="control_id">Control</label>
+<select id="control_id" name="control_id" required>
+{% for id, title in controls %}
+<option value="{{ id }}"{% if id == form.control_id %} selected{% endif %}>{{ id }}: {{ title }}</option>
+{% endfor %}
+</select>
+<label for="owner">Owner</label>
+<input id="owner" name="owner" type="text" maxlength="100" required value="{{ form.owner }}">
+<label for="reason">Reason</label>
+<textarea id="reason" name="reason" rows="3" maxlength="2000" required>{{ form.reason }}</textarea>
+<label for="compensating_control">Compensating control (what the client does instead, if anything)</label>
+<textarea id="compensating_control" name="compensating_control" rows="2" maxlength="2000">{{ form.compensating_control }}</textarea>
+<label for="review_date">Review date</label>
+<input id="review_date" name="review_date" type="date" required value="{{ form.review_date }}">
+<button type="submit">Add the exception</button>
+</form>
+{% endblock %}

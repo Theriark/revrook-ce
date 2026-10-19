@@ -17,6 +17,7 @@ from app.models import AuditEvent, ReportExport
 from app.reports.completeness import ExportBlockedError
 from app.reports.export import (
     ExportIntegrityError,
+    ExportNotFoundError,
     ExportRecord,
     export_filename,
     export_report,
@@ -84,11 +85,13 @@ async def test_an_export_keeps_an_immutable_copy_and_its_hash(
         assert stored.storage_key == record.storage_key
         audited = (
             await session.execute(
-                select(AuditEvent).where(AuditEvent.action == "report.export")
+                select(AuditEvent).where(
+                    AuditEvent.action == "report.export",
+                    AuditEvent.target_id == str(record.id),
+                )
             )
         ).scalar_one()
         assert audited.detail["sha256"] == record.sha256
-        assert audited.target_id == str(record.id)
 
 
 async def test_the_same_report_exported_twice_is_two_lines_and_one_file(
@@ -139,19 +142,19 @@ async def test_a_stored_copy_is_read_back_after_a_check_of_its_hash(
     client_id = await create_test_client(db_engine, ctx)
     record, data = await export(db_engine, ctx.files, client_id, INSURANCE)
     async with async_sessionmaker(db_engine)() as session:
-        again, copy = await read_export(session, ctx.files, record.id)
+        again, copy = await read_export(session, ctx.files, client_id, record.id)
     assert copy == data and again == record
     path = ctx.files.root / record.storage_key
     path.write_bytes(data + b"<!-- changed -->")
     async with async_sessionmaker(db_engine)() as session:
         with pytest.raises(ExportIntegrityError, match="does not match"):
-            await read_export(session, ctx.files, record.id)
+            await read_export(session, ctx.files, client_id, record.id)
     path.unlink()
     async with async_sessionmaker(db_engine)() as session:
         with pytest.raises(ExportIntegrityError, match="missing"):
-            await read_export(session, ctx.files, record.id)
-        with pytest.raises(ExportIntegrityError, match="no export"):
-            await read_export(session, ctx.files, record.id + 1000)
+            await read_export(session, ctx.files, client_id, record.id)
+        with pytest.raises(ExportNotFoundError, match="no export"):
+            await read_export(session, ctx.files, client_id, record.id + 1000)
 
 
 @pytest.mark.parametrize(

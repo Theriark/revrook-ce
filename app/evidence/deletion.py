@@ -27,7 +27,9 @@ from app.models import (
     EvidenceRevision,
     Fact,
     ReportExport,
+    Setting,
     Snapshot,
+    draft_key,
 )
 
 
@@ -110,6 +112,8 @@ async def _delete_rows(
         target_id=client_id,
         detail=counts,
     )
+    # The draft notes of the client live in the setting table, with no foreign key.
+    await session.execute(delete(Setting).where(Setting.key == draft_key(client_id)))
     # The foreign keys of every client table cascade, so this removes the rest.
     await session.execute(delete(Client).where(Client.id == client_id))
     return report

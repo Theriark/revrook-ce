@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>Export history</h2>
+{% if exported %}
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Export {{ exported }} was made and an unchangeable copy was kept.</p>
+{% endif %}
+<p>Every file that was exported is kept as it was sent, with its SHA-256. A download is the kept copy, checked against that hash, and is never made again.</p>
+{% if rows %}
+<table id="exports">
+<caption>Exports of this client, newest first</caption>
+<thead>
+<tr>
+<th scope="col">When (UTC)</th>
+<th scope="col">Report</th>
+<th scope="col">File</th>
+<th scope="col">Size in bytes</th>
+<th scope="col">SHA-256</th>
+<th scope="col">By</th>
+<th scope="col">Download</th>
+</tr>
+</thead>
+<tbody>
+{% for record, who, name in rows %}
+<tr>
+<th scope="row">{{ record.exported_at.strftime("%Y-%m-%d %H:%M") }}</th>
+<td>{{ name }}</td>
+<td>{{ record.filename }}</td>
+<td>{{ record.size_bytes }}</td>
+<td><code>{{ record.sha256 }}</code></td>
+<td>{{ who }}</td>
+<td><a href="/clients/{{ client_id }}/exports/{{ record.id }}/download">Download</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Nothing has been exported for this client yet.</p>
+{% endif %}
+{% endblock %}

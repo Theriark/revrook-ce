@@ -44,8 +44,12 @@ check result unescaped and is escaped here, where it is printed.
 ## The disclaimer and the brand
 
 The disclaimer of rnd-report-3 section 3.8 (`app/reports/disclaimer.py`) is in the footer
-of every page and in full on the last page, with the line "Generated with revrook". The
-MSP name is on the cover. No revrook logo is on a client page. The status colours and
+of every section of the report (each is one `.page` of the HTML, and starts on a new
+sheet when printed) and in full on the last page, with the line "Generated with
+revrook". A section that is longer than one printed sheet has its footer at its end
+only, so a middle sheet of a long section does not carry the disclaimer; the first
+sheet of every section starts with the report heading, and the last page has the full
+text. The MSP name is on the cover. No revrook logo is on a client page. The status colours and
 the secondary text are the approved brand tokens and appear on white only;
 `tests/test_report_contrast.py` reads every foreground and background pair of the report
 stylesheets, as `tests/test_brand_contrast.py` does for the application.

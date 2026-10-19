@@ -1,7 +1,9 @@
 /*
  * Print stylesheet (phase 8): "Save as PDF" from a browser prints a report from the
- * HTML. Every page of a report keeps its own footer with the disclaimer, so the
- * pages break where the report does. Flat rules only, like report.css.
+ * HTML. Every section of a report (one .page) keeps its own footer with the
+ * disclaimer, and a section starts on a new sheet. A section that is longer than one
+ * sheet has its footer at its end only, so the sheets in between do not carry the
+ * disclaimer: the full text is on the last page. Flat rules only, like report.css.
  */
 
 @page {

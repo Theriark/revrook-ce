@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+{% if saved %}
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> The settings were saved.</p>
+{% endif %}
+{% include "_errors.html" %}
+<h2>Your business</h2>
+<form id="settings-form" method="post" action="/settings">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label for="msp_name">The name printed on the cover of every report</label>
+<input id="msp_name" name="msp_name" type="text" maxlength="100" required value="{{ msp_name }}">
+<button type="submit">Save</button>
+</form>
+
+<h2>Read only</h2>
+<h3>The disclaimer in every report</h3>
+<p id="disclaimer">{{ disclaimer }}</p>
+
+<h3>Weights of the domains ({{ ruleset }})</h3>
+<table id="weights">
+<caption>How much each domain counts towards the score. The weights are fixed by the rules and cannot be edited here.</caption>
+<thead><tr><th scope="col">Domain</th><th scope="col">Weight</th></tr></thead>
+<tbody>
+{% for domain in domains %}
+<tr><th scope="row">{{ domain.name }}</th><td>{{ domain.weight }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h3>Retention and limits</h3>
+<ul>
+<li>Raw files are kept {{ raw_retention_days }} days after import (0 means they are deleted once read).</li>
+<li>Reports and snapshots are kept {{ pack_retention_months }} months.</li>
+<li>An import can be up to {{ max_megabytes }} MB.</li>
+</ul>
+
+<h3>Mappings to other frameworks</h3>
+<p>A mapping to another framework is shown in a report only after a person has checked it against its source. None is shown until then.</p>
+
+<h3>Users</h3>
+<ul id="users">
+{% for name in usernames %}
+<li>{{ name }}</li>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,13 @@
+<ul>
+<li><a class="rv-nav-link" href="/clients"{% if nav == "clients" %} aria-current="page"{% endif %}>Clients</a></li>
+<li><a class="rv-nav-link" href="/imports/profile-editor">Profile editor</a></li>
+<li><a class="rv-nav-link" href="/evidence/integrity">Evidence integrity</a></li>
+<li><a class="rv-nav-link" href="/settings"{% if nav == "settings" %} aria-current="page"{% endif %}>Settings</a></li>
+<li><a class="rv-nav-link" href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}>Glossary</a></li>
+<li>
+<form class="rv-inline-form" method="post" action="/logout">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">Sign out</button>
+</form>
+</li>
+</ul>

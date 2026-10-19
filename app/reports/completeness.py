@@ -18,6 +18,7 @@ from app.checks.engine import na_review_problem
 from app.exceptions import exception_problems
 from app.reports.topics import TOPIC_KEYS
 from app.reports.view import ReportView
+from app.textcheck import control_character
 
 MAX_NAME = 200
 MAX_SHORT = 100
@@ -39,11 +40,13 @@ def _shown(value: str) -> str:
 
 
 def _text(label: str, value: str, limit: int, required: bool = False) -> list[str]:
-    """What is wrong with one text: empty (when it is needed) or too long."""
+    """What is wrong with one text: empty, too long or holding a control character."""
     if required and not value.strip():
         return [f"{label} is empty"]
     if len(value) > limit:
         return [f"{label} is longer than {limit} characters"]
+    if control_character(value, allow_breaks=True) is not None:
+        return [f"{label} contains a control character"]
     return []
 
 

@@ -128,6 +128,14 @@ class Setting(Base):
     updated_by_id: Mapped[int | None] = mapped_column(BigInteger)
 
 
+def draft_key(client_id: int) -> str:
+    """The `setting` key of the draft notes of one client (see app/drafts.py).
+
+    Deleting a client deletes this row too (app/evidence/deletion.py).
+    """
+    return f"draft:{client_id}"
+
+
 class Client(Base):
     """An MSP client.
 

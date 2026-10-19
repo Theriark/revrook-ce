@@ -10,7 +10,7 @@
 {% endfor %}
 </div>
 <dl class="facts">
-<dt>Score</dt><dd>{{ n.score }} out of 100</dd>
+<dt>{% if view.result.insufficient %}Lower bound of the score{% else %}Score{% endif %}</dt><dd>{{ n.score }} out of 100{% if view.result.insufficient %} (a lower bound only: the evidence is too thin to rate){% endif %}</dd>
 <dt>Best case</dt><dd>{{ n.best_case }}</dd>
 <dt>Evidence coverage</dt><dd>{{ n.coverage }} percent</dd>
 <dt>Band</dt><dd>{{ n.band }}</dd>

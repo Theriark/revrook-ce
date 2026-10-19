@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>Checklist</h2>
+<p id="checklist-count">{{ rows|length }} of {{ total }} controls shown.</p>
+<p>
+{% if show == "flagged" %}
+<a id="show-all" href="/clients/{{ client_id }}/checklist">Show all controls</a>
+{% else %}
+<a id="show-flagged" href="/clients/{{ client_id }}/checklist?show=flagged">Show only the controls that changed or need a look</a>
+{% endif %}
+</p>
+{% if not has_earlier %}
+<p class="rv-text-secondary">No report has been made for this client yet, so no control is marked as changed.</p>
+{% endif %}
+<div class="rv-table-scroll">
+<table id="checklist">
+<caption>Every control, its status and the evidence behind it</caption>
+<thead>
+<tr>
+<th scope="col">Control</th>
+<th scope="col">Status</th>
+<th scope="col">Coverage</th>
+<th scope="col">Evidence dated</th>
+<th scope="col">Owner</th>
+<th scope="col">Why it needs a look</th>
+</tr>
+</thead>
+<tbody>
+{% for item in rows %}
+<tr data-control="{{ item.row.control_id }}" data-changed="{{ 'true' if item.changed else 'false' }}" data-flagged="{{ 'true' if item.flagged else 'false' }}">
+<th scope="row"><a href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}">{{ item.row.title }}</a> <span class="rv-text-secondary">{{ item.row.control_id }}{% if item.row.gate %} (gate control){% endif %}</span></th>
+<td>{{ s.status(item.row.label) }}</td>
+<td>{{ item.coverage }}</td>
+<td>{{ s.day(item.row.evidence_at) }}</td>
+<td>{{ item.owner }}</td>
+<td>
+{% if item.changed %}<p>Changed since the last report: it was {{ item.changed_from.text }}.</p>{% endif %}
+{% if item.reasons %}
+<ul>
+{% for reason in item.reasons %}
+<li>{{ reason }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</td>
+</tr>
+{% else %}
+<tr><td colspan="6">Nothing changed and nothing needs a look.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}

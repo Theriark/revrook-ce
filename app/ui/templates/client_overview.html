@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "_status.html" as s %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% include "_client_nav.html" %}
+<h2>Overview</h2>
+<form id="period-picker" method="get" action="/clients/{{ client_id }}">
+<label for="period_start">The period starts</label>
+<input id="period_start" name="period_start" type="date" value="{{ period_start }}">
+<label for="period_end">The period ends</label>
+<input id="period_end" name="period_end" type="date" value="{{ period_end }}">
+<button type="submit">Show this period</button>
+</form>
+<p class="rv-text-secondary">Period {{ period_start }} to {{ period_end }}. Pack date {{ s.day(view.snapshot.as_of) }}: the evidence is read as it is today.</p>
+
+<h3>Where the client stands</h3>
+<div id="summary">
+{% for line in view.summary_lines %}
+<p>{{ line }}</p>
+{% endfor %}
+</div>
+<table id="status-counts">
+<caption>Controls by status</caption>
+<thead><tr><th scope="col">Status</th><th scope="col">Controls</th></tr></thead>
+<tbody>
+{% for label, count in view.counts %}
+<tr><td>{{ s.status(label) }}</td><td>{{ count }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+<table id="domains">
+<caption>Score by domain</caption>
+<thead><tr><th scope="col">Domain</th><th scope="col">Weight</th><th scope="col">Score</th></tr></thead>
+<tbody>
+{% for domain in view.domains %}
+<tr><th scope="row">{{ domain.name }}</th><td>{{ domain.weight }}</td><td>{{ domain.score_text }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h3>How fresh is the evidence?</h3>
+<table id="freshness">
+<caption>The newest export of every source this client's controls read</caption>
+<thead>
+<tr>
+<th scope="col">Source</th>
+<th scope="col">State</th>
+<th scope="col">Newest export</th>
+<th scope="col">Stale after</th>
+</tr>
+</thead>
+<tbody>
+{% for row in sources %}
+<tr>
+<th scope="row">{{ row.name }}</th>
+<td>{{ s.status(row.state) }}</td>
+<td>{{ s.day(row.captured_at) }}</td>
+<td>{{ s.day(row.expires_at) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if refresh %}
+<p>{{ refresh|length }} source{% if refresh|length != 1 %}s need{% else %} needs{% endif %} a fresh export. <a href="/clients/{{ client_id }}/evidence">See which export to refresh</a>.</p>
+{% else %}
+<p>Every source is current.</p>
+{% endif %}
+
+<h3>Next</h3>
+<ul>
+<li><a href="/clients/{{ client_id }}/checklist?show=flagged">Review the controls that changed or need a look</a></li>
+<li><a href="/clients/{{ client_id }}/reports?period_start={{ period_start }}&amp;period_end={{ period_end }}">Prepare a report for this period</a></li>
+</ul>
+{% endblock %}
