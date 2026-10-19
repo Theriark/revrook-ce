@@ -43,7 +43,7 @@ from tools import make_report_golden, report_clients
 LIBRARY = load_library()
 NAMES = tuple(report_clients.NAMES)
 EXPECTED_SCORES = {"A": "89.5", "B": "45.7", "C": "49.0"}
-HOSTILE = '<script>alert("x")</script> & \'quoted\' <img src=x onerror=y>'
+HOSTILE = "<script>alert(\"x\")</script> & 'quoted' <img src=x onerror=y>"
 SECTION = re.compile(r'<section class="page[^"]*" id="([^"]+)".*?</section>', re.DOTALL)
 CASES = 500
 SEED = 20261019
@@ -256,7 +256,7 @@ def hostile_context(name: str) -> ReportContext:
 @pytest.mark.parametrize("kind", KINDS)
 def test_hostile_names_and_exception_text_are_printed_as_text(kind: str) -> None:
     text = html_of(kind, "A", hostile_context("A"))
-    for tag in ("<script", "<img src=x", 'onerror=y>', '"x")</script>'):
+    for tag in ("<script", "<img src=x", "onerror=y>", '"x")</script>'):
         assert tag not in text, tag
     escaped = str(escape(HOSTILE))
     assert escaped in text
