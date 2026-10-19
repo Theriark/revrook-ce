@@ -3,28 +3,34 @@
 Question: can the Community Edition ship PDF reports made by WeasyPrint, with a bundled
 Noto Sans font, inside the `python:3.12-slim` image?
 
-**Decision: no. CE ships HTML with a print stylesheet only.** The PDF code is not in this
-repository. Two of the hard gates cannot be met by this work package, whatever the
-measurements say, so the plan's rule applies: "if ANY gate fails, CE ships HTML with
-print CSS only, the PDF code is not merged, and docs/pdf-spike.md records the evidence so
-R&D can decide the EE path (ReportLab)".
+**Decision for now: CE ships HTML with a print stylesheet only, and the PDF code is not
+in this repository.** The plan says "if ANY gate fails, CE ships HTML with print CSS only,
+the PDF code is not merged, and docs/pdf-spike.md records the evidence so R&D can decide
+the EE path (ReportLab)". No gate was shown to fail. Two gates could not be assessed by
+this work package (see the table) and the other four were never measured in a run whose
+numbers are recorded, so every gate is **not assessed**. HTML only is the safe shipping
+format while that is so. Whether a gate that was not assessed counts as failed is a
+question for R&D, and so is who reads the licences; this document does not answer it.
 
 ## The gates
 
 | Gate | Needed | Result | Evidence |
 | --- | --- | --- | --- |
-| Licences read from the primary file (WeasyPrint, Pango and the other OS libraries, the font) | Each one read, each permissive, or LGPL as a dynamically linked OS package with notices | **Not met: not read** | The licence texts of WeasyPrint, Pango, Pyphen and Noto Sans were not opened. The tool that reads a web page was refused to this role (no permission was granted), and the GitHub read grant of this task covers `Theriark/revrook-ce` only. Nothing is assumed from memory: a licence that was not read is not recorded as permissive. |
-| A bundled font with its `OFL.txt` in the repository | Noto Sans regular and bold (SIL OFL 1.1) committed with the licence file | **Not met** | A font is a binary file. The tools the crew has write plain text one commit at a time (`push_files`); `brand_assets` copies only the product's own Nextcloud brand folder. A TTF cannot be committed by this role, and a font installed by the operating system (the spike below uses `fonts-noto-core`) is not the bundled font the plan names. |
-| Image size increase | Under 250 MB | Measured in CI, see below | `scripts/pdf-spike/measure.sh` |
-| Peak RAM during a 10-page report | Under 400 MB | Measured in CI, see below | the same script |
-| Render time | Under 30 seconds | Measured in CI, see below | the same script |
-| Tagged PDF | A structure tree and `MarkInfo` in the file | Measured in CI, see below | the same script |
+| Licences read from the primary file (WeasyPrint, Pango and the other OS libraries, the font) | Each one read, each permissive, or LGPL as a dynamically linked OS package with notices | **Not assessed: not read** | The licence texts of WeasyPrint, Pango and the other libraries it loads, and of Noto Sans, were not opened. The tool that reads a web page was refused to this role (no permission was granted), and the GitHub read grant of this task covered `Theriark/revrook-ce` only. Nothing is assumed from memory: a licence that was not read is not recorded as permissive or as anything else. |
+| A bundled font with its `OFL.txt` in the repository | Noto Sans regular and bold (SIL OFL 1.1) committed with the licence file | **Not assessed** | A font is a binary file. The tools the crew has write plain text one commit at a time (`push_files`); `brand_assets` copies only the product's own Nextcloud brand folder. A TTF cannot be committed by this role, and a font installed by the operating system (the spike below uses `fonts-noto-core`) is not the bundled font the plan names. |
+| Image size increase | Under 250 MB | Not measured in a recorded run | `scripts/pdf-spike/measure.sh` (opt-in, see below) |
+| Peak RAM during a 10-page report | Under 400 MB | Not measured in a recorded run | the same script |
+| Render time | Under 30 seconds | Not measured in a recorded run | the same script |
+| Tagged PDF | A structure tree and `MarkInfo` in the file | Not measured in a recorded run | the same script |
 
-## What was measured, and how
+## What the measurement does, and how to run it
 
-This work package has no Docker, so the measurement runs where Docker exists: in check 9
-of the merge gate, from `scripts/e2e/phase_08.sh`, which calls
-`scripts/pdf-spike/measure.sh`. No workflow file was changed.
+The measurement needs Docker, so it runs where Docker exists. It is **opt-in**: it
+builds a throwaway image and installs unpinned packages, which takes minutes, so it does
+not run on every pull request. `scripts/e2e/phase_08.sh` calls
+`scripts/pdf-spike/measure.sh` only when the variable `RUN_PDF_SPIKE=1` is set, for
+example `RUN_PDF_SPIKE=1 bash scripts/e2e/phase_08.sh` on a machine with the compose
+stack running. No workflow file runs it.
 
 1. The script pulls `python:3.12-slim` and records its size (`docker image inspect`).
 2. It builds a **throwaway** image from that base with `libpango-1.0-0`,
@@ -43,32 +49,37 @@ of the merge gate, from `scripts/e2e/phase_08.sh`, which calls
    counts as tagged when it holds both `/StructTreeRoot` and `/MarkInfo`. The text of every
    page is extracted and checked for the first sentence of the disclaimer.
 
-The script prints lines that start with `SPIKE` in the log of the check, and a final
+The script prints lines that start with `SPIKE`, and a final
 `SPIKE gates size=... ram=... time=... tagged=...` line. A problem in the script is a
-warning, never a failure of the merge gate: the decision above does not depend on it.
+warning, never a failure.
 
 ## Results of the measurement
 
-The values of the run that merged this change are in the log of check 9 and are quoted
-in the report of the task (THE-314). They inform the EE decision; they do not reopen
-the CE decision, because the licence and font gates stand regardless.
+None is recorded. The script was not run in a run whose log is kept with the change that
+introduced it, and no figure is quoted here. Run it, then record the `SPIKE` lines, the
+date and the machine in this section. The numbers would inform the EE decision; the
+licence and font gates would still need to be assessed.
 
 ## What CE ships instead
 
 - HTML, one file with its stylesheet inlined, that loads nothing from outside.
-- A print stylesheet (`app/reports/print.css`): A4, one `.page` per sheet, the footer
-  with the disclaimer on every page. "Save as PDF" in a browser gives a PDF of it.
-- The disclaimer in every footer and in full on the last page (checked on every page of
-  both reports by `tests/test_reports.py`). A PDF text-extraction test is not written:
-  there is no PDF to extract from.
+- A print stylesheet (`app/reports/print.css`): A4, one `.page` for each section of the
+  report, each section starting on a new sheet, with the footer and the disclaimer at the
+  end of the section. A section that is longer than one printed sheet carries its footer
+  on its last sheet only, so a sheet in the middle of a long section has no disclaimer.
+  "Save as PDF" in a browser gives a PDF of it.
+- The disclaimer in the footer of every section and in full on the last page (checked on
+  every section of both reports by `tests/test_reports.py`). A PDF text-extraction test
+  is not written: there is no PDF to extract from.
 
 ## What R&D needs to decide for EE
 
-1. Read the primary licence files (WeasyPrint, Pango, HarfBuzz and the other libraries it
-   loads, Pyphen, the Noto Sans OFL) and record them in `docs/licences.md` with the date.
-   Pyphen offers GPL, LGPL and MPL; the repository policy (check 6) rejects LGPL and GPL
-   packages, so the audit would need an explicit exception or a different library.
+1. Whether a gate that was not assessed counts as failed, and who reads the primary
+   licence files (WeasyPrint, Pango, HarfBuzz and the other libraries it loads, and the
+   Noto Sans OFL) and records them in `docs/licences.md` with the date. The repository
+   policy (check 6) rejects LGPL and GPL packages, so a dependency of the PDF stack that
+   is licensed that way would need an explicit exception or a different library.
 2. A way to commit the font binary, or the decision to depend on a font package.
 3. If WeasyPrint fails on a licence, evaluate ReportLab (BSD-3-Clause, to be read) with
    tagged-PDF support as the plan says.
-4. The measurements above, from the run that merged this change.
+4. The measurements, from a run of the opt-in script.

@@ -6,9 +6,10 @@
 #   - both reports render from a snapshot, every page has the disclaimer, a hostile
 #     name is printed as text and a claim with no dated evidence blocks the export
 #     (scripts/e2e/phase_08_check.py, run inside the web container);
-# and measures the PDF spike on the runner (scripts/pdf-spike/measure.sh): image
-# size, peak memory, render time and tags. The measurement only reports (see
-# docs/pdf-spike.md); a problem in it is a warning and never fails the merge gate.
+# and, only when RUN_PDF_SPIKE=1 is set (opt-in, minutes long, not run by CI), measures
+# the PDF spike (scripts/pdf-spike/measure.sh): image size, peak memory, render time and
+# tags. The measurement only reports (see docs/pdf-spike.md); a problem in it is a
+# warning and never fails the script.
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -40,10 +41,16 @@ for name in ("weasyprint", "reportlab", "fpdf", "xhtml2pdf"):
 print("phase_08: the image holds no PDF library (HTML with a print stylesheet)")
 PY
 
-if bash "${ROOT}/scripts/pdf-spike/measure.sh" "${ROOT}"; then
-  echo "phase_08: the PDF spike measurement finished"
+# The PDF spike measurement builds a throwaway image and installs unpinned packages, so
+# it is opt-in: RUN_PDF_SPIKE=1 runs it, and the merge gate does not.
+if [[ "${RUN_PDF_SPIKE:-0}" == "1" ]]; then
+  if bash "${ROOT}/scripts/pdf-spike/measure.sh" "${ROOT}"; then
+    echo "phase_08: the PDF spike measurement finished"
+  else
+    echo "::warning::phase_08: the PDF spike measurement did not finish (see the log)"
+  fi
 else
-  echo "::warning::phase_08: the PDF spike measurement did not finish (see the log)"
+  echo "phase_08: the PDF spike measurement is opt-in and was not run (RUN_PDF_SPIKE=1)"
 fi
 
 echo "phase_08: OK"

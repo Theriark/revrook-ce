@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# PDF spike measurement (phase 8, step 1). Run by scripts/e2e/phase_08.sh:
+# PDF spike measurement (phase 8, step 1). Opt-in: scripts/e2e/phase_08.sh runs it only
+# when RUN_PDF_SPIKE=1 is set (it takes minutes and installs unpinned packages, so the
+# merge gate does not run it). By hand:
 #   bash scripts/pdf-spike/measure.sh <repository root>
 #
 # Builds a THROWAWAY image (python:3.12-slim plus WeasyPrint, Pango and a font; it is
