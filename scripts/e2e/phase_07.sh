@@ -109,9 +109,9 @@ weak = {
     ("_dmarc.client.example", "TXT"): ["v=DMARC1; p=none"],
 }
 _, results, _ = run(weak)
-assert results["PC-EML-01"].status != "pass", results["PC-EML-01"]
+assert results["PC-EML-01"].status == "pass", results["PC-EML-01"]
 assert results["PC-EML-03"].status == "fail", results["PC-EML-03"]
-print("phase_07: soft fail and DMARC p=none are not a pass")
+print("phase_07: SPF soft fail with the provider passes, DMARC p=none fails")
 
 includes = " ".join(f"include:inc{n}.example.net" for n in range(11))
 many = {("client.example", "TXT"): [f"v=spf1 {includes} -all"]}
