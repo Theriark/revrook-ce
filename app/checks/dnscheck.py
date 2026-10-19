@@ -327,9 +327,7 @@ class _SpfWalk:
     not entered again.
     """
 
-    def __init__(
-        self, queries: Queries, providers: Sequence[str], domain: str
-    ) -> None:
+    def __init__(self, queries: Queries, providers: Sequence[str], domain: str) -> None:
         self._queries = queries
         self._providers = providers
         self._records: dict[str, ParsedSpf | None] = {}
