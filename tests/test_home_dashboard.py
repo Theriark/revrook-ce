@@ -334,8 +334,9 @@ def test_the_template_draws_every_part_without_an_image_or_a_colour_alone() -> N
         assert f'id="{part}"' in TEMPLATE, part
     assert 'id="home-empty"' in TEMPLATE
     assert "<img" not in TEMPLATE and "url(" not in TEMPLATE
+    # The ring and the trend chart, which is drawn once for every width it has
     assert TEMPLATE.count('role="img"') == 2
-    assert 'aria-labelledby="trend-title trend-desc"' in TEMPLATE
+    assert 'aria-labelledby="trend-title trend-desc' in TEMPLATE
     assert "s.status(" in TEMPLATE and "Signed in as {{ user.username }}" in TEMPLATE
     assert "<details" in TEMPLATE and "<caption>" in TEMPLATE
 
