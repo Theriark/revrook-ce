@@ -85,6 +85,17 @@ COMPONENTS = (
     "details.rv-confirm",
     "dialog.rv-dialog",
     ".rv-skeleton",
+    # The Home dashboard (area 2 of the revamp)
+    ".rv-stat-note",
+    ".rv-spark",
+    ".rv-rookery",
+    ".rv-ring-arc",
+    ".rv-attention-row",
+    ".rv-chart",
+    ".rv-domains .rv-bar",
+    ".rv-seg-protected",
+    ".rv-timeline",
+    ".rv-steps",
 )
 
 
@@ -214,7 +225,10 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         assert [href for href, _ in links] == [href for href, _ in NAV_LINKS]
         assert [href for href, flag in links if flag] == [current]
         assert html.count('aria-current="page"') == 1
-        assert html.count('<svg class="rv-icon"') == len(NAV_LINKS) + 1
+        # The rail draws one icon per link and one on the sign-out button; the page
+        # below it may draw its own (the Home empty state does).
+        rail = html.split("</header>", 1)[0]
+        assert rail.count('<svg class="rv-icon"') == len(NAV_LINKS) + 1
         assert '<span class="rv-user-name">admin</span>' in html
         assert 'action="/logout"' in html and ">Sign out</span>" in html
         assert 'class="rv-footer"' in html

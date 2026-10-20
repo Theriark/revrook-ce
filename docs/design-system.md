@@ -159,6 +159,48 @@ in `div.rv-dialog-actions`.
 Loading: `span.rv-skeleton` for a block that is still coming and `span.rv-busy` next
 to a button that is working. htmx swaps keep `aria-busy`.
 
+## Dashboard
+
+Home (`app/ui/templates/home.html`, data from `app/ui/home.py` and the pure functions
+of `app/ui/dashboard.py`) is the page an MSP owner opens every morning: which client
+needs work today, and what changed. It is read-only. Every number comes from the same
+views, labels and stored snapshots as the client pages and the reports, so Home never
+says something a report would not say.
+
+Its parts, in order:
+
+- Four stat cards: clients, controls protected, controls that need work, exports to
+  refresh. Each shows the number, its context, the change against the last stored
+  report of every client that has one, and a sparkline of the last twelve weeks drawn
+  from the stored reports (`.rv-stat`, `.rv-spark`). The number is a link.
+- The rookery (`.rv-rookery`), the signature of Home: one posture ring per client,
+  the score inside, the band beside it, the controls that need work and the movement
+  since the last report under it. A client whose evidence is too thin for a score has
+  a dashed stone ring and a question mark, never a number that would read as a score.
+- Needs attention (`.rv-attention`): the eight most urgent controls across every
+  client, gate controls first, then what is not protected, by weight. Every row is the
+  status pill, the control, the client and the reason beyond the status (old evidence,
+  an open exception), and one action.
+- Score over the last 90 days (`.rv-chart`): one line per client from the stored
+  reports, up to six, labelled at its end and told apart by its dash pattern; a table
+  under the chart carries every number. Controls by domain (`.rv-domains`): a stacked
+  bar per domain with the counts in the columns beside it and a legend of status pills.
+- Recent changes (`.rv-timeline`): the newest audit entries that changed a client,
+  its evidence or its reports, with who did it and when (the exact time on hover).
+
+States: a fresh installation shows one empty state with the three first steps and
+one action; a client without evidence shows a dashed ring and "No evidence imported
+yet"; a client whose evidence cannot be read today is listed in a warning strip above
+the dashboard instead of stopping it; the attention list, the chart and the timeline
+each have their own empty state that says what fills them. The page is rendered whole
+on the server: there is no part that loads later, so there is no loading state to
+show.
+
+Charts are inline SVG drawn on the server with the brand colours only: the sparkline
+and the ring arc in the accent, the lines in charcoal, the domain bars in the status
+colours with the counts beside them, so nothing is told by colour alone. No library,
+no image, nothing loaded from outside.
+
 ## Floors every page keeps
 
 - Works at 390, 768 and 1440 px without horizontal overflow.

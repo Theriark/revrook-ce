@@ -21,6 +21,7 @@ from app.evidence.service import EvidenceContext, NewEvidence
 from app.main import create_app
 from app.settings import load_settings
 from app.ui import clients as ui_clients
+from app.ui import home as ui_home
 from app.ui import reports as ui_reports
 from app.ui import site as ui_site
 from app.ui import system as ui_system
@@ -28,8 +29,10 @@ from helpers import NOW, create_admin, create_test_client, get_csrf, login, uplo
 from tools import make_generic_fixtures
 
 UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
-# The routers of the pages of phases 9 and 10; each route is checked against the app.
+# The routers of the pages of phases 9 and 10 and of the Home dashboard; each route is
+# checked against the app.
 PAGE_ROUTERS = (
+    ui_home.router,
     ui_clients.router,
     ui_reports.router,
     ui_site.router,

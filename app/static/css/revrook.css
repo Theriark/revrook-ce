@@ -1633,3 +1633,474 @@ body.rv-signed-out {
     grid-template-columns: minmax(320px, 44%) minmax(0, 1fr);
   }
 }
+
+/* ---------- Home dashboard (docs/design-system.md, Dashboard) ---------- */
+
+/* A heading that only assistive technology reads */
+.rv-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.rv-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 24px;
+  margin: 32px 0 12px;
+}
+
+.rv-section-head h2 {
+  margin: 0;
+}
+
+.rv-section-note {
+  max-width: 40rem;
+  margin: 0;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* Stat cards: the number, its label, its context, its change and a sparkline */
+.rv-stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.rv-stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 20px 16px;
+}
+
+main .rv-stat .rv-stat-value {
+  display: block;
+  width: fit-content;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+main .rv-stat .rv-stat-value:hover {
+  font-size: 28px;
+  text-decoration: underline;
+  text-decoration-color: var(--rv-accent);
+  color: var(--rv-accent-deep);
+  background-color: var(--rv-white);
+}
+
+.rv-stat .rv-stat-label {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-stat-note {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-stat-change {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-spark {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 96px;
+  height: 28px;
+  overflow: visible;
+}
+
+.rv-spark polyline {
+  fill: none;
+  stroke: var(--rv-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* The rookery: one posture ring per client, the signature of Home */
+.rv-rookery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-rook {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 16px 16px 14px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+main .rv-rook-link {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  text-decoration: none;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+main .rv-rook-link:hover {
+  text-decoration: none;
+  color: var(--rv-accent-deep);
+  background-color: var(--rv-white);
+}
+
+.rv-ring {
+  grid-row: 1 / span 2;
+  width: 72px;
+  height: 72px;
+}
+
+.rv-ring-track {
+  fill: none;
+  stroke: var(--rv-line);
+  stroke-width: 7;
+}
+
+.rv-rook-insufficient .rv-ring-track {
+  stroke: var(--rv-stone);
+  stroke-dasharray: 3 4;
+}
+
+.rv-ring-arc {
+  fill: none;
+  stroke: var(--rv-accent);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.rv-ring-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: currentColor;
+}
+
+.rv-rook-name {
+  align-self: end;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-rook-band {
+  align-self: start;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.rv-rook-meta {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-rook-meta:first-of-type {
+  margin-top: 10px;
+}
+
+/* Needs attention: one row per control, the status first, one action */
+.rv-attention {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-attention-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-attention-row:last-child {
+  border-bottom: 0;
+}
+
+.rv-attention-status {
+  min-width: 9.5rem;
+}
+
+.rv-attention-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 14px;
+}
+
+main .rv-attention-what a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+main .rv-attention-what a:hover {
+  text-decoration: underline;
+}
+
+.rv-attention-client {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+@media (max-width: 599px) {
+  .rv-attention-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .rv-attention-status {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+}
+
+/* The trend chart and the breakdown side by side from 1024px */
+.rv-two {
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.rv-two > .rv-card {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .rv-two {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.rv-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-size: 12px;
+}
+
+.rv-chart-grid line {
+  stroke: var(--rv-line);
+  stroke-width: 1;
+}
+
+.rv-chart-grid text,
+.rv-chart-axis text {
+  fill: var(--rv-text-secondary);
+}
+
+.rv-chart-line polyline {
+  fill: none;
+  stroke: var(--rv-charcoal);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.rv-chart-line circle {
+  fill: var(--rv-charcoal);
+}
+
+.rv-chart-line text {
+  font-weight: 600;
+  fill: var(--rv-charcoal);
+}
+
+.rv-chart-data {
+  margin-top: 12px;
+}
+
+.rv-chart-data summary {
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rv-chart-data table {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Controls by domain: a stacked bar per domain, the counts beside it */
+.rv-domains {
+  margin-bottom: 12px;
+}
+
+.rv-domains .rv-bar {
+  display: block;
+  width: 100%;
+  min-width: 6rem;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.rv-seg-protected {
+  fill: var(--rv-status-protected);
+}
+
+.rv-seg-needs-attention {
+  fill: var(--rv-status-needs-attention);
+}
+
+.rv-seg-not-protected {
+  fill: var(--rv-status-not-protected);
+}
+
+.rv-seg-not-checked {
+  fill: var(--rv-stone);
+}
+
+.rv-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+
+/* Recent changes: a timeline with the actor and the moment */
+.rv-timeline {
+  margin: 0;
+  padding: 0 0 0 20px;
+  list-style: none;
+  border-left: 2px solid var(--rv-line);
+}
+
+.rv-timeline-item {
+  position: relative;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.rv-timeline-dot {
+  position: absolute;
+  top: 5px;
+  left: -27px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--rv-white);
+  border-radius: 50%;
+  background-color: var(--rv-accent);
+}
+
+.rv-timeline-what {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rv-timeline-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* The first visit: what to do first, as three steps */
+.rv-home-empty {
+  padding: 48px 24px 40px;
+}
+
+.rv-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 24px;
+  max-width: 46rem;
+  margin: 0 auto 24px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.rv-steps li {
+  display: flex;
+  flex: 1 1 12rem;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.rv-step-number {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
