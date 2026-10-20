@@ -39,7 +39,8 @@ async def test_the_evidence_page_has_its_verdict_the_refresh_list_and_the_tables
     html = page.text
     assert page.status_code == 200 and structure_problems(html) == []
     assert html.count('aria-current="page"') == 2  # the rail and the tabs
-    assert 'href="/imports/profile-editor">Import an export</a>' in html
+    editor = f'href="/imports/profile-editor?client_id={client_id}">Import an export'
+    assert f"{editor}</a>" in html
     assert '<section class="rv-verdict" id="evidence-status"' in html
     for fact in ("Sources", "Current", "To refresh", "Items imported"):
         assert f"<dt>{fact}</dt>" in html, fact
