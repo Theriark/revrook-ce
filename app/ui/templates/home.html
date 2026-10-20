@@ -125,6 +125,7 @@
 </svg>
 <details class="rv-chart-data">
 <summary>Show the numbers</summary>
+<div class="rv-table-scroll">
 <table>
 <caption>Score by report date, {{ trend.reports }} report{% if trend.reports != 1 %}s{% endif %}</caption>
 <thead><tr><th scope="col">Client</th><th scope="col">Report date</th><th scope="col">Score</th><th scope="col">Band</th></tr></thead>
@@ -134,6 +135,7 @@
 {% endfor %}{% endfor %}
 </tbody>
 </table>
+</div>
 </details>
 {% else %}
 <div class="rv-empty" id="trend-empty">

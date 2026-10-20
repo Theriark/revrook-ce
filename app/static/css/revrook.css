@@ -2015,10 +2015,6 @@ main .rv-attention-what a:hover {
   margin: 0;
 }
 
-.rv-chart-data th[scope="row"] {
-  white-space: nowrap;
-}
-
 /* Controls by domain: one stacked bar per domain across the whole card, the
    name and the protected share above it, the counts under "Show the numbers".
    A table of six columns beside the bars was wider than the card at 1440px
@@ -2066,6 +2062,13 @@ main .rv-attention-what a:hover {
   margin-top: 5px;
   border-radius: 5px;
   overflow: hidden;
+}
+
+/* In the table of the breakdown the first column holds the short domain names
+   of the library, kept on one line. The first column of the trend table is a
+   client name, which wraps as usual, so a long name cannot widen its card */
+.rv-domains ~ .rv-chart-data th[scope="row"] {
+  white-space: nowrap;
 }
 
 .rv-seg-protected {

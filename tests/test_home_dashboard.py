@@ -58,6 +58,7 @@ RING_TITLE = re.compile(r'<title id="ring-(\d+)-title">([^<]+)</title>')
 POLYLINE = re.compile(r'<polyline points="([^"]+)"')
 STAT_VALUE = re.compile(r'id="stat-evidence">\s*<a class="rv-stat-value"[^>]*>(\d+)<')
 DOMAIN_SUM = re.compile(r'<span class="rv-domain-sum">(\d+) of (\d+) protected</span>')
+SCROLLED_TABLE = '<div class="rv-table-scroll">\n<table>'
 
 
 def view_of(name: str) -> ReportView:
@@ -346,11 +347,20 @@ def test_the_breakdown_by_domain_is_a_bar_per_domain_with_the_counts_folded() ->
     # numbers" that scrolls inside the card on a narrow phone.
     domains = TEMPLATE.split('id="domains"', 1)[1].split("</section>", 1)[0]
     assert '<ul class="rv-domains">' in domains
-    assert 'class="rv-domain-sum"' in domains and "of {{ bar.total }} protected" in domains
+    assert 'class="rv-domain-sum"' in domains
+    assert "of {{ bar.total }} protected" in domains
     assert domains.count('class="rv-bar"') == 1
     assert '<details class="rv-chart-data">' in domains
-    assert '<div class="rv-table-scroll">\n<table>' in domains
+    assert SCROLLED_TABLE in domains
     assert domains.index('class="rv-bar"') < domains.index("<table>")
+
+
+def test_the_numbers_behind_the_trend_scroll_inside_their_card() -> None:
+    # A long client name in the first column must not widen the card on a phone:
+    # the table scrolls inside the card, like the table of the breakdown.
+    trend = TEMPLATE.split('id="trend"', 1)[1].split("</section>", 1)[0]
+    assert SCROLLED_TABLE in trend
+    assert trend.count("<table>") == 1
 
 
 # --- the page -----------------------------------------------------------------------
