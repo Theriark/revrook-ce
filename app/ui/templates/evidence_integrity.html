@@ -1,50 +1,79 @@
 {% extends "base.html" %}
+{% import "_icons.html" as i %}
 {% block content %}
-<h1>Evidence integrity</h1>
-<p>Every client has a chain of evidence records. Each record stores the hash of the record before it, so a record that was changed or removed afterwards breaks the chain at that point.</p>
-<form method="post" action="/evidence/integrity">
+<div class="rv-page-header">
+<div><h1>Evidence integrity</h1><p class="rv-page-purpose">Every client has a chain of evidence records. Each record stores the hash of the record before it, so a record that was changed or removed afterwards breaks the chain at that point.</p></div>
+{% if rows is not none %}
+<div class="rv-page-actions">
+<form class="rv-inline-form" method="post" action="/evidence/integrity">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit">Check again</button>
+</form>
+</div>
+{% endif %}
+</div>
+{% if rows is none %}
+<div class="rv-empty" id="integrity-start">
+{{ i.icon("chain", 36) }}
+<p class="rv-empty-title">Check every chain</p>
+<p class="rv-empty-text">The check reads every evidence record of every client and computes its hash again. Nothing is changed. It takes a moment on a large installation.</p>
+<form class="rv-inline-form" method="post" action="/evidence/integrity">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <button type="submit">Check all chains</button>
 </form>
-{% if rows is not none %}
-{% if not rows %}
-<p class="rv-text-secondary">There are no evidence records yet.</p>
+</div>
+{% elif not rows %}
+<div class="rv-empty" id="integrity-empty">
+{{ i.icon("inbox", 36) }}
+<p class="rv-empty-title">There are no evidence records yet</p>
+<p class="rv-empty-text">A chain starts with the first import of a client. Import an export with the profile editor or through the API, then check again.</p>
+<a role="button" class="rv-button-quiet" href="/imports/profile-editor">Open the profile editor</a>
+</div>
 {% else %}
+<section class="rv-verdict" id="integrity-status" aria-labelledby="integrity-status-title">
+<h2 id="integrity-status-title" class="rv-sr-only">Result of the check</h2>
+<div class="rv-verdict-status">
 {% if failed %}
-<p class="rv-status-not-protected" role="alert"><span class="rv-status-icon" aria-hidden="true">!</span> {{ failed }} of {{ rows|length }} chains failed the check.</p>
+<span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">&#10007;</span> {{ failed }} of {{ rows|length }} chain{% if rows|length != 1 %}s{% endif %} broken</span>
+{% elif rows|length == 1 %}
+<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> The only chain is intact</span>
 {% else %}
-<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> All {{ rows|length }} chains are intact.</p>
+<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> All {{ rows|length }} chains intact</span>
 {% endif %}
-<table>
-<caption>Result of the check</caption>
+</div>
+<dl class="rv-facts rv-verdict-facts">
+<div><dt>Chains checked</dt><dd>{{ rows|length }}</dd></div>
+<div><dt>Records</dt><dd>{{ records }}</dd></div>
+<div><dt>Broken</dt><dd>{{ failed }}</dd></div>
+{% if checked_at %}<div><dt>Checked</dt><dd><time datetime="{{ checked_at.isoformat() }}">{{ checked_at.strftime("%Y-%m-%d %H:%M") }} UTC</time></dd></div>{% endif %}
+</dl>
+</section>
+<table id="chains" class="rv-table-cards rv-chains">
+<caption>Every client's chain, the result of the check and the hash of its latest record</caption>
 <thead>
 <tr>
 <th scope="col">Client</th>
 <th scope="col">Result</th>
-<th scope="col">Records</th>
+<th scope="col" class="rv-numeric">Records</th>
 <th scope="col">Latest record hash</th>
 <th scope="col">Problem</th>
 </tr>
 </thead>
 <tbody>
 {% for row in rows %}
-<tr>
+<tr data-ok="{{ 'true' if row.ok else 'false' }}">
 <th scope="row">{{ row.client_label }}</th>
-<td>
-{% if row.ok %}
-<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Intact</span>
-{% else %}
-<span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">!</span> Broken</span>
-{% endif %}
-</td>
-<td>{{ row.records }}</td>
-<td><code>{{ row.head }}</code></td>
-<td>{{ row.problem }}</td>
+<td data-label="Result">{% if row.ok %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Intact</span>{% else %}<span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">&#10007;</span> Broken</span>{% endif %}</td>
+<td data-label="Records" class="rv-numeric">{{ row.records }}</td>
+<td data-label="Latest record hash"><code class="rv-hash">{{ row.head }}</code></td>
+<td data-label="Problem">{% if row.problem %}{{ row.problem }}{% else %}<span class="rv-text-secondary">None</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
-<p class="rv-text-secondary">The check proves that nothing in the log changed after it was written. It does not prove that the data in the source system was true, and it cannot see records cut off the end of a chain. Keep the latest record hash if you need that.</p>
-{% endif %}
+<div class="rv-alert" id="integrity-note">
+<p class="rv-alert-title">What the check proves</p>
+<p>That nothing in the log changed after it was written. It does not prove that the data in the source system was true, and it cannot see records cut off the end of a chain. Keep the latest record hash if you need that.</p>
+</div>
 {% endif %}
 {% endblock %}

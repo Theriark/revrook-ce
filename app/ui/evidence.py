@@ -1,6 +1,7 @@
 """The evidence integrity page: check the hash chains from the browser."""
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Request, Response
@@ -10,7 +11,7 @@ from app.auth import get_user
 from app.evidence.chain import ChainResult, verify_all
 from app.models import AppUser, Client
 from app.ui.auth import redirect, render
-from app.web import current_session, session_factory
+from app.web import clock_of, current_session, session_factory
 
 router = APIRouter()
 INTEGRITY_TITLE = "Evidence integrity"
@@ -44,7 +45,9 @@ def _row(result: ChainResult, names: dict[int, str]) -> ChainRow:
     return ChainRow(label, result.ok, result.records, result.head_hash[:16], problem)
 
 
-def _context(user: AppUser, rows: list[ChainRow] | None) -> dict[str, Any]:
+def _context(
+    user: AppUser, rows: list[ChainRow] | None, checked_at: datetime | None = None
+) -> dict[str, Any]:
     failed = 0 if rows is None else sum(1 for row in rows if not row.ok)
     return {
         "title": INTEGRITY_TITLE,
@@ -52,6 +55,8 @@ def _context(user: AppUser, rows: list[ChainRow] | None) -> dict[str, Any]:
         "user": user,
         "rows": rows,
         "failed": failed,
+        "records": 0 if rows is None else sum(row.records for row in rows),
+        "checked_at": checked_at,
     }
 
 
@@ -82,6 +87,6 @@ async def integrity_check(request: Request) -> Response:
     return render(
         request,
         "evidence_integrity.html",
-        _context(user, rows),
+        _context(user, rows, clock_of(request)()),
         current_session(request),
     )

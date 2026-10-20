@@ -22,6 +22,7 @@ from app.reports.view import (
 )
 from app.ui.common import FormError, last_quarter, read_period, sentence
 from app.ui.viewmodels import (
+    ALL_CURRENT,
     CURRENT,
     EXCEPTION_FLAG,
     EXPIRED,
@@ -33,6 +34,7 @@ from app.ui.viewmodels import (
     STALE,
     checklist_rows,
     coverage_text,
+    evidence_facts,
     flags_of,
     only_flagged,
     read_earlier,
@@ -253,6 +255,39 @@ def test_a_source_that_is_not_wanted_is_still_listed_when_it_was_imported() -> N
     rows = source_rows(views, [])
     assert [(row.code, row.name) for row in rows] == [("leavers-csv", "Leavers list")]
     assert refresh_list(rows) == []
+
+
+def test_the_evidence_verdict_counts_the_sources_and_names_the_worst_state() -> None:
+    views = [
+        export_view("device-inventory", 2, Freshness.CURRENT),
+        export_view("network-export", 50, Freshness.STALE),
+        export_view("backup-export", 100, Freshness.EXPIRED),
+        evidence_view("training-csv", 1, Freshness.CURRENT, Assurance.ATTESTATION),
+    ]
+    wanted = ["backup-export", "device-inventory", "dns-check", "network-export"]
+    facts = evidence_facts(source_rows(views, wanted), views)
+    assert (facts.sources, facts.current, facts.to_refresh) == (4, 1, 3)
+    assert facts.items == 4
+    assert facts.label.key == "not-protected" and facts.label.icon == "cross"
+    assert facts.label.text == "1 stale, 1 expired, 1 not imported"
+
+    stale = [export_view("network-export", 50, Freshness.STALE)]
+    facts = evidence_facts(source_rows(stale, []), stale)
+    assert facts.label.key == "needs-attention" and facts.label.icon == "alert"
+    assert facts.label.text == "1 stale"
+    assert (facts.sources, facts.current, facts.to_refresh) == (1, 0, 1)
+    assert facts.items == 1
+
+    current = [export_view("device-inventory", 2, Freshness.CURRENT)]
+    facts = evidence_facts(source_rows(current, ["device-inventory"]), current)
+    assert facts.label == ALL_CURRENT
+    assert (facts.sources, facts.current, facts.to_refresh) == (1, 1, 0)
+
+    nothing = evidence_facts(source_rows([], ["dns-check"]), [])
+    assert nothing.label.key == "not-checked"
+    assert nothing.label.text == "No evidence yet"
+    assert (nothing.sources, nothing.current, nothing.to_refresh) == (1, 0, 1)
+    assert nothing.items == 0
 
 
 @pytest.mark.parametrize(

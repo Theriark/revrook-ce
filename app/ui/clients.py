@@ -77,6 +77,7 @@ from app.ui.viewmodels import (
     STATE_OF_FRESHNESS,
     checklist_rows,
     coverage_text,
+    evidence_facts,
     only_flagged,
     read_earlier,
     reason_text,
@@ -655,6 +656,14 @@ async def evidence_page(request: Request, client_id: RowId) -> Response:
             "sources": rows,
             "refresh": refresh_list(rows),
             "items": items,
+            "facts": evidence_facts(rows, views),
+            "client_actions": [
+                {
+                    "path": "imports/profile-editor",
+                    "text": "Import an export",
+                    "primary": True,
+                },
+            ],
         }
         return page(request, "evidence_imports.html", user, context)
 

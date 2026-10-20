@@ -243,3 +243,66 @@ def refresh_list(rows: Sequence[SourceRow]) -> list[SourceRow]:
         return (0, item.captured_at, item.name)
 
     return sorted((item for item in rows if item.refresh is not None), key=order)
+
+
+@dataclass(frozen=True)
+class EvidenceFacts:
+    """The verdict band of the evidence page: one status and four counts.
+
+    The status is read from the source rows the page already shows; nothing is
+    scored here.
+    """
+
+    label: StatusLabel
+    sources: int
+    current: int
+    to_refresh: int
+    items: int
+
+
+NO_EVIDENCE = StatusLabel("not-checked", "No evidence yet", "question")
+ALL_CURRENT = StatusLabel("protected", "Every export is current", "check")
+
+
+def _count_words(count: int, word: str) -> str:
+    return f"{count} {word}"
+
+
+def evidence_facts(
+    rows: Sequence[SourceRow], views: Sequence[EvidenceView]
+) -> EvidenceFacts:
+    """The status pill and the counts of the evidence page.
+
+    The pill names the worst state among the sources: stale exports alone need
+    attention; an expired export or a source never imported counts for nothing, so
+    the pill is not protected and says how many of each. A client without any item
+    has no evidence yet. Nothing is scored here: the states come from the rows.
+    """
+    to_refresh = [row for row in rows if row.refresh is not None]
+    stale = sum(1 for row in to_refresh if row.state == STALE)
+    expired = sum(1 for row in to_refresh if row.state == EXPIRED)
+    missing = sum(1 for row in to_refresh if row.state == MISSING)
+    if not views:
+        label = NO_EVIDENCE
+    elif not to_refresh:
+        label = ALL_CURRENT
+    else:
+        parts: list[str] = []
+        if stale:
+            parts.append(_count_words(stale, "stale"))
+        if expired:
+            parts.append(_count_words(expired, "expired"))
+        if missing:
+            parts.append(_count_words(missing, "not imported"))
+        text = ", ".join(parts)
+        if expired or missing:
+            label = StatusLabel("not-protected", text, "cross")
+        else:
+            label = StatusLabel("needs-attention", text, "alert")
+    return EvidenceFacts(
+        label=label,
+        sources=len(rows),
+        current=len(rows) - len(to_refresh),
+        to_refresh=len(to_refresh),
+        items=len(views),
+    )

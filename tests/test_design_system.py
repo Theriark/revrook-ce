@@ -125,6 +125,17 @@ COMPONENTS = (
     ".rv-suggestion",
     ".rv-notes-saving",
     ".rv-notes-status",
+    # Evidence imports, the profile editor and the integrity check (area 5)
+    ".rv-date",
+    ".rv-refresh",
+    ".rv-refresh-how",
+    "fieldset.rv-step",
+    ".rv-step-title",
+    ".rv-step-lead",
+    ".rv-editor-busy",
+    ".rv-import-next",
+    ".rv-chains",
+    ".rv-hash",
 )
 # A placeholder for the CSRF field of a rendered template; not a real token.
 PLACEHOLDER_TOKEN = "x" * 32
@@ -313,6 +324,60 @@ def test_the_notes_form_shows_that_it_is_saving_while_htmx_posts() -> None:
     control = (ROOT / "app/ui/templates/control.html").read_text(encoding="utf-8")
     assert '<span class="rv-notes-saving" aria-hidden="true">' in control
     assert '<span class="rv-busy"></span>' in control
+
+
+def test_the_evidence_tables_become_cards_on_a_phone() -> None:
+    # The sources, the items and the chains carry rv-table-cards: below 768px
+    # every row is a card, each cell names its column, a number aligns left in
+    # its card and an empty cell is dropped, as the clients list does.
+    phone = CSS.split("/* Any table that carries rv-table-cards", 1)[1]
+    phone = phone.split("\n}\n", 1)[0]
+    assert "main table.rv-table-cards" in phone and "display: block;" in phone
+    assert re.search(r"\.rv-table-cards thead \{[^}]*clip: rect\(0 0 0 0\);", phone)
+    before = re.search(r"td\[data-label\]::before \{([^}]*)\}", phone)
+    assert before is not None and "content: attr(data-label);" in before.group(1)
+    assert "background-color: var(--rv-white);" in before.group(1)
+    assert re.search(r"\.rv-table-cards caption \{[^}]*display: block;", phone)
+    assert re.search(r"main \.rv-table-cards td:empty \{[^}]*display: none;", phone)
+    cells = re.search(r"main \.rv-table-cards tbody td \{([^}]*)\}", phone)
+    assert cells is not None and "text-align: left;" in cells.group(1)
+    broken = re.search(r'\n\.rv-chains tr\[data-ok="false"\] > th \{([^}]*)\}', CSS)
+    assert broken is not None
+    assert "var(--rv-status-not-protected)" in broken.group(1)
+    for name in ("evidence_imports.html", "evidence_integrity.html"):
+        page = (ROOT / "app/ui/templates" / name).read_text(encoding="utf-8")
+        assert 'class="rv-table-cards' in page, name
+        assert 'data-label="' in page, name
+
+
+def test_the_editor_steps_are_cards_with_a_busy_indicator_beside_each_button() -> None:
+    # The legend of a step floats across its card so it reads as the title; the
+    # indicator of a button is shown only while htmx posts (hx-indicator names
+    # it, htmx adds htmx-request to it); the hint of the import area is plain.
+    legend = re.search(r"\n\.rv-step > legend \{([^}]*)\}", CSS)
+    assert legend is not None
+    assert "float: left;" in legend.group(1) and "width: 100%;" in legend.group(1)
+    assert re.search(r"\n\.rv-step > legend \+ \* \{[^}]*clear: both;", CSS)
+    hidden = re.search(r"\n\.rv-editor-busy \{([^}]*)\}", CSS)
+    assert hidden is not None and "display: none;" in hidden.group(1)
+    shown = re.search(r"\n\.rv-editor-busy\.htmx-request \{([^}]*)\}", CSS)
+    assert shown is not None and "display: inline-flex;" in shown.group(1)
+    hint = re.search(r"\n\.rv-dropzone-hint \{([^}]*)\}", CSS)
+    assert hint is not None and "font-weight: 400;" in hint.group(1)
+    templates = ROOT / "app/ui/templates"
+    editor = (templates / "profile_editor.html").read_text(encoding="utf-8")
+    assert 'hx-indicator="#rv-editor-busy"' in editor
+    assert '<label class="rv-dropzone">' in editor
+    assert '<output class="rv-dropzone-file" aria-live="polite"></output>' in editor
+    first = '<legend><span class="rv-step-number">1</span>Client, source and file'
+    assert first in editor
+    result = (templates / "_profile_editor_result.html").read_text(encoding="utf-8")
+    for step in ("2", "4", "5"):
+        assert f'<legend><span class="rv-step-number">{step}</span>' in result, step
+    assert '<h2 id="step-3-title" class="rv-step-title">' in result
+    for name in ("preview", "save", "import"):
+        assert f'hx-indicator="#rv-busy-{name}"' in result, name
+        assert f'id="rv-busy-{name}" class="rv-editor-busy"' in result, name
 
 
 # --- the shell --------------------------------------------------------------
