@@ -34,6 +34,7 @@ No version has been released: there is no tag, no GitHub release and no publishe
 
 ### Fixed
 
+- On Home the table of controls by domain was wider than its card and pushed the page sideways at 1440 and 390 px. The breakdown is now one stacked bar per domain across the card with the protected share beside the name, and every count sits in a table under "Show the numbers" that scrolls inside the card on a phone. The four stat cards stand one, two or four to a row (never three and one), the trend chart and the breakdown share one height with an empty state centred in it, and a posture ring card is wide enough for a client name of about twenty letters.
 - The arrow of a select, the date picker icon and the check mark of a checkbox were `data:` images of Pico CSS, which the content security policy blocks; the native controls are shown instead and the stylesheet loads no image at all.
 - In the app shell on a narrow phone the "Community Edition" badge overlapped the sign-out button, and in the rail the signed-in name was cut short beside that button: the badge is hidden below 600 px (the footer names the edition) and the button has its own line in the rail. The sign-in tagline grows to 24 px only from 1024 px, where the panel is wide enough for it.
 - A request with `Transfer-Encoding: chunked` and a small `Content-Length` passed the body size check; any `Transfer-Encoding` is now refused with 411.

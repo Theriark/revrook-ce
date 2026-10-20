@@ -172,7 +172,9 @@ Its parts, in order:
 - Four stat cards: clients, controls protected, controls that need work, exports to
   refresh. Each shows the number, its context, the change against the last stored
   report of every client that has one, and a sparkline of the last twelve weeks drawn
-  from the stored reports (`.rv-stat`, `.rv-spark`). The number is a link.
+  from the stored reports (`.rv-stat`, `.rv-spark`). The number is a link. The cards
+  stand one to a row on a phone, two from 600 px and four from 1280 px, never three
+  and one.
 - The rookery (`.rv-rookery`), the signature of Home: one posture ring per client,
   the score inside, the band beside it, the controls that need work and the movement
   since the last report under it. A client whose evidence is too thin for a score has
@@ -183,8 +185,12 @@ Its parts, in order:
   an open exception), and one action.
 - Score over the last 90 days (`.rv-chart`): one line per client from the stored
   reports, up to six, labelled at its end and told apart by its dash pattern; a table
-  under the chart carries every number. Controls by domain (`.rv-domains`): a stacked
-  bar per domain with the counts in the columns beside it and a legend of status pills.
+  under the chart carries every number. Controls by domain (`.rv-domains`): one
+  stacked bar per domain across the whole card with the domain and its protected
+  share above it, a legend of status pills, and every count in a table folded under
+  "Show the numbers" (`details.rv-chart-data`, the same fold as the chart; the table
+  sits in `div.rv-table-scroll` so a narrow phone scrolls the table, never the page).
+  The two cards sit side by side from 1024 px and share one height.
 - Recent changes (`.rv-timeline`): the newest audit entries that changed a client,
   its evidence or its reports, with who did it and when (the exact time on hover).
 
@@ -192,9 +198,10 @@ States: a fresh installation shows one empty state with the three first steps an
 one action; a client without evidence shows a dashed ring and "No evidence imported
 yet"; a client whose evidence cannot be read today is listed in a warning strip above
 the dashboard instead of stopping it; the attention list, the chart and the timeline
-each have their own empty state that says what fills them. The page is rendered whole
-on the server: there is no part that loads later, so there is no loading state to
-show.
+each have their own empty state that says what fills them, and an empty state in one
+of the two side-by-side cards is centred in the height of its neighbour. The page is
+rendered whole on the server: there is no part that loads later, so there is no
+loading state to show.
 
 Charts are inline SVG drawn on the server with the brand colours only: the sparkline
 and the ring arc in the accent, the lines in charcoal, the domain bars in the status
