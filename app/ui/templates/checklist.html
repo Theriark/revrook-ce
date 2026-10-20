@@ -1,22 +1,21 @@
 {% extends "base.html" %}
 {% import "_status.html" as s %}
+{% import "_icons.html" as i %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
-<h2>Checklist</h2>
-<p id="checklist-count">{{ rows|length }} of {{ total }} controls shown.</p>
-<p>
-{% if show == "flagged" %}
-<a id="show-all" href="/clients/{{ client_id }}/checklist">Show all controls</a>
-{% else %}
-<a id="show-flagged" href="/clients/{{ client_id }}/checklist?show=flagged">Show only the controls that changed or need a look</a>
-{% endif %}
-</p>
-{% if not has_earlier %}
-<p class="rv-text-secondary">No report has been made for this client yet, so no control is marked as changed.</p>
-{% endif %}
-<div class="rv-table-scroll">
-<table id="checklist">
+<div class="rv-section-head rv-checklist-head">
+<div><h2 id="checklist-title">Checklist</h2><p class="rv-section-note">Every control of the library as a report made today would show it, with the evidence behind each status.</p></div>
+</div>
+<div class="rv-toolbar rv-checklist-toolbar">
+<ul class="rv-chips" aria-label="Show">
+<li><a id="show-all" class="rv-chip" href="/clients/{{ client_id }}/checklist"{% if show == "all" %} aria-current="true"{% endif %}>All controls <span class="rv-chip-count">{{ total }}</span></a></li>
+<li><a id="show-flagged" class="rv-chip" href="/clients/{{ client_id }}/checklist?show=flagged"{% if show == "flagged" %} aria-current="true"{% endif %}>Changed or needs a look <span class="rv-chip-count">{{ flagged_total }}</span></a></li>
+</ul>
+<p class="rv-toolbar-note" id="checklist-count">{{ rows|length }} of {{ total }} controls shown.{% if not has_earlier %} No report has been made for this client yet, so no control is marked as changed.{% endif %}</p>
+</div>
+{% if rows %}
+<table id="checklist" class="rv-checklist">
 <caption>Every control, its status and the evidence behind it</caption>
 <thead>
 <tr>
@@ -31,26 +30,22 @@
 <tbody>
 {% for item in rows %}
 <tr data-control="{{ item.row.control_id }}" data-changed="{{ 'true' if item.changed else 'false' }}" data-flagged="{{ 'true' if item.flagged else 'false' }}">
-<th scope="row"><a href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}">{{ item.row.title }}</a> <span class="rv-text-secondary">{{ item.row.control_id }}{% if item.row.gate %} (gate control){% endif %}</span></th>
-<td>{{ s.status(item.row.label) }}</td>
-<td>{{ item.coverage }}</td>
-<td>{{ s.day(item.row.evidence_at) }}</td>
-<td>{{ item.owner }}</td>
-<td>
-{% if item.changed %}<p>Changed since the last report: it was {{ item.changed_from.text }}.</p>{% endif %}
-{% if item.reasons %}
-<ul>
-{% for reason in item.reasons %}
-<li>{{ reason }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-</td>
+<th scope="row"><a class="rv-control-link" href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}">{{ item.row.title }}</a><span class="rv-cell-note">{{ item.row.control_id }}{% if item.row.gate %}, gate control{% endif %}</span></th>
+<td data-label="Status">{{ s.status(item.row.label) }}</td>
+<td data-label="Coverage" class="rv-coverage">{{ item.coverage }}</td>
+<td data-label="Evidence dated" class="rv-coverage">{{ s.day(item.row.evidence_at) }}</td>
+<td data-label="Owner">{{ item.owner }}</td>
+<td data-label="Why it needs a look">{% if item.changed or item.reasons %}<ul class="rv-flags">{% if item.changed %}<li class="rv-flag-changed">Changed since the last report: it was {{ item.changed_from.text }}.</li>{% endif %}{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>{% endif %}</td>
 </tr>
-{% else %}
-<tr><td colspan="6">Nothing changed and nothing needs a look.</td></tr>
 {% endfor %}
 </tbody>
 </table>
+{% else %}
+<div class="rv-empty" id="checklist-empty">
+{{ i.icon("check", 36) }}
+<p class="rv-empty-title">Nothing changed and nothing needs a look</p>
+<p class="rv-empty-text">{% if has_earlier %}Every control has the status it had at the last report, its evidence is current and no exception is open.{% else %}No control has old evidence or an open exception. A change of status appears here once a report has been made to compare against.{% endif %}</p>
+<a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/checklist">Show all controls</a>
 </div>
+{% endif %}
 {% endblock %}
