@@ -196,9 +196,7 @@ def test_a_submit_button_is_as_wide_as_its_words() -> None:
         r'\nbutton\[type="submit"\],\ninput\[type="submit"\] \{([^}]*)\}', CSS
     )
     assert rule is not None and "width: auto;" in rule.group(1)
-    block = re.search(
-        r"\n\.rv-button-block,\nbutton\.rv-button-block \{([^}]*)\}", CSS
-    )
+    block = re.search(r"\n\.rv-button-block,\nbutton\.rv-button-block \{([^}]*)\}", CSS)
     assert block is not None and "width: 100%;" in block.group(1)
     # The block rule comes later, so at equal specificity it wins
     assert CSS.index('\nbutton[type="submit"],') < CSS.index("\n.rv-button-block,")
