@@ -2736,3 +2736,416 @@ main .rv-table-compact td {
   color: var(--rv-text-secondary);
   background-color: var(--rv-white);
 }
+
+/* ---------- Checklist and control detail (docs/design-system.md, Checklist) ---------- */
+
+/* The head of the checklist: the title with its purpose, then the filter band
+   (a div, not a form: the two chips are links) */
+.rv-checklist-head {
+  margin-top: 8px;
+}
+
+.rv-checklist-toolbar {
+  margin-bottom: 16px;
+}
+
+/* The checklist: the control is the row heading with its id under it, the
+   status a pill, the flags a short dotted list. There is no scroll box, so the
+   head stays sticky while the page scrolls; below 768px every row is a card */
+main .rv-checklist a.rv-control-link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+main .rv-checklist a.rv-control-link:hover {
+  text-decoration: underline;
+}
+
+.rv-checklist .rv-cell-note {
+  font-weight: 400;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* A row whose status changed since the last report carries the violet mark of
+   the rail on its heading cell; the words beside it say what it was */
+.rv-checklist tr[data-changed="true"] > th {
+  box-shadow: inset 3px 0 0 var(--rv-accent);
+}
+
+.rv-coverage {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rv-flags {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-flags li {
+  position: relative;
+  margin: 0 0 2px;
+  padding: 0 0 0 14px;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.rv-flags li::before {
+  content: "";
+  position: absolute;
+  top: 0.55em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--rv-charcoal);
+}
+
+.rv-flag-changed {
+  font-weight: 600;
+}
+
+@media (min-width: 1024px) {
+  .rv-checklist th[scope="row"] {
+    width: 30%;
+  }
+}
+
+/* On a phone every row of the checklist is a card, like the clients list: the
+   heading row stays for assistive technology and each cell names its column;
+   a row with nothing to flag drops that cell */
+@media (max-width: 767px) {
+  main table.rv-checklist,
+  .rv-checklist tbody,
+  .rv-checklist tr,
+  .rv-checklist th,
+  .rv-checklist td {
+    display: block;
+  }
+
+  main table.rv-checklist {
+    border: 0;
+  }
+
+  .rv-checklist caption {
+    display: block;
+  }
+
+  .rv-checklist thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-checklist thead th {
+    position: static;
+  }
+
+  main .rv-checklist tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-checklist tbody th,
+  main .rv-checklist tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+  }
+
+  main .rv-checklist tbody th {
+    padding-top: 10px;
+  }
+
+  .rv-checklist tr[data-changed="true"] > th {
+    border-radius: 12px 12px 0 0;
+  }
+
+  main .rv-checklist td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-checklist td:empty {
+    display: none;
+  }
+
+  main .rv-checklist tbody tr:hover > td,
+  main .rv-checklist tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-coverage {
+    white-space: normal;
+  }
+}
+
+/* The control head: the way back, the title and the facts of the control */
+.rv-control-head {
+  margin: 8px 0 16px;
+}
+
+.rv-control-kicker {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+main .rv-control-kicker a {
+  text-decoration: none;
+}
+
+main .rv-control-kicker a:hover {
+  text-decoration: underline;
+}
+
+.rv-control-title {
+  max-width: 44rem;
+  margin: 0 0 8px;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.rv-control-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-control-meta li {
+  margin: 0;
+  padding: 0 10px;
+  list-style: none;
+  border-left: 1px solid var(--rv-line);
+}
+
+.rv-control-meta li:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+/* The verdict band: the status as a large pill beside the facts of the
+   evidence, on the canvas. Every text inside declares canvas as its background */
+.rv-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 32px;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-verdict-status {
+  flex: 0 0 auto;
+}
+
+.rv-verdict span.rv-status-protected,
+.rv-verdict span.rv-status-needs-attention,
+.rv-verdict span.rv-status-not-protected,
+.rv-verdict span.rv-status-not-checked,
+.rv-verdict span.rv-status-not-applicable {
+  padding: 6px 16px 6px 12px;
+  font-size: 16px;
+}
+
+.rv-verdict-facts {
+  flex: 1 1 20rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.rv-verdict-facts dt {
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-verdict-facts dd {
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+/* What was checked and the exceptions beside the notes from 1024px; the notes
+   stay in view while the person reads the evidence */
+.rv-control-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.rv-control-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rv-control-main > .rv-card,
+.rv-control-grid > .rv-card {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .rv-control-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .rv-notes-card {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+/* The rule of the control as a lead, then what the check found */
+.rv-rule {
+  margin: 0 0 12px;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--rv-charcoal);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.rv-result-detail {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+/* The exceptions of this control: the owner and the state, the reason, the
+   compensating control and the review date */
+.rv-exception-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-exception {
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--rv-line);
+  list-style: none;
+}
+
+.rv-exception:last-child {
+  padding-bottom: 0;
+}
+
+.rv-exception p {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.rv-exception-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-weight: 600;
+}
+
+.rv-exception .rv-exception-meta {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* A compact empty state inside a card */
+.rv-empty-small {
+  margin-bottom: 0;
+  padding: 24px 16px;
+}
+
+.rv-empty-small .rv-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* Your notes: the suggestion on canvas, one field per line, the saving
+   indicator while htmx posts (it adds htmx-request to the form), the status
+   line that receives "Saved at" or the refusal */
+.rv-suggestion {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--rv-line);
+  border-radius: 8px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-suggestion-label {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-suggestion-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-notes-card textarea {
+  min-height: 4.5rem;
+}
+
+.rv-notes-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.rv-notes-saving {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#note-form.htmx-request .rv-notes-saving {
+  display: inline-flex;
+}
+
+.rv-notes-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-notes-status .rv-errors {
+  margin: 0;
+  font-size: 14px;
+}
+
+.rv-control-foot {
+  margin: 0;
+  font-size: 14px;
+}
