@@ -450,8 +450,7 @@ def test_the_builder_shows_that_it_is_saving_and_the_pages_become_cards() -> Non
     assert digest is not None and "overflow-wrap: anywhere;" in digest.group(1)
 
 
-def test_the_administration_pages_use_the_header_the_cards_and_the_confirmation(
-) -> None:
+def test_the_administration_pages_use_header_cards_and_confirmation() -> None:
     # Settings and System open with the page header; the fixed facts of the
     # installation are cards two to a row from 1024px; a client is deleted behind
     # the inline confirmation with the danger button; the glossary is one card
