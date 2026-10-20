@@ -400,3 +400,50 @@ async def test_the_overview_shows_the_posture_the_domains_and_the_changes(
     assert after.status_code == 200 and structure_problems(after.text) == []
     assert "Report snapshot made" in after.text
     assert "Unchanged since 2026-10-17" in after.text
+
+
+async def test_the_checklist_has_the_filter_chips_and_the_control_its_verdict(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    await sign_in(ui_browser, db_engine)
+    client_id = await seed_client(db_engine, ui_ctx)
+    page = await ui_browser.get(f"/clients/{client_id}/checklist")
+    html = page.text
+    assert page.status_code == 200 and structure_problems(html) == []
+    assert html.count('aria-current="page"') == 2  # the rail and the tabs
+    assert 'id="show-all" class="rv-chip" href' in html
+    assert 'aria-current="true">All controls <span class="rv-chip-count">' in html
+    assert 'id="show-flagged" class="rv-chip"' in html
+    assert 'id="checklist-count">' in html and "controls shown." in html
+    assert "No report has been made for this client yet" in html
+    assert '<table id="checklist" class="rv-checklist">' in html
+    headings = html.count('<th scope="row"><a class="rv-control-link"')
+    assert headings == len(LIBRARY.controls)
+    assert html.count('<td data-label="Why it needs a look"></td>') > 0
+    assert '<ul class="rv-flags">' in html and ", gate control</span>" in html
+    assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
+
+    narrowed = await ui_browser.get(
+        f"/clients/{client_id}/checklist", params={"show": "flagged"}
+    )
+    assert narrowed.status_code == 200 and structure_problems(narrowed.text) == []
+    assert 'id="show-flagged" class="rv-chip" href="/clients/' in narrowed.text
+    assert 'aria-current="true">Changed or needs a look' in narrowed.text
+    assert '<td data-label="Why it needs a look"></td>' not in narrowed.text
+
+    control_id = LIBRARY.controls[0].id
+    control = await ui_browser.get(f"/clients/{client_id}/controls/{control_id}")
+    html = control.text
+    assert control.status_code == 200 and structure_problems(html) == []
+    assert ">Back to the checklist</a>" in html
+    assert '<h2 class="rv-control-title">' in html
+    assert f"<li>{control_id}</li>" in html and "<li>Weight " in html
+    assert '<section class="rv-verdict" id="control-status"' in html
+    for fact in ("Evidence dated", "State of the evidence", "Evidence type"):
+        assert f"<dt>{fact}</dt>" in html, fact
+    assert '<p class="rv-rule">' in html and 'id="exceptions-empty"' in html
+    assert '<p id="suggestion" class="rv-suggestion-text">' in html
+    assert 'aria-describedby="by_when-help"' in html
+    assert '<span class="rv-notes-saving" aria-hidden="true">' in html
+    assert 'id="note-status" class="rv-notes-status" aria-live="polite"' in html
+    assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))

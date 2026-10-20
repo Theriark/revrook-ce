@@ -113,7 +113,21 @@ COMPONENTS = (
     ".rv-mix-bar",
     ".rv-mix-count",
     ".rv-domain-meta",
+    # The checklist and the control detail (area 4 of the revamp)
+    ".rv-checklist-toolbar",
+    ".rv-flags",
+    ".rv-coverage",
+    ".rv-control-meta",
+    ".rv-verdict",
+    ".rv-rule",
+    ".rv-exception",
+    ".rv-empty-small",
+    ".rv-suggestion",
+    ".rv-notes-saving",
+    ".rv-notes-status",
 )
+# A placeholder for the CSRF field of a rendered template; not a real token.
+PLACEHOLDER_TOKEN = "x" * 32
 
 
 def render(name: str, brand_files: frozenset[str] = frozenset(BRAND_FILES)) -> str:
@@ -121,7 +135,7 @@ def render(name: str, brand_files: frozenset[str] = frozenset(BRAND_FILES)) -> s
         title="Sign in",
         errors=[],
         username="",
-        csrf_token="***REDACTED***",
+        csrf_token=PLACEHOLDER_TOKEN,
         brand_files=brand_files,
     )
 
@@ -247,6 +261,58 @@ def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> No
     assert re.search(
         r'\.rv-add-form button\[type="submit"\] \{[^}]*width: 100%;', block
     )
+
+
+def test_the_checklist_becomes_cards_on_a_phone_and_marks_a_changed_row() -> None:
+    # The checklist has six columns and no scroll box (its head is sticky), so
+    # below 768px every row is a card and a cell with nothing to flag is dropped.
+    # A row whose status changed carries the violet mark beside its words.
+    phone = CSS.split("/* On a phone every row of the checklist", 1)[1]
+    phone = phone.split("\n}\n", 1)[0]
+    assert "main table.rv-checklist" in phone and "display: block;" in phone
+    assert re.search(r"\.rv-checklist thead \{[^}]*clip: rect\(0 0 0 0\);", phone)
+    before = re.search(r"td\[data-label\]::before \{([^}]*)\}", phone)
+    assert before is not None and "content: attr(data-label);" in before.group(1)
+    assert re.search(r"\.rv-checklist caption \{[^}]*display: block;", phone)
+    assert re.search(r"main \.rv-checklist td:empty \{[^}]*display: none;", phone)
+    changed = re.search(
+        r'\n\.rv-checklist tr\[data-changed="true"\] > th \{([^}]*)\}', CSS
+    )
+    assert changed is not None and "var(--rv-accent)" in changed.group(1)
+
+
+def test_the_verdict_band_and_the_suggestion_keep_every_text_on_the_canvas() -> None:
+    # Both are canvas bands: a fact or a suggestion that kept the white background
+    # of the page would show as a white box on them (the toolbar rule, again).
+    for selector in (
+        ".rv-verdict-facts dt",
+        ".rv-verdict-facts dd",
+        ".rv-suggestion-label",
+        ".rv-suggestion-text",
+    ):
+        rule = re.search(rf"\n{re.escape(selector)} \{{([^}}]*)\}}", CSS)
+        assert rule is not None, selector
+        assert "background-color: var(--rv-canvas);" in rule.group(1), selector
+        assert "var(--rv-text-secondary)" not in rule.group(1), selector
+    band = re.search(r"\n\.rv-verdict \{([^}]*)\}", CSS)
+    assert band is not None and "background-color: var(--rv-canvas);" in band.group(1)
+    large = re.search(
+        r"\n\.rv-verdict span\.rv-status-protected,([^{]*)\{([^}]*)\}", CSS
+    )
+    assert large is not None and "font-size: 16px;" in large.group(2)
+    assert large.group(1).count("span.rv-status-") == 4
+
+
+def test_the_notes_form_shows_that_it_is_saving_while_htmx_posts() -> None:
+    # htmx adds htmx-request to the form while a request is in flight; the
+    # stylesheet shows the spinner and the word then, and nothing otherwise.
+    hidden = re.search(r"\n\.rv-notes-saving \{([^}]*)\}", CSS)
+    assert hidden is not None and "display: none;" in hidden.group(1)
+    shown = re.search(r"\n#note-form\.htmx-request \.rv-notes-saving \{([^}]*)\}", CSS)
+    assert shown is not None and "display: inline-flex;" in shown.group(1)
+    control = (ROOT / "app/ui/templates/control.html").read_text(encoding="utf-8")
+    assert '<span class="rv-notes-saving" aria-hidden="true">' in control
+    assert '<span class="rv-busy"></span>' in control
 
 
 # --- the shell --------------------------------------------------------------
