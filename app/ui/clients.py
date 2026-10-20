@@ -341,11 +341,12 @@ async def checklist(request: Request, client_id: RowId, show: str = "all") -> Re
             draft.owners,
             excepted,
         )
-        shown = only_flagged(rows) if show == "flagged" else rows
+        flagged = only_flagged(rows)
         context = client_context(loaded, "checklist", "Checklist")
         context.update(
-            rows=shown,
+            rows=flagged if show == "flagged" else rows,
             total=len(rows),
+            flagged_total=len(flagged),
             show=show,
             has_earlier=loaded.earlier is not None,
         )

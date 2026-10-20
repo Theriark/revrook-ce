@@ -285,6 +285,42 @@ and the tabs. Under it the period toolbar (`form.rv-period`), then:
 - Recent changes (`#recent-changes`): the audit entries of this client only, read
   with the same words as Home.
 
+## Checklist and control detail
+
+The checklist (`app/ui/templates/checklist.html`) is where the owner scans every
+control of one client to find what to fix before a report, and the control page
+(`control.html`) is where they read what was checked and write the four lines the
+report prints. Both read the same rows, labels and results as before; nothing is
+stored on either page except the notes, which were already saved as they are typed.
+
+The checklist. Under the client header, the section head names the page and its
+purpose, then a canvas band (`.rv-checklist-toolbar`) holds two chips with their
+counts, all controls and the ones that changed or need a look (the one that applies
+carries `aria-current="true"`), and the count line (`#checklist-count`), which also
+says when no report exists yet to compare against. The table (`table.rv-checklist`)
+has no scroll box, so its head stays sticky: the control is the row heading with its
+id and "gate control" under it, the status a pill, the coverage and the date in
+tabular figures, the owner, and the flags as a short dotted list (`ul.rv-flags`). A
+row whose status changed since the last report carries the violet mark of the rail on
+its heading cell, with the words "Changed since the last report" beside it. Below
+768 px every row is a card and each cell names its column; a row with nothing to flag
+drops that cell. The flagged view with nothing in it is an empty state that says what
+would fill it and leads back to the whole list.
+
+The control page. A kicker leads back to the checklist; the title is the control's
+sentence, with its id, domain, gate and weight under it (`ul.rv-control-meta`). The
+verdict band (`section.rv-verdict`, the signature of the page) shows the status as a
+large pill beside the four evidence facts (dated, state, type, coverage) on the
+canvas. From 1024 px the page splits 3:2: what was checked (the rule as a lead,
+`p.rv-rule`, then what the check found and its notes) and the exceptions of this
+control (owner, open or overdue as a pill, reason, compensating control, review date;
+an empty state leads to the exceptions page) on the left, and the notes card on the
+right, which stays in view while the person reads. The notes card holds the suggested
+wording on canvas (`.rv-suggestion`), one `div.rv-field` per line with a help text
+on "By when", the primary button, a "Saving" indicator (`.rv-notes-saving`, shown
+while htmx posts, when the form carries `htmx-request`) and the `aria-live` status
+line that receives "Saved at" or the refusal.
+
 ## Floors every page keeps
 
 - Works at 390, 768 and 1440 px without horizontal overflow.
