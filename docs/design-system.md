@@ -383,6 +383,98 @@ cards below 768 px like the clients list and the checklist: the heading row stay
 for assistive technology, each cell names its column through `data-label`, numbers
 align left and an empty cell is dropped.
 
+## Exceptions and reports
+
+The last six kinds of page: the exceptions register (`exceptions.html`), the report
+builder (`reports.html`), the report page (`report.html`), the export history
+(`exports.html`), the settings and the glossary (`settings.html`, `glossary.html`,
+`app/ui/site.py`), the system page (`system.html`, `app/ui/system.py`) and the
+problem page (`problem.html`, rendered by `problem` in `app/ui/common.py`). All read
+the same rows and views as before; no behaviour, data or evidence rule changed. The
+API and the CSRF check keep their JSON refusals; only the page a person sees changed.
+
+The exceptions register. Under the client tabs, the section head names the page
+and its rule (an exception never changes a status). Then the verdict band of the
+control page: how the register stands as one pill (how many are past their review
+date; open with none overdue; no open exception) beside four facts (open, overdue,
+closed, the next review date), computed in the template from the rows the page
+shows. The table (`table.rv-exceptions`, with `rv-table-cards`) lists the open
+exceptions first with the earliest review date at the top: the control with its id
+under it, the owner, the reason and the compensating control in a column of their
+own, the review date, the state as a pill and the small quiet button that closes an
+open one; a closed row is quieter. Without a row the page shows an empty state
+whose action leads to the form. The form to add one is a card
+(`section.rv-exception-card`): the control, the owner beside the review date, the
+reason, the compensating control, each with its help text, and the one primary
+button; a refusal stays `_errors.html` above the fields.
+
+The report builder. Three numbered step cards (`section.rv-step` with
+`h3.rv-step-title`, the circle of the Home steps, because the steps are a sequence):
+the period, two date fields side by side with the quiet button and the period
+beside it; the details, the preparer, the plan with its help, and the topics of the
+insurer in `fieldset.rv-topics`, one row each (`div.rv-topic`) with the checkbox
+beside the owner field, then the quiet save button with the "Saving" indicator
+(`.rv-notes-saving`, shown while htmx posts the form) and the status line
+(`#details-status`, `aria-live="polite"`) that receives "Saved at" or the refusal;
+and the one primary action of the page, making the report. Then "Reports made
+before", a table (`table.rv-snapshots`) of period, pack date and the way to each
+report, or an empty state that says to make the first one.
+
+The report page. The control head gives the way back to the builder, the title and
+the facts of the report (period, pack date, snapshot). Then the export readiness as
+the verdict band: "Ready to export" or how many things to fix first, beside the
+controls, the open exceptions, the data sources and the preparer. Under it, from
+1024 px side by side (`div.rv-report-layout`): the sheet and the side column. The
+sheet (`article.rv-sheet` on the canvas of `div.rv-sheet-band`) is the signature of
+the page: a white sheet with the elevation of a dialog, drawn with the same facts
+and rules as the cover of the exported file (`app/reports/report.css`): the running
+head with the business and the client, the business name at 28 px, the subtitle,
+the cover facts (client, period, prepared by, generated, pack date, data sources),
+the violet rule, the summary lines (`#summary`) and the controls by status as pills
+with their counts; a business name that is not set shows where it will be. The side
+column holds the problems to fix first (`#problems`, `.rv-errors`) or the success
+strip, and the card of the two reports (`ul.rv-kinds`), each with its name, what it
+is for, the quiet preview button and the primary export button.
+
+The export history. The section head and the success strip after an export, then
+the table (`table.rv-exports`, with `rv-table-cards`): when, the report, the file
+and the SHA-256 in `code.rv-digest` (which breaks anywhere, so a card on a phone
+never grows wider than the page), the size, who exported it and the small download
+button; or an empty state that leads to the builder.
+
+Settings. The page header with the purpose, the success strip and the errors, then
+the form card: the business name and the reminder address, each with a help text
+that says what it does and whether a mail relay is set, and the one primary button.
+Under the section head "Fixed by the rules and the installation", the read-only
+facts as cards two to a row from 1024 px (`div.rv-readonly`): the disclaimer as a
+lead (`p.rv-quote`), the retention and limits as facts, the weights of the domains
+as a table with the ruleset in its subtitle, and the users as chips
+(`ul.rv-users`, the first letter as the mark) with the mapping policy under them.
+
+System. The page header with the version and the role, the success strip after a
+deletion, then the worker as the verdict band (`#worker-status`, the label of
+`app/system.py` as the pill) beside the newest heartbeat, when the banner appears,
+the number of schedules and the role of this process. The schedules are a table
+(`table.rv-schedules`, with `rv-table-cards`) with the enabled state as a pill and
+the runs as dates, or an empty state that says the worker adds them when it
+starts. Two cards side by side from 1024 px: the reminders and outside services as
+a list (`ul.rv-services`) of a pill (set, not set, on, off) and its sentence, and
+the data export with its primary button and the way to the integrity check. The
+deletion of a client is a card with the not-protected rail (`.rv-danger-card`):
+one `details.rv-confirm` per client whose summary is the quiet button and whose
+body holds the field to type the name and the danger button.
+
+Glossary. The page header, then one card (`dl.rv-glossary`): from 768 px each term
+sits beside its meaning, on a phone above it. The closing sentence is an alert that
+says what a report is.
+
+The problem page. A refusal a person can read (404, 409, 422) is one card
+(`section.rv-problem`, `role="alert"`): the status code as a 28 px figure in
+violet-blue (`p.rv-problem-code`, with "Status" for assistive technology), the
+title as the `h1`, the message, the details where there are any, one line that says
+what to do, and two ways back, Home as the primary button and the clients list as
+the quiet one. The htmx fragment of the same refusal is unchanged.
+
 ## Floors every page keeps
 
 - Works at 390, 768 and 1440 px without horizontal overflow.

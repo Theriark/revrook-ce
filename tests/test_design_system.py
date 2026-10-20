@@ -136,6 +136,26 @@ COMPONENTS = (
     ".rv-import-next",
     ".rv-chains",
     ".rv-hash",
+    # Exceptions, reports, exports, settings, system, glossary, problem (area 6)
+    ".rv-under-tabs",
+    ".rv-topic",
+    ".rv-sheet-band",
+    ".rv-sheet",
+    ".rv-sheet-title",
+    ".rv-sheet-facts",
+    ".rv-sheet-rule",
+    ".rv-sheet-counts",
+    ".rv-kind",
+    ".rv-digest",
+    ".rv-readonly",
+    ".rv-quote",
+    ".rv-users",
+    ".rv-services",
+    ".rv-danger-card",
+    ".rv-delete-list",
+    ".rv-glossary",
+    ".rv-problem",
+    ".rv-problem-code",
 )
 # A placeholder for the CSRF field of a rendered template; not a real token.
 PLACEHOLDER_TOKEN = "x" * 32
@@ -380,6 +400,91 @@ def test_the_editor_steps_are_cards_with_a_busy_indicator_beside_each_button() -
     for name in ("preview", "save", "import"):
         assert f'hx-indicator="#rv-busy-{name}"' in result, name
         assert f'id="rv-busy-{name}" class="rv-editor-busy"' in result, name
+
+
+def test_the_report_sheet_is_white_paper_on_the_canvas_band() -> None:
+    # The signature of the report page: a letter-sized white sheet on the canvas
+    # band, drawn with the cover facts of the exported file. The band is canvas,
+    # the sheet and every text on it declare white, the title is the 28px of the
+    # type scale and the violet rule is the only colour on the page.
+    band = re.search(r"\n\.rv-sheet-band \{([^}]*)\}", CSS)
+    assert band is not None and "background-color: var(--rv-canvas);" in band.group(1)
+    sheet = re.search(r"\n\.rv-sheet \{([^}]*)\}", CSS)
+    assert sheet is not None and "background-color: var(--rv-white);" in sheet.group(1)
+    assert "box-shadow: var(--rv-shadow-2);" in sheet.group(1)
+    title = re.search(r"\n\.rv-sheet-title \{([^}]*)\}", CSS)
+    assert title is not None and "font-size: 28px;" in title.group(1)
+    rule = re.search(r"\n\.rv-sheet-rule \{([^}]*)\}", CSS)
+    assert rule is not None and "background-color: var(--rv-accent);" in rule.group(1)
+    report = (ROOT / "app/ui/templates/report.html").read_text(encoding="utf-8")
+    sheet_tag = '<article class="rv-sheet" id="sheet" aria-labelledby="sheet-title">'
+    assert sheet_tag in report
+    for part in ("rv-sheet-head", "rv-sheet-facts", "rv-sheet-rule", "rv-sheet-counts"):
+        assert f'class="{part}"' in report, part
+    # The ids the tests of phase 9 read stay where they were
+    for marker in ('id="summary"', 'id="problems"', 'id="kinds"', 'id="export-status"'):
+        assert marker in report, marker
+    assert "Ready to export" in report and "to fix first" in report
+
+
+def test_the_builder_shows_that_it_is_saving_and_the_pages_become_cards() -> None:
+    # The details form of the report builder shows the spinner while htmx posts,
+    # as the notes card does; the registers of area 6 carry rv-table-cards so a
+    # row is a card on a phone, with each cell naming its column.
+    shown = re.search(
+        r"\n#details-form\.htmx-request \.rv-notes-saving \{([^}]*)\}", CSS
+    )
+    assert shown is not None and "display: inline-flex;" in shown.group(1)
+    builder = (ROOT / "app/ui/templates/reports.html").read_text(encoding="utf-8")
+    assert '<span class="rv-notes-saving" aria-hidden="true">' in builder
+    for step in ("1", "2", "3"):
+        assert f'<span class="rv-step-number">{step}</span>' in builder, step
+    topic = re.search(r"@media \(min-width: 768px\) \{\n  \.rv-topic \{([^}]*)\}", CSS)
+    assert topic is not None and "minmax(12rem, 1fr)" in topic.group(1)
+    for name in ("exceptions.html", "exports.html", "reports.html", "system.html"):
+        page = (ROOT / "app/ui/templates" / name).read_text(encoding="utf-8")
+        assert 'class="rv-table-cards' in page, name
+        assert 'data-label="' in page, name
+        assert 'class="rv-empty"' in page, name
+    digest = re.search(r"\n\.rv-digest \{([^}]*)\}", CSS)
+    assert digest is not None and "overflow-wrap: anywhere;" in digest.group(1)
+
+
+def test_the_administration_pages_use_the_header_the_cards_and_the_confirmation(
+) -> None:
+    # Settings and System open with the page header; the fixed facts of the
+    # installation are cards two to a row from 1024px; a client is deleted behind
+    # the inline confirmation with the danger button; the glossary is one card
+    # with the term beside its meaning from 768px; the problem page is one card
+    # with the status code as a figure in violet-blue and two ways back.
+    templates = ROOT / "app/ui/templates"
+    for name in ("settings.html", "system.html", "glossary.html"):
+        page = (templates / name).read_text(encoding="utf-8")
+        assert '<div class="rv-page-header">' in page, name
+        assert 'class="rv-page-purpose"' in page, name
+    settings = (templates / "settings.html").read_text(encoding="utf-8")
+    assert '<div class="rv-readonly">' in settings
+    assert 'id="users" class="rv-users"' in settings
+    columns = re.search(
+        r"@media \(min-width: 1024px\) \{\n  \.rv-readonly \{([^}]*)\}", CSS
+    )
+    assert columns is not None and "repeat(2, minmax(0, 1fr))" in columns.group(1)
+    system = (templates / "system.html").read_text(encoding="utf-8")
+    assert '<div id="worker-status" class="rv-verdict-status">' in system
+    assert '<details class="rv-confirm">' in system
+    assert 'class="rv-button-danger"' in system
+    assert 'id="clients" class="rv-delete-list"' in system
+    glossary = re.search(
+        r"@media \(min-width: 768px\) \{\n  \.rv-glossary > div \{([^}]*)\}", CSS
+    )
+    assert glossary is not None and "15rem minmax(0, 1fr)" in glossary.group(1)
+    problem = (templates / "problem.html").read_text(encoding="utf-8")
+    assert '<section class="rv-problem" role="alert"' in problem
+    assert '<p class="rv-problem-code">' in problem and "{{ status }}" in problem
+    assert problem.count('role="button"') == 2
+    code = re.search(r"\n\.rv-problem-code \{([^}]*)\}", CSS)
+    assert code is not None and "color: var(--rv-accent);" in code.group(1)
+    assert "font-size: 28px;" in code.group(1)
 
 
 # --- the shell --------------------------------------------------------------

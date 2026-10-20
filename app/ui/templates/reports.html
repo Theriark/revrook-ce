@@ -1,68 +1,108 @@
 {% extends "base.html" %}
+{% import "_icons.html" as i %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
-<h2>Report builder</h2>
+<div class="rv-section-head rv-under-tabs">
+<div><h2 id="builder-title">Report builder</h2><p class="rv-section-note">Three steps: choose the period, write the details, make the report. A report is made from the state of the client today, so it can be previewed and exported again exactly as it was.</p></div>
+</div>
 {% if not msp_name %}
-<p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> The name of your business is not set, so a report cannot be exported yet. <a href="/settings">Set it in the settings</a>.</p>
+<p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>The name of your business is not set, so a report cannot be exported yet. <a href="/settings">Set it in the settings</a>.</span></p>
 {% endif %}
 
-<h3>1. Choose the period</h3>
+<section class="rv-step" id="step-period" aria-labelledby="step-period-title">
+<h3 id="step-period-title" class="rv-step-title"><span class="rv-step-number">1</span>Choose the period</h3>
+<p class="rv-step-lead">The quarter the report covers. The evidence is still read as it is today.</p>
 <form id="period-form" method="get" action="/clients/{{ client_id }}/reports">
+<div class="rv-field-row">
+<div class="rv-field">
 <label for="period_start">The period starts</label>
 <input id="period_start" name="period_start" type="date" value="{{ period_start }}">
+</div>
+<div class="rv-field">
 <label for="period_end">The period ends</label>
 <input id="period_end" name="period_end" type="date" value="{{ period_end }}">
+</div>
+</div>
+<div class="rv-actions">
 <button type="submit" class="rv-button-quiet">Use this period</button>
+<span class="rv-step-note rv-step-note-inline">Period {{ period_start }} to {{ period_end }}.</span>
+</div>
 </form>
+</section>
 
-<h3>2. Write the details</h3>
-<p class="rv-text-secondary">Everything here is saved as you type. Notes for each control are written on its own page, from the <a href="/clients/{{ client_id }}/checklist">checklist</a>.</p>
+<section class="rv-step" id="step-details" aria-labelledby="step-details-title">
+<h3 id="step-details-title" class="rv-step-title"><span class="rv-step-number">2</span>Write the details</h3>
+<p class="rv-step-lead">Everything here is saved as you type. Notes for each control are written on its own page, from the <a href="/clients/{{ client_id }}/checklist">checklist</a>.</p>
 <form id="details-form" method="post" action="/clients/{{ client_id }}/reports/details" hx-post="/clients/{{ client_id }}/reports/details" hx-trigger="input changed delay:1s, change" hx-target="#details-status" hx-swap="innerHTML">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="rv-field rv-field-narrow">
 <label for="prepared_by">Prepared by</label>
-<input id="prepared_by" name="prepared_by" type="text" maxlength="100" value="{{ prepared_by }}">
-<label for="plan">Plan for next quarter (one line for each step)</label>
-<textarea id="plan" name="plan" rows="5">{{ plan_text }}</textarea>
-<fieldset>
+<input id="prepared_by" name="prepared_by" type="text" maxlength="100" value="{{ prepared_by }}" aria-describedby="prepared-help">
+<small id="prepared-help" class="rv-help">Printed on the cover of the report.</small>
+</div>
+<div class="rv-field">
+<label for="plan">Plan for next quarter</label>
+<textarea id="plan" name="plan" rows="5" aria-describedby="plan-help">{{ plan_text }}</textarea>
+<small id="plan-help" class="rv-help">One line for each step. The lines become the numbered plan at the end of the review.</small>
+</div>
+<fieldset class="rv-topics">
 <legend>The topics the insurer of this client asks about, and who owns each</legend>
 {% for topic, owner, asked in topics %}
-<p>
-<label for="ask-{{ topic.key }}"><input id="ask-{{ topic.key }}" name="ask-{{ topic.key }}" type="checkbox" value="1"{% if asked %} checked{% endif %}> {{ topic.title }}</label>
+<div class="rv-topic">
+<label class="rv-check" for="ask-{{ topic.key }}"><input id="ask-{{ topic.key }}" name="ask-{{ topic.key }}" type="checkbox" value="1"{% if asked %} checked{% endif %}> {{ topic.title }}</label>
+<div class="rv-field rv-topic-owner">
 <label for="owner-{{ topic.key }}">Owner of {{ topic.title }}</label>
 <input id="owner-{{ topic.key }}" name="owner-{{ topic.key }}" type="text" maxlength="100" value="{{ owner }}">
-</p>
+</div>
+</div>
 {% endfor %}
 </fieldset>
-<button type="submit">Save the details</button>
-<div id="details-status" class="rv-text-secondary" aria-live="polite">{% if saved_at %}Last saved {{ saved_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% else %}Nothing saved yet.{% endif %}</div>
+<div class="rv-actions rv-notes-actions">
+<button type="submit" class="rv-button-quiet">Save the details</button>
+<span class="rv-notes-saving" aria-hidden="true"><span class="rv-busy"></span> Saving</span>
+</div>
+<div id="details-status" class="rv-notes-status" aria-live="polite">{% if saved_at %}Last saved {{ saved_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% else %}Nothing saved yet.{% endif %}</div>
 </form>
+</section>
 
-<h3>3. Make the report</h3>
+<section class="rv-step" id="step-make" aria-labelledby="step-make-title">
+<h3 id="step-make-title" class="rv-step-title"><span class="rv-step-number">3</span>Make the report</h3>
+<p class="rv-step-lead">This stores the state of {{ client_name }} today for the period {{ period_start }} to {{ period_end }}. You preview it and export it on the next page.</p>
 <form id="snapshot-form" method="post" action="/clients/{{ client_id }}/reports/snapshot">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <input type="hidden" name="period_start" value="{{ period_start }}">
 <input type="hidden" name="period_end" value="{{ period_end }}">
-<p>This stores the state of {{ client_name }} today for the period {{ period_start }} to {{ period_end }}. You can preview it and export it on the next page.</p>
+<div class="rv-actions">
 <button type="submit">Make the report for this period</button>
+</div>
 </form>
+</section>
 
-<h3>Reports made before</h3>
+<section id="made-before" aria-labelledby="made-before-title">
+<div class="rv-section-head">
+<div><h3 id="made-before-title">Reports made before</h3><p class="rv-section-note">Every report of this client, the newest first. Each one opens as it was made.</p></div>
+</div>
 {% if snapshots %}
-<table id="snapshots">
+<table id="snapshots" class="rv-table-cards rv-snapshots">
 <caption>The newest reports of this client</caption>
-<thead><tr><th scope="col">Period</th><th scope="col">Pack date</th><th scope="col">Open</th></tr></thead>
+<thead><tr><th scope="col">Period</th><th scope="col">Pack date</th><th scope="col"><span class="rv-sr-only">Open</span></th></tr></thead>
 <tbody>
 {% for item in snapshots %}
 <tr>
-<th scope="row">{{ item.period_start.isoformat() }} to {{ item.period_end.isoformat() }}</th>
-<td>{{ item.as_of.strftime("%Y-%m-%d") }}</td>
-<td><a href="/clients/{{ client_id }}/reports/{{ item.id }}">Preview and export</a></td>
+<th scope="row" class="rv-date">{{ item.period_start.isoformat() }} to {{ item.period_end.isoformat() }}</th>
+<td data-label="Pack date" class="rv-date">{{ item.as_of.strftime("%Y-%m-%d") }}</td>
+<td class="rv-row-actions"><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client_id }}/reports/{{ item.id }}">Preview and export</a></td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 {% else %}
-<p>No report has been made for this client yet.</p>
+<div class="rv-empty" id="snapshots-empty">
+{{ i.icon("inbox", 36) }}
+<p class="rv-empty-title">No report has been made for this client yet</p>
+<p class="rv-empty-text">Choose the period and write the details above, then make the first report with step 3. It appears here, ready to preview and export.</p>
+</div>
 {% endif %}
+</section>
 {% endblock %}
