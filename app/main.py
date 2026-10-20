@@ -36,6 +36,7 @@ from app.ui import reports as ui_reports
 from app.ui import site as ui_site
 from app.ui import system as ui_system
 from app.ui.brand import STATIC_DIR
+from app.ui.common import missing_page
 from app.web import clock_of, csrf_protect, session_factory
 from app.worker.heartbeat import read_status
 
@@ -48,6 +49,11 @@ HX_NOT_FOUND = (
     "Reload the page."
 )
 HX_MESSAGES = {403: HX_FORBIDDEN, 404: HX_NOT_FOUND}
+# The refusals a browser gets as the problem page: an address no page answers and
+# a method a page does not take. Under these prefixes the answer stays JSON: the
+# API, the health and metrics endpoints and the static files are not pages.
+PAGE_REFUSALS = (404, 405)
+NOT_PAGES = ("/api/", "/healthz", "/readyz", "/metrics", "/static/")
 REFUSED_HTML = (
     '<div class="rv-errors" role="alert">'
     '<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!'
@@ -117,11 +123,13 @@ def create_app(
 
     @app.exception_handler(StarletteHTTPException)
     async def refusal(request: Request, error: StarletteHTTPException) -> Response:
-        """A refusal of a page request made by htmx is shown as a message.
+        """A refusal of a page request is shown as a page or as a message.
 
         htmx swaps the body of the response into the page (see base.html), so a
         403 (an expired session or a stale form) or a 404 must carry a readable
-        HTML message and not JSON. Every other request keeps FastAPI's JSON answer.
+        HTML message and not JSON. An address no page answers (404) or a method a
+        page does not take (405), asked for as a page, is the problem page. Every
+        other request keeps FastAPI's JSON answer.
         """
         message = HX_MESSAGES.get(error.status_code)
         if request.headers.get("hx-request") == "true" and message is not None:
@@ -130,6 +138,9 @@ def create_app(
                 status_code=error.status_code,
                 headers={"Cache-Control": "no-store"},
             )
+        page_wanted = not request.url.path.startswith(NOT_PAGES)
+        if error.status_code in PAGE_REFUSALS and page_wanted:
+            return await missing_page(request, error.status_code, error.headers)
         return await http_exception_handler(request, error)
 
     @app.exception_handler(DataError)
