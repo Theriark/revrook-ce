@@ -1,24 +1,46 @@
 {% extends "base.html" %}
 {% import "_status.html" as s %}
+{% import "_icons.html" as i %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
-<h2>Evidence and imports</h2>
-<p>Evidence is the export of a tool, with the time it was captured. An export that is out of date counts for less, and for nothing at twice its age. Import a fresh file with the <a href="/imports/profile-editor">profile editor</a>, or through the API.</p>
+<div class="rv-section-head rv-evidence-head">
+<div><h2 id="evidence-title">Evidence and imports</h2><p class="rv-section-note">Evidence is the export of a tool, with the time it was captured. An export that is out of date counts for less, and for nothing at twice its age.</p></div>
+</div>
 
-<h3>Refresh these exports</h3>
+<section class="rv-verdict" id="evidence-status" aria-labelledby="evidence-status-title">
+<h3 id="evidence-status-title" class="rv-sr-only">Where the evidence stands</h3>
+<div class="rv-verdict-status">{{ s.status(facts.label) }}</div>
+<dl class="rv-facts rv-verdict-facts">
+<div><dt>Sources</dt><dd>{{ facts.sources }}</dd></div>
+<div><dt>Current</dt><dd>{{ facts.current }}</dd></div>
+<div><dt>To refresh</dt><dd>{{ facts.to_refresh }}</dd></div>
+<div><dt>Items imported</dt><dd>{{ facts.items }}</dd></div>
+</dl>
+</section>
+
+<section id="refresh" aria-labelledby="refresh-title">
+<div class="rv-section-head">
+<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. Import a fresh file with the profile editor, or through the API.</p></div>
+</div>
 {% if refresh %}
+<div class="rv-refresh">
 <ol id="refresh-list">
 {% for row in refresh %}
-<li><strong>{{ row.name }}</strong>: {{ s.status(row.state) }}{% if row.captured_at %}, newest export {{ s.day(row.captured_at) }}{% endif %}. {{ row.refresh }}</li>
+<li><strong>{{ row.name }}</strong> {{ s.status(row.state) }}{% if row.captured_at %} <span class="rv-refresh-when">newest export {{ s.day(row.captured_at) }}</span>{% endif %}<span class="rv-refresh-how">{{ row.refresh }}</span></li>
 {% endfor %}
 </ol>
+</div>
 {% else %}
-<p id="refresh-list">Every export is current. Nothing to refresh.</p>
+<p id="refresh-list" class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Every export is current. Nothing to refresh.</span></p>
 {% endif %}
+</section>
 
-<h3>Sources</h3>
-<table id="sources">
+<section id="sources-section" aria-labelledby="sources-title">
+<div class="rv-section-head">
+<div><h3 id="sources-title">Sources</h3><p class="rv-section-note">Every source a control reads, with its newest export and the date it goes stale.</p></div>
+</div>
+<table id="sources" class="rv-table-cards rv-sources">
 <caption>The newest export of every source</caption>
 <thead>
 <tr>
@@ -26,25 +48,29 @@
 <th scope="col">State</th>
 <th scope="col">Newest export</th>
 <th scope="col">Stale after</th>
-<th scope="col">Exports kept</th>
+<th scope="col" class="rv-numeric">Exports kept</th>
 </tr>
 </thead>
 <tbody>
 {% for row in sources %}
 <tr>
 <th scope="row">{{ row.name }}</th>
-<td>{{ s.status(row.state) }}</td>
-<td>{{ s.day(row.captured_at) }}</td>
-<td>{{ s.day(row.expires_at) }}</td>
-<td>{{ row.exports }}</td>
+<td data-label="State">{{ s.status(row.state) }}</td>
+<td data-label="Newest export" class="rv-date">{{ s.day(row.captured_at) }}</td>
+<td data-label="Stale after" class="rv-date">{{ s.day(row.expires_at) }}</td>
+<td data-label="Exports kept" class="rv-numeric">{{ row.exports }}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
+</section>
 
-<h3>Everything imported</h3>
+<section id="items-section" aria-labelledby="items-title">
+<div class="rv-section-head">
+<div><h3 id="items-title">Everything imported</h3><p class="rv-section-note">Every evidence item of this client, newest first. A revision is a later import of the same export.</p></div>
+</div>
 {% if items %}
-<table id="items">
+<table id="items" class="rv-table-cards rv-items">
 <caption>Every evidence item of this client, newest first</caption>
 <thead>
 <tr>
@@ -52,24 +78,30 @@
 <th scope="col">Type</th>
 <th scope="col">Captured</th>
 <th scope="col">State</th>
-<th scope="col">Revisions</th>
-<th scope="col">Size in bytes</th>
+<th scope="col" class="rv-numeric">Revisions</th>
+<th scope="col" class="rv-numeric">Size</th>
 </tr>
 </thead>
 <tbody>
 {% for view, state, name in items %}
 <tr>
-<th scope="row">{{ name }}</th>
-<td>{{ view.assurance.label }}</td>
-<td>{{ s.day(view.captured_at) }}</td>
-<td>{{ s.status(state) }}</td>
-<td>{{ view.revisions }}</td>
-<td>{{ view.size_bytes }}</td>
+<th scope="row">{{ name }}<span class="rv-cell-note">Item {{ view.item_id }}</span></th>
+<td data-label="Type">{{ view.assurance.label }}</td>
+<td data-label="Captured" class="rv-date">{{ s.day(view.captured_at) }}</td>
+<td data-label="State">{{ s.status(state) }}</td>
+<td data-label="Revisions" class="rv-numeric">{{ view.revisions }}</td>
+<td data-label="Size" class="rv-numeric">{{ "{:,}".format(view.size_bytes) }} bytes</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 {% else %}
-<p>Nothing has been imported for this client yet.</p>
+<div class="rv-empty" id="items-empty">
+{{ i.icon("inbox", 36) }}
+<p class="rv-empty-title">Nothing imported yet</p>
+<p class="rv-empty-text">Export the first file from a tool this client uses, then import it with the profile editor or through the API. Every control that reads that source takes its status from it.</p>
+<a role="button" href="/imports/profile-editor">Import an export</a>
+</div>
 {% endif %}
+</section>
 {% endblock %}

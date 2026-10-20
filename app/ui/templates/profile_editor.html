@@ -1,36 +1,51 @@
 {% extends "base.html" %}
+{% import "_icons.html" as i %}
 {% block content %}
-<h1>Profile editor</h1>
-<p>A mapping profile tells revrook which column of a vendor export holds which column of a source. Choose the file, map the columns, check the first 20 rows the way revrook reads them, save the profile, then import the file with it.</p>
+<div class="rv-page-header">
+<div><h1>Profile editor</h1><p class="rv-page-purpose">Map the columns of a vendor export to a source, check the first rows the way revrook reads them, save the mapping as a profile and import the file with it.</p></div>
+</div>
 {% if not clients %}
-<p class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> There are no clients yet. A profile belongs to one client: create a client first (through the API for now).</p>
+<div class="rv-empty" id="editor-empty">
+{{ i.icon("clients", 36) }}
+<p class="rv-empty-title">No clients yet</p>
+<p class="rv-empty-text">A profile belongs to one client. Add the client first, then come back to map its first export.</p>
+<a role="button" href="/clients">Add a client</a>
+</div>
 {% else %}
-<form id="rv-editor" method="post" action="/imports/profile-editor/preview" enctype="multipart/form-data" hx-post="/imports/profile-editor/preview" hx-encoding="multipart/form-data" hx-target="#rv-editor-result">
+<form id="rv-editor" method="post" action="/imports/profile-editor/preview" enctype="multipart/form-data" hx-post="/imports/profile-editor/preview" hx-encoding="multipart/form-data" hx-target="#rv-editor-result" hx-indicator="#rv-editor-busy">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<fieldset>
-<legend>1. Client, source and file</legend>
-<p>
+<fieldset class="rv-step">
+<legend><span class="rv-step-number">1</span>Client, source and file</legend>
+<p class="rv-step-lead">Choose the client the export belongs to and the source the file comes from, then the file itself.</p>
+<div class="rv-field-row">
+<div class="rv-field">
 <label for="client_id">Client</label>
 <select id="client_id" name="client_id" required>
 {% for id, client_name in clients %}
 <option value="{{ id }}"{% if id == client_id %} selected{% endif %}>{{ client_name }}</option>
 {% endfor %}
 </select>
-</p>
-<p>
+</div>
+<div class="rv-field">
 <label for="source_code">Source</label>
 <select id="source_code" name="source_code" required>
 {% for code, label in sources %}
 <option value="{{ code }}"{% if code == source_code %} selected{% endif %}>{{ code }}: {{ label }}</option>
 {% endfor %}
 </select>
-</p>
-<p>
-<label for="file">Vendor export (CSV, at most {{ max_megabytes }} MB)</label>
-<input id="file" name="file" type="file" accept=".csv,text/csv" required aria-describedby="file-help">
-<small id="file-help" class="rv-text-secondary">The preview only reads the file. Nothing is stored until you import it.</small>
-</p>
-<p><button type="submit" formaction="/imports/profile-editor/preview" hx-post="/imports/profile-editor/preview">Read the file</button></p>
+</div>
+</div>
+<label class="rv-dropzone">
+{{ i.icon("upload") }}
+<span class="rv-dropzone-title">Drop the vendor export here, or choose a file</span>
+<span class="rv-dropzone-hint">CSV, at most {{ max_megabytes }} MB. The preview only reads the file; nothing is stored until you import it.</span>
+<input id="file" name="file" type="file" accept=".csv,text/csv" required>
+<output class="rv-dropzone-file" aria-live="polite"></output>
+</label>
+<div class="rv-actions">
+<button type="submit" formaction="/imports/profile-editor/preview" hx-post="/imports/profile-editor/preview">Read the file</button>
+<span id="rv-editor-busy" class="rv-editor-busy" aria-hidden="true"><span class="rv-busy"></span> Reading the file</span>
+</div>
 </fieldset>
 <div id="rv-editor-result">
 {% include "_profile_editor_result.html" %}

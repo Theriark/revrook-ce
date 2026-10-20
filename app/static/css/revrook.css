@@ -3149,3 +3149,297 @@ main .rv-control-kicker a:hover {
   margin: 0;
   font-size: 14px;
 }
+
+/* ---------- Evidence imports, the profile editor and the integrity check (docs/design-system.md, Evidence) ---------- */
+
+/* The head of the evidence page sits under the client tabs like the checklist;
+   the three parts under the verdict each start with a section head at h3 */
+.rv-evidence-head {
+  margin-top: 8px;
+}
+
+.rv-section-head h3 {
+  margin: 0;
+}
+
+/* A date in tabular figures that never wraps */
+.rv-date {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Refresh these exports: an ordered list, the oldest export first and then the
+   sources never imported, so the number is the order to work in. The list is
+   one card; the number sits in the charcoal circle of the Home steps */
+.rv-refresh {
+  margin: 0 0 24px;
+}
+
+.rv-refresh ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rv-refresh;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-refresh li {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 12px 16px 12px 52px;
+  border-bottom: 1px solid var(--rv-line);
+  list-style: none;
+  counter-increment: rv-refresh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rv-refresh li:last-child {
+  border-bottom: 0;
+}
+
+.rv-refresh li::before {
+  content: counter(rv-refresh);
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-refresh strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.rv-refresh-when {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-refresh-how {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* The item id under the source name in the table of everything imported */
+.rv-items .rv-cell-note {
+  font-weight: 400;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+/* The profile editor: five steps as cards. The legend of a fieldset floats
+   across the whole card so it reads as the title of the card instead of
+   sitting in its border; the title of the step without controls (the preview)
+   is an h2 drawn the same. The step number is the circle of the Home steps */
+fieldset.rv-step,
+section.rv-step {
+  margin: 0 0 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-step > legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-step > legend + * {
+  clear: both;
+}
+
+.rv-step-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.rv-step > legend .rv-step-number,
+.rv-step-title .rv-step-number {
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: 2px;
+}
+
+.rv-step-lead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-step-note {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-step > :last-child {
+  margin-bottom: 0;
+}
+
+.rv-step .rv-actions {
+  margin-bottom: 0;
+}
+
+.rv-field-narrow {
+  max-width: 28rem;
+}
+
+/* The import area: the hint under the title is plain text, not the bold of a
+   label (the area is a label around the file input) */
+.rv-dropzone-hint {
+  max-width: 36rem;
+  font-weight: 400;
+}
+
+/* The indicator beside the button of each step: htmx adds htmx-request to the
+   element its hx-indicator names while the request is in flight, and the
+   stylesheet shows the spinner and the words then, and nothing otherwise */
+.rv-editor-busy {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-editor-busy.htmx-request {
+  display: inline-flex;
+}
+
+/* The result of an import: the strip, three facts and the counts */
+.rv-import-result .rv-import-facts {
+  margin-bottom: 16px;
+}
+
+.rv-import-next {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* The integrity check: a broken chain carries the not-protected mark on its
+   heading cell beside the words of the pill; the hash stays on one line */
+.rv-chains tr[data-ok="false"] > th {
+  box-shadow: inset 3px 0 0 var(--rv-status-not-protected);
+}
+
+.rv-hash {
+  white-space: nowrap;
+}
+
+/* Any table that carries rv-table-cards becomes cards below 768px, like the
+   clients list and the checklist: the heading row stays for assistive
+   technology, each cell names its column, numbers align left in a card and an
+   empty cell is dropped */
+@media (max-width: 767px) {
+  main table.rv-table-cards,
+  .rv-table-cards tbody,
+  .rv-table-cards tr,
+  .rv-table-cards th,
+  .rv-table-cards td {
+    display: block;
+  }
+
+  main table.rv-table-cards {
+    border: 0;
+  }
+
+  .rv-table-cards caption {
+    display: block;
+  }
+
+  .rv-table-cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-table-cards thead th {
+    position: static;
+  }
+
+  main .rv-table-cards tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-table-cards tbody th,
+  main .rv-table-cards tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-table-cards tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-table-cards td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-table-cards td:empty {
+    display: none;
+  }
+
+  main .rv-table-cards tbody tr:hover > td,
+  main .rv-table-cards tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-chains tr[data-ok="false"] > th {
+    border-radius: 12px 12px 0 0;
+  }
+
+  .rv-refresh li {
+    align-items: flex-start;
+  }
+}

@@ -321,6 +321,68 @@ on "By when", the primary button, a "Saving" indicator (`.rv-notes-saving`, show
 while htmx posts, when the form carries `htmx-request`) and the `aria-live` status
 line that receives "Saved at" or the refusal.
 
+## Evidence imports, the profile editor and the integrity check
+
+The evidence page of one client (`app/ui/templates/evidence_imports.html`) is where
+the owner sees which export to refresh before a report and what was imported; the
+profile editor (`profile_editor.html` and its result part
+`_profile_editor_result.html`) is where a technician turns a vendor export into
+evidence in five steps; the integrity page (`evidence_integrity.html`,
+`app/ui/evidence.py`) proves that nothing in the log changed after it was written.
+All three read the same rows, labels and results as before; no behaviour, data or
+evidence rule changed.
+
+The evidence page. Under the client header, whose one action leads to the profile
+editor, the section head names the page and the rule of freshness, then the evidence
+verdict (`section.rv-verdict`, the band of the control page): the state of the
+client's evidence as one large pill (every export current; `1 stale`; `1 expired, 2
+not imported`; no evidence yet) beside four facts (sources, current, to refresh,
+items imported), computed by `evidence_facts` in `app/ui/viewmodels.py` from the
+source rows the page shows. Then three parts, each with a section head at h3:
+"Refresh these exports", an ordered list (`.rv-refresh`, the oldest export first and
+then the sources never imported) whose numbers are the order to work in, with the
+state pill, the date of the newest export and what to do, or a success strip when
+every export is current; "Sources", a table of every source a control reads with
+its state, newest export, the date it goes stale and the exports kept; and
+"Everything imported", a table of every item with its id under the source, its type,
+date, state, revisions and size, or an empty state that leads to the profile editor.
+Dates are `.rv-date` (tabular figures, never wrapped); counts are `.rv-numeric`.
+
+The profile editor. The page header names the job; without a client the page is one
+empty state that leads to the clients page. The form is five steps, each a card
+(`fieldset.rv-step` with its legend floated across the card as the title, or
+`section.rv-step` with `h2.rv-step-title` for the preview, which has no controls),
+numbered with the circle of the Home steps because the steps are a sequence: the
+client and the source side by side and the file in the import area
+(`label.rv-dropzone`, whose hint names the limit and that nothing is stored until
+the import); the mapping, one `div.rv-field` per column of the source in the
+`.rv-mapping` grid; the preview of the first rows in a scroll region, with the UTC
+note as a status strip and an empty state when the file has no data rows; the
+profile name with a help text; and the import with the saved profile and the capture
+time side by side, or an empty state that says to save a profile first. Every button
+has an indicator beside it (`.rv-editor-busy`, named by `hx-indicator`, shown while
+htmx posts). Missing required columns and a refused file stay `.rv-errors` with
+`role="alert"`; a saved profile is a status strip; an import is a result card
+(`.rv-import-result`) with the strip, three facts, the counts and the way to the
+evidence page of the client. Before any file is read the result area is a small
+empty state that says what to do.
+
+The integrity page. The page header carries the purpose; before a check the page is
+one empty state whose action is the check (nothing else is on the page, since the
+check is what fills it); after a check the header's action is "Check again". The
+result is the verdict band (all chains intact, or how many of how many are broken)
+beside four facts (chains checked, records, broken, the time of the check), then the
+table of every client's chain (`table.rv-chains`): the result as a pill, the records,
+the hash of the latest record in `code.rv-hash` and the problem. A broken chain
+carries the not-protected mark on its heading cell beside the words of its pill. An
+installation without records is an empty state that leads to the profile editor. The
+alert under the table says what the check proves and what it cannot.
+
+Tables that carry `rv-table-cards` (the sources, the items, the chains) become
+cards below 768 px like the clients list and the checklist: the heading row stays
+for assistive technology, each cell names its column through `data-label`, numbers
+align left and an empty cell is dropped.
+
 ## Floors every page keeps
 
 - Works at 390, 768 and 1440 px without horizontal overflow.
