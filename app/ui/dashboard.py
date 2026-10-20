@@ -454,9 +454,44 @@ class TrendLine:
 
 
 @dataclass(frozen=True)
+class ChartSize:
+    """The geometry of a trend drawing in SVG units: its box, the margins around
+    the plot, how many dates the time axis names, and whether each line is labelled
+    at its end. The page draws the chart twice and shows the one that suits the
+    width: the wide drawing, whose labels sit at the ends of the lines, and the
+    narrow one for a phone, where a 640-unit drawing would shrink to half and its
+    labels with it, so the clients are named in a legend under it instead.
+    """
+
+    kind: str
+    width: int
+    height: int
+    left: int
+    right: int
+    top: int
+    bottom: int
+    dates: int
+    labelled: bool
+
+
+WIDE_CHART = ChartSize(
+    "wide",
+    CHART_WIDTH,
+    CHART_HEIGHT,
+    CHART_LEFT,
+    CHART_RIGHT,
+    CHART_TOP,
+    CHART_BOTTOM,
+    dates=4,
+    labelled=True,
+)
+NARROW_CHART = ChartSize("narrow", 320, 200, 36, 16, 12, 28, dates=3, labelled=False)
+
+
+@dataclass(frozen=True)
 class TrendChart:
     lines: tuple[TrendLine, ...]
-    x_ticks: tuple[tuple[str, str], ...]
+    x_ticks: tuple[tuple[str, str, str], ...]
     y_ticks: tuple[tuple[str, str], ...]
     left: int = CHART_LEFT
     right: int = CHART_WIDTH - CHART_RIGHT
@@ -464,6 +499,8 @@ class TrendChart:
     bottom: int = CHART_HEIGHT - CHART_BOTTOM
     width: int = CHART_WIDTH
     height: int = CHART_HEIGHT
+    kind: str = "wide"
+    labelled: bool = True
 
     @property
     def reports(self) -> int:
@@ -482,15 +519,44 @@ class _Drawn:
     rows: tuple[tuple[str, str, str], ...]
 
 
-def _chart_x(moment: datetime, start: datetime, now: datetime) -> float:
-    plot = CHART_WIDTH - CHART_RIGHT - CHART_LEFT
+def _chart_x(
+    moment: datetime, start: datetime, now: datetime, size: ChartSize = WIDE_CHART
+) -> float:
+    plot = size.width - size.right - size.left
     share = (moment - start) / (now - start) if now > start else 1.0
-    return CHART_LEFT + plot * max(0.0, min(share, 1.0))
+    return size.left + plot * max(0.0, min(share, 1.0))
 
 
-def _chart_y(score: Fraction) -> float:
-    plot = CHART_HEIGHT - CHART_BOTTOM - CHART_TOP
-    return CHART_HEIGHT - CHART_BOTTOM - plot * float(score) / 100
+def _chart_y(score: Fraction, size: ChartSize = WIDE_CHART) -> float:
+    plot = size.height - size.bottom - size.top
+    return size.height - size.bottom - plot * float(score) / 100
+
+
+def _label_places(drawn: Sequence[_Drawn], size: ChartSize) -> dict[int, float]:
+    """Where the label of each line goes: at the end of its line, pushed down by
+    LABEL_GAP from the label above when two ends are close. A stack that would
+    reach past the plot sat on the dates of the time axis (seen with several
+    clients at a score of 0), so it is moved up by the excess, keeping its gaps:
+    six labels of 14 units fit in the 180 units of the plot."""
+    labels: dict[int, float] = {}
+    floor = size.top + LABEL_GAP / 2
+    for item in sorted(drawn, key=lambda item: item.last_y):
+        floor = max(floor, item.last_y)
+        labels[item.client_id] = floor
+        floor += LABEL_GAP
+    ceiling = size.height - size.bottom - LABEL_GAP / 2
+    excess = max(labels.values(), default=0.0) - ceiling
+    if excess > 0:
+        labels = {client_id: y - excess for client_id, y in labels.items()}
+    return labels
+
+
+def _anchor(number: int, count: int) -> str:
+    """The first date is written from its tick and the last up to its tick, so
+    neither is cut at an edge of the drawing; the others are centred."""
+    if number == 0:
+        return "start"
+    return "end" if number == count - 1 else "middle"
 
 
 def trend_chart(
@@ -499,6 +565,7 @@ def trend_chart(
     now: datetime,
     days: int = HISTORY_DAYS,
     max_lines: int = MAX_TREND_LINES,
+    size: ChartSize = WIDE_CHART,
 ) -> TrendChart:
     """The scores of the last `days` as one line per client, newest clients first.
 
@@ -518,7 +585,7 @@ def trend_chart(
     for number, client_id in enumerate(chosen):
         series = by_client[client_id]
         pairs = [
-            (_chart_x(point.as_of, start, now), _chart_y(point.score))
+            (_chart_x(point.as_of, start, now, size), _chart_y(point.score, size))
             for point in series
         ]
         polyline = ""
@@ -531,12 +598,7 @@ def trend_chart(
         last_x, last_y = pairs[-1]
         dash = DASHES[number % len(DASHES)]
         drawn.append(_Drawn(client_id, last_x, last_y, polyline, dash, rows))
-    labels: dict[int, float] = {}
-    floor = CHART_TOP + LABEL_GAP / 2
-    for item in sorted(drawn, key=lambda item: item.last_y):
-        floor = max(floor, item.last_y)
-        labels[item.client_id] = floor
-        floor += LABEL_GAP
+    labels = _label_places(drawn, size)
     lines = tuple(
         TrendLine(
             client_id=item.client_id,
@@ -550,14 +612,33 @@ def trend_chart(
         )
         for item in drawn
     )
-    ticks = [now - timedelta(days=back) for back in (days, 2 * days // 3, days // 3, 0)]
+    steps = max(size.dates - 1, 1)
+    ticks = [now - timedelta(days=days - days * k // steps) for k in range(size.dates)]
     x_ticks = tuple(
-        (f"{_chart_x(moment, start, now):.1f}", iso_date(moment)) for moment in ticks
+        (
+            f"{_chart_x(moment, start, now, size):.1f}",
+            iso_date(moment),
+            _anchor(number, len(ticks)),
+        )
+        for number, moment in enumerate(ticks)
     )
     y_ticks = tuple(
-        (f"{_chart_y(Fraction(value)):.1f}", str(value)) for value in (0, 50, 100)
+        (f"{_chart_y(Fraction(value), size):.1f}", str(value))
+        for value in (0, 50, 100)
     )
-    return TrendChart(lines=lines, x_ticks=x_ticks, y_ticks=y_ticks)
+    return TrendChart(
+        lines=lines,
+        x_ticks=x_ticks,
+        y_ticks=y_ticks,
+        left=size.left,
+        right=size.width - size.right,
+        top=size.top,
+        bottom=size.height - size.bottom,
+        width=size.width,
+        height=size.height,
+        kind=size.kind,
+        labelled=size.labelled,
+    )
 
 
 # --- the stat cards -----------------------------------------------------------------
