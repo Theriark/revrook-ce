@@ -156,6 +156,11 @@ COMPONENTS = (
     ".rv-glossary",
     ".rv-problem",
     ".rv-problem-code",
+    # The corrective fixes of the retest (THE-505)
+    ".rv-nav-strip",
+    ".rv-tabs-strip",
+    ".rv-chart-legend",
+    ".rv-import-reach",
 )
 # A placeholder for the CSRF field of a rendered template; not a real token.
 PLACEHOLDER_TOKEN = "x" * 32
@@ -274,12 +279,14 @@ def test_the_chips_and_the_status_pills_keep_their_shape() -> None:
     assert even is not None and "repeat(2, minmax(0, 1fr))" in even.group(1)
 
 
-def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> None:
+def test_the_clients_table_becomes_cards_below_the_sidebar_not_a_scroll_box() -> None:
     # A sticky heading needs the page itself to scroll, so the table has no scroll
-    # box; below 768px every row is a card and each cell names its column.
-    phone = re.search(r"@media \(max-width: 767px\) \{(.*?)\n\}\n", CSS, re.DOTALL)
-    assert phone is not None
-    block = phone.group(1)
+    # box; below 1024px (where the sidebar ends; at 768px the five columns broke
+    # the last report one letter a line, THE-505) every row is a card and each
+    # cell names its column.
+    cards = re.search(r"@media \(max-width: 1023px\) \{(.*?)\n\}\n", CSS, re.DOTALL)
+    assert cards is not None
+    block = cards.group(1)
     assert "main table.rv-clients" in block and "display: block;" in block
     assert re.search(r"\.rv-clients thead \{[^}]*clip: rect\(0 0 0 0\);", block)
     before = re.search(r"td\[data-label\]::before \{([^}]*)\}", block)
@@ -289,8 +296,10 @@ def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> No
     # The caption shrank to one word a line at 390px while it was still a
     # table caption inside the block the table had become
     assert re.search(r"\.rv-clients caption \{[^}]*display: block;", block)
+    phone = re.search(r"@media \(max-width: 767px\) \{(.*?)\n\}\n", CSS, re.DOTALL)
+    assert phone is not None
     assert re.search(
-        r'\.rv-add-form button\[type="submit"\] \{[^}]*width: 100%;', block
+        r'\.rv-add-form button\[type="submit"\] \{[^}]*width: 100%;', phone.group(1)
     )
 
 
