@@ -4,7 +4,9 @@ description: >-
   application. Checks the target identity first, updates the image, deploys,
   waits for the new Dokploy deployment to finish, checks health and confirms the
   application reports exactly the requested digest. Records the previous image
-  as the rollback target. Creates and deletes nothing in Dokploy.
+  as the rollback target. Creates and deletes nothing in Dokploy. Dokploy API
+  calls are paced (5 s spacing, 10-call bursts, 61 s idle reset) because the
+  Dokploy key counter rejects rapid bursts with 401; a write is never replayed.
 
 inputs:
   application-id:
@@ -27,7 +29,7 @@ inputs:
     description: Title of the Dokploy deployment record.
     required: true
   restore-on-failure:
-    description: Redeploy the previous image when this deployment fails.
+    description: Restore the previous image when this deployment fails.
     required: false
     default: "true"
   timeout-seconds:
@@ -88,46 +90,159 @@ runs:
 
         base="${DOKPLOY_URL%/}/api"
 
-        # GET is retried; POST is not, so a deployment is never requested twice.
+        # Dokploy validates the key on every call and rejects rapid bursts with
+        # 401. Every call goes through pace(): at least SPACING seconds between
+        # calls, at most BURST calls, then wait until the window has been idle
+        # for IDLE_RESET seconds. The state lives in files because the helpers
+        # run inside command substitutions.
+        SPACING="${DOKPLOY_CALL_SPACING_SECONDS:-5}"
+        BURST="${DOKPLOY_CALL_BURST:-10}"
+        IDLE_RESET="${DOKPLOY_IDLE_RESET_SECONDS:-61}"
+        PACE_DIR="$(mktemp -d)"
+        trap 'rm -rf "${PACE_DIR}"' EXIT
+        echo 0 > "${PACE_DIR}/last_ms"
+        echo 0 > "${PACE_DIR}/count"
+        echo 000 > "${PACE_DIR}/status"
+
+        now_ms() { date +%s%3N; }
+        sleep_ms() { sleep "$(awk -v ms="$1" 'BEGIN { printf "%.3f", ms / 1000 }')"; }
+        note() { echo "$*" >&2; }
+
+        pace() {
+          local now last count wait_ms
+          now="$(now_ms)"; last="$(<"${PACE_DIR}/last_ms")"; count="$(<"${PACE_DIR}/count")"
+          if ((now - last >= IDLE_RESET * 1000)); then
+            count=0
+          elif ((count >= BURST)); then
+            wait_ms=$((IDLE_RESET * 1000 - (now - last)))
+            note "::notice::Dokploy call burst of ${BURST} reached; idling ${wait_ms} ms for the key counter to reset"
+            sleep_ms "${wait_ms}"
+            count=0
+          fi
+          now="$(now_ms)"
+          wait_ms=$((SPACING * 1000 - (now - last)))
+          ((wait_ms > 0)) && sleep_ms "${wait_ms}"
+          echo "$(now_ms)" > "${PACE_DIR}/last_ms"
+          echo $((count + 1)) > "${PACE_DIR}/count"
+        }
+
+        # One paced HTTP call. Body goes to ${PACE_DIR}/body, status to
+        # ${PACE_DIR}/status. Succeeds only on 2xx. Never retries.
+        http_once() {
+          local method="$1" path="$2" data="$3" code
+          shift 3
+          pace
+          local args=(--silent --max-time 60 --output "${PACE_DIR}/body" --write-out '%{http_code}'
+            --header "CF-Access-Client-Id: ${CF_ID}"
+            --header "CF-Access-Client-Secret: ${CF_SECRET}"
+            --header "x-api-key: ${DOKPLOY_API_KEY}")
+          if [[ "${method}" == "GET" ]]; then
+            args+=(--header "accept: application/json" --get "${base}/${path}" "$@")
+          else
+            args+=(--header "Content-Type: application/json" --request POST --data "${data}" "${base}/${path}")
+          fi
+          code="$(curl "${args[@]}" 2>/dev/null)" || true
+          [[ "${code}" =~ ^[0-9]{3}$ ]] || code=000
+          echo "${code}" > "${PACE_DIR}/status"
+          [[ "${code}" =~ ^2[0-9][0-9]$ ]]
+        }
+        last_status() { cat "${PACE_DIR}/status"; }
+
+        # Reads are idempotent, so they are retried: after a 401/429 the key
+        # counter is given a full idle window; after a 5xx or a network error
+        # the next paced call is made. A 401 that survives two idle windows is
+        # reported as a probable real authentication defect.
         api_get() {
-          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
-            --max-time 30 \
-            --header "CF-Access-Client-Id: ${CF_ID}" \
-            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
-            --header "x-api-key: ${DOKPLOY_API_KEY}" \
-            --header "accept: application/json" \
-            --get "${base}/$1" "${@:2}"
+          local path="$1" attempt=0 code
+          shift
+          while :; do
+            attempt=$((attempt + 1))
+            if http_once GET "${path}" "" "$@"; then cat "${PACE_DIR}/body"; return 0; fi
+            code="$(last_status)"
+            if ((attempt >= 3)); then
+              note "::warning::Dokploy GET ${path} failed with HTTP ${code} after ${attempt} attempts"
+              [[ "${code}" == "401" ]] &&
+                note "::warning::HTTP 401 persisted across two idle resets: this is not rate limiting, check the Dokploy API key"
+              return 1
+            fi
+            case "${code}" in
+              401 | 429)
+                note "::warning::Dokploy GET ${path} returned HTTP ${code}; idling ${IDLE_RESET}s before the next attempt"
+                sleep "${IDLE_RESET}" ;;
+              000 | 5??) ;;
+              *) note "::warning::Dokploy GET ${path} returned HTTP ${code}"; return 1 ;;
+            esac
+          done
         }
+
+        # Writes are never replayed. A failed write has an unknown outcome, so
+        # the caller must reconcile by reading state (see settle()).
         api_post() {
-          curl --fail-with-body --silent --show-error --max-time 60 \
-            --header "CF-Access-Client-Id: ${CF_ID}" \
-            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
-            --header "x-api-key: ${DOKPLOY_API_KEY}" \
-            --header "Content-Type: application/json" \
-            --request POST --data "$2" "${base}/$1"
+          if http_once POST "$1" "$2"; then return 0; fi
+          note "::warning::Dokploy POST $1 returned HTTP $(last_status); not replayed, outcome must be reconciled"
+          return 1
         }
-        current_image() {
-          api_get application.one --data-urlencode "applicationId=${APP_ID}" | jq -r '.dockerImage // empty'
+        settle() {
+          note "::notice::Idling ${IDLE_RESET}s so the key counter resets before reconciling by reading state"
+          sleep "${IDLE_RESET}"
         }
+
+        app_json() { api_get application.one --data-urlencode "applicationId=${APP_ID}"; }
+        current_image() { app_json | jq -r '.dockerImage // empty'; }
+        deployments_json() {
+          api_get deployment.allByType --data-urlencode "id=${APP_ID}" --data-urlencode "type=application"
+        }
+        records_filter='[.. | objects | select(has("status") and (has("deploymentId") or has("id")))]'
         deployment_ids() {
-          api_get deployment.allByType --data-urlencode "id=${APP_ID}" --data-urlencode "type=application" |
-            jq -r '[.. | objects | select(has("status") and (has("deploymentId") or has("id")))
-                    | (.deploymentId // .id)] | unique | .[]'
+          deployments_json | jq -r "${records_filter} | map(.deploymentId // .id) | unique | .[]"
         }
-        request_deploy() {
+        # Records whose id was not present before the request (newest last).
+        new_records() {
+          jq -c --arg before "${before}" "
+              (\$before | split(\"\\n\")) as \$old
+              | ${records_filter}
+              | map(select((.deploymentId // .id) as \$i | (\$old | index(\$i)) == null))
+              | sort_by(.createdAt // .startedAt // \"\")"
+        }
+        post_update() {
           api_post application.update "$(jq -nc --arg a "${APP_ID}" --arg i "$1" \
-            '{applicationId: $a, sourceType: "docker", dockerImage: $i}')" >/dev/null
-          api_post application.deploy "$(jq -nc --arg a "${APP_ID}" --arg t "$2" \
+            '{applicationId: $a, sourceType: "docker", dockerImage: $i}')"
+        }
+        post_deploy() {
+          api_post application.deploy "$(jq -nc --arg a "${APP_ID}" --arg t "$1" \
             --arg d "revrook-ce GitHub Actions run ${GITHUB_RUN_ID}" \
-            '{applicationId: $a, title: $t, description: $d}')" >/dev/null
+            '{applicationId: $a, title: $t, description: $d}')"
         }
 
         UPDATED=0
+        RESTORING=0
         PREVIOUS=""
+        before=""
+
+        # Restore reconciles first: configured image, then deployment records.
+        # With no new deployment record nothing was deployed, so the running
+        # image is still PREVIOUS and only the configuration is reverted. One
+        # attempt per write; a failure is reported, never replayed.
         restore() {
-          if [[ "${UPDATED}" == "1" && "${RESTORE_ON_FAILURE}" == "true" && -n "${PREVIOUS}" && "${PREVIOUS}" != "${IMAGE}" ]]; then
-            echo "::warning::restoring previous image ${PREVIOUS}"
-            request_deploy "${PREVIOUS}" "Automatic restore after failed run ${GITHUB_RUN_ID}" || echo "::warning::restore request failed"
+          [[ "${UPDATED}" == "1" && "${RESTORE_ON_FAILURE}" == "true" && -n "${PREVIOUS}" && "${PREVIOUS}" != "${IMAGE}" ]] || return 0
+          [[ "${RESTORING}" == "0" ]] || return 0
+          RESTORING=1
+          local configured created
+          settle
+          configured="$(current_image)" || { echo "::warning::restore skipped: cannot read the configured image; reconcile ${APP_ID} manually (previous image ${PREVIOUS})"; return 0; }
+          if [[ "${configured}" == "${PREVIOUS}" ]]; then
+            echo "::notice::configured image is already the previous image; nothing to restore"
+            return 0
+          fi
+          created="$(deployments_json | new_records | jq 'length')" ||
+            { echo "::warning::restore skipped: cannot read deployment records; reconcile ${APP_ID} manually (configured ${configured}, previous ${PREVIOUS})"; return 0; }
+          if [[ "${created}" == "0" ]]; then
+            echo "::warning::no new deployment was created; reverting the configured image only: ${PREVIOUS}"
+            post_update "${PREVIOUS}" || echo "::warning::revert failed; configured image is ${configured}, running image is still ${PREVIOUS}"
+          else
+            echo "::warning::restoring previous image ${PREVIOUS} (${created} new deployment record(s) exist)"
+            { post_update "${PREVIOUS}" && post_deploy "Automatic restore after failed run ${GITHUB_RUN_ID}"; } ||
+              echo "::warning::restore request failed; reconcile ${APP_ID} manually (previous image ${PREVIOUS})"
           fi
         }
         fail() { echo "::error::$*"; restore; exit 1; }
@@ -138,19 +253,38 @@ runs:
           { echo "::error::cannot read domains of the Dokploy application"; exit 1; }
         jq -e --arg h "${EXPECTED_HOST}" 'type == "array" and any(.[]; .host == $h)' <<<"${domains}" >/dev/null ||
           { echo "::error::Dokploy application ${APP_ID} is not attached to ${EXPECTED_HOST}; refusing to deploy"; exit 1; }
-        app_id_seen="$(api_get application.one --data-urlencode "applicationId=${APP_ID}" | jq -r '.applicationId // empty')" ||
-          { echo "::error::cannot read the Dokploy application"; exit 1; }
-        [[ "${app_id_seen}" == "${APP_ID}" ]] || { echo "::error::Dokploy returned a different application id"; exit 1; }
+        app="$(app_json)" || { echo "::error::cannot read the Dokploy application"; exit 1; }
+        [[ "$(jq -r '.applicationId // empty' <<<"${app}")" == "${APP_ID}" ]] ||
+          { echo "::error::Dokploy returned a different application id"; exit 1; }
 
         # 2. Rollback target and the deployments that already exist.
-        PREVIOUS="$(current_image)" || { echo "::error::cannot read the current image"; exit 1; }
+        PREVIOUS="$(jq -r '.dockerImage // empty' <<<"${app}")"
         echo "previous_image=${PREVIOUS}" >> "${GITHUB_OUTPUT}"
         before="$(deployment_ids)" || { echo "::error::cannot list Dokploy deployments"; exit 1; }
         echo "Target ${EXPECTED_HOST} (${APP_ID}); previous image: ${PREVIOUS:-none}; requested: ${IMAGE}"
 
-        # 3. Update and deploy, then confirm the configured image.
+        # 3. Update, then deploy, each exactly once. A failed write is reconciled
+        #    by reading state after an idle reset, never replayed.
         UPDATED=1
-        request_deploy "${IMAGE}" "${TITLE}" || fail "Dokploy rejected the update or deploy request"
+        if ! post_update "${IMAGE}"; then
+          update_status="$(last_status)"
+          settle
+          configured="$(current_image)" || fail "update outcome unknown: cannot read the configured image"
+          if [[ "${configured}" == "${PREVIOUS}" ]]; then
+            UPDATED=0
+            fail "Dokploy rejected the image update (HTTP ${update_status}); configuration unchanged, nothing deployed, nothing replayed"
+          fi
+          [[ "${configured}" == "${IMAGE}" ]] || fail "Dokploy reports ${configured} after a failed update, expected ${IMAGE} or ${PREVIOUS}"
+          echo "::warning::update returned an error but the configured image is the requested one; continuing to deploy"
+        fi
+        if ! post_deploy "${TITLE}"; then
+          deploy_status="$(last_status)"
+          settle
+          created="$(deployments_json | new_records | jq 'length')" || fail "deploy outcome unknown: cannot read deployment records"
+          [[ "${created}" != "0" ]] ||
+            fail "Dokploy rejected the deploy request (HTTP ${deploy_status}) and created no deployment record; nothing replayed"
+          echo "::warning::deploy returned an error but a new deployment record exists; waiting for it"
+        fi
         configured="$(current_image)" || fail "cannot read the configured image after the update"
         [[ "${configured}" == "${IMAGE}" ]] || fail "Dokploy reports ${configured}, expected ${IMAGE}"
 
@@ -159,13 +293,9 @@ runs:
         finished=""
         while ((SECONDS < deadline)); do
           sleep 5
-          after="$(api_get deployment.allByType --data-urlencode "id=${APP_ID}" --data-urlencode "type=application" 2>/dev/null)" || continue
+          after="$(deployments_json)" || continue
           # Newest record whose id was not present before the request.
-          status="$(jq -r --arg before "${before}" '
-              ($before | split("\n")) as $old
-              | [.. | objects | select(has("status") and (has("deploymentId") or has("id")))
-                 | select((.deploymentId // .id) as $i | ($old | index($i)) == null)]
-              | sort_by(.createdAt // .startedAt // "") | last | .status // empty' <<<"${after}")"
+          status="$(new_records <<<"${after}" | jq -r 'last | .status // empty')"
           case "${status}" in
             done) finished=done; break ;;
             error | cancelled | canceled) fail "Dokploy deployment ended with status ${status}" ;;
