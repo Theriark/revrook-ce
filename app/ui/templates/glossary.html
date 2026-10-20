@@ -1,37 +1,41 @@
 {% extends "base.html" %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
-<h1>Glossary</h1>
-<p>The words revrook uses, each explained once.</p>
-<dl id="glossary">
-<dt>Pack date</dt>
-<dd>The date the evidence was read. Everything in a report is true as of that date.</dd>
-<dt>Evidence</dt>
-<dd>An export from a tool, a document or a statement, with the time it was captured. A status with no dated evidence is shown as Not checked.</dd>
-<dt>Automatic export, manual artefact, attestation</dt>
-<dd>How much a piece of evidence proves. An automatic export is read from a tool's own file. A manual artefact is a document a named person reviewed on a date. An attestation is a statement with no document behind it, and counts for the least.</dd>
-<dt>Freshness</dt>
-<dd>Evidence counts in full up to its maximum age, counts less after that, and counts for nothing at twice that age.</dd>
-<dt>Coverage</dt>
-<dd>How much of the score rests on evidence that is present and fresh. Coverage is shown beside the score so that better evidence is not read as better security.</dd>
-<dt>Best case</dt>
-<dd>The score if every control that was not checked, or whose evidence is old, turned out to pass.</dd>
-<dt>Lower bound</dt>
-<dd>A score that is shown as the least the client could have, because too little was checked to give a real score.</dd>
-<dt>Gate control</dt>
-<dd>A control so important that, if it is not protected, it holds the whole score down.</dd>
-<dt>Protected, Needs attention, Not protected, Not checked</dt>
-<dd>The four statuses of a control. Each has an icon and words, so it can be told apart without colour. Not checked means nothing was verified.</dd>
-<dt>Exception</dt>
-<dd>A control that is knowingly not met, with an owner, a reason and a date to look at it again. It never changes a status.</dd>
-<dt>QBR</dt>
-<dd>Quarterly business review: the report you give a client each quarter.</dd>
-<dt>MFA</dt>
-<dd>Multi-factor authentication: signing in with more than a password.</dd>
-<dt>SPF, DKIM, DMARC</dt>
-<dd>Three public settings of a mail domain that help receivers tell real mail from forged mail. SPF lists the servers allowed to send, DKIM signs the mail and DMARC says what to do when a check fails.</dd>
-<dt>Snapshot</dt>
-<dd>A stored copy of the state of a client on one day. A report is made from a snapshot, so it can be made again exactly.</dd>
+<div class="rv-page-header">
+<div><h1>Glossary</h1><p class="rv-page-purpose">The words revrook uses, each explained once, in the order you meet them.</p></div>
+</div>
+<dl id="glossary" class="rv-glossary">
+<div><dt>Pack date</dt>
+<dd>The date the evidence was read. Everything in a report is true as of that date.</dd></div>
+<div><dt>Evidence</dt>
+<dd>An export from a tool, a document or a statement, with the time it was captured. A status with no dated evidence is shown as Not checked.</dd></div>
+<div><dt>Automatic export, manual artefact, attestation</dt>
+<dd>How much a piece of evidence proves. An automatic export is read from a tool's own file. A manual artefact is a document a named person reviewed on a date. An attestation is a statement with no document behind it, and counts for the least.</dd></div>
+<div><dt>Freshness</dt>
+<dd>Evidence counts in full up to its maximum age, counts less after that, and counts for nothing at twice that age.</dd></div>
+<div><dt>Coverage</dt>
+<dd>How much of the score rests on evidence that is present and fresh. Coverage is shown beside the score so that better evidence is not read as better security.</dd></div>
+<div><dt>Best case</dt>
+<dd>The score if every control that was not checked, or whose evidence is old, turned out to pass.</dd></div>
+<div><dt>Lower bound</dt>
+<dd>A score that is shown as the least the client could have, because too little was checked to give a real score.</dd></div>
+<div><dt>Gate control</dt>
+<dd>A control so important that, if it is not protected, it holds the whole score down.</dd></div>
+<div><dt>Protected, Needs attention, Not protected, Not checked</dt>
+<dd>The four statuses of a control. Each has an icon and words, so it can be told apart without colour. Not checked means nothing was verified.</dd></div>
+<div><dt>Exception</dt>
+<dd>A control that is knowingly not met, with an owner, a reason and a date to look at it again. It never changes a status.</dd></div>
+<div><dt>QBR</dt>
+<dd>Quarterly business review: the report you give a client each quarter.</dd></div>
+<div><dt>MFA</dt>
+<dd>Multi-factor authentication: signing in with more than a password.</dd></div>
+<div><dt>SPF, DKIM, DMARC</dt>
+<dd>Three public settings of a mail domain that help receivers tell real mail from forged mail. SPF lists the servers allowed to send, DKIM signs the mail and DMARC says what to do when a check fails.</dd></div>
+<div><dt>Snapshot</dt>
+<dd>A stored copy of the state of a client on one day. A report is made from a snapshot, so it can be made again exactly.</dd></div>
 </dl>
+<div class="rv-alert" id="glossary-note">
+<p class="rv-alert-title">What a report is</p>
 <p>This product summarises settings observed on a date. It is not a certification, audit or attestation.</p>
+</div>
 {% endblock %}

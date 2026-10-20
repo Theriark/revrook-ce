@@ -1,51 +1,77 @@
 {% extends "base.html" %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
-<h1>Settings</h1>
+<div class="rv-page-header">
+<div><h1>Settings</h1><p class="rv-page-purpose">The name printed on every report and where the reminders go. Everything else on this page is fixed by the rules or by the installation.</p></div>
+</div>
 {% if saved %}
-<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> The settings were saved.</p>
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>The settings were saved.</span></p>
 {% endif %}
 {% include "_errors.html" %}
-<h2>Your business</h2>
+<section class="rv-card rv-settings-card" id="business" aria-labelledby="business-title">
+<h2 id="business-title" class="rv-card-title">Your business</h2>
+<p class="rv-card-subtitle">What a client sees on the cover of a report, and where revrook writes to you.</p>
 <form id="settings-form" method="post" action="/settings">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<label for="msp_name">The name printed on the cover of every report</label>
-<input id="msp_name" name="msp_name" type="text" maxlength="100" required value="{{ msp_name }}">
-<label for="reminder_email">Send the evidence expiry reminders to this email address (empty means no reminders)</label>
+<div class="rv-field">
+<label for="msp_name">The name of your business</label>
+<input id="msp_name" name="msp_name" type="text" maxlength="100" required value="{{ msp_name }}" aria-describedby="msp-help">
+<small id="msp-help" class="rv-help">Printed on the cover of every report. A report cannot be exported while it is empty.</small>
+</div>
+<div class="rv-field">
+<label for="reminder_email">Send the evidence expiry reminders to</label>
 <input id="reminder_email" name="reminder_email" type="email" maxlength="254" autocomplete="off" aria-describedby="reminder-help" value="{{ reminder_email }}">
-<small id="reminder-help">{% if mail_relay %}A mail relay is set, so reminders can be sent.{% else %}No mail relay is set (SMTP_HOST and SMTP_FROM), so no reminder is sent yet.{% endif %}</small>
+<small id="reminder-help" class="rv-help">An email address; empty means no reminders. {% if mail_relay %}A mail relay is set, so reminders can be sent.{% else %}No mail relay is set (SMTP_HOST and SMTP_FROM), so no reminder is sent yet.{% endif %}</small>
+</div>
+<div class="rv-actions">
 <button type="submit">Save</button>
+</div>
 </form>
+</section>
 
-<h2>Read only</h2>
-<h3>The disclaimer in every report</h3>
-<p id="disclaimer">{{ disclaimer }}</p>
+<div class="rv-section-head">
+<div><h2 id="read-only-title">Fixed by the rules and the installation</h2><p class="rv-section-note">Shown here so you know what every report says and keeps. Changing them is a configuration of the installation, not a setting.</p></div>
+</div>
+<div class="rv-readonly">
+<section class="rv-card" id="disclaimer-card" aria-labelledby="disclaimer-title">
+<h3 id="disclaimer-title" class="rv-card-title">The disclaimer in every report</h3>
+<p id="disclaimer" class="rv-quote">{{ disclaimer }}</p>
+</section>
 
-<h3>Weights of the domains ({{ ruleset }})</h3>
-<table id="weights">
-<caption>How much each domain counts towards the score. The weights are fixed by the rules and cannot be edited here.</caption>
-<thead><tr><th scope="col">Domain</th><th scope="col">Weight</th></tr></thead>
+<section class="rv-card" id="retention" aria-labelledby="retention-title">
+<h3 id="retention-title" class="rv-card-title">Retention and limits</h3>
+<dl class="rv-facts rv-retention">
+<div><dt>Raw files after import</dt><dd>{{ raw_retention_days }} days</dd></div>
+<div><dt>Reports and snapshots</dt><dd>{{ pack_retention_months }} months</dd></div>
+<div><dt>Largest import</dt><dd>{{ max_megabytes }} MB</dd></div>
+</dl>
+<p class="rv-help">Zero days means a raw file is deleted once it has been read.</p>
+</section>
+
+<section class="rv-card" id="weights-card" aria-labelledby="weights-title">
+<h3 id="weights-title" class="rv-card-title">Weights of the domains</h3>
+<p class="rv-card-subtitle">How much each domain counts towards the score under the rules {{ ruleset }}. The weights are fixed by the rules and cannot be edited here.</p>
+<table id="weights" class="rv-weights">
+<caption>Weight of each domain in the score</caption>
+<thead><tr><th scope="col">Domain</th><th scope="col" class="rv-numeric">Weight</th></tr></thead>
 <tbody>
 {% for domain in domains %}
-<tr><th scope="row">{{ domain.name }}</th><td>{{ domain.weight }}</td></tr>
+<tr><th scope="row">{{ domain.name }}</th><td class="rv-numeric">{{ domain.weight }}</td></tr>
 {% endfor %}
 </tbody>
 </table>
+</section>
 
-<h3>Retention and limits</h3>
-<ul>
-<li>Raw files are kept {{ raw_retention_days }} days after import (0 means they are deleted once read).</li>
-<li>Reports and snapshots are kept {{ pack_retention_months }} months.</li>
-<li>An import can be up to {{ max_megabytes }} MB.</li>
-</ul>
-
-<h3>Mappings to other frameworks</h3>
-<p>A mapping to another framework is shown in a report only after a person has checked it against its source. None is shown until then.</p>
-
-<h3>Users</h3>
-<ul id="users">
+<section class="rv-card" id="people" aria-labelledby="people-title">
+<h3 id="people-title" class="rv-card-title">Users and mappings</h3>
+<p class="rv-card-subtitle">Everyone who can sign in to this installation.</p>
+<ul id="users" class="rv-users">
 {% for name in usernames %}
-<li>{{ name }}</li>
+<li><span class="rv-user-mark" aria-hidden="true">{{ name[:1]|upper }}</span>{{ name }}</li>
 {% endfor %}
 </ul>
+<h4 class="rv-card-heading">Mappings to other frameworks</h4>
+<p class="rv-card-text">A mapping to another framework is shown in a report only after a person has checked it against its source. None is shown until then.</p>
+</section>
+</div>
 {% endblock %}

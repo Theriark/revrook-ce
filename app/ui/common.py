@@ -116,6 +116,7 @@ def problem(
     context = {
         "title": TITLES.get(status_code, DEFAULT_TITLE),
         "nav": "",
+        "status": status_code,
         "message": message,
         "details": list(details),
     }

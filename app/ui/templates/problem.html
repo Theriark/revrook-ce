@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
-<h1>{{ title }}</h1>
-<div class="rv-errors" role="alert">
-<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!</span> {{ message }}</p>
+<section class="rv-problem" role="alert" aria-labelledby="problem-title">
+<p class="rv-problem-code"><span class="rv-sr-only">Status </span>{{ status }}</p>
+<h1 id="problem-title">{{ title }}</h1>
+<p class="rv-problem-message">{{ message }}</p>
 {% if details %}
-<ul>
+<ul class="rv-problem-details">
 {% for item in details %}
 <li>{{ item }}</li>
 {% endfor %}
 </ul>
 {% endif %}
+<p class="rv-problem-hint">{% if status == 404 %}The address may be out of date, or what it pointed at was deleted.{% elif status == 409 %}Nothing was altered. The kept copy stays as it is so the difference can be looked into.{% else %}Nothing was saved. Fix what is listed, then try again.{% endif %}</p>
+<div class="rv-actions">
+<a role="button" href="/">Home</a>
+<a role="button" class="rv-button-quiet" href="/clients">Back to the clients</a>
 </div>
-<p><a href="/clients">Back to the clients</a></p>
+</section>
 {% endblock %}

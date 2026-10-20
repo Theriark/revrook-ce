@@ -3,15 +3,66 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
-<h2>Preview and export</h2>
-<p class="rv-text-secondary">Period {{ view.context.period_start.isoformat() }} to {{ view.context.period_end.isoformat() }}. Pack date {{ s.day(view.snapshot.as_of) }}.</p>
-<div id="summary">
+<div class="rv-control-head">
+<p class="rv-control-kicker"><a href="/clients/{{ client_id }}/reports">Back to the report builder</a></p>
+<h2 class="rv-control-title">Preview and export</h2>
+<ul class="rv-control-meta" aria-label="About this report">
+<li>Period {{ view.context.period_start.isoformat() }} to {{ view.context.period_end.isoformat() }}</li>
+<li>Pack date {{ s.day(view.snapshot.as_of) }}</li>
+<li>Snapshot {{ view.snapshot_sha256[:16] }}</li>
+</ul>
+</div>
+
+<section class="rv-verdict" id="export-status" aria-labelledby="export-status-title">
+<h3 id="export-status-title" class="rv-sr-only">Before you export</h3>
+<div class="rv-verdict-status">
+{% if problems %}
+<span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> {{ problems|length }} thing{% if problems|length != 1 %}s{% endif %} to fix first</span>
+{% else %}
+<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Ready to export</span>
+{% endif %}
+</div>
+<dl class="rv-facts rv-verdict-facts">
+<div><dt>Controls</dt><dd>{{ view.rows|length }}</dd></div>
+<div><dt>Open exceptions</dt><dd>{{ view.register|length }}</dd></div>
+<div><dt>Data sources</dt><dd>{{ view.context.data_sources|length }}</dd></div>
+<div><dt>Prepared by</dt><dd>{{ view.context.prepared_by }}</dd></div>
+</dl>
+</section>
+
+<div class="rv-report-layout">
+<div class="rv-report-sheet-column">
+<div class="rv-sheet-band">
+<article class="rv-sheet" id="sheet" aria-labelledby="sheet-title">
+<p class="rv-sheet-head"><span>{% if view.context.msp_name %}{{ view.context.msp_name }}{% else %}Your business{% endif %}</span><span>{{ view.context.client_name }}</span></p>
+<h3 id="sheet-title" class="rv-sheet-title">{% if view.context.msp_name %}{{ view.context.msp_name }}{% else %}Your business name goes here{% endif %}</h3>
+<p class="rv-sheet-subtitle">Security review for {{ view.context.client_name }}</p>
+<dl class="rv-sheet-facts">
+<div><dt>Client</dt><dd>{{ view.context.client_name }}</dd></div>
+<div><dt>Period</dt><dd>{{ view.context.period_start.isoformat() }} to {{ view.context.period_end.isoformat() }}</dd></div>
+<div><dt>Prepared by</dt><dd>{{ view.context.prepared_by }}</dd></div>
+<div><dt>Generated</dt><dd>{{ view.context.generated_on.isoformat() }}</dd></div>
+<div><dt>Pack date</dt><dd>{{ s.day(view.snapshot.as_of) }}</dd></div>
+<div><dt>Data sources</dt><dd>{% if view.context.data_sources %}{{ view.context.data_sources|join(", ") }}{% else %}None entered{% endif %}</dd></div>
+</dl>
+<div class="rv-sheet-rule" aria-hidden="true"></div>
+<h4 class="rv-sheet-heading">Summary</h4>
+<div id="summary" class="rv-sheet-summary">
 {% for line in view.summary_lines %}
 <p>{{ line }}</p>
 {% endfor %}
 </div>
+<ul class="rv-sheet-counts" aria-label="Controls by status">
+{% for label, count in view.counts %}
+<li>{{ s.status(label) }}<span class="rv-sheet-count">{{ count }}</span></li>
+{% endfor %}
+</ul>
+<p class="rv-sheet-foot">The cover and the summary as the client receives them. The exported file adds the findings, the coverage by domain, the exceptions and the plan, with the disclaimer on every page.</p>
+</article>
+</div>
+</div>
 
-<h3>Before you export</h3>
+<div class="rv-report-side">
 {% if problems %}
 <div id="problems" class="rv-errors" role="alert">
 <p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!</span> {{ problems|length }} thing{% if problems|length != 1 %}s{% endif %} to fix first</p>
@@ -22,22 +73,30 @@
 </ul>
 </div>
 {% else %}
-<p id="problems" class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Nothing stops this report from being exported.</p>
+<p id="problems" class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Nothing stops this report from being exported.</span></p>
 {% endif %}
 
-<h3>The reports</h3>
-<ul id="kinds">
+<section class="rv-card" id="kinds-card" aria-labelledby="kinds-title">
+<h3 id="kinds-title" class="rv-card-title">The reports</h3>
+<p class="rv-card-subtitle">Both are made from this same stored state. A preview opens the file as it would be sent; an export keeps an unchangeable copy and its hash.</p>
+<ul id="kinds" class="rv-kinds">
 {% for kind, name in kinds %}
-<li>
-<strong>{{ name }}</strong>:
-<a href="/clients/{{ client_id }}/reports/{{ snapshot_id }}/preview/{{ kind }}">Preview</a>
+<li class="rv-kind">
+<p class="rv-kind-name">{{ name }}</p>
+<p class="rv-kind-text">{% if kind == "qbr" %}The quarterly review for the client meeting: the score, what was found, what was done and the plan.{% else %}The evidence an insurer asks about, topic by topic, with who owns each.{% endif %}</p>
+<div class="rv-kind-actions">
+<a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/reports/{{ snapshot_id }}/preview/{{ kind }}">Preview</a>
 <form class="rv-inline-form" method="post" action="/clients/{{ client_id }}/reports/{{ snapshot_id }}/export">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <input type="hidden" name="kind" value="{{ kind }}">
 <button type="submit">Export the {{ name|lower }}</button>
 </form>
+</div>
 </li>
 {% endfor %}
 </ul>
-<p>An export keeps an unchangeable copy of the file and its hash. See the <a href="/clients/{{ client_id }}/exports">export history</a>.</p>
+<p class="rv-control-foot">Every export is listed in the <a href="/clients/{{ client_id }}/exports">export history</a> with its SHA-256.</p>
+</section>
+</div>
+</div>
 {% endblock %}
