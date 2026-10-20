@@ -3443,3 +3443,571 @@ section.rv-step {
     align-items: flex-start;
   }
 }
+
+/* ---------- Exceptions, reports, exports, settings, system, glossary and the problem page (docs/design-system.md, Exceptions and reports) ---------- */
+
+/* The section head of a page of one client sits under the tabs, like the
+   evidence page; the pages of the administration use the page header */
+.rv-under-tabs {
+  margin-top: 8px;
+}
+
+/* The exceptions register: a closed row is quieter, the reason and the
+   compensating control wrap in a column of their own, the close button sits
+   in the last cell */
+.rv-exceptions .rv-exception-text {
+  min-width: 12rem;
+  max-width: 24rem;
+}
+
+.rv-exceptions tr.rv-exception-closed > th a,
+.rv-exceptions tr.rv-exception-closed > td {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-exceptions .rv-cell-note {
+  font-weight: 400;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-exception-card {
+  margin-top: 32px;
+}
+
+/* The report builder: three numbered step cards (the steps are a sequence),
+   then the reports made before. The note beside the period button and the
+   topics of the insurer, one row each: the checkbox beside the owner field */
+.rv-step-note-inline {
+  margin: 0;
+}
+
+fieldset.rv-topics {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+}
+
+.rv-topic {
+  display: grid;
+  gap: 4px 24px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--rv-line);
+}
+
+.rv-topic:first-of-type {
+  border-top: 0;
+}
+
+.rv-topic .rv-check {
+  margin: 0;
+  font-size: 15px;
+}
+
+.rv-topic .rv-topic-owner {
+  margin: 0;
+}
+
+.rv-topic .rv-topic-owner label {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .rv-topic {
+    grid-template-columns: minmax(12rem, 1fr) minmax(0, 1.4fr);
+  }
+}
+
+#details-form.htmx-request .rv-notes-saving {
+  display: inline-flex;
+}
+
+.rv-snapshots th.rv-date {
+  white-space: normal;
+}
+
+/* Preview and export: the sheet, the signature of the report page. A paper
+   sheet on the canvas band, drawn with the same facts and rules as the cover
+   of the exported file (app/reports/report.css), so what the owner sees is
+   what the client receives. Every text on the sheet declares white */
+.rv-report-layout {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.rv-report-sheet-column,
+.rv-report-side {
+  min-width: 0;
+}
+
+.rv-report-side > .rv-card {
+  margin-bottom: 16px;
+}
+
+@media (min-width: 1024px) {
+  .rv-report-layout {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+.rv-sheet-band {
+  padding: 32px 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-sheet {
+  box-sizing: border-box;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 32px 36px 28px;
+  border: 1px solid var(--rv-stone);
+  box-shadow: var(--rv-shadow-2);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-sheet-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin: 0 0 24px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rv-gray);
+  font-size: 12px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-sheet-title {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-sheet-subtitle {
+  margin: 0 0 24px;
+  font-size: 20px;
+  line-height: 1.3;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-sheet-facts {
+  display: grid;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.rv-sheet-facts > div {
+  display: grid;
+  gap: 2px 16px;
+}
+
+.rv-sheet-facts dt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-sheet-facts dd {
+  margin: 0;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+@media (min-width: 600px) {
+  .rv-sheet-facts > div {
+    grid-template-columns: 9rem minmax(0, 1fr);
+  }
+}
+
+.rv-sheet-rule {
+  height: 3px;
+  margin: 24px 0 20px;
+  background-color: var(--rv-accent);
+}
+
+.rv-sheet-heading {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-sheet-summary p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.rv-sheet-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-sheet-counts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.rv-sheet-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-sheet-foot {
+  margin: 24px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--rv-line);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+@media (max-width: 599px) {
+  .rv-sheet-band {
+    padding: 16px 12px;
+  }
+
+  .rv-sheet {
+    padding: 20px 18px 18px;
+  }
+}
+
+/* The two reports, each a bordered row with its name, what it is for and
+   its two actions */
+.rv-kinds {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-kind {
+  margin: 0 0 12px;
+  padding: 16px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  list-style: none;
+}
+
+.rv-kind-name {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rv-kind-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-kind-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* The export history: a file name or a digest breaks anywhere, so a card on
+   a phone never grows wider than the page */
+.rv-digest {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+/* Settings: the form card, then the fixed facts of the installation as cards
+   in two columns from 1024px */
+.rv-settings-card {
+  margin-bottom: 8px;
+}
+
+.rv-readonly {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.rv-readonly > .rv-card {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .rv-readonly {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rv-quote {
+  margin: 0;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--rv-charcoal);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.rv-retention {
+  margin-bottom: 12px;
+}
+
+.rv-readonly .rv-help {
+  margin-top: 0;
+}
+
+.rv-readonly table {
+  margin-bottom: 0;
+}
+
+.rv-card-heading {
+  margin: 16px 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rv-card-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+/* The users: one chip per person with the first letter as its mark */
+.rv-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-users li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 3px 12px 3px 3px;
+  border: 1px solid var(--rv-line);
+  border-radius: 999px;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rv-user-mark {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal-soft);
+}
+
+/* System: the worker verdict, the note under it, the services as a list of
+   pill and sentence, the two cards side by side from 1024px and the deletion
+   of a client behind a confirmation */
+.rv-worker-note {
+  margin: -8px 0 24px;
+}
+
+.rv-services {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-services li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--rv-line);
+  list-style: none;
+  font-size: 14px;
+}
+
+.rv-services li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.rv-services li:last-child {
+  padding-bottom: 0;
+}
+
+.rv-system-grid {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.rv-system-grid > .rv-card {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .rv-system-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.rv-danger-card {
+  border-left: 4px solid var(--rv-status-not-protected);
+}
+
+.rv-delete-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-delete-list li {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-delete-list details.rv-confirm {
+  display: block;
+  margin-bottom: 0;
+}
+
+.rv-delete-list .rv-confirm-body .rv-actions {
+  margin-bottom: 0;
+}
+
+/* The glossary: one card, a term beside its meaning from 768px and above it
+   on a phone */
+.rv-glossary {
+  margin: 0 0 24px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-glossary > div {
+  display: grid;
+  gap: 4px 24px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--rv-line);
+}
+
+.rv-glossary > div:first-child {
+  border-top: 0;
+}
+
+.rv-glossary dt {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-glossary dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+@media (min-width: 768px) {
+  .rv-glossary > div {
+    grid-template-columns: 15rem minmax(0, 1fr);
+  }
+}
+
+/* The problem page (404, 409, 422): one card with the status code as a large
+   figure in violet-blue, the message, the details and two ways back */
+.rv-problem {
+  max-width: 36rem;
+  margin: 24px auto 32px;
+  padding: 32px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-1);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-problem-code {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-accent);
+  background-color: var(--rv-white);
+}
+
+.rv-problem h1 {
+  margin: 0 0 8px;
+}
+
+.rv-problem-message {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.rv-problem-details {
+  margin: 0 0 12px;
+  padding-left: 1.25rem;
+  font-size: 14px;
+}
+
+.rv-problem-hint {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-problem .rv-actions {
+  margin-bottom: 0;
+}
+
+@media (max-width: 599px) {
+  .rv-problem {
+    margin-top: 8px;
+    padding: 20px;
+  }
+}
