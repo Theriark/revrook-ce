@@ -623,8 +623,7 @@ def trend_chart(
         for number, moment in enumerate(ticks)
     )
     y_ticks = tuple(
-        (f"{_chart_y(Fraction(value), size):.1f}", str(value))
-        for value in (0, 50, 100)
+        (f"{_chart_y(Fraction(value), size):.1f}", str(value)) for value in (0, 50, 100)
     )
     return TrendChart(
         lines=lines,
