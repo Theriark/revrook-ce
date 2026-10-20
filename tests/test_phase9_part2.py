@@ -61,6 +61,8 @@ REPORT_PATHS = ("/preview/", "/download")
 LONG_NOTE = "ab\r\n" * 666 + "ab"
 # The stylesheet link carries the asset version (?v=<digest>), see app/ui/brand.py.
 STYLESHEET_LINK = 'href="/static/css/revrook.css?v='
+# A placeholder for the CSRF field of a rendered template; not a real token.
+PLACEHOLDER_TOKEN = "x" * 32
 
 
 def view_of(name: str = "A", **context_changes: Any) -> ReportView:
@@ -158,7 +160,7 @@ def test_the_public_pages_are_well_formed(name: str, value: str) -> None:
         title="Sign in",
         errors=[value] if value else [],
         username=value,
-        csrf_token="***REDACTED***",
+        csrf_token=PLACEHOLDER_TOKEN,
         brand_files=frozenset(BRAND_FILES),
     )
     assert structure_problems(text) == []
@@ -461,9 +463,11 @@ async def test_an_autosave_for_a_deleted_client_says_nothing_was_saved(
     assert missing.status_code == 404
     assert missing.headers["content-type"].startswith("text/html")
     assert "no longer exists" in missing.text
+    # Asked for as a page, the same address is the problem page (THE-505).
     plain = await ui_browser.get("/no-such-page")
     assert plain.status_code == 404
-    assert plain.headers["content-type"].startswith("application/json")
+    assert plain.headers["content-type"].startswith("text/html")
+    assert 'class="rv-problem"' in plain.text
 
 
 # --- O-8: a double submit of the snapshot form makes one snapshot --------------------
