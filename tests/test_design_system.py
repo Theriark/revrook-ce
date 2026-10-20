@@ -362,8 +362,10 @@ def test_the_editor_steps_are_cards_with_a_busy_indicator_beside_each_button() -
     assert hidden is not None and "display: none;" in hidden.group(1)
     shown = re.search(r"\n\.rv-editor-busy\.htmx-request \{([^}]*)\}", CSS)
     assert shown is not None and "display: inline-flex;" in shown.group(1)
-    hint = re.search(r"\n\.rv-dropzone-hint \{([^}]*)\}", CSS)
-    assert hint is not None and "font-weight: 400;" in hint.group(1)
+    # The import area declares the hint in two places: its own section sets
+    # the size, the editor's section (later in the file) makes it plain.
+    hints = re.findall(r"\n\.rv-dropzone-hint \{([^}]*)\}", CSS)
+    assert len(hints) == 2 and "font-weight: 400;" in hints[-1]
     templates = ROOT / "app/ui/templates"
     editor = (templates / "profile_editor.html").read_text(encoding="utf-8")
     assert 'hx-indicator="#rv-editor-busy"' in editor

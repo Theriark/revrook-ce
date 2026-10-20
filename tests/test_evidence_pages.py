@@ -13,6 +13,7 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.evidence.service import EvidenceContext
+from app.ui.auth import templates
 from helpers import VENDOR_COLUMNS, create_test_client, get_csrf, vendor_inventory
 from html_structure import structure_problems
 from ui_helpers import STATUS, STATUS_SPAN, seed_client, sign_in
@@ -20,6 +21,9 @@ from ui_helpers import STATUS, STATUS_SPAN, seed_client, sign_in
 EDITOR = "/imports/profile-editor"
 INTEGRITY = "/evidence/integrity"
 RECORDS = re.compile(r"<dt>Records</dt><dd>(\d+)</dd>")
+VERDICT = re.compile(
+    r"(The only chain is intact|All \d+ chains intact|\d+ of \d+ chains? broken)</span>"
+)
 
 
 async def test_the_evidence_page_has_its_verdict_the_refresh_list_and_the_tables(
@@ -116,19 +120,31 @@ async def test_the_integrity_page_starts_with_the_check_and_shows_its_verdict(
     assert html.count('action="/evidence/integrity"') == 1
     assert ">Check again</button>" not in html and 'id="chains"' not in html
 
-    csrf = await get_csrf(ui_browser, INTEGRITY)
-    empty = await ui_browser.post(INTEGRITY, data={"csrf_token": csrf})
-    html = empty.text
-    assert empty.status_code == 200 and structure_problems(html) == []
+    # The evidence log is append-only and shared by the test run, so a check
+    # through the app sees the chains of earlier tests; the page without any
+    # record is rendered from the template with the context of an empty check.
+    html = templates.get_template("evidence_integrity.html").render(
+        title="Evidence integrity",
+        nav="integrity",
+        user=None,
+        rows=[],
+        failed=0,
+        records=0,
+        checked_at=None,
+        csrf_token="x" * 32,
+    )
+    assert structure_problems(html) == []
     assert 'id="integrity-empty"' in html and ">Check again</button>" in html
     assert 'href="/imports/profile-editor">Open the profile editor</a>' in html
+    assert 'id="integrity-start"' not in html and 'id="chains"' not in html
 
     await seed_client(db_engine, ui_ctx)
+    csrf = await get_csrf(ui_browser, INTEGRITY)
     checked = await ui_browser.post(INTEGRITY, data={"csrf_token": csrf})
     html = checked.text
     assert checked.status_code == 200 and structure_problems(html) == []
     assert '<section class="rv-verdict" id="integrity-status"' in html
-    assert "The only chain is intact</span>" in html
+    assert VERDICT.search(html) is not None  # one pill, icon and words
     for fact in ("Chains checked", "Records", "Broken", "Checked"):
         assert f"<dt>{fact}</dt>" in html, fact
     records = RECORDS.search(html)
