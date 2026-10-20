@@ -1,4 +1,7 @@
-"""First-run, sign-in, sign-out and the placeholder home page."""
+"""First-run, sign-in and sign-out, and the page renderer every page module uses.
+
+The Home page itself is `app.ui.home`.
+"""
 
 from pathlib import Path
 from typing import Annotated, Any
@@ -13,10 +16,8 @@ from app.auth import (
     authenticate,
     count_users,
     create_first_admin,
-    get_user,
     validate_new_credentials,
 )
-from app.models import AppUser
 from app.ratelimit import ConcurrencyGate
 from app.security import SessionData, new_csrf_token
 from app.ui.brand import asset_version, available_brand_files
@@ -56,21 +57,6 @@ def render(
     response.headers["Cache-Control"] = "no-store"
     set_session_cookie(response, request, session)
     return response
-
-
-@router.get("/")
-async def home(request: Request) -> Response:
-    session = current_session(request)
-    async with session_factory(request)() as db:
-        if await count_users(db) == 0:
-            return redirect("/setup")
-        user: AppUser | None = None
-        if session.user_id is not None:
-            user = await get_user(db, session.user_id)
-    if user is None:
-        return redirect("/login")
-    context: dict[str, Any] = {"title": "Home", "nav": "home", "user": user}
-    return render(request, "home.html", context, session)
 
 
 @router.get("/setup")

@@ -1,6 +1,191 @@
 {% extends "base.html" %}
+{% import "_status.html" as s %}
+{% import "_icons.html" as i %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
-<h1>Home</h1>
-<p>Signed in as {{ user.username }}.</p>
-<p>Start with the <a href="/clients">clients</a>: pick a client and a period, review the checklist, add exceptions, then preview and export the report.</p>
+<div class="rv-page-header">
+<div><h1>Home</h1><p class="rv-page-purpose">Signed in as {{ user.username }}. Where every client stands today, what to fix first, and what changed.</p></div>
+{% if clients or unread %}<div class="rv-page-actions"><a role="button" href="/clients">Add a client</a></div>{% endif %}
+</div>
+{% if unread %}
+<div class="rv-alert rv-alert-warning" role="alert" id="unread">
+<p class="rv-alert-title">{{ unread|length }} client{% if unread|length != 1 %}s{% endif %} could not be read today</p>
+<ul>
+{% for item in unread %}
+<li><a href="/clients/{{ item.client_id }}">{{ item.name }}</a>: {{ item.reason }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+{% if not clients and not unread %}
+<div class="rv-empty rv-home-empty" id="home-empty">
+{{ i.icon("clients", 36) }}
+<p class="rv-empty-title">Add the first client to start</p>
+<p class="rv-empty-text">Home fills in as you work. Add a client, import an export from a tool you already use, and the checklist, the score and the reports follow from that evidence.</p>
+<ol class="rv-steps">
+<li><span class="rv-step-number" aria-hidden="true">1</span><span>Add a client</span></li>
+<li><span class="rv-step-number" aria-hidden="true">2</span><span>Import an export: devices, backups, network, training, leavers, mail or Microsoft 365</span></li>
+<li><span class="rv-step-number" aria-hidden="true">3</span><span>Review the checklist and make the first report</span></li>
+</ol>
+<a role="button" href="/clients">Add a client</a>
+</div>
+{% else %}
+<section id="stats" aria-labelledby="stats-title">
+<h2 id="stats-title" class="rv-sr-only">At a glance</h2>
+<div class="rv-grid rv-stat-grid">
+{% for stat in stats %}
+<div class="rv-card rv-stat" id="stat-{{ stat.key }}">
+{% if stat.anchor %}<a class="rv-stat-value" href="#{{ stat.anchor }}">{{ stat.value }}</a>{% else %}<a class="rv-stat-value" href="/{{ stat.path }}">{{ stat.value }}</a>{% endif %}
+<span class="rv-stat-label">{{ stat.label }}</span>
+<span class="rv-stat-note">{{ stat.note }}</span>
+{% if stat.change %}<span class="rv-stat-change">{{ stat.change }}</span>{% endif %}
+{% if stat.spark %}<svg class="rv-spark" viewBox="0 0 96 28" width="96" height="28" aria-hidden="true" focusable="false"><polyline points="{{ stat.spark }}"/></svg>{% endif %}
+</div>
+{% endfor %}
+</div>
+</section>
+
+<section id="rookery" aria-labelledby="rookery-title">
+<div class="rv-section-head">
+<h2 id="rookery-title">Posture by client</h2>
+<p class="rv-section-note">The score of each client from its evidence as it is today. A dashed ring means the evidence is too thin for a score.</p>
+</div>
+<ul class="rv-rookery">
+{% for client in clients %}
+<li class="rv-rook{% if client.insufficient %} rv-rook-insufficient{% endif %}">
+<a class="rv-rook-link" href="/clients/{{ client.client_id }}">
+<svg class="rv-ring" viewBox="0 0 72 72" width="72" height="72" role="img" aria-labelledby="ring-{{ client.client_id }}-title">
+<title id="ring-{{ client.client_id }}-title">{{ client.name }}: {% if client.insufficient %}insufficient evidence, lower bound {{ client.score_text }}{% else %}score {{ client.score_text }}, {{ client.band }}{% endif %}</title>
+<circle class="rv-ring-track" cx="36" cy="36" r="30"/>
+{% if not client.insufficient %}<circle class="rv-ring-arc" cx="36" cy="36" r="30" stroke-dasharray="{{ client.ring_dash }}" transform="rotate(-90 36 36)"/>{% endif %}
+<text class="rv-ring-value" x="36" y="43" text-anchor="middle">{% if client.insufficient %}?{% else %}{{ client.score_text }}{% endif %}</text>
+</svg>
+<span class="rv-rook-name">{{ client.name }}</span>
+<span class="rv-rook-band">{{ client.band }}</span>
+</a>
+<span class="rv-rook-meta">{% if client.evidence %}{{ client.needs_work }} control{% if client.needs_work != 1 %}s{% endif %} need{% if client.needs_work == 1 %}s{% endif %} work, evidence coverage {{ client.coverage_percent }}%{% else %}No evidence imported yet{% endif %}</span>
+<span class="rv-rook-meta">{{ client.change_text }}</span>
+</li>
+{% endfor %}
+</ul>
+</section>
+
+<section id="needs-attention" aria-labelledby="attention-title">
+<div class="rv-section-head">
+<h2 id="attention-title">Needs attention</h2>
+<p class="rv-section-note">Gate controls first, then what is not protected, by weight. {{ attention_total }} across all clients.</p>
+</div>
+{% if attention %}
+<ol class="rv-attention">
+{% for item in attention %}
+<li class="rv-attention-row">
+<span class="rv-attention-status">{{ s.status(item.label) }}</span>
+<span class="rv-attention-what"><a href="/{{ item.path }}">{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{{ item.client_name }}{% if item.gate %}, gate control{% endif %}{% if item.why %}, {{ item.why }}{% endif %}</span></span>
+<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}">Open</a>
+</li>
+{% endfor %}
+</ol>
+{% if attention_total > attention|length %}
+<p class="rv-text-secondary">{{ attention_total - attention|length }} more on the checklists of the clients.</p>
+{% endif %}
+{% else %}
+<div class="rv-empty" id="attention-empty">
+{{ i.icon("check", 36) }}
+<p class="rv-empty-title">Nothing needs attention</p>
+<p class="rv-empty-text">{% if with_evidence %}Every checked control is protected. Controls that were not checked are counted by domain below.{% else %}Import the first export: the controls it shows as not protected appear here, most urgent first.{% endif %}</p>
+</div>
+{% endif %}
+</section>
+
+<div class="rv-two">
+<section class="rv-card" id="trend" aria-labelledby="trend-title">
+<h2 id="trend-title" class="rv-card-title">Score over the last {{ history_days }} days</h2>
+<p class="rv-card-subtitle">From the stored reports of each client. Up to six clients are drawn, the ones with the newest reports.</p>
+{% if trend.lines %}
+<svg class="rv-chart" viewBox="0 0 {{ trend.width }} {{ trend.height }}" role="img" aria-labelledby="trend-title trend-desc">
+<desc id="trend-desc">Score from 0 to 100 by report date, one line per client. The numbers are in the table that follows.</desc>
+<g class="rv-chart-grid">
+{% for y, label in trend.y_ticks %}
+<line x1="{{ trend.left }}" x2="{{ trend.right }}" y1="{{ y }}" y2="{{ y }}"/>
+<text x="{{ trend.left - 8 }}" y="{{ y }}" text-anchor="end" dominant-baseline="middle">{{ label }}</text>
+{% endfor %}
+</g>
+<g class="rv-chart-axis">
+{% for x, label in trend.x_ticks %}
+<text x="{{ x }}" y="{{ trend.bottom + 18 }}" text-anchor="middle">{{ label }}</text>
+{% endfor %}
+</g>
+{% for line in trend.lines %}
+<g class="rv-chart-line">
+{% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
+<circle cx="{{ line.last_x }}" cy="{{ line.last_y }}" r="3.5"/>
+<text x="{{ trend.right + 10 }}" y="{{ line.label_y }}" dominant-baseline="middle">{{ line.short_name }}</text>
+</g>
+{% endfor %}
+</svg>
+<details class="rv-chart-data">
+<summary>Show the numbers</summary>
+<table>
+<caption>Score by report date, {{ trend.reports }} report{% if trend.reports != 1 %}s{% endif %}</caption>
+<thead><tr><th scope="col">Client</th><th scope="col">Report date</th><th scope="col">Score</th><th scope="col">Band</th></tr></thead>
+<tbody>
+{% for line in trend.lines %}{% for day, score, band in line.rows %}
+<tr><th scope="row">{{ line.name }}</th><td>{{ day }}</td><td class="rv-numeric">{{ score }}</td><td>{{ band }}</td></tr>
+{% endfor %}{% endfor %}
+</tbody>
+</table>
+</details>
+{% else %}
+<div class="rv-empty" id="trend-empty">
+{{ i.icon("system", 36) }}
+<p class="rv-empty-title">No reports yet</p>
+<p class="rv-empty-text">A line appears for a client once a report has been made for it, from the Reports page of that client.</p>
+</div>
+{% endif %}
+</section>
+
+<section class="rv-card" id="domains" aria-labelledby="domains-title">
+<h2 id="domains-title" class="rv-card-title">Controls by domain</h2>
+<p class="rv-card-subtitle">Every control of every client, by the status it has today.</p>
+<table class="rv-domains">
+<caption>Controls by domain and status across all clients</caption>
+<thead><tr><th scope="col">Domain</th><th scope="col">Share</th><th scope="col" class="rv-numeric">Protected</th><th scope="col" class="rv-numeric">Attention</th><th scope="col" class="rv-numeric">Not protected</th><th scope="col" class="rv-numeric">Not checked</th></tr></thead>
+<tbody>
+{% for bar in domains %}
+<tr>
+<th scope="row">{{ bar.name }}</th>
+<td><svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">{% for seg in bar.segments %}<rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/>{% endfor %}</svg></td>
+{% for label, count in bar.counts %}<td class="rv-numeric">{{ count }}</td>{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<ul class="rv-legend">
+{% for bar in domains[:1] %}{% for label, count in bar.counts %}
+<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-seg-{{ label.key }}" width="12" height="12" rx="3"/></svg> {{ s.status(label) }}</li>
+{% endfor %}{% endfor %}
+</ul>
+</section>
+</div>
+
+<section id="recent-changes" aria-labelledby="changes-title">
+<div class="rv-section-head">
+<h2 id="changes-title">Recent changes</h2>
+<p class="rv-section-note">The newest entries of the audit trail that changed a client, its evidence or its reports.</p>
+</div>
+{% if changes %}
+<ol class="rv-timeline">
+{% for line in changes %}
+<li class="rv-timeline-item">
+<span class="rv-timeline-dot" aria-hidden="true"></span>
+<p class="rv-timeline-what">{{ line.words }}{% if line.client_name %} for {% if line.path %}<a href="/{{ line.path }}">{{ line.client_name }}</a>{% else %}{{ line.client_name }}{% endif %}{% endif %}</p>
+<p class="rv-timeline-meta">{{ line.actor }}, <time datetime="{{ line.when_iso }}" title="{{ line.when_text }} UTC">{{ line.ago }}</time></p>
+</li>
+{% endfor %}
+</ol>
+{% else %}
+<p class="rv-text-secondary" id="changes-empty">Nothing has changed yet.</p>
+{% endif %}
+</section>
+{% endif %}
 {% endblock %}
