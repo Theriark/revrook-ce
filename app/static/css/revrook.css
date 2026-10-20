@@ -2187,3 +2187,515 @@ main .rv-attention-what a:hover {
   color: var(--rv-white);
   background-color: var(--rv-charcoal);
 }
+
+/* ---------- Clients list and client overview (docs/design-system.md, Clients) ---------- */
+
+/* The header of the pages of one client: the way back to the list, the name and
+   the actions of the page. The tabs under it carry the dividing line */
+.rv-client-header {
+  margin-bottom: 4px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.rv-client-kicker {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+main .rv-client-kicker a {
+  text-decoration: none;
+}
+
+main .rv-client-kicker a:hover {
+  text-decoration: underline;
+}
+
+/* Toolbar: the controls of a list, or of a period, on one canvas band. Every
+   text inside it declares canvas as its background, never white */
+.rv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-toolbar .rv-field {
+  margin: 0;
+}
+
+.rv-toolbar label {
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-toolbar input:not([type="checkbox"], [type="radio"]) {
+  margin: 0;
+}
+
+.rv-toolbar-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-period {
+  align-items: flex-end;
+}
+
+.rv-period .rv-field {
+  flex: 0 1 13rem;
+}
+
+.rv-toolbar-search {
+  position: relative;
+  display: flex;
+  flex: 1 1 18rem;
+  align-items: center;
+  gap: 8px;
+}
+
+.rv-toolbar-search .rv-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  pointer-events: none;
+}
+
+.rv-toolbar-search [type="search"] {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding-left: 36px;
+}
+
+/* Chips: the filters of a list with their counts, and the pages */
+.rv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-chips li {
+  margin: 0;
+  padding: 0;
+}
+
+.rv-chip,
+main a.rv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--rv-gray);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+  transition: background-color var(--rv-motion), color var(--rv-motion),
+    border-color var(--rv-motion);
+}
+
+main a.rv-chip:hover,
+main a.rv-chip[aria-current="true"] {
+  border-color: var(--rv-charcoal);
+  text-decoration: none;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.rv-chip-count {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-chip-off {
+  border-color: var(--rv-line);
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-density {
+  margin-left: auto;
+}
+
+/* The clients table: the name is the row heading, the last report a small ring
+   beside its band, the controls by status as pills with counts */
+.rv-clients th[scope="row"] {
+  font-size: 15px;
+}
+
+main .rv-clients a.rv-client-name {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+main .rv-clients a.rv-client-name:hover {
+  text-decoration: underline;
+}
+
+.rv-cell-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.rv-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.rv-posture {
+  display: inline-grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+}
+
+.rv-posture-ring {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.rv-posture-ring .rv-ring-value {
+  font-size: 24px;
+}
+
+.rv-posture-insufficient .rv-ring-track {
+  stroke: var(--rv-stone);
+  stroke-dasharray: 3 4;
+}
+
+.rv-posture-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.rv-posture-score {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rv-posture-note {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-row-actions {
+  white-space: nowrap;
+}
+
+.rv-row-actions a + a {
+  margin-left: 8px;
+}
+
+/* Sortable headings: the link takes the colour of the canvas head it sits on */
+main a.rv-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+main a.rv-sort:hover {
+  text-decoration: underline;
+  color: var(--rv-accent-deep);
+  background-color: var(--rv-canvas);
+}
+
+.rv-sort-mark {
+  font-size: 12px;
+}
+
+/* Compact density: tighter cells, a smaller ring, the note on the same line */
+main .rv-table-compact th,
+main .rv-table-compact td {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.rv-table-compact th[scope="row"] {
+  font-size: 14px;
+}
+
+.rv-table-compact .rv-posture {
+  grid-template-columns: 28px minmax(0, 1fr);
+}
+
+.rv-table-compact .rv-posture-ring {
+  width: 28px;
+  height: 28px;
+}
+
+.rv-table-compact .rv-cell-note {
+  display: inline;
+  margin-left: 6px;
+}
+
+.rv-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: -8px 0 24px;
+}
+
+.rv-pager-status {
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-pager-links {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.rv-add-client {
+  margin-top: 8px;
+}
+
+.rv-add-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.rv-add-form .rv-field {
+  flex: 1 1 18rem;
+  max-width: 28rem;
+  margin: 0;
+}
+
+/* On a phone every row of the clients table is a card: the heading row stays
+   for assistive technology only and each cell carries the name of its column */
+@media (max-width: 767px) {
+  main table.rv-clients,
+  .rv-clients tbody,
+  .rv-clients tr,
+  .rv-clients th,
+  .rv-clients td {
+    display: block;
+  }
+
+  main table.rv-clients {
+    border: 0;
+  }
+
+  .rv-clients thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-clients thead th {
+    position: static;
+  }
+
+  main .rv-clients tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-clients tbody th,
+  main .rv-clients tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+  }
+
+  main .rv-clients tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-clients td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-clients tbody tr:hover > td,
+  main .rv-clients tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-clients .rv-row-actions {
+    white-space: normal;
+  }
+
+  .rv-density {
+    margin-left: 0;
+  }
+}
+
+/* The client overview: the posture card and the status mix side by side, then
+   what needs attention, the domains beside the evidence, the recent changes */
+.rv-overview-top {
+  margin-top: 0;
+}
+
+.rv-posture-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+  margin-bottom: 16px;
+}
+
+.rv-ring-large {
+  flex: none;
+  width: 144px;
+  height: 144px;
+}
+
+.rv-ring-large .rv-ring-track,
+.rv-ring-large .rv-ring-arc {
+  stroke-width: 6;
+}
+
+.rv-posture-facts {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.rv-posture-grade {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.rv-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.rv-facts div {
+  margin: 0;
+}
+
+.rv-facts dt {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-facts dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-summary {
+  padding-top: 14px;
+  border-top: 1px solid var(--rv-line);
+}
+
+.rv-summary p {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rv-summary p:first-child {
+  font-weight: 600;
+}
+
+.rv-summary p:last-child {
+  margin-bottom: 0;
+}
+
+/* Controls by status: one stacked bar, then the counts beside their pills */
+.rv-mix-bar {
+  display: block;
+  width: 100%;
+  height: 12px;
+  margin: 4px 0 14px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rv-mix-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 10px 16px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-mix-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-mix-count {
+  min-width: 2ch;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rv-mix-link {
+  margin: 0;
+  font-size: 14px;
+}
+
+.rv-domain-meta {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}

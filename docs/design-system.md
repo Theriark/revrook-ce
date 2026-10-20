@@ -33,7 +33,7 @@ against the text they carry by `tests/test_brand_contrast.py` and
 | `--rv-gray` | `#8a8f98` | Control borders; text only on charcoal at 24 px or more |
 | `--rv-white` | `#ffffff` | The page and every surface that carries status text |
 | `--rv-text-secondary` | `#5a5e6b` | Secondary text, on white only |
-| `--rv-canvas` | `#f4f3ef` | Table headers, code, the footer, the import area |
+| `--rv-canvas` | `#f4f3ef` | Table headers, code, the footer, the import area, toolbars |
 | `--rv-line` | `#e4e2db` | Borders and dividers |
 | `--rv-charcoal-deep` | `#22242d` | The current page in the rail |
 | `--rv-charcoal-soft` | `#3a3d4b` | Hover in the rail, the avatar |
@@ -159,6 +159,20 @@ in `div.rv-dialog-actions`.
 Loading: `span.rv-skeleton` for a block that is still coming and `span.rv-busy` next
 to a button that is working. htmx swaps keep `aria-busy`.
 
+Toolbar: `form.rv-toolbar` is a canvas band that holds the controls of a list or of a
+period: `div.rv-toolbar-search` (an icon over a search field and its button),
+`ul.rv-chips` of `a.rv-chip` links (the one that applies carries
+`aria-current="true"`; a count sits in `span.rv-chip-count`) and `p.rv-toolbar-note`
+for one line of context. Every text inside the band declares the canvas as its
+background, so a label never shows as a white box on it; secondary text is not used
+there. Chips also make the pager (`div.rv-pager[role="navigation"]`, with
+`span.rv-chip.rv-chip-off` for the way that does not exist).
+
+Client header: `_client_nav.html` draws the header of every page of one client, the
+link back to the list above the name, the actions the page gives in `client_actions`
+(a path without its leading slash, the text and whether it is the primary one) and
+the tabs. A page that gives no actions renders the name and the tabs alone.
+
 ## Dashboard
 
 Home (`app/ui/templates/home.html`, data from `app/ui/home.py` and the pure functions
@@ -207,6 +221,69 @@ Charts are inline SVG drawn on the server with the brand colours only: the spark
 and the ring arc in the accent, the lines in charcoal, the domain bars in the status
 colours with the counts beside them, so nothing is told by colour alone. No library,
 no image, nothing loaded from outside.
+
+## Clients
+
+The clients list (`app/ui/templates/clients.html`, the pure functions of
+`app/ui/clientlist.py`) is where the owner picks the client to work on next, and the
+client overview (`client_overview.html`, `app/ui/overview.py`) is where they see
+where that client stands before opening the checklist or a report. Both read the same
+views, labels and snapshots as Home and the reports; nothing is stored and no rule of
+evidence changes.
+
+The list. One table (`table.rv-clients`) with the client name as the row heading, the
+last stored report as a small posture ring beside its band and date, the controls of
+that report by status as pills with their counts ("3 not protected", "7 need
+attention", "1 not checked", or "All checked controls protected"), the date of the
+newest evidence with its age and the number of exports, and the row actions. The
+posture is read from the newest stored snapshot of each client with the same scoring
+the report was made with (`last_report_of`), never from a check run on the list, so
+the page stays one query for the clients and one for their newest snapshots. A client
+without a report says so in words; a client without evidence shows the "No evidence
+yet" pill.
+
+Above the table a toolbar carries the search (by name, case-insensitive), the filter
+chips with their counts (all, needs work, no report yet, no evidence yet), and the
+density (comfortable or compact, `table.rv-table-compact`). The column headings of
+the name, the last report and the newest evidence are sort links with `aria-sort`;
+the first click on the score sorts the lowest first and on the evidence the newest
+first, and a client without the value a column sorts by comes last whichever the
+order. Fifty rows make a page (`.rv-pager`). Every one of these is a query parameter
+of `GET /clients` (`q`, `show`, `sort`, `order`, `density`, `page`), read by
+`read_query`, which refuses a value it does not know with a 422 like the checklist
+filter does; a page number past the end gives the last page.
+
+The table has no scroll box, so its heading stays sticky while the page scrolls.
+Below 768 px every row becomes a card: the heading row is kept for assistive
+technology only and each cell names its column before its value. The empty list is
+an empty state that says what a client is; a search or filter that matches nothing
+is its own empty state with the way back to the whole list. The form that adds a
+client is a card at the end of the page, and the primary action of the page header
+leads to it.
+
+The overview. The client header (`_client_nav.html`) gives the way back to the list,
+the name, two actions (review the flagged controls, prepare a report for the period)
+and the tabs. Under it the period toolbar (`form.rv-period`), then:
+
+- Where the client stands (`#posture`): a large posture ring (`.rv-ring-large`, the
+  same drawing as Home at 144 px) with the band, four facts (evidence coverage,
+  controls that need work, exports to refresh, the movement since the last report)
+  and the three summary sentences of the report (`#summary`). A client whose
+  evidence is too thin shows a dashed ring and the lower bound in words.
+- Controls by status (`#status-counts`): one stacked bar (`.rv-mix-bar`) and the
+  count beside each status pill, with the way to the checklist.
+- Needs attention (`#needs-attention`): the eight most urgent controls of this
+  client in the order of the report (gate controls first, then what is not
+  protected, by weight), each with its status, the reasons beyond the status and
+  one action; a link to the rest on the flagged checklist; an empty state that says
+  what fills it.
+- Coverage by domain (`#domains`): one stacked bar per domain of the control library
+  with its protected share, its weight and its score, a legend of status pills and
+  every number under "Show the numbers".
+- How fresh is the evidence (`#freshness`): the strip that names how many sources
+  need a fresh export (or that every source is current) and the table of sources.
+- Recent changes (`#recent-changes`): the audit entries of this client only, read
+  with the same words as Home.
 
 ## Floors every page keeps
 

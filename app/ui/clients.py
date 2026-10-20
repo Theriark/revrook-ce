@@ -3,7 +3,8 @@
 The overview, the checklist and the control page show the client as it is today: the
 newest export of every source, run through the check engine, with the report's own
 wording and status labels. Nothing on them is stored. A snapshot is stored only when a
-report is made (app/ui/reports.py).
+report is made (app/ui/reports.py). The list reads the newest stored snapshot of each
+client for its posture (app/ui/clientlist.py) and runs no check.
 """
 
 from dataclasses import dataclass
@@ -12,7 +13,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import HTMLResponse
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import add_audit_event
@@ -24,7 +25,14 @@ from app.evidence.errors import ClientNotFoundError, ItemNotFoundError
 from app.evidence.locking import lock_client
 from app.evidence.service import EvidenceView, list_evidence
 from app.exceptions import ExceptionEntry, exception_problems, is_overdue
-from app.models import AppUser, Client, EvidenceItem, ExceptionRecord
+from app.models import (
+    AppUser,
+    AuditEvent,
+    Client,
+    EvidenceItem,
+    ExceptionRecord,
+    Snapshot,
+)
 from app.posture import LiveClient, load_live, view_of
 from app.reports.completeness import MAX_SHORT, MAX_TEXT
 from app.reports.view import ControlRow, Finding, ReportContext, ReportView, iso_date
@@ -32,6 +40,17 @@ from app.snapshots import earlier_bytes
 from app.sources import source_name
 from app.textcheck import control_character, normalise_breaks
 from app.ui.auth import redirect
+from app.ui.clientlist import (
+    FILTERS,
+    NO_EVIDENCE,
+    ClientCard,
+    ListQuery,
+    filter_counts,
+    last_reports,
+    paginate,
+    read_query,
+    select_rows,
+)
 from app.ui.common import (
     ControlIdPath,
     FormError,
@@ -44,6 +63,16 @@ from app.ui.common import (
     read_period,
     sentence,
 )
+from app.ui.dashboard import (
+    EVENT_WORDS,
+    MAX_ATTENTION,
+    MAX_EVENTS,
+    attention_items,
+    change_lines,
+    posture_of,
+    segments_of,
+)
+from app.ui.overview import domain_lines
 from app.ui.viewmodels import (
     STATE_OF_FRESHNESS,
     checklist_rows,
@@ -63,17 +92,6 @@ NO_SUCH_CONTROL = "There is no such control."
 
 
 @dataclass(frozen=True)
-class ClientLine:
-    """One client in the list."""
-
-    id: int
-    name: str
-    exports: int
-    newest: datetime | None
-    days_old: int | None
-
-
-@dataclass(frozen=True)
 class Loaded:
     """A client as it is today, ready for a page."""
 
@@ -83,8 +101,20 @@ class Loaded:
     evidence: list[EvidenceView]
 
 
-async def client_lines(request: Request, now: datetime) -> list[ClientLine]:
-    """Every client with the number of its exports and the date of the newest."""
+async def newest_snapshots(session: AsyncSession) -> list[tuple[int, dict[str, Any]]]:
+    """The newest stored snapshot document of every active client."""
+    found = await session.execute(
+        select(Snapshot.client_id, Snapshot.inputs)
+        .join(Client, Client.id == Snapshot.client_id)
+        .where(Client.archived_at.is_(None))
+        .distinct(Snapshot.client_id)
+        .order_by(Snapshot.client_id, Snapshot.as_of.desc(), Snapshot.id.desc())
+    )
+    return [(client_id, document) for client_id, document in found.all()]
+
+
+async def client_cards(request: Request, now: datetime) -> list[ClientCard]:
+    """Every client with its exports, the date of the newest and its last report."""
     async with session_factory(request)() as session:
         rows = await session.execute(
             select(
@@ -99,11 +129,15 @@ async def client_lines(request: Request, now: datetime) -> list[ClientLine]:
             .group_by(Client.id, Client.name)
             .order_by(Client.name, Client.id)
         )
-        lines: list[ClientLine] = []
-        for client_id, name, count, newest in rows.all():
-            days = None if newest is None else (now - newest).days
-            lines.append(ClientLine(client_id, name, count, newest, days))
-        return lines
+        lines = rows.all()
+        reports = last_reports(await newest_snapshots(session))
+    cards: list[ClientCard] = []
+    for client_id, name, count, newest in lines:
+        days = None if newest is None else (now - newest).days
+        cards.append(
+            ClientCard(client_id, name, count, newest, days, reports.get(client_id))
+        )
+    return cards
 
 
 async def clients_response(
@@ -112,12 +146,21 @@ async def clients_response(
     errors: list[str],
     name: str,
     status_code: int = 200,
+    query: ListQuery | None = None,
 ) -> Response:
-    lines = await client_lines(request, clock_of(request)())
+    query = query or ListQuery()
+    cards = await client_cards(request, clock_of(request)())
+    shown = paginate(select_rows(cards, query), query.page)
+    counts = filter_counts(cards, query)
     context: dict[str, Any] = {
         "title": "Clients",
         "nav": "clients",
-        "rows": lines,
+        "rows": shown.items,
+        "page": shown,
+        "query": query,
+        "filters": [(key, label, counts[key]) for key, label in FILTERS],
+        "total": len(cards),
+        "no_evidence": NO_EVIDENCE,
         "errors": errors,
         "name": name,
     }
@@ -125,9 +168,18 @@ async def clients_response(
 
 
 @router.get("/clients")
-async def clients_page(request: Request) -> Response:
+async def clients_page(
+    request: Request,
+    q: str = "",
+    show: str = "all",
+    sort: str = "name",
+    order: str = "asc",
+    density: str = "comfortable",
+    page: str = "1",
+) -> Response:
     async def handle(user: AppUser) -> Response:
-        return await clients_response(request, user, [], "")
+        query = read_query(q, show, sort, order, density, page)
+        return await clients_response(request, user, [], "", query=query)
 
     return await guarded(request, handle)
 
@@ -189,6 +241,28 @@ def client_context(loaded: Loaded, section: str, title: str) -> dict[str, Any]:
     }
 
 
+async def client_events(session: AsyncSession, client_id: int) -> list[AuditEvent]:
+    """The newest audit events that changed this client, its evidence or reports."""
+    named = func.jsonb_extract_path_text(AuditEvent.detail, "client_id") == str(
+        client_id
+    )
+    targeted = and_(
+        AuditEvent.target_type == "client", AuditEvent.target_id == str(client_id)
+    )
+    found = await session.execute(
+        select(AuditEvent)
+        .where(AuditEvent.action.in_(list(EVENT_WORDS)), or_(named, targeted))
+        .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
+        .limit(MAX_EVENTS)
+    )
+    return list(found.scalars())
+
+
+async def actor_names(session: AsyncSession) -> dict[int, str]:
+    found = await session.execute(select(AppUser.id, AppUser.username))
+    return {user_id: username for user_id, username in found.all()}
+
+
 @router.get("/clients/{client_id}")
 async def overview(
     request: Request,
@@ -197,10 +271,16 @@ async def overview(
     period_end: str = "",
 ) -> Response:
     async def handle(user: AppUser) -> Response:
-        today = clock_of(request)().date()
-        start, end = read_period(period_start.strip(), period_end.strip(), today)
+        now = clock_of(request)()
+        start, end = read_period(period_start.strip(), period_end.strip(), now.date())
         loaded = await load_client(request, user, client_id, start, end)
         rows = source_rows(loaded.evidence, needed_sources(request))
+        name = loaded.live.name
+        excepted = {entry.control_id for entry in loaded.live.exceptions}
+        attention = attention_items(client_id, name, loaded.view, excepted)
+        async with session_factory(request)() as session:
+            events = await client_events(session, client_id)
+            users = await actor_names(session)
         context = client_context(loaded, "overview", "Overview")
         context.update(
             view=loaded.view,
@@ -208,6 +288,36 @@ async def overview(
             period_end=end.isoformat(),
             sources=rows,
             refresh=refresh_list(rows),
+            posture=posture_of(
+                client_id,
+                name,
+                loaded.view,
+                read_earlier(loaded.earlier),
+                len(loaded.evidence),
+            ),
+            status_segments=segments_of(loaded.view.counts),
+            domains=domain_lines(loaded.view.domains),
+            attention=attention[:MAX_ATTENTION],
+            attention_total=len(attention),
+            changes=change_lines(events, {client_id: name}, users, now),
+            # Paths without their leading slash: the template writes the slash, so
+            # every link in a template is visibly same-origin.
+            client_actions=[
+                {
+                    "path": f"clients/{client_id}/checklist?show=flagged",
+                    "text": "Review flagged controls",
+                    "primary": False,
+                },
+                {
+                    "path": (
+                        f"clients/{client_id}/reports"
+                        f"?period_start={start.isoformat()}"
+                        f"&period_end={end.isoformat()}"
+                    ),
+                    "text": "Prepare a report",
+                    "primary": True,
+                },
+            ],
         )
         return page(request, "client_overview.html", user, context)
 
