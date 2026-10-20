@@ -66,7 +66,11 @@ banner, `main.rv-content` and the footer with the disclaimer. From 1024 px the r
 a 248 px sidebar that stays in view, with the sign-out button on its own line under the
 user name; below that it is a charcoal bar with the navigation as a scrolling strip, so
 no menu is ever hidden behind a button, and below 600 px the bar drops the edition
-badge (the footer still names the edition) so it never meets the sign-out button.
+badge (the footer still names the edition) so it never meets the sign-out button. The
+strip (`div.rv-nav-strip`, like `div.rv-tabs-strip` around the tabs of a client) fades
+the last visible link into its background at the right edge, so a person sees that it
+goes on; the strip ends in 32 px of space, so with the last link in view nothing is
+under the fade.
 
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
 panel with the stacked logo and three lines about the product on the left, the light
@@ -199,7 +203,10 @@ Its parts, in order:
   an open exception), and one action.
 - Score over the last 90 days (`.rv-chart`): one line per client from the stored
   reports, up to six, labelled at its end and told apart by its dash pattern; a table
-  under the chart carries every number. Controls by domain (`.rv-domains`): one
+  under the chart carries every number. The chart is drawn twice (`ChartSize` in
+  `app/ui/dashboard.py`): the wide drawing of 640 units, and below 600 px a narrow one
+  of 320 units whose labels keep their size on a phone, with the clients named in a
+  legend (`ul.rv-chart-legend`) under it. Controls by domain (`.rv-domains`): one
   stacked bar per domain across the whole card with the domain and its protected
   share above it, a legend of status pills, and every count in a table folded under
   "Show the numbers" (`details.rv-chart-data`, the same fold as the chart; the table
@@ -254,8 +261,9 @@ of `GET /clients` (`q`, `show`, `sort`, `order`, `density`, `page`), read by
 filter does; a page number past the end gives the last page.
 
 The table has no scroll box, so its heading stays sticky while the page scrolls.
-Below 768 px every row becomes a card: the heading row is kept for assistive
-technology only and each cell names its column before its value. The empty list is
+Below 1024 px, where the sidebar ends, every row becomes a card (two to a row from
+768 px, one on a phone): the heading row is kept for assistive technology only and
+each cell names its column before its value. The empty list is
 an empty state that says what a client is; a search or filter that matches nothing
 is its own empty state with the way back to the whole list. The form that adds a
 client is a card at the end of the page, and the primary action of the page header
@@ -363,9 +371,13 @@ time side by side, or an empty state that says to save a profile first. Every bu
 has an indicator beside it (`.rv-editor-busy`, named by `hx-indicator`, shown while
 htmx posts). Missing required columns and a refused file stay `.rv-errors` with
 `role="alert"`; a saved profile is a status strip; an import is a result card
-(`.rv-import-result`) with the strip, three facts, the counts and the way to the
-evidence page of the client. Before any file is read the result area is a small
-empty state that says what to do.
+(`.rv-import-result`) with the strip, three facts, the counts, the controls that read
+the export (`.rv-import-reach`, each a link to its control page, with the note that
+the other controls keep their status until their own export is imported) and the way
+to the checklist and the evidence page of the client. Step 3 is always there, with an
+empty state while no row can be shown, so the numbers never skip. Before any file is
+read the result area is a small empty state that says what to do. Opened from the
+evidence page or a control page, the editor carries the client (`?client_id=`).
 
 The integrity page. The page header carries the purpose; before a check the page is
 one empty state whose action is the check (nothing else is on the page, since the
@@ -473,7 +485,10 @@ The problem page. A refusal a person can read (404, 409, 422) is one card
 violet-blue (`p.rv-problem-code`, with "Status" for assistive technology), the
 title as the `h1`, the message, the details where there are any, one line that says
 what to do, and two ways back, Home as the primary button and the clients list as
-the quiet one. The htmx fragment of the same refusal is unchanged.
+the quiet one. An address no page answers (404) and a method a page does not take
+(405) get the same page, in the signed-out shell when nobody is signed in; under
+`/api/`, the probes and `/static/` the answer stays JSON. The htmx fragment of the
+same refusal is unchanged.
 
 ## Floors every page keeps
 
