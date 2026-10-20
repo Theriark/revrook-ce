@@ -12,7 +12,7 @@
 {% endfor %}
 </ul>
 {% endif %}
-<p class="rv-problem-hint">{% if status == 404 %}The address may be out of date, or what it pointed at was deleted.{% elif status == 409 %}Nothing was changed. The kept copy is left as it is so the difference can be looked into.{% else %}Nothing was changed. Fix what is listed, then try again.{% endif %}</p>
+<p class="rv-problem-hint">{% if status == 404 %}The address may be out of date, or what it pointed at was deleted.{% elif status == 409 %}Nothing was altered. The kept copy stays as it is so the difference can be looked into.{% else %}Nothing was saved. Fix what is listed, then try again.{% endif %}</p>
 <div class="rv-actions">
 <a role="button" href="/">Home</a>
 <a role="button" class="rv-button-quiet" href="/clients">Back to the clients</a>
