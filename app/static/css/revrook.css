@@ -198,6 +198,15 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible 
   outline-color: var(--rv-white);
 }
 
+/* Pico's own rule for the summary of a details element (details
+   summary:focus-visible:not([role]), a hairline in its focus colour, which the
+   tokens above make transparent) outranked the ring, so "Show the numbers" and
+   the delete confirmations showed no ring when reached with the keyboard */
+html details summary:focus-visible:not([role]) {
+  outline: 3px solid var(--rv-charcoal);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -315,17 +324,45 @@ body.rv-app {
   }
 }
 
-/* Navigation: grouped links with an icon; the active one carries the violet rail */
+/* Navigation: grouped links with an icon; the active one carries the violet rail.
+   Below 1024px the links are a strip that scrolls sideways inside .rv-nav-strip,
+   whose right edge fades the last visible link into the charcoal, so a person
+   sees that the strip goes on (a thin scrollbar alone is invisible on a touch
+   screen). The strip ends in 32px of space, so once the last link is in view
+   nothing sits under the fade and the cue is gone */
+.rv-nav-strip {
+  grid-area: nav;
+  position: relative;
+  min-width: 0;
+  margin: 0 -16px;
+}
+
+.rv-nav-strip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 4px;
+  width: 48px;
+  pointer-events: none;
+  background-image: linear-gradient(to right, transparent, var(--rv-charcoal) 70%);
+}
+
 .rv-header nav,
 .rv-nav {
-  grid-area: nav;
   display: flex;
   align-items: center;
   gap: 4px;
-  margin: 0 -16px;
+  margin: 0;
   padding: 0 16px 4px;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.rv-nav::after {
+  content: "";
+  flex: none;
+  width: 32px;
 }
 
 .rv-header nav ul,
@@ -507,6 +544,18 @@ body.rv-app {
     height: 48px;
   }
 
+  .rv-nav-strip {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .rv-nav-strip::after,
+  .rv-nav::after {
+    display: none;
+  }
+
   .rv-header nav,
   .rv-nav {
     display: block;
@@ -638,15 +687,44 @@ main a:not([role="button"]):hover {
   text-decoration-color: var(--rv-accent-deep);
 }
 
-/* Section tabs (the pages of one client) */
+/* Section tabs (the pages of one client): a strip that scrolls sideways when the
+   tabs are wider than the page, with the same fade at its right edge as the
+   navigation (to white here) and the same space after the last tab */
+.rv-tabs-strip {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.rv-tabs-strip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 1px;
+  width: 48px;
+  pointer-events: none;
+  background-image: linear-gradient(to right, transparent, var(--rv-white) 70%);
+}
+
 main nav {
   margin-bottom: 24px;
   border-bottom: 1px solid var(--rv-line);
   overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.rv-tabs-strip > nav {
+  margin-bottom: 0;
 }
 
 main nav ul {
   gap: 4px;
+}
+
+.rv-tabs-strip > nav > ul::after {
+  content: "";
+  flex: none;
+  width: 32px;
 }
 
 main nav li {
@@ -2008,6 +2086,54 @@ main .rv-attention-what a:hover {
   fill: var(--rv-charcoal);
 }
 
+/* The chart is drawn twice, in a wide and a narrow geometry, and the width
+   decides which one shows: the wide drawing of 640 units shrank to half at 390px
+   and its labels with it, so below 600px the narrow drawing (320 units, so its
+   labels keep their size) shows instead, with the clients named in a legend
+   under it in place of the labels at the ends of the lines */
+.rv-chart-narrow,
+.rv-chart-legend {
+  display: none;
+}
+
+@media (max-width: 599px) {
+  .rv-chart-wide {
+    display: none;
+  }
+
+  .rv-chart-narrow,
+  .rv-chart-legend {
+    display: block;
+  }
+}
+
+.rv-chart-legend {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  padding: 0;
+  font-size: 13px;
+  list-style: none;
+}
+
+.rv-chart-key {
+  flex: none;
+  width: 28px;
+  height: 8px;
+}
+
+.rv-chart-key line {
+  stroke: var(--rv-charcoal);
+  stroke-width: 2;
+}
+
 /* The numbers behind a chart, folded under "Show the numbers"; a wide table
    scrolls inside its card (div.rv-table-scroll), never the page */
 .rv-chart-data {
@@ -2414,14 +2540,18 @@ main .rv-clients a.rv-client-name:hover {
   line-height: 1.3;
 }
 
+/* The band and the date stay whole: in a squeezed cell Pico's break-word broke
+   them one letter a line (seen at 768px) */
 .rv-posture-score {
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .rv-posture-note {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .rv-row-actions {
@@ -2430,6 +2560,14 @@ main .rv-clients a.rv-client-name:hover {
 
 .rv-row-actions a + a {
   margin-left: 8px;
+}
+
+/* Beside the sidebar the page is about 712px wide at 1024px, too narrow for the
+   four row actions on one line beside the other columns, so they wrap there */
+@media (max-width: 1279px) {
+  .rv-clients .rv-row-actions {
+    white-space: normal;
+  }
 }
 
 /* Sortable headings: the link takes the colour of the canvas head it sits on */
@@ -2515,9 +2653,12 @@ main .rv-table-compact td {
   margin: 0;
 }
 
-/* On a phone every row of the clients table is a card: the heading row stays
-   for assistive technology only and each cell carries the name of its column */
-@media (max-width: 767px) {
+/* Below 1024px every row of the clients table is a card: the heading row stays
+   for assistive technology only and each cell carries the name of its column.
+   The cards start where the sidebar ends and not at 768px: at 768px the five
+   columns had 704px, the last report broke one letter a line and the page
+   overflowed sideways */
+@media (max-width: 1023px) {
   main table.rv-clients,
   .rv-clients tbody,
   .rv-clients tr,
@@ -2585,7 +2726,22 @@ main .rv-table-compact td {
   .rv-clients .rv-row-actions {
     white-space: normal;
   }
+}
 
+/* From 768px to 1023px the cards stand two to a row */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rv-clients tbody {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  main .rv-clients tbody tr {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 767px) {
   .rv-density {
     margin-left: 0;
   }
@@ -3343,9 +3499,28 @@ section.rv-step {
   display: inline-flex;
 }
 
-/* The result of an import: the strip, three facts and the counts */
+/* The result of an import: the strip, three facts, the counts, and what the
+   export changes (the controls that read it, as a list) */
 .rv-import-result .rv-import-facts {
   margin-bottom: 16px;
+}
+
+.rv-import-reach {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.rv-import-controls {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-import-controls li {
+  margin: 0 0 4px;
+  padding: 0;
+  font-size: 14px;
+  list-style: none;
 }
 
 .rv-import-next {
