@@ -1670,9 +1670,24 @@ body.rv-signed-out {
   background-color: var(--rv-white);
 }
 
-/* Stat cards: the number, its label, its context, its change and a sparkline */
+/* Stat cards: the number, its label, its context, its change and a sparkline.
+   One to a row on a phone, two on a tablet and beside the rail on a small
+   laptop, four from 1280px: never three and a lonely fourth (seen at 768 and
+   1024px with the auto-fit grid) */
 .rv-stat-grid {
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 600px) {
+  .rv-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .rv-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .rv-stat {
@@ -1742,10 +1757,12 @@ main .rv-stat .rv-stat-value:hover {
   stroke-linecap: round;
 }
 
-/* The rookery: one posture ring per client, the signature of Home */
+/* The rookery: one posture ring per client, the signature of Home. A card is
+   15rem wide at least, so a client name of about twenty letters is read whole
+   beside the ring (at 12rem it was cut after eight) */
 .rv-rookery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: 12px;
   margin: 0 0 8px;
   padding: 0;
@@ -1905,7 +1922,10 @@ main .rv-attention-what a:hover {
   }
 }
 
-/* The trend chart and the breakdown side by side from 1024px */
+/* The trend chart and the breakdown side by side from 1024px, the chart wider
+   from 1280px. The two cards share one height; a card whose part is still
+   empty centres its empty state in that height instead of leaving a void
+   under it (seen at 1440px with the chart empty beside the full breakdown) */
 .rv-two {
   display: grid;
   gap: 16px;
@@ -1913,11 +1933,27 @@ main .rv-attention-what a:hover {
 }
 
 .rv-two > .rv-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   margin-bottom: 0;
 }
 
+.rv-two .rv-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (min-width: 1024px) {
+  .rv-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
   .rv-two {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
@@ -1958,6 +1994,8 @@ main .rv-attention-what a:hover {
   fill: var(--rv-charcoal);
 }
 
+/* The numbers behind a chart, folded under "Show the numbers"; a wide table
+   scrolls inside its card (div.rv-table-scroll), never the page */
 .rv-chart-data {
   margin-top: 12px;
 }
@@ -1973,19 +2011,64 @@ main .rv-attention-what a:hover {
   margin-bottom: 0;
 }
 
-/* Controls by domain: a stacked bar per domain, the counts beside it */
+.rv-chart-data .rv-table-scroll {
+  margin: 0;
+}
+
+/* Controls by domain: one stacked bar per domain across the whole card, the
+   name and the protected share above it, the counts under "Show the numbers".
+   A table of six columns beside the bars was wider than the card at 1440px
+   and than the page at 390px; a bar fits any width */
 .rv-domains {
-  margin-bottom: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-domain {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 12px;
+  margin: 0;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-domain:last-child {
+  border-bottom: 0;
+}
+
+.rv-domain-name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rv-domain-sum {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
 }
 
 .rv-domains .rv-bar {
+  grid-column: 1 / -1;
   display: block;
   width: 100%;
-  min-width: 6rem;
   height: 10px;
   margin-top: 5px;
   border-radius: 5px;
   overflow: hidden;
+}
+
+/* In the table of the breakdown the first column holds the short domain names
+   of the library, kept on one line. The first column of the trend table is a
+   client name, which wraps as usual, so a long name cannot widen its card */
+.rv-domains ~ .rv-chart-data th[scope="row"] {
+  white-space: nowrap;
 }
 
 .rv-seg-protected {

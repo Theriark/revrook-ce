@@ -57,6 +57,8 @@ SECTIONS = ("stats", "rookery", "needs-attention", "trend", "domains", "recent-c
 RING_TITLE = re.compile(r'<title id="ring-(\d+)-title">([^<]+)</title>')
 POLYLINE = re.compile(r'<polyline points="([^"]+)"')
 STAT_VALUE = re.compile(r'id="stat-evidence">\s*<a class="rv-stat-value"[^>]*>(\d+)<')
+DOMAIN_SUM = re.compile(r'<span class="rv-domain-sum">(\d+) of (\d+) protected</span>')
+SCROLLED_TABLE = '<div class="rv-table-scroll">\n<table>'
 
 
 def view_of(name: str) -> ReportView:
@@ -338,6 +340,29 @@ def test_the_template_draws_every_part_without_an_image_or_a_colour_alone() -> N
     assert "<details" in TEMPLATE and "<caption>" in TEMPLATE
 
 
+def test_the_breakdown_by_domain_is_a_bar_per_domain_with_the_counts_folded() -> None:
+    # Seen on Development at 1440 and 390px: a table of six columns beside the bars
+    # was wider than its card and pushed the page sideways. The bars stand alone,
+    # one per domain across the card, and the counts sit in a table under "Show the
+    # numbers" that scrolls inside the card on a narrow phone.
+    domains = TEMPLATE.split('id="domains"', 1)[1].split("</section>", 1)[0]
+    assert '<ul class="rv-domains">' in domains
+    assert 'class="rv-domain-sum"' in domains
+    assert "of {{ bar.total }} protected" in domains
+    assert domains.count('class="rv-bar"') == 1
+    assert '<details class="rv-chart-data">' in domains
+    assert SCROLLED_TABLE in domains
+    assert domains.index('class="rv-bar"') < domains.index("<table>")
+
+
+def test_the_numbers_behind_the_trend_scroll_inside_their_card() -> None:
+    # A long client name in the first column must not widen the card on a phone:
+    # the table scrolls inside the card, like the table of the breakdown.
+    trend = TEMPLATE.split('id="trend"', 1)[1].split("</section>", 1)[0]
+    assert SCROLLED_TABLE in trend
+    assert trend.count("<table>") == 1
+
+
 # --- the page -----------------------------------------------------------------------
 
 
@@ -384,6 +409,11 @@ async def test_the_dashboard_shows_every_part_for_a_client_with_evidence(
     # The backup export of the seeded client is 100 days old: a refresh is due.
     refresh = STAT_VALUE.search(html)
     assert refresh is not None and int(refresh.group(1)) >= 1
+    # One bar and one protected share per domain, each share within its total.
+    sums = DOMAIN_SUM.findall(html)
+    assert len(sums) == len(LIBRARY.domains)
+    assert all(int(protected) <= int(total) for protected, total in sums)
+    assert sum(int(total) for _, total in sums) == len(LIBRARY.controls)
 
     report = await make_report(ui_browser, csrf, client_id)
     assert report.startswith(f"/clients/{client_id}/reports/")
