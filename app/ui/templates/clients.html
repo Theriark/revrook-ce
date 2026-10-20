@@ -1,38 +1,120 @@
 {% extends "base.html" %}
+{% import "_status.html" as s %}
+{% import "_icons.html" as i %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
-<h1>Clients</h1>
+<div class="rv-page-header">
+<div><h1>Clients</h1><p class="rv-page-purpose">Every client, the posture of its last report and the age of its newest evidence.</p></div>
+<div class="rv-page-actions"><a role="button" href="#add-client">{{ i.icon("plus", 16) }}<span>Add a client</span></a></div>
+</div>
 {% include "_errors.html" %}
+{% if total %}
+<form class="rv-toolbar" id="client-filters" method="get" action="/clients">
+{% if query.show != "all" %}<input type="hidden" name="show" value="{{ query.show }}">{% endif %}
+{% if query.sort != "name" %}<input type="hidden" name="sort" value="{{ query.sort }}">{% endif %}
+{% if query.order != "asc" %}<input type="hidden" name="order" value="{{ query.order }}">{% endif %}
+{% if query.density != "comfortable" %}<input type="hidden" name="density" value="{{ query.density }}">{% endif %}
+<div class="rv-toolbar-search">
+<label for="q" class="rv-sr-only">Search clients by name</label>
+{{ i.icon("search", 16) }}
+<input id="q" name="q" type="search" value="{{ query.q }}" placeholder="Search by name" maxlength="200" autocomplete="off">
+<button type="submit" class="rv-button-quiet rv-button-small">Search</button>
+</div>
+<ul class="rv-chips" aria-label="Show">
+{% for key, label, count in filters %}
+<li><a class="rv-chip" href="/clients{{ query.params(show=key, page=1) }}"{% if query.show == key %} aria-current="true"{% endif %}>{{ label }} <span class="rv-chip-count">{{ count }}</span></a></li>
+{% endfor %}
+</ul>
+<ul class="rv-chips rv-density" aria-label="Density">
+<li><a class="rv-chip" href="/clients{{ query.params(density='comfortable') }}"{% if query.density == "comfortable" %} aria-current="true"{% endif %}>Comfortable</a></li>
+<li><a class="rv-chip" href="/clients{{ query.params(density='compact') }}"{% if query.density == "compact" %} aria-current="true"{% endif %}>Compact</a></li>
+</ul>
+</form>
 {% if rows %}
-<table id="clients">
-<caption>Your clients and the date of their newest evidence</caption>
+<table id="clients" class="rv-clients{% if query.density == "compact" %} rv-table-compact{% endif %}">
+<caption>{{ page.start }} to {{ page.end }} of {{ page.total }} client{% if page.total != 1 %}s{% endif %}{% if query.q %} matching "{{ query.q }}"{% endif %}, by {{ query.sort_words }}</caption>
 <thead>
 <tr>
-<th scope="col">Client</th>
-<th scope="col">Exports imported</th>
-<th scope="col">Newest evidence</th>
+<th scope="col"{% if query.aria_sort('name') %} aria-sort="{{ query.aria_sort('name') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='name', order=query.next_order('name'), page=1) }}">Client{% if query.sort == "name" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
+<th scope="col"{% if query.aria_sort('score') %} aria-sort="{{ query.aria_sort('score') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='score', order=query.next_order('score'), page=1) }}">Last report{% if query.sort == "score" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
+<th scope="col">Controls at last report</th>
+<th scope="col"{% if query.aria_sort('evidence') %} aria-sort="{{ query.aria_sort('evidence') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='evidence', order=query.next_order('evidence'), page=1) }}">Newest evidence{% if query.sort == "evidence" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
 <th scope="col">Open</th>
 </tr>
 </thead>
 <tbody>
 {% for row in rows %}
 <tr>
-<th scope="row"><a href="/clients/{{ row.id }}">{{ row.name }}</a></th>
-<td>{{ row.exports }}</td>
-<td>{% if row.newest %}{{ row.newest.strftime("%Y-%m-%d") }} ({{ row.days_old }} days ago){% else %}<span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> No evidence yet</span>{% endif %}</td>
-<td><a href="/clients/{{ row.id }}/checklist">Checklist</a> &middot; <a href="/clients/{{ row.id }}/evidence">Evidence</a> &middot; <a href="/clients/{{ row.id }}/reports">Reports</a></td>
+<th scope="row" data-label="Client"><a class="rv-client-name" href="/clients/{{ row.id }}">{{ row.name }}</a></th>
+<td data-label="Last report">
+{% if row.report %}
+<span class="rv-posture{% if row.report.insufficient %} rv-posture-insufficient{% endif %}">
+<svg class="rv-posture-ring" viewBox="0 0 72 72" width="40" height="40" role="img" aria-labelledby="ring-{{ row.id }}-title">
+<title id="ring-{{ row.id }}-title">{% if row.report.insufficient %}Insufficient evidence at the last report, lower bound {{ row.report.score_text }}{% else %}Score {{ row.report.score_text }} at the last report, {{ row.report.band }}{% endif %}</title>
+<circle class="rv-ring-track" cx="36" cy="36" r="30"/>
+{% if not row.report.insufficient %}<circle class="rv-ring-arc" cx="36" cy="36" r="30" stroke-dasharray="{{ row.report.ring_dash }}" transform="rotate(-90 36 36)"/>{% endif %}
+<text class="rv-ring-value" x="36" y="43" text-anchor="middle">{% if row.report.insufficient %}?{% else %}{{ row.report.score_text }}{% endif %}</text>
+</svg>
+<span class="rv-posture-text"><span class="rv-posture-score">{{ row.report.band }}</span><span class="rv-posture-note">{{ row.report.day }}</span></span>
+</span>
+{% else %}
+<span class="rv-cell-note">No report yet</span>
+{% endif %}
+</td>
+<td data-label="Controls at last report">
+{% if row.report %}
+<span class="rv-pills">{% for pill in row.report.pills %}{{ s.status(pill) }}{% endfor %}</span>
+{% else %}
+<span class="rv-cell-note">Make a report to see the controls by status</span>
+{% endif %}
+</td>
+<td data-label="Newest evidence">
+{% if row.newest %}
+<time datetime="{{ row.newest.isoformat() }}">{{ s.day(row.newest) }}</time>
+<span class="rv-cell-note">{{ row.age_text }}, {{ row.exports }} export{% if row.exports != 1 %}s{% endif %}</span>
+{% else %}
+{{ s.status(no_evidence) }}
+{% endif %}
+</td>
+<td data-label="Open" class="rv-row-actions"><a class="rv-button-quiet rv-button-small" role="button" href="/clients/{{ row.id }}">Open</a> <a href="/clients/{{ row.id }}/checklist">Checklist</a> <a href="/clients/{{ row.id }}/evidence">Evidence</a> <a href="/clients/{{ row.id }}/reports">Reports</a></td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
-{% else %}
-<p class="rv-text-secondary">There are no clients yet. Add the first one below.</p>
+{% if page.pages > 1 %}
+<div class="rv-pager" role="navigation" aria-label="Pages of the list">
+<span class="rv-pager-status">Page {{ page.number }} of {{ page.pages }}</span>
+<span class="rv-pager-links">
+{% if page.number > 1 %}<a class="rv-chip" href="/clients{{ query.params(page=page.number - 1) }}">Previous</a>{% else %}<span class="rv-chip rv-chip-off">Previous</span>{% endif %}
+{% if page.number < page.pages %}<a class="rv-chip" href="/clients{{ query.params(page=page.number + 1) }}">Next</a>{% else %}<span class="rv-chip rv-chip-off">Next</span>{% endif %}
+</span>
+</div>
 {% endif %}
-<h2>Add a client</h2>
-<form method="post" action="/clients">
+{% else %}
+<div class="rv-empty" id="clients-none">
+{{ i.icon("search", 36) }}
+<p class="rv-empty-title">No client matches</p>
+<p class="rv-empty-text">{% if query.q %}No client name contains "{{ query.q }}"{% if query.show != "all" %} under this filter{% endif %}.{% else %}No client is in this group right now.{% endif %}</p>
+<a role="button" class="rv-button-quiet" href="/clients">Show all clients</a>
+</div>
+{% endif %}
+{% else %}
+<div class="rv-empty" id="clients-empty">
+{{ i.icon("clients", 36) }}
+<p class="rv-empty-title">Add the first client</p>
+<p class="rv-empty-text">A client is a company you look after. Add it below, import an export from a tool you already use, and its checklist, score and reports follow from that evidence.</p>
+</div>
+{% endif %}
+<section class="rv-card rv-add-client" id="add-client" aria-labelledby="add-client-title">
+<h2 id="add-client-title" class="rv-card-title">Add a client</h2>
+<p class="rv-card-subtitle">The name as it should appear on reports. You can import evidence right after.</p>
+<form method="post" action="/clients" class="rv-add-form">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="rv-field">
 <label for="name">Client name</label>
-<input id="name" name="name" type="text" maxlength="200" required value="{{ name }}">
+<input id="name" name="name" type="text" maxlength="200" required value="{{ name }}" autocomplete="organization">
+</div>
 <button type="submit">Add client</button>
 </form>
+</section>
 {% endblock %}

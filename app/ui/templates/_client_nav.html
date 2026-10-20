@@ -1,5 +1,17 @@
-<h1>{{ client_name }}</h1>
-<nav aria-label="This client">
+{#- The header of every page of one client: the way back to the list, the name, the
+    actions a page gives (`client_actions`: path without its leading slash, text,
+    primary) and the tabs. -#}
+<div class="rv-page-header rv-client-header">
+<div><p class="rv-client-kicker"><a href="/clients">Clients</a></p><h1>{{ client_name }}</h1></div>
+{% if client_actions is defined and client_actions %}
+<div class="rv-page-actions">
+{% for action in client_actions %}
+<a role="button"{% if not action.primary %} class="rv-button-quiet"{% endif %} href="/{{ action.path }}">{{ action.text }}</a>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+<nav class="rv-client-nav" aria-label="This client">
 <ul>
 <li><a class="rv-nav-link" href="/clients/{{ client_id }}"{% if section == "overview" %} aria-current="page"{% endif %}>Overview</a></li>
 <li><a class="rv-nav-link" href="/clients/{{ client_id }}/checklist"{% if section == "checklist" %} aria-current="page"{% endif %}>Checklist</a></li>

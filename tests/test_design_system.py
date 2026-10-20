@@ -96,6 +96,23 @@ COMPONENTS = (
     ".rv-seg-protected",
     ".rv-timeline",
     ".rv-steps",
+    # The clients list and the client overview (area 3 of the revamp)
+    ".rv-client-header",
+    ".rv-toolbar",
+    ".rv-toolbar-search",
+    ".rv-chip",
+    ".rv-chip-off",
+    ".rv-posture",
+    ".rv-posture-ring",
+    "main a.rv-sort",
+    "main .rv-table-compact th",
+    ".rv-pager",
+    ".rv-ring-large",
+    ".rv-posture-grade",
+    ".rv-facts",
+    ".rv-mix-bar",
+    ".rv-mix-count",
+    ".rv-domain-meta",
 )
 
 
@@ -104,7 +121,7 @@ def render(name: str, brand_files: frozenset[str] = frozenset(BRAND_FILES)) -> s
         title="Sign in",
         errors=[],
         username="",
-        csrf_token="synthetic-csrf-token",
+        csrf_token="***REDACTED***",
         brand_files=brand_files,
     )
 
@@ -166,6 +183,31 @@ def test_the_narrow_bar_and_the_rail_make_room_for_the_sign_out_button() -> None
     assert re.search(r"\.rv-user \{[^}]*flex-wrap: wrap;", block)
     assert re.search(r"\.rv-user \.rv-inline-form \{[^}]*flex-basis: 100%;", block)
     assert re.search(r"\.rv-user \.rv-button-quiet \{[^}]*width: 100%;", block)
+
+
+def test_the_toolbar_keeps_every_text_on_its_canvas() -> None:
+    # The toolbar is a canvas band: a label or a note inside it that kept the white
+    # background of the page would show as a white box on the band.
+    toolbar = CSS.split("/* Toolbar:", 1)[1].split("/* Chips:", 1)[0]
+    for selector in (".rv-toolbar label", ".rv-toolbar-note"):
+        rule = re.search(rf"{re.escape(selector)} \{{([^}}]*)\}}", toolbar)
+        assert rule is not None, selector
+        assert "background-color: var(--rv-canvas);" in rule.group(1), selector
+        assert "var(--rv-text-secondary)" not in rule.group(1), selector
+
+
+def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> None:
+    # A sticky heading needs the page itself to scroll, so the table has no scroll
+    # box; below 768px every row is a card and each cell names its column.
+    phone = re.search(r"@media \(max-width: 767px\) \{(.*?)\n\}\n", CSS, re.DOTALL)
+    assert phone is not None
+    block = phone.group(1)
+    assert "main table.rv-clients" in block and "display: block;" in block
+    assert re.search(r"\.rv-clients thead \{[^}]*clip: rect\(0 0 0 0\);", block)
+    before = re.search(r'td\[data-label\]::before \{([^}]*)\}', block)
+    assert before is not None
+    assert "content: attr(data-label);" in before.group(1)
+    assert "background-color: var(--rv-white);" in before.group(1)
 
 
 # --- the shell --------------------------------------------------------------

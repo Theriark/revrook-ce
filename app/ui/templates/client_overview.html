@@ -1,46 +1,143 @@
 {% extends "base.html" %}
 {% import "_status.html" as s %}
+{% import "_icons.html" as i %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
-<h2>Overview</h2>
-<form id="period-picker" method="get" action="/clients/{{ client_id }}">
+<form id="period-picker" class="rv-toolbar rv-period" method="get" action="/clients/{{ client_id }}">
+<div class="rv-field">
 <label for="period_start">The period starts</label>
 <input id="period_start" name="period_start" type="date" value="{{ period_start }}">
+</div>
+<div class="rv-field">
 <label for="period_end">The period ends</label>
 <input id="period_end" name="period_end" type="date" value="{{ period_end }}">
-<button type="submit">Show this period</button>
+</div>
+<button type="submit" class="rv-button-quiet">Show this period</button>
+<p class="rv-toolbar-note">Period {{ period_start }} to {{ period_end }}. Pack date {{ s.day(view.snapshot.as_of) }}: the evidence is read as it is today.</p>
 </form>
-<p class="rv-text-secondary">Period {{ period_start }} to {{ period_end }}. Pack date {{ s.day(view.snapshot.as_of) }}: the evidence is read as it is today.</p>
 
-<h3>Where the client stands</h3>
-<div id="summary">
+<div class="rv-two rv-overview-top">
+<section class="rv-card rv-posture-card{% if posture.insufficient %} rv-posture-insufficient{% endif %}" id="posture" aria-labelledby="posture-title">
+<h2 id="posture-title" class="rv-card-title">Where the client stands</h2>
+<p class="rv-card-subtitle">The newest export of every source, scored as a report made today would score it.</p>
+<div class="rv-posture-hero">
+<svg class="rv-ring rv-ring-large" viewBox="0 0 72 72" width="144" height="144" role="img" aria-labelledby="posture-ring-title">
+<title id="posture-ring-title">{% if posture.insufficient %}Insufficient evidence, lower bound {{ posture.score_text }}{% else %}Score {{ posture.score_text }} out of 100, {{ posture.band }}{% endif %}</title>
+<circle class="rv-ring-track" cx="36" cy="36" r="30"/>
+{% if not posture.insufficient %}<circle class="rv-ring-arc" cx="36" cy="36" r="30" stroke-dasharray="{{ posture.ring_dash }}" transform="rotate(-90 36 36)"/>{% endif %}
+<text class="rv-ring-value" x="36" y="43" text-anchor="middle">{% if posture.insufficient %}?{% else %}{{ posture.score_text }}{% endif %}</text>
+</svg>
+<div class="rv-posture-facts">
+<p class="rv-posture-grade">{{ posture.band }}</p>
+<dl class="rv-facts">
+<div><dt>Evidence coverage</dt><dd>{{ posture.coverage_percent }}%</dd></div>
+<div><dt>Controls that need work</dt><dd>{{ posture.needs_work }} of {{ posture.counted }}</dd></div>
+<div><dt>Exports to refresh</dt><dd>{{ refresh|length }}</dd></div>
+<div><dt>Since the last report</dt><dd>{{ posture.change_text }}</dd></div>
+</dl>
+</div>
+</div>
+<div id="summary" class="rv-summary">
 {% for line in view.summary_lines %}
 <p>{{ line }}</p>
 {% endfor %}
 </div>
-<table id="status-counts">
-<caption>Controls by status</caption>
-<thead><tr><th scope="col">Status</th><th scope="col">Controls</th></tr></thead>
-<tbody>
-{% for label, count in view.counts %}
-<tr><td>{{ s.status(label) }}</td><td>{{ count }}</td></tr>
-{% endfor %}
-</tbody>
-</table>
-<table id="domains">
-<caption>Score by domain</caption>
-<thead><tr><th scope="col">Domain</th><th scope="col">Weight</th><th scope="col">Score</th></tr></thead>
-<tbody>
-{% for domain in view.domains %}
-<tr><th scope="row">{{ domain.name }}</th><td>{{ domain.weight }}</td><td>{{ domain.score_text }}</td></tr>
-{% endfor %}
-</tbody>
-</table>
+</section>
 
-<h3>How fresh is the evidence?</h3>
+<section class="rv-card" id="status-counts" aria-labelledby="mix-title">
+<h2 id="mix-title" class="rv-card-title">Controls by status</h2>
+<p class="rv-card-subtitle">Every counted control of the library, by the status it has today.</p>
+<svg class="rv-mix-bar" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">{% for seg in status_segments %}<rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="12"/>{% endfor %}</svg>
+<ul class="rv-mix-list">
+{% for label, count in view.counts %}
+<li><span class="rv-mix-count">{{ count }}</span> {{ s.status(label) }}</li>
+{% endfor %}
+</ul>
+<p class="rv-mix-link"><a href="/clients/{{ client_id }}/checklist">Open the checklist</a> to see every control with its evidence.</p>
+</section>
+</div>
+
+<section id="needs-attention" aria-labelledby="attention-title">
+<div class="rv-section-head">
+<h2 id="attention-title">Needs attention</h2>
+<p class="rv-section-note">Gate controls first, then what is not protected, by weight. {{ attention_total }} for this client.</p>
+</div>
+{% if attention %}
+<ol class="rv-attention">
+{% for item in attention %}
+<li class="rv-attention-row">
+<span class="rv-attention-status">{{ s.status(item.label) }}</span>
+<span class="rv-attention-what"><a href="/{{ item.path }}">{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{% if item.gate %}Gate control{% endif %}{% if item.why %}{% if item.gate %}, {% endif %}{{ item.why }}{% endif %}</span></span>
+<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}">Open</a>
+</li>
+{% endfor %}
+</ol>
+{% if attention_total > attention|length %}
+<p class="rv-text-secondary"><a href="/clients/{{ client_id }}/checklist?show=flagged">{{ attention_total - attention|length }} more on the checklist</a>.</p>
+{% endif %}
+{% else %}
+<div class="rv-empty" id="attention-empty">
+{{ i.icon("check", 36) }}
+<p class="rv-empty-title">Nothing needs attention</p>
+<p class="rv-empty-text">{% if posture.evidence %}Every checked control is protected. Controls that were not checked are counted by domain below.{% else %}Import the first export: the controls it shows as not protected appear here, most urgent first.{% endif %}</p>
+<a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/evidence">{% if posture.evidence %}See the evidence{% else %}Import evidence{% endif %}</a>
+</div>
+{% endif %}
+</section>
+
+<div class="rv-two">
+<section class="rv-card" id="domains" aria-labelledby="domains-title">
+<h2 id="domains-title" class="rv-card-title">Coverage by domain</h2>
+<p class="rv-card-subtitle">Each bar is one domain of the control library: its controls by status, with the weight of the domain and its score.</p>
+<ul class="rv-domains">
+{% for bar in domains %}
+<li class="rv-domain">
+<span class="rv-domain-name">{{ bar.name }}</span>
+<span class="rv-domain-sum">{{ bar.protected }} of {{ bar.total }} protected</span>
+<svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">{% for seg in bar.segments %}<rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/>{% endfor %}</svg>
+<span class="rv-domain-meta">Weight {{ bar.weight }}, score {{ bar.score_text }}</span>
+</li>
+{% endfor %}
+</ul>
+<ul class="rv-legend">
+{% for label, count in view.counts %}
+<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-seg-{{ label.key }}" width="12" height="12" rx="3"/></svg> {{ s.status(label) }}</li>
+{% endfor %}
+</ul>
+<details class="rv-chart-data">
+<summary>Show the numbers</summary>
+<div class="rv-table-scroll">
+<table>
+<caption>Controls by domain and status, with the weight and the score of each domain</caption>
+<thead><tr><th scope="col">Domain</th><th scope="col" class="rv-numeric">Weight</th><th scope="col" class="rv-numeric">Score</th><th scope="col" class="rv-numeric">Protected</th><th scope="col" class="rv-numeric">Attention</th><th scope="col" class="rv-numeric">Not protected</th><th scope="col" class="rv-numeric">Not checked</th><th scope="col" class="rv-numeric">All</th></tr></thead>
+<tbody>
+{% for bar in domains %}
+<tr>
+<th scope="row">{{ bar.name }}</th>
+<td class="rv-numeric">{{ bar.weight }}</td>
+<td class="rv-numeric">{{ bar.score_text }}</td>
+{% for label, count in bar.counts %}<td class="rv-numeric">{{ count }}</td>{% endfor %}
+<td class="rv-numeric">{{ bar.total }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+</section>
+
+<section class="rv-card" id="freshness-card" aria-labelledby="freshness-title">
+<h2 id="freshness-title" class="rv-card-title">How fresh is the evidence?</h2>
+<p class="rv-card-subtitle">The newest export of every source this client's controls read, and when it goes stale.</p>
+{% if refresh %}
+<p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>{{ refresh|length }} source{% if refresh|length != 1 %}s need{% else %} needs{% endif %} a fresh export. <a href="/clients/{{ client_id }}/evidence">See which export to refresh</a>.</span></p>
+{% else %}
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Every source is current.</span></p>
+{% endif %}
+<div class="rv-table-scroll">
 <table id="freshness">
-<caption>The newest export of every source this client's controls read</caption>
+<caption>Sources by name</caption>
 <thead>
 <tr>
 <th scope="col">Source</th>
@@ -60,15 +157,27 @@
 {% endfor %}
 </tbody>
 </table>
-{% if refresh %}
-<p>{{ refresh|length }} source{% if refresh|length != 1 %}s need{% else %} needs{% endif %} a fresh export. <a href="/clients/{{ client_id }}/evidence">See which export to refresh</a>.</p>
-{% else %}
-<p>Every source is current.</p>
-{% endif %}
+</div>
+</section>
+</div>
 
-<h3>Next</h3>
-<ul>
-<li><a href="/clients/{{ client_id }}/checklist?show=flagged">Review the controls that changed or need a look</a></li>
-<li><a href="/clients/{{ client_id }}/reports?period_start={{ period_start }}&amp;period_end={{ period_end }}">Prepare a report for this period</a></li>
-</ul>
+<section id="recent-changes" aria-labelledby="changes-title">
+<div class="rv-section-head">
+<h2 id="changes-title">Recent changes</h2>
+<p class="rv-section-note">The newest entries of the audit trail for this client: evidence, reports and exceptions, with who did it and when.</p>
+</div>
+{% if changes %}
+<ol class="rv-timeline">
+{% for line in changes %}
+<li class="rv-timeline-item">
+<span class="rv-timeline-dot" aria-hidden="true"></span>
+<p class="rv-timeline-what">{% if line.path %}<a href="/{{ line.path }}">{{ line.words }}</a>{% else %}{{ line.words }}{% endif %}</p>
+<p class="rv-timeline-meta">{{ line.actor }}, <time datetime="{{ line.when_iso }}" title="{{ line.when_text }} UTC">{{ line.ago }}</time></p>
+</li>
+{% endfor %}
+</ol>
+{% else %}
+<p class="rv-text-secondary" id="changes-empty">Nothing has changed yet.</p>
+{% endif %}
+</section>
 {% endblock %}
