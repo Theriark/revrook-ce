@@ -8,12 +8,14 @@ the step cards of the editor and the empty states.
 """
 
 import re
+from types import SimpleNamespace
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.evidence.service import EvidenceContext
 from app.ui.auth import templates
+from app.ui.brand import BRAND_FILES
 from helpers import VENDOR_COLUMNS, create_test_client, get_csrf, vendor_inventory
 from html_structure import structure_problems
 from ui_helpers import STATUS, STATUS_SPAN, seed_client, sign_in
@@ -24,6 +26,8 @@ RECORDS = re.compile(r"<dt>Records</dt><dd>(\d+)</dd>")
 VERDICT = re.compile(
     r"(The only chain is intact|All \d+ chains intact|\d+ of \d+ chains? broken)</span>"
 )
+# A placeholder for the CSRF field of a rendered template; not a real token.
+PLACEHOLDER_TOKEN = "x" * 32
 
 
 async def test_the_evidence_page_has_its_verdict_the_refresh_list_and_the_tables(
@@ -123,17 +127,21 @@ async def test_the_integrity_page_starts_with_the_check_and_shows_its_verdict(
     # The evidence log is append-only and shared by the test run, so a check
     # through the app sees the chains of earlier tests; the page without any
     # record is rendered from the template with the context of an empty check.
+    # The shell draws the rail (and the user's name in it) whenever `user` is
+    # defined, so the render gets a stand-in user as the routes would supply.
     html = templates.get_template("evidence_integrity.html").render(
         title="Evidence integrity",
         nav="integrity",
-        user=None,
+        user=SimpleNamespace(username="admin"),
+        brand_files=frozenset(BRAND_FILES),
         rows=[],
         failed=0,
         records=0,
         checked_at=None,
-        csrf_token="x" * 32,
+        csrf_token=PLACEHOLDER_TOKEN,
     )
     assert structure_problems(html) == []
+    assert '<span class="rv-user-name">admin</span>' in html
     assert 'id="integrity-empty"' in html and ">Check again</button>" in html
     assert 'href="/imports/profile-editor">Open the profile editor</a>' in html
     assert 'id="integrity-start"' not in html and 'id="chains"' not in html
