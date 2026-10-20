@@ -713,6 +713,16 @@ main .rv-nav-link[aria-current="page"] {
   opacity: 0.55;
 }
 
+/* Pico gives a submit button the width of its form (button[type="submit"]
+   { width: 100% }, specificity 0,1,1, above the :is() rule above): on
+   Development the Search button spanned the toolbar beside a 54px search box
+   and "Add client" spanned its card. A button is as wide as its words; only
+   .rv-button-block and the sign-out button of the rail take the whole line */
+button[type="submit"],
+input[type="submit"] {
+  width: auto;
+}
+
 /* Quiet (secondary) buttons: charcoal on white with a gray border */
 .rv-button-quiet,
 .rv-button-quiet:not(:hover) {
@@ -746,7 +756,8 @@ main .rv-nav-link[aria-current="page"] {
   font-size: 13px;
 }
 
-.rv-button-block {
+.rv-button-block,
+button.rv-button-block {
   width: 100%;
   padding: 10px 16px;
   font-size: 15px;
@@ -1113,7 +1124,9 @@ main table th .rv-text-secondary {
   background-color: var(--rv-white);
 }
 
-/* As a badge (span): a pill with a border in the status colour */
+/* As a badge (span): a pill with a border in the status colour. Its words stay
+   on one line: in a narrow table cell (overflow-wrap: anywhere) "Not imported"
+   broke one letter a line, and the table scrolls inside its card instead */
 span.rv-status-protected,
 span.rv-status-needs-attention,
 span.rv-status-not-protected,
@@ -1128,6 +1141,7 @@ span.rv-status-not-applicable {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.5;
+  white-space: nowrap;
 }
 
 /* As a message (p): a strip with the status colour as its left rail */
@@ -2283,7 +2297,9 @@ main .rv-client-kicker a:hover {
   padding-left: 36px;
 }
 
-/* Chips: the filters of a list with their counts, and the pages */
+/* Chips: the filters of a list with their counts, and the pages. An item is
+   not a list item to the eye: Pico marks every one with a square (ul li
+   { list-style: square }), which showed beside each chip on Development */
 .rv-chips {
   display: flex;
   flex-wrap: wrap;
@@ -2296,6 +2312,7 @@ main .rv-client-kicker a:hover {
 .rv-chips li {
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .rv-chip,
@@ -2513,6 +2530,12 @@ main .rv-table-compact td {
     border: 0;
   }
 
+  /* The caption is a block too: as a table caption inside a block it shrank to
+     the width of an anonymous table, one word a line (seen at 390px) */
+  .rv-clients caption {
+    display: block;
+  }
+
   .rv-clients thead {
     position: absolute;
     width: 1px;
@@ -2566,12 +2589,26 @@ main .rv-table-compact td {
   .rv-density {
     margin-left: 0;
   }
+
+  /* The one primary action of the add form takes the whole line on a phone */
+  .rv-add-form button[type="submit"] {
+    width: 100%;
+  }
 }
 
 /* The client overview: the posture card and the status mix side by side, then
    what needs attention, the domains beside the evidence, the recent changes */
 .rv-overview-top {
   margin-top: 0;
+}
+
+/* The domains and the evidence freshness share their row evenly: the table of
+   sources (name, state pill, two dates) needs about 420px, and in the 2fr
+   column of 1440px it had 396px, so "Not imported" broke one letter a line */
+@media (min-width: 1280px) {
+  .rv-two-even {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .rv-posture-hero {

@@ -185,6 +185,23 @@ def test_the_narrow_bar_and_the_rail_make_room_for_the_sign_out_button() -> None
     assert re.search(r"\.rv-user \.rv-button-quiet \{[^}]*width: 100%;", block)
 
 
+def test_a_submit_button_is_as_wide_as_its_words() -> None:
+    # Pico widens every submit button to its form (button[type="submit"]
+    # { width: 100% }, specificity 0,1,1), which the :is() button rule of the
+    # design system cannot override. Seen on Development: the Search button
+    # across the toolbar beside a 54px search box, "Show this period" and "Add
+    # client" across their cards. Only the block button of the sign-in pages and
+    # the sign-out button of the rail take the whole line.
+    rule = re.search(
+        r'\nbutton\[type="submit"\],\ninput\[type="submit"\] \{([^}]*)\}', CSS
+    )
+    assert rule is not None and "width: auto;" in rule.group(1)
+    block = re.search(r"\n\.rv-button-block,\nbutton\.rv-button-block \{([^}]*)\}", CSS)
+    assert block is not None and "width: 100%;" in block.group(1)
+    # The block rule comes later, so at equal specificity it wins
+    assert CSS.index('\nbutton[type="submit"],') < CSS.index("\n.rv-button-block,")
+
+
 def test_the_toolbar_keeps_every_text_on_its_canvas() -> None:
     # The toolbar is a canvas band: a label or a note inside it that kept the white
     # background of the page would show as a white box on the band.
@@ -194,6 +211,22 @@ def test_the_toolbar_keeps_every_text_on_its_canvas() -> None:
         assert rule is not None, selector
         assert "background-color: var(--rv-canvas);" in rule.group(1), selector
         assert "var(--rv-text-secondary)" not in rule.group(1), selector
+
+
+def test_the_chips_and_the_status_pills_keep_their_shape() -> None:
+    # Seen on Development: Pico marks every list item with a square (ul li
+    # { list-style: square }), which showed beside each filter chip; and a pill
+    # in the narrow cell of the evidence freshness table broke "Not imported"
+    # one letter a line, so the pill stays on one line and that table shares
+    # its row evenly with the domains from 1280px.
+    chips = re.search(r"\n\.rv-chips li \{([^}]*)\}", CSS)
+    assert chips is not None and "list-style: none;" in chips.group(1)
+    pill = re.search(r"\nspan\.rv-status-not-applicable \{([^}]*)\}", CSS)
+    assert pill is not None and "white-space: nowrap;" in pill.group(1)
+    even = re.search(
+        r"@media \(min-width: 1280px\) \{\n  \.rv-two-even \{([^}]*)\}", CSS
+    )
+    assert even is not None and "repeat(2, minmax(0, 1fr))" in even.group(1)
 
 
 def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> None:
@@ -208,6 +241,12 @@ def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> No
     assert before is not None
     assert "content: attr(data-label);" in before.group(1)
     assert "background-color: var(--rv-white);" in before.group(1)
+    # The caption shrank to one word a line at 390px while it was still a
+    # table caption inside the block the table had become
+    assert re.search(r"\.rv-clients caption \{[^}]*display: block;", block)
+    assert re.search(
+        r'\.rv-add-form button\[type="submit"\] \{[^}]*width: 100%;', block
+    )
 
 
 # --- the shell --------------------------------------------------------------
