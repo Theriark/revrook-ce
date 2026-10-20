@@ -1,6 +1,7 @@
 {#- The navigation of the app shell and the signed-in user. The page sets `nav` to mark
     where it is: home, clients, profile-editor, integrity, settings, system, glossary. -#}
 {% import "_icons.html" as i %}
+<div class="rv-nav-strip">
 <nav class="rv-nav" aria-label="Main">
 <p class="rv-nav-group-label">Work</p>
 <ul class="rv-nav-list">
@@ -19,6 +20,7 @@
 <li><a class="rv-nav-link" href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}>{{ i.icon("glossary") }}<span class="rv-nav-text">Glossary</span></a></li>
 </ul>
 </nav>
+</div>
 <div class="rv-user">
 <span class="rv-avatar" aria-hidden="true">{{ user.username[:1]|upper }}</span>
 <span class="rv-user-text"><span class="rv-user-name">{{ user.username }}</span><span class="rv-user-note">Signed in</span></span>
