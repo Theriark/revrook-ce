@@ -204,7 +204,7 @@ def test_the_clients_table_becomes_cards_on_a_phone_without_a_scroll_box() -> No
     block = phone.group(1)
     assert "main table.rv-clients" in block and "display: block;" in block
     assert re.search(r"\.rv-clients thead \{[^}]*clip: rect\(0 0 0 0\);", block)
-    before = re.search(r'td\[data-label\]::before \{([^}]*)\}', block)
+    before = re.search(r"td\[data-label\]::before \{([^}]*)\}", block)
     assert before is not None
     assert "content: attr(data-label);" in before.group(1)
     assert "background-color: var(--rv-white);" in before.group(1)
