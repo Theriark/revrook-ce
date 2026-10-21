@@ -1,0 +1,37 @@
+/*
+ * revrook follow-up stylesheet (docs/design-system.md, The shell). Loaded after
+ * revrook.css, so a rule here wins over a rule of the same specificity there. It
+ * holds the corrections of the web interface retest follow-up (THE-520); fold
+ * them into revrook.css at its next rewrite. The same tokens as revrook.css, no
+ * colour literal, no image, nothing external.
+ */
+
+/* The strips that scroll sideways (the main navigation below 1024px, the client
+   tabs at any width): the fade at the right edge is the cue that the strip goes
+   on. Three things changed against revrook.css.
+   1. The fade reaches its colour within 20 of its 48px (the 40 percent stop), so
+      a link cut near the edge is dimmed from its cut and not only in its last
+      pixels (at 768px the navigation is cut just after "System", and the hidden
+      "Glossary" got a faint cue).
+   2. The space after the last link is as wide as the fade, so scrolled to the
+      end nothing sits under it.
+   3. revrook.js marks a strip data-scroll-end="true" while nothing lies to the
+      right of what is in view, and the fade goes (at 768px every client tab was
+      in view under a fade). Without the script the stylesheet keeps the fade. */
+.rv-nav-strip::after {
+  background-image: linear-gradient(to right, transparent, var(--rv-charcoal) 40%);
+}
+
+.rv-tabs-strip::after {
+  background-image: linear-gradient(to right, transparent, var(--rv-white) 40%);
+}
+
+.rv-nav::after,
+.rv-tabs-strip > nav > ul::after {
+  width: 48px;
+}
+
+.rv-nav-strip[data-scroll-end="true"]::after,
+.rv-tabs-strip[data-scroll-end="true"]::after {
+  display: none;
+}
