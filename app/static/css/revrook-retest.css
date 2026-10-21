@@ -146,3 +146,16 @@
 .rv-schedules code {
   white-space: nowrap;
 }
+
+/* An opened delete disclosure (System at 390px): Pico colours the summary of an
+   open details grey (details[open] > summary:not([role]):not(:focus)), and on a
+   touch screen the hover stays after the tap, so the words were grey on charcoal
+   (1.9:1). The open summary is the pressed button, white on charcoal (13.1:1),
+   focused or not; closed it keeps the quiet button of revrook.css */
+details.rv-confirm[open] > summary,
+details.rv-confirm[open] > summary:focus,
+details.rv-confirm[open] > summary:not([role]):not(:focus) {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}

@@ -28,6 +28,7 @@ from app.ui.clients import EXCEPTION_DONE
 from app.ui.reports import DETAILS_SAVED
 from helpers import NOW
 from html_structure import structure_problems
+from test_brand_contrast import BODY_MINIMUM, VARIABLES, contrast_ratio
 from ui_helpers import seed_client, sign_in
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -190,3 +191,26 @@ def test_the_export_history_and_the_schedules_are_cards_below_the_sidebar() -> N
     assert '<td data-label="SHA-256"><code class="rv-digest">' in exports
     assert 'class="rv-table-cards rv-schedules"' in system
     assert '<td data-label="When"><code>{{ line.cron }}</code></td>' in system
+
+
+# --- defect 12: the opened delete disclosure at 390px -------------------------------
+
+
+def test_an_opened_delete_disclosure_is_white_on_charcoal() -> None:
+    open_summary = rule(
+        "details.rv-confirm[open] > summary,\n"
+        "details.rv-confirm[open] > summary:focus,\n"
+        "details.rv-confirm[open] > summary:not([role]):not(:focus)"
+    )
+    assert "color: var(--rv-white);" in open_summary
+    assert "background-color: var(--rv-charcoal);" in open_summary
+    white, charcoal = VARIABLES["--rv-white"], VARIABLES["--rv-charcoal"]
+    assert contrast_ratio(white, charcoal) >= BODY_MINIMUM
+    # The grey Pico used (the muted colour) fails on charcoal, so the rule is needed.
+    grey = VARIABLES["--rv-text-secondary"]
+    assert contrast_ratio(grey, charcoal) < BODY_MINIMUM
+    # The closed summary and its hover are unchanged in revrook.css.
+    assert "color: var(--rv-charcoal);" in rule("details.rv-confirm > summary", CSS)
+    assert "color: var(--rv-white);" in rule("details.rv-confirm > summary:hover", CSS)
+    system = (TEMPLATES / "system.html").read_text(encoding="utf-8")
+    assert '<details class="rv-confirm">\n<summary>Delete {{ client.name }}' in system
