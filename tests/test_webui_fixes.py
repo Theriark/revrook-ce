@@ -16,6 +16,7 @@ The page tests need PostgreSQL (DATABASE_URL) and are skipped without it.
 import re
 from datetime import timedelta
 from fractions import Fraction
+from itertools import pairwise
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -146,9 +147,15 @@ async def test_an_unknown_address_is_the_problem_page_signed_out_and_in(
 
 
 def test_the_controls_that_read_a_source_are_listed() -> None:
+    # A control names its sources by the letters of the report (H is the leavers
+    # file) and its fields by those letters; the field map says which importer
+    # carries each field, so the importer code of an import is matched through it.
     leavers = controls_reading(LIBRARY, "leavers-csv")
-    assert leavers and all("leavers-csv" in item.sources for item in leavers)
-    assert len(leavers) < len(LIBRARY.controls)
+    assert [item.id for item in leavers] == ["PC-GOV-04"]
+    devices = controls_reading(LIBRARY, "device-inventory")
+    assert 1 < len(devices) < len(LIBRARY.controls)
+    assert "PC-DEV-02" in {item.id for item in devices}
+    assert controls_reading(LIBRARY, "H") == ()
     assert controls_reading(LIBRARY, "no-such-source") == ()
 
 
@@ -267,12 +274,12 @@ def test_a_stack_of_labels_never_sits_on_the_dates_of_the_axis() -> None:
     labels = sorted(float(line.label_y) for line in chart.lines)
     assert max(labels) <= chart.bottom - LABEL_GAP / 2
     assert min(labels) >= chart.top + LABEL_GAP / 2
-    assert [round(b - a, 1) for a, b in zip(labels, labels[1:], strict=True)] == [
-        LABEL_GAP
-    ] * 5
-    # One client at 0 keeps its label at the end of its line.
+    assert [round(b - a, 1) for a, b in pairwise(labels)] == [LABEL_GAP] * 5
+    # One client at 0 keeps its label beside the end of its line, lifted by half
+    # a gap so that the lower half of the text stays inside the plot.
     alone = trend_chart([point(1, 0)], names, AS_OF)
-    assert alone.lines[0].label_y == alone.lines[0].last_y
+    assert float(alone.lines[0].label_y) == alone.bottom - LABEL_GAP / 2
+    assert float(alone.lines[0].last_y) == alone.bottom
 
 
 def test_the_home_template_draws_both_charts_and_a_legend() -> None:

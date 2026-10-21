@@ -207,12 +207,25 @@ def _display(value: FactValue) -> str:
 
 
 def controls_reading(library: Library, source_code: str) -> tuple[Control, ...]:
-    """The controls that read a source, in the order of the library.
+    """The controls that read the source of an importer, in the order of the library.
 
-    An import changes only these; the result card names them so that a checklist
+    A control names the fields its rule reads, and the field map of the library
+    says which importer carries each one (the sources of a control are the letter
+    codes of the report, H for the leavers file, not importer codes). An import
+    changes only these controls; the result card names them so that a checklist
     with most of its controls still unchecked after one import is no surprise.
     """
-    return tuple(item for item in library.controls if source_code in item.sources)
+    return tuple(
+        item for item in library.controls if _reads(library, item, source_code)
+    )
+
+
+def _reads(library: Library, control: Control, source_code: str) -> bool:
+    for field_id in control.fields:
+        target = library.field_map.get(field_id)
+        if target is not None and target.adapter == source_code:
+            return True
+    return False
 
 
 def _chosen_client(request: Request, clients: list[tuple[int, str]]) -> int | None:
