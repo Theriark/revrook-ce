@@ -354,3 +354,27 @@ def test_the_counts_of_an_import_scroll_inside_their_card() -> None:
     html = templates.get_template(RESULT_TEMPLATE).render(context)
     assert 'aria-label="What the import counted"' in html
     assert "a_very_long_count_name_nobody_would_break" in html
+
+
+# --- D2: the checklist at 768px -----------------------------------------------------
+
+
+def test_the_checklist_fits_between_768_and_1023px() -> None:
+    blocks = re.findall(
+        r"@media \(min-width: 768px\) and \(max-width: 1023px\) \{(.*?)\n\}\n",
+        FOLLOW_UP,
+        re.DOTALL,
+    )
+    checklist = [block for block in blocks if "main .rv-checklist th," in block]
+    assert len(checklist) == 1
+    assert re.search(
+        r"main \.rv-checklist th,\n  main \.rv-checklist td \{\n"
+        r"    padding-right: 8px;\n    padding-left: 8px;",
+        checklist[0],
+    )
+    assert re.search(
+        r"\.rv-checklist \.rv-coverage \{\n    white-space: normal;", checklist[0]
+    )
+    # The sticky head and the cards below 768px of revrook.css stay as they are.
+    assert "white-space: nowrap;" in rule(".rv-coverage", CSS)
+    assert re.search(r"\n  main table\.rv-checklist,\n  \.rv-checklist tbody,", CSS)
