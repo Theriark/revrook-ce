@@ -202,9 +202,10 @@ def test_the_export_history_and_the_schedules_are_cards_below_the_sidebar() -> N
         r"    grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);",
         cards,
     )
-    assert "grid-template-columns: repeat(2, minmax(0, 1fr));" not in cards.split(
-        ".rv-schedules tbody {"
-    )[0]
+    assert (
+        "grid-template-columns: repeat(2, minmax(0, 1fr));"
+        not in cards.split(".rv-schedules tbody {")[0]
+    )
     assert "white-space: nowrap;" in rule(".rv-schedules code")
     # The tables carry the classes the rules address, and a cron is a code element.
     exports = (TEMPLATES / "exports.html").read_text(encoding="utf-8")
