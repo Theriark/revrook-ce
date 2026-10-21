@@ -1,0 +1,381 @@
+/*
+ * revrook follow-up stylesheet (docs/design-system.md, The shell). Loaded after
+ * revrook.css, so a rule here wins over a rule of the same specificity there. It
+ * holds the corrections of the web interface retest follow-up (THE-520); fold
+ * them into revrook.css at its next rewrite. The same tokens as revrook.css, no
+ * colour literal, no image, nothing external.
+ */
+
+/* The strips that scroll sideways (the main navigation below 1024px, the client
+   tabs at any width): the fade at the right edge is the cue that the strip goes
+   on. Three things changed against revrook.css.
+   1. The fade reaches its colour within 20 of its 48px (the 40 percent stop), so
+      a link cut near the edge is dimmed from its cut and not only in its last
+      pixels (at 768px the navigation is cut just after "System", and the hidden
+      "Glossary" got a faint cue).
+   2. The space after the last link is as wide as the fade, so scrolled to the
+      end nothing sits under it.
+   3. revrook.js marks a strip data-scroll-end="true" while nothing lies to the
+      right of what is in view, and the fade goes (at 768px every client tab was
+      in view under a fade). Without the script the stylesheet keeps the fade. */
+.rv-nav-strip::after {
+  background-image: linear-gradient(to right, transparent, var(--rv-charcoal) 40%);
+}
+
+.rv-tabs-strip::after {
+  background-image: linear-gradient(to right, transparent, var(--rv-white) 40%);
+}
+
+.rv-nav::after,
+.rv-tabs-strip > nav > ul::after {
+  width: 48px;
+}
+
+.rv-nav-strip[data-scroll-end="true"]::after,
+.rv-tabs-strip[data-scroll-end="true"]::after {
+  display: none;
+}
+
+/* The export history from 768px to 1023px: like the clients list, its rows are
+   cards below the sidebar and not only below 768px (where rv-table-cards in
+   revrook.css takes over). With seven columns in 704px the file name and the
+   SHA-256 broke into columns of six letters. An export is one card a row, so a
+   64-character digest keeps one line. Beside the sidebar the history fits as a
+   table (712px of page at 1024px, measured on Development) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  main table.rv-exports,
+  .rv-exports tbody,
+  .rv-exports tr,
+  .rv-exports th,
+  .rv-exports td {
+    display: block;
+  }
+
+  main table.rv-exports {
+    border: 0;
+  }
+
+  .rv-exports caption {
+    display: block;
+  }
+
+  .rv-exports thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-exports thead th {
+    position: static;
+  }
+
+  main .rv-exports tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-exports tbody th,
+  main .rv-exports tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-exports tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-exports td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-exports td:empty {
+    display: none;
+  }
+
+  main .rv-exports tbody tr:hover > td,
+  main .rv-exports tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-exports .rv-row-actions {
+    white-space: normal;
+  }
+}
+
+/* The schedules from 768px to 1099px: the same cards as the export history (at
+   768px a cron expression took three lines), but the schedules, short values,
+   stand two to a row. Seven columns need 768px, and beside the sidebar the page
+   gives 712px at 1024px (measured on Development after the live retest: the
+   table pushed the page sideways by 24px, and the page is 312px narrower than
+   the window from 1024px), so the cards stay until the page is 20px wider than
+   the table */
+@media (min-width: 768px) and (max-width: 1099px) {
+  main table.rv-schedules,
+  .rv-schedules tbody,
+  .rv-schedules tr,
+  .rv-schedules th,
+  .rv-schedules td {
+    display: block;
+  }
+
+  main table.rv-schedules {
+    border: 0;
+  }
+
+  .rv-schedules caption {
+    display: block;
+  }
+
+  .rv-schedules thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-schedules thead th {
+    position: static;
+  }
+
+  main .rv-schedules tbody tr {
+    margin-bottom: 0;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-schedules tbody th,
+  main .rv-schedules tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-schedules tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-schedules td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-schedules td:empty {
+    display: none;
+  }
+
+  main .rv-schedules tbody tr:hover > td,
+  main .rv-schedules tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-schedules tbody {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+/* A cron expression never breaks across lines, at any width */
+.rv-schedules code {
+  white-space: nowrap;
+}
+
+/* An opened delete disclosure (System at 390px): Pico colours the summary of an
+   open details grey (details[open] > summary:not([role]):not(:focus)), and on a
+   touch screen the hover stays after the tap, so the words were grey on charcoal
+   (1.9:1). The open summary is the pressed button, white on charcoal (13.1:1),
+   focused or not; closed it keeps the quiet button of revrook.css */
+details.rv-confirm[open] > summary,
+details.rv-confirm[open] > summary:focus,
+details.rv-confirm[open] > summary:not([role]):not(:focus) {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}
+
+/* A link that keyboard focus scrolls into view stops 48px short of the right edge
+   of its strip, as wide as the fade, so its focus ring is never under the fade
+   (which takes no pointer and sits above the links). The main navigation scrolls
+   in nav.rv-nav; the client tabs in the nav of .rv-tabs-strip */
+.rv-header nav,
+.rv-nav,
+.rv-tabs-strip > nav {
+  scroll-padding-right: 48px;
+}
+
+/* The counts of an import (the profile editor at 390px): the table was wider
+   than its card and pushed the page sideways. It scrolls inside its own region
+   like the preview of the rows, and a long count name breaks instead of
+   stretching its column */
+.rv-import-result .rv-table-scroll {
+  margin-bottom: 16px;
+}
+
+.rv-import-result .rv-table-scroll th {
+  overflow-wrap: anywhere;
+}
+
+/* The checklist from 768px to 1079px: its six columns need 747px (measured on
+   Development: the status pill alone 181px), and the page gives 720px at 768px
+   and 712px beside the sidebar at 1024px, so the page scrolled sideways by 11px
+   at 768px and by 3px at 1024px. The cells lose 6px of padding each side (72px
+   over six columns, the table 675px) until the page is wider than the table,
+   and the coverage may wrap; the table keeps its sticky head, there is still no
+   scroll box. Six and not four: with a classic 15px scrollbar the page beside
+   the sidebar is 697px at 1024px, and the 699px of the 8px cells overflowed it
+   by 2px (the review of the live retest, THE-533); 675px leaves 22px */
+@media (min-width: 768px) and (max-width: 1079px) {
+  main .rv-checklist th,
+  main .rv-checklist td {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .rv-checklist .rv-coverage {
+    white-space: normal;
+  }
+}
+
+/* The exceptions register from 768px to 1279px (the live retest, F1): seven
+   columns, two of them prose of at least 12rem, need 804px, and the page gives
+   704px at 768px and 712px beside the sidebar at 1024px (measured on
+   Development: the page scrolled sideways by 68px at 768px and 60px at 1024px,
+   and the State column was cut). Like the export history, each exception is one
+   card a row until the page is wider than the table (968px from 1280px); below
+   768px the cards of revrook.css take over. The table also sits in a scrolling
+   region (div.rv-table-scroll, like the counts of an import), so at any width a
+   register wider than the page scrolls inside its box and never the page */
+@media (min-width: 768px) and (max-width: 1279px) {
+  main table.rv-exceptions,
+  .rv-exceptions tbody,
+  .rv-exceptions tr,
+  .rv-exceptions th,
+  .rv-exceptions td {
+    display: block;
+  }
+
+  main table.rv-exceptions {
+    border: 0;
+  }
+
+  .rv-exceptions caption {
+    display: block;
+  }
+
+  .rv-exceptions thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-exceptions thead th {
+    position: static;
+  }
+
+  main .rv-exceptions tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-exceptions tbody th,
+  main .rv-exceptions tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-exceptions tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-exceptions td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-exceptions td:empty {
+    display: none;
+  }
+
+  main .rv-exceptions tbody tr:hover > td,
+  main .rv-exceptions tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+}
+
+/* A cell of a card is as wide as its card: the 20rem cap of a cell in a
+   scrolling table (revrook.css) is for columns, and the reason and the
+   compensating control keep their own 24rem measure */
+main .rv-exceptions-scroll td {
+  max-width: none;
+}
+
+/* From 1280px the register is a table that fits its page (804px in 968px), and
+   the region stops clipping: a scroll box makes the sticky head of revrook.css
+   (main table thead th) stick to the box and not to the page, so on a long
+   register scrolled at a desktop width the column names left the view (the
+   review of the live retest, THE-530). Below 1280px the rows are cards and no
+   head is shown, so the box there costs nothing and the page never widens */
+@media (min-width: 1280px) {
+  .rv-exceptions-scroll {
+    overflow-x: visible;
+  }
+}
+
+/* The border of a field (the live retest, F2): the gray of revrook.css is 2.9:1
+   on the canvas a field sits on (3.2:1 on white), under the 3:1 of WCAG 1.4.11
+   for the boundary of a control. The secondary text colour is 5.8:1 on the
+   canvas and 6.5:1 on white; the active border (the accent) and the focus ring
+   are unchanged. Buttons keep their borders: their words mark them */
+:root:not([data-theme="dark"]),
+[data-theme="light"] {
+  --pico-form-element-border-color: var(--rv-text-secondary);
+}
+
+/* The import area is the boundary of a file control too (the review of the live
+   retest, THE-530): its dashed gray border was 2.9:1 on the canvas, so it takes
+   the same colour as the fields, 5.8:1 on the canvas; the 2px dashed line, the
+   accent on hover, focus and drag-over (revrook.css) are unchanged */
+.rv-dropzone {
+  border-color: var(--rv-text-secondary);
+}
+
+/* The message a swapped fragment brings (the live retest, F3): revrook.js moves
+   focus to it and scrolls it to the top of the view; the margin keeps the
+   heading of its card in view above it */
+[data-announce] {
+  scroll-margin-top: 72px;
+}
