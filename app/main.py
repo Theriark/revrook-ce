@@ -54,6 +54,8 @@ HX_MESSAGES = {403: HX_FORBIDDEN, 404: HX_NOT_FOUND}
 # API, the health and metrics endpoints and the static files are not pages.
 PAGE_REFUSALS = (404, 405)
 NOT_PAGES = ("/api/", "/healthz", "/readyz", "/metrics", "/static/")
+# The bare prefix of the API is not a page either (/api, without the slash).
+NOT_PAGE_PATHS = frozenset({"/api"})
 REFUSED_HTML = (
     '<div class="rv-errors" role="alert">'
     '<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!'
@@ -61,6 +63,13 @@ REFUSED_HTML = (
 )
 OUT_OF_RANGE = "A value in the request is outside what revrook can store."
 logger = logging.getLogger("revrook.web")
+
+
+def is_page_address(path: str) -> bool:
+    """Whether a refusal of this address is shown as a page and not as JSON."""
+    return path not in NOT_PAGE_PATHS and not path.startswith(NOT_PAGES)
+
+
 # At most this many sign-ins are checked at once (each holds a database connection
 # while Argon2 runs); the others are told to retry.
 MAX_PARALLEL_LOGINS = 4
@@ -138,7 +147,7 @@ def create_app(
                 status_code=error.status_code,
                 headers={"Cache-Control": "no-store"},
             )
-        page_wanted = not request.url.path.startswith(NOT_PAGES)
+        page_wanted = is_page_address(request.url.path)
         if error.status_code in PAGE_REFUSALS and page_wanted:
             return await missing_page(request, error.status_code, error.headers)
         return await http_exception_handler(request, error)

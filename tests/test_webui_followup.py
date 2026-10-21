@@ -20,11 +20,12 @@ from datetime import timedelta
 from pathlib import Path
 
 import httpx
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.db import make_engine
 from app.evidence.service import EvidenceContext
-from app.main import create_app
+from app.main import create_app, is_page_address
 from app.security import SESSION_COOKIE
 from app.settings import Settings
 from app.ui.brand import ASSET_FILES
@@ -265,3 +266,49 @@ def test_keyboard_focus_scrolls_a_link_clear_of_the_fade() -> None:
     assert '<div class="rv-tabs-strip">\n<nav class="rv-client-nav"' in (
         TEMPLATES / "_client_nav.html"
     ).read_text(encoding="utf-8")
+
+
+# --- L3: the API, the probes and the static files keep JSON, /api included ----------
+
+
+@pytest.mark.parametrize(
+    ("path", "page"),
+    [
+        ("/api", False),
+        ("/api/", False),
+        ("/api/v1/no-such", False),
+        ("/healthz", False),
+        ("/readyz", False),
+        ("/metrics", False),
+        ("/static/css/no-such.css", False),
+        ("/", True),
+        ("/apiary", True),
+        ("/no-such-page", True),
+        ("/clients/1/no-such", True),
+    ],
+)
+def test_which_addresses_get_the_problem_page(path: str, page: bool) -> None:
+    assert is_page_address(path) is page
+
+
+async def test_the_api_and_the_probes_refuse_in_json_for_any_method(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    await sign_in(ui_browser, db_engine)
+    for path in ("/api", "/api/", "/api/v1", "/api/v1/no-such"):
+        missing = await ui_browser.get(path)
+        assert missing.status_code == 404, path
+        assert missing.headers["content-type"].startswith("application/json"), path
+        assert missing.json() == {"detail": "Not Found"}, path
+    # A method an API path or a probe does not take: JSON too, with Allow kept.
+    for path in ("/api/v1/whoami", "/healthz", "/readyz"):
+        wrong = await ui_browser.post(path, data={"csrf_token": "x"})
+        assert wrong.status_code == 405, path
+        assert wrong.headers["content-type"].startswith("application/json"), path
+        assert "GET" in wrong.headers["allow"], path
+        assert wrong.json() == {"detail": "Method Not Allowed"}, path
+    # An address that merely starts with the letters of the prefix is a page.
+    page = await ui_browser.get("/apiary")
+    assert page.status_code == 404
+    assert page.headers["content-type"].startswith("text/html")
+    assert 'class="rv-problem"' in page.text
