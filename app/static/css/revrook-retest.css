@@ -169,3 +169,15 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
 .rv-tabs-strip > nav {
   scroll-padding-right: 48px;
 }
+
+/* The counts of an import (the profile editor at 390px): the table was wider
+   than its card and pushed the page sideways. It scrolls inside its own region
+   like the preview of the rows, and a long count name breaks instead of
+   stretching its column */
+.rv-import-result .rv-table-scroll {
+  margin-bottom: 16px;
+}
+
+.rv-import-result .rv-table-scroll th {
+  overflow-wrap: anywhere;
+}

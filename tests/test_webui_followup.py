@@ -18,6 +18,7 @@ are skipped without it.
 import re
 from datetime import timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -28,8 +29,10 @@ from app.evidence.service import EvidenceContext
 from app.main import create_app, is_page_address
 from app.security import SESSION_COOKIE
 from app.settings import Settings
-from app.ui.brand import ASSET_FILES
+from app.ui.auth import templates
+from app.ui.brand import ASSET_FILES, BRAND_FILES
 from app.ui.clients import EXCEPTION_DONE
+from app.ui.profiles import RESULT_TEMPLATE
 from app.ui.reports import DETAILS_SAVED
 from helpers import NOW
 from html_structure import structure_problems
@@ -312,3 +315,42 @@ async def test_the_api_and_the_probes_refuse_in_json_for_any_method(
     assert page.status_code == 404
     assert page.headers["content-type"].startswith("text/html")
     assert 'class="rv-problem"' in page.text
+
+
+# --- D1: the counts of an import at 390px -------------------------------------------
+
+
+def test_the_counts_of_an_import_scroll_inside_their_card() -> None:
+    result = (TEMPLATES / "_profile_editor_result.html").read_text(encoding="utf-8")
+    region = (
+        '<div class="rv-table-scroll" role="region" '
+        'aria-label="What the import counted" tabindex="0">\n'
+        '<table id="rv-import-summary">'
+    )
+    assert region in result
+    assert "</table>\n</div>\n{% endif %}\n<h3" in result
+    assert "overflow-x: auto;" in rule(".rv-table-scroll", CSS)
+    assert "overflow-wrap: anywhere;" in rule(".rv-import-result .rv-table-scroll th")
+    imported = SimpleNamespace(
+        item_id=5,
+        profile_id=4,
+        facts=3,
+        summary=[("a_very_long_count_name_nobody_would_break", 1)],
+        controls=[],
+        control_total=51,
+    )
+    context: dict[str, object] = {
+        "errors": [],
+        "saved": None,
+        "imported": imported,
+        "preview": None,
+        "profiles": [],
+        "profile_id": None,
+        "name": "",
+        "client_id": None,
+        "csrf_token": "x" * 32,
+        "brand_files": frozenset(BRAND_FILES),
+    }
+    html = templates.get_template(RESULT_TEMPLATE).render(context)
+    assert 'aria-label="What the import counted"' in html
+    assert "a_very_long_count_name_nobody_would_break" in html
