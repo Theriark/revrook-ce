@@ -13,7 +13,7 @@ are recorded here and must not be confused:
 
 | Fact | Commit | Image digest | How it was read |
 | --- | --- | --- | --- |
-| Capture-time facts (this reading, the screenshots of the [guides](guides/README.md) and their [capture manifest](images/README.md)) | `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac` | `sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333` | the pages of the Development site linked the stylesheets with the version query of this commit; the digest is the one the registry returned for the tag `sha-c41125fd...` on that day |
+| Capture-time facts (this reading, the screenshots of the [guides](guides/README.md) and their [capture manifest](images/README.md)) | `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac` | `sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333` | the pages of the Development site linked the stylesheets with the version query of this commit; the digest is the one the registry returned for the tag `sha-c41125fd...` on that day. Four pictures (Settings, the preview page and the two of the rendered review) were captured again between 20:31 and 20:33 Europe/Lisbon while the deployed candidate below was running; the manifest marks them with its commit and digest, read from the receipt |
 | Deployed Development candidate (later the same day) | `f143e3db58fced1d8c993fe891174a8bb6f12873` | `sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0` | the deployment receipt of the Development environment (CI run 39601882209, deployed 2026-10-21T12:55:26Z); re-read on 2026-10-21 |
 
 The capture-time commit and digest are what the site ran when the pictures were taken.

@@ -15,7 +15,8 @@ application showed, the state of the release candidate label, the flows that wer
 captured and why, and what is unchanged. A reviewer compares the hash of each file
 with the manifest; the manifest changes only when a picture is captured again, and a
 picture is captured again only when the page it shows changed or when its content
-needed a cleaner state.
+needed a cleaner state. A picture that replaced an earlier one keeps the hash, the time
+and the reason of the one it replaced under `replaces`.
 
 The commit and digest in the manifest are capture-time facts: what the Development
 site ran when each picture was taken. They are not the deployed Development
@@ -25,11 +26,25 @@ image and the deployed image is claimed. The application pages are the same betw
 the capture-time commits and the documentation head, because the commits in between
 changed documentation only.
 
+Four pictures were captured again on 2026-10-21 between 20:31 and 20:33
+(Europe/Lisbon), while the deployed Development candidate of that day was running:
+`settings-1440.png` and `report-preview-1440.png`, because the first capture showed
+the business name "FE Retest MSP THE-497" left by an earlier test (the name was set to
+"Sample MSP" in Settings, the only state change made for the capture, and the preview
+page prints that name at render time), and the two new pictures of the rendered
+quarterly security review that **Preview** opens, `report-preview-file-1440.png` (the
+cover at the viewport size) and `report-preview-file-full-1440.png` (the whole file,
+15,615 px tall). For these four the manifest carries the commit and digest of the
+deployed candidate, read from the deployment receipt: the pages themselves could not
+tell the two commits of that day apart, because no static file changed between them
+and the stylesheet version query stayed the same.
+
 Viewports: 1440 px for every page; 390 px for the four pages whose layout changes most
 on a phone (the clients list, Home, the checklist and the sign-in page); 768 px for the
 clients list only, where the rows become two cards to a row. A picture named `-1440` is
 the whole page at 1440 px unless the manifest says `fullPage: false` (the checklist,
-whose 51 rows would make the picture very tall, and the problem page).
+whose 51 rows would make the picture very tall, the problem page, and the cover of the
+rendered report, whose whole file has its own picture).
 
 What the pictures show is the shared Development test installation: every client,
 report and audit entry in them is synthetic. The **Recent changes** list on Home names

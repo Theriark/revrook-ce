@@ -46,7 +46,20 @@ period and pack date; **Preview and export** opens each as it was made.
   evidence pack** keeps an unchangeable copy and its SHA-256 and opens the export
   history. The same snapshot and the same details give the same bytes.
 
-The rendered report file itself (what **Preview** opens) is not pictured in this guide.
+## The rendered report
+
+**Preview** of the quarterly security review opens the file itself, as the client
+receives it: one HTML page laid out as paper. The cover carries the name of your
+business (from Settings), the client, the period, who prepared it, the date it was
+generated, the pack date, the data sources and the id of the snapshot it was made
+from, followed by the disclaimer that every report prints.
+
+![The cover of the rendered quarterly security review at 1440 px](../images/report-preview-file-1440.png)
+
+The whole file, from the cover to the plan for next quarter, is one tall picture in
+[report-preview-file-full-1440.png](../images/report-preview-file-full-1440.png); its
+sections are described in [reports](../reports.md). The cyber insurance evidence pack
+opens the same way from its own **Preview** and is not pictured here.
 
 ## The export history
 
