@@ -15,7 +15,12 @@
  * - the message a fragment brings when htmx swaps it in (the profile editor:
  *   the profile saved, the file imported): focus moves to it and it is scrolled
  *   to the top of the view; without the script (and so without htmx) the server
- *   draws the whole page with the result in place.
+ *   draws the whole page with the result in place;
+ * - the regions that scroll sideways (the exceptions register, the counts and
+ *   the preview of an import): the template gives each tabindex="0", so the
+ *   keyboard always reaches a region that scrolls; the script takes that tab
+ *   stop away while the content fits its box (card rows, a short table) and
+ *   gives it back when the content overflows (a resize, a swap).
  */
 (function () {
   "use strict";
@@ -115,8 +120,32 @@
     message.scrollIntoView({ block: "start" });
   }
 
+  // A region with tabindex="0" is one more tab stop even when nothing scrolls:
+  // the exceptions are cards from 768px to 1279px, a short table fits its box.
+  // The region keeps the tab stop only while its box clips (overflow-x auto or
+  // scroll, as .rv-table-scroll sets it; from 1280px the exceptions region is
+  // visible, and then the page scrolls, not the box) and the content is wider
+  // than the box. A region that holds focus keeps it until focus moves on.
+  function updateRegions() {
+    var regions = document.querySelectorAll('.rv-table-scroll[role="region"]');
+    for (var k = 0; k < regions.length; k += 1) {
+      var region = regions[k];
+      var overflow = window.getComputedStyle(region).overflowX;
+      var clips = overflow === "auto" || overflow === "scroll";
+      if (clips && region.scrollWidth > region.clientWidth) {
+        region.setAttribute("tabindex", "0");
+      } else if (region !== document.activeElement) {
+        region.removeAttribute("tabindex");
+      }
+    }
+  }
+
   function ready() {
     document.addEventListener("htmx:afterSwap", announceSwapped);
+    document.addEventListener("htmx:afterSwap", updateRegions);
+    window.addEventListener("resize", updateRegions);
+    window.addEventListener("load", updateRegions);
+    updateRegions();
     var zones = document.querySelectorAll(".rv-dropzone");
     for (var k = 0; k < zones.length; k += 1) {
       decorate(zones[k]);

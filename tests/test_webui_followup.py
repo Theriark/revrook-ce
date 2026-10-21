@@ -468,12 +468,14 @@ def test_the_counts_of_an_import_scroll_inside_their_card() -> None:
 
 def test_the_checklist_fits_between_768_and_1079px() -> None:
     # Six columns need 747px; the page gives 720px at 768px and 712px beside the
-    # sidebar at 1024px (the live retest), so the padding is reduced to 1079px.
+    # sidebar at 1024px (the live retest), so the padding is reduced to 1079px:
+    # 6px a side (the review of that fix: with a classic 15px scrollbar the page
+    # is 697px at 1024px, and 8px cells, 699px, overflowed it by 2px).
     checklist = [block for block in media_blocks(1079) if "rv-checklist" in block]
     assert len(checklist) == 1
     assert re.search(
         r"main \.rv-checklist th,\n  main \.rv-checklist td \{\n"
-        r"    padding-right: 8px;\n    padding-left: 8px;",
+        r"    padding-right: 6px;\n    padding-left: 6px;",
         checklist[0],
     )
     assert re.search(
@@ -588,29 +590,81 @@ def test_the_exceptions_register_never_widens_the_page() -> None:
 # 320, 390, 768, 769, 800, 1024 and 1440px: from 1024px the page is 312px
 # narrower than the window (712px at 1024px, with the sidebar), and two tables
 # that fit from 768px to 1023px pushed the page sideways there: the schedules by
-# 24px and the checklist by 3px. The width of each table at its narrowest, and
-# the last window width of its cards (the schedules) or of its reduced padding
-# (the checklist, 48px less over six columns).
-PAGE_BESIDE_THE_SIDEBAR = 712
-SIDEBAR_WINDOW = 1024
-WIDE_TABLES = {
-    "rv-schedules": (768, 1099),
-    "rv-exceptions": (804, 1279),
-}
-CHECKLIST = (747, 1079)
+# 24px and the checklist by 3px. The width of each table at its narrowest is a
+# measurement; the window the sidebar appears at, the width of the sidebar, the
+# gutters of the page and the last window width of each block are read from the
+# stylesheets (the review of that fix asked that no breakpoint be copied). A
+# classic scrollbar (Windows, or Linux without overlay scrollbars) takes 15px
+# off the page, and every block leaves it that room.
+WIDE_TABLES = {"rv-schedules": 768, "rv-exceptions": 804}
+CHECKLIST = 747
+CLASSIC_SCROLLBAR = 15
+
+
+def shell_geometry() -> tuple[int, int, int]:
+    """The window the sidebar appears at, its width and the gutter of the page."""
+    sidebar = re.search(
+        r"@media \(min-width: (\d+)px\) \{\n  body\.rv-app \{\n"
+        r"    grid-template-columns: (\d+)px minmax",
+        CSS,
+    )
+    gutter = re.search(
+        r"@media \(min-width: 768px\) \{\n  \.rv-content \{\n"
+        r"    padding: \d+px (\d+)px \d+px;",
+        CSS,
+    )
+    assert sidebar is not None and gutter is not None
+    return int(sidebar.group(1)), int(sidebar.group(2)), int(gutter.group(1))
+
+
+def page_width(window: int) -> int:
+    """The width of the page at this window width, from 768px up."""
+    sidebar_window, sidebar, gutter = shell_geometry()
+    beside = sidebar if window >= sidebar_window else 0
+    return window - beside - 2 * gutter
+
+
+def block_end(marker: str, css: str = FOLLOW_UP) -> int:
+    """The last window width of the 768px-and-up block that holds this text."""
+    blocks = re.findall(
+        r"@media \(min-width: 768px\) and \(max-width: (\d+)px\) \{(.*?)\n\}\n",
+        css,
+        re.DOTALL,
+    )
+    found = [int(until) for until, body in blocks if marker in body]
+    assert len(found) == 1, marker
+    return found[0]
+
+
+def test_the_shell_geometry_is_read_from_the_stylesheet() -> None:
+    assert shell_geometry() == (1024, 248, 32)
+    # The measured page widths of the live retest: 704px at 768px, 712px beside
+    # the sidebar at 1024px, 968px at 1280px.
+    assert (page_width(768), page_width(1024), page_width(1280)) == (704, 712, 968)
 
 
 def test_the_wide_tables_are_cards_until_the_page_beside_the_sidebar_fits() -> None:
-    for table, (width, until) in WIDE_TABLES.items():
-        fits_from = SIDEBAR_WINDOW + width - PAGE_BESIDE_THE_SIDEBAR
-        assert until + 1 >= fits_from, table
+    for table, width in WIDE_TABLES.items():
+        until = block_end(f"main table.{table},")
         block = [b for b in media_blocks(until) if f"main table.{table}," in b]
         assert len(block) == 1, table
         assert "display: block;" in block[0], table
-    width, until = CHECKLIST
-    assert until + 1 >= SIDEBAR_WINDOW + width - PAGE_BESIDE_THE_SIDEBAR
+        # The first window of the table has a page that holds it beside a
+        # classic scrollbar.
+        assert page_width(until + 1) - CLASSIC_SCROLLBAR >= width, table
+    until = block_end("main .rv-checklist th,")
     padded = [b for b in media_blocks(until) if "main .rv-checklist th," in b]
-    assert len(padded) == 1 and "padding-left: 8px;" in padded[0]
+    assert len(padded) == 1 and "padding-left: 6px;" in padded[0]
+    assert page_width(until + 1) - CLASSIC_SCROLLBAR >= CHECKLIST
+    # Inside the block the six columns lose twice the difference between the
+    # 12px cell padding of revrook.css and the reduced one, and the narrowest
+    # page of the block (768px, then 1024px beside the sidebar) holds the
+    # reduced table with a classic scrollbar.
+    assert "padding: 10px 12px;" in rule("main table th,\nmain table td", CSS)
+    reduced = CHECKLIST - 6 * 2 * (12 - 6)
+    assert reduced == 675
+    for window in (768, 1024):
+        assert page_width(window) - CLASSIC_SCROLLBAR >= reduced, window
     # The export history fits beside the sidebar (712px at 1024px) and is the
     # only table whose cards end at 1023px.
     narrow = media_blocks(1023)
@@ -693,3 +747,66 @@ def test_the_result_of_the_profile_editor_is_announced_after_the_swap() -> None:
     html = templates.get_template(RESULT_TEMPLATE).render(context)
     assert 'id="rv-imported"' in html
     assert 'tabindex="-1" data-announce data-item-id="5"' in html
+
+
+# --- The lows of the reviews of the live retest (THE-530, THE-533) ------------------
+
+
+def test_the_import_area_border_reaches_3_to_1_and_stays_dashed() -> None:
+    # L-A: the dashed gray boundary of the file control was 2.9:1 on the canvas.
+    assert rule(".rv-dropzone").strip() == "border-color: var(--rv-text-secondary);"
+    border = VARIABLES["--rv-text-secondary"]
+    assert contrast_ratio(border, VARIABLES["--rv-canvas"]) >= LARGE_MINIMUM
+    # The dashed 2px line of revrook.css and its accent on hover, focus and
+    # drag-over are untouched (their selectors outrank the single class).
+    assert "border: 2px dashed var(--rv-gray);" in rule(".rv-dropzone", CSS)
+    lifted = ".rv-dropzone:hover,\n.rv-dropzone:focus-within,\n.rv-dropzone.is-dragover"
+    assert "border-color: var(--rv-accent);" in rule(lifted, CSS)
+    assert "background-color: var(--rv-canvas);" in rule(".rv-dropzone", CSS)
+
+
+def test_the_exceptions_head_sticks_to_the_page_from_1280px() -> None:
+    # L-B: a scroll box makes the sticky head stick to the box, not the page.
+    # From the first window where the register is a table and fits its page,
+    # the region stops clipping; below it the rows are cards, with no head.
+    table_from = block_end("main table.rv-exceptions,") + 1
+    width = WIDE_TABLES["rv-exceptions"]
+    assert page_width(table_from) - CLASSIC_SCROLLBAR >= width
+    visible = re.search(
+        r"@media \(min-width: (\d+)px\) \{\n  \.rv-exceptions-scroll \{\n"
+        r"    overflow-x: visible;\n  \}\n\}",
+        FOLLOW_UP,
+    )
+    assert visible is not None and int(visible.group(1)) == table_from
+    assert "overflow-x: auto;" in rule(".rv-table-scroll", CSS)
+    assert "position: sticky;" in rule("main table thead th", CSS)
+
+
+def test_a_scrolling_region_is_a_tab_stop_only_while_it_scrolls() -> None:
+    # L-C: the templates keep tabindex="0" (without the script the keyboard
+    # always reaches a region); the script drops it while nothing scrolls.
+    exceptions = (TEMPLATES / "exceptions.html").read_text(encoding="utf-8")
+    result = (TEMPLATES / "_profile_editor_result.html").read_text(encoding="utf-8")
+    register = 'class="rv-table-scroll rv-exceptions-scroll" role="region"'
+    assert exceptions.count(register) == 1
+    assert result.count('class="rv-table-scroll" role="region"') == 2
+    for template in (exceptions, result):
+        assert template.count('role="region"') == template.count('tabindex="0"')
+    selector = "document.querySelectorAll('.rv-table-scroll[role=\"region\"]');"
+    assert selector in SCRIPT
+    assert "var overflow = window.getComputedStyle(region).overflowX;" in SCRIPT
+    assert 'var clips = overflow === "auto" || overflow === "scroll";' in SCRIPT
+    assert "if (clips && region.scrollWidth > region.clientWidth) {" in SCRIPT
+    assert 'region.setAttribute("tabindex", "0");' in SCRIPT
+    # A region that holds focus keeps its tab stop until focus moves on.
+    assert "} else if (region !== document.activeElement) {" in SCRIPT
+    assert 'region.removeAttribute("tabindex");' in SCRIPT
+    # Measured again on load (fonts), on resize and after every htmx swap (the
+    # counts and the preview of an import arrive in a swapped fragment).
+    for hook in (
+        'document.addEventListener("htmx:afterSwap", updateRegions);',
+        'window.addEventListener("resize", updateRegions);',
+        'window.addEventListener("load", updateRegions);',
+    ):
+        assert hook in SCRIPT, hook
+    assert SCRIPT.index("updateRegions();\n") > SCRIPT.index("function ready() {")
