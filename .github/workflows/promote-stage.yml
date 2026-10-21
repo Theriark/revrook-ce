@@ -2,25 +2,31 @@ name: Promote - Stage
 
 # Promote an already built image to the Stage Dokploy application. Never rebuilds.
 #
-# The private publisher dispatches this workflow with the six inputs of the publishing
-# contract. The run name is exactly publishing:<request_id> so the publisher can find
-# the run it started. Before ANY write the workflow verifies the source commit, the
-# image digest and the Development run:
+# The private publisher dispatches this workflow with the seven inputs of the publishing
+# contract (revision 2). The run name is exactly publishing:<request_id> so the
+# publisher can find the run it started. Before ANY write the workflow verifies the
+# source commit, the image digest, the Development run and the existing release
+# candidate:
 #   - source_commit is a commit of development and the stage branch can move to it
 #     without force (promote) or is an earlier commit of stage (rollback);
 #   - image is the digest CI published for sha-<source_commit>;
 #   - development_run_id is the successful CI run on development for that commit whose
 #     deploy-development job succeeded;
+#   - rc_tag is an existing annotated release candidate prepared earlier on
+#     Development (the prepare-rc job of ci.yml). It is verified and CONSUMED: it must
+#     point at source_commit and seal the same digest, development run, documentation
+#     manifest and an integer gateCycle, and the run that produced it must be a
+#     successful run on development. This workflow never mints, moves or deletes an
+#     RC tag;
 #   - on a promotion, Development runs exactly that digest right now.
 # Then the digest is deployed to the registered Stage application (title
 # "Stage <full SHA>", description "revrook-ce GitHub Actions run <run ID>"), the image
-# is tagged `stage`, the next unused annotated RC tag v27.<minor>.<patch>-rc.<n> is
-# created (an existing tag for the same commit AND image is reused) and the `stage`
-# branch is moved to the commit.
+# is tagged `stage` and the `stage` branch is moved to the commit. This Stage run is
+# recorded separately from the RC-producing run.
 #
-# Rollback is this same workflow with an earlier approved commit and its digest; there
-# is no separate rollback workflow. The database is not downgraded: name any
-# irreversible migration before rolling back.
+# Rollback is this same workflow with an earlier approved commit, its digest and its
+# own earlier RC tag; there is no separate rollback workflow and no tag is created.
+# The database is not downgraded: name any irreversible migration before rolling back.
 #
 # The human Stage decision is the native Paperclip approval that precedes the dispatch.
 # No second GitHub approval is added. See docs/ci-cd.md.
@@ -54,6 +60,10 @@ on:
         description: "Reviewed documentation manifest hash (64 hex), sealed into the RC tag."
         required: true
         type: string
+      rc_tag:
+        description: "Existing annotated release candidate tag of this candidate, v27.<minor>.<patch>-rc.<n>."
+        required: true
+        type: string
 
 permissions:
   actions: read
@@ -80,6 +90,7 @@ jobs:
       IMAGE_INPUT: ${{ inputs.image }}
       DEV_RUN_ID: ${{ inputs.development_run_id }}
       MANIFEST_SHA256: ${{ inputs.documentation_manifest_sha256 }}
+      RC_TAG: ${{ inputs.rc_tag }}
       DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
       DEV_HOST: ce-dev-revrook.theriark.dev
       STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
@@ -100,6 +111,7 @@ jobs:
           base_version="${BASH_REMATCH[1]}"
           [[ "${DEV_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::development_run_id must be a run ID (integer)"; exit 1; }
           [[ "${MANIFEST_SHA256}" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::documentation_manifest_sha256 must be 64 lowercase hex characters"; exit 1; }
+          [[ "${RC_TAG}" == "v${base_version}-rc."* && "${RC_TAG##*-rc.}" =~ ^[0-9]+$ ]] || { echo "::error::rc_tag must look like v${base_version}-rc.<n>"; exit 1; }
           digest="${IMAGE_INPUT#"${IMAGE}@"}"
           [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::image must be ${IMAGE}@sha256:<64 hex> or sha256:<64 hex>"; exit 1; }
           case "${GITHUB_REF}" in
@@ -189,6 +201,59 @@ jobs:
           rm -f jobs.tsv
           echo "Verified Development run ${DEV_RUN_ID} for ${SOURCE_SHA}"
 
+      - name: Verify and consume the existing RC tag
+        id: rc
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # Read only: this workflow never creates, moves or deletes a tag.
+          ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}")" || { echo "::error::${RC_TAG} does not exist; prepare the release candidate on Development first"; exit 1; }
+          [[ "$(jq -r '.object.type' <<<"${ref}")" == "tag" ]] || { echo "::error::${RC_TAG} is not an annotated tag"; exit 1; }
+          object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/$(jq -r '.object.sha' <<<"${ref}")")"
+          jq -e --arg t "${RC_TAG}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
+              --argjson dev "${DEV_RUN_ID}" '
+              .tag == $t and .object.type == "commit" and .object.sha == $c
+              and ((.message | fromjson) as $j
+                | ($j | type) == "object"
+                and $j.sourceCommit == $c and $j.imageDigest == $d
+                and $j.developmentRunId == $dev
+                and ($j.workflowRunId | type) == "number" and $j.workflowRunId >= 1 and $j.workflowRunId == ($j.workflowRunId | floor)
+                and $j.documentationManifestSha256 == $m
+                and ($j.gateCycle | type) == "number" and $j.gateCycle >= 1 and $j.gateCycle == ($j.gateCycle | floor))' <<<"${object}" >/dev/null || {
+            echo "::error::${RC_TAG} does not seal this commit, digest, development run, documentation manifest and an integer gateCycle"
+            exit 1
+          }
+          rc_run="$(jq -r '(.message | fromjson).workflowRunId' <<<"${object}")"
+          gate_cycle="$(jq -r '(.message | fromjson).gateCycle' <<<"${object}")"
+          # The run that produced the RC: a successful prepare-rc run of this
+          # repository on development, separate from this Stage run.
+          jq -e --arg repo "${GITHUB_REPOSITORY}" '
+              .repository.full_name == $repo
+              and .path == ".github/workflows/ci.yml"
+              and .event == "workflow_dispatch"
+              and .head_branch == "development"
+              and .status == "completed"
+              and .conclusion == "success"' <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}")" >/dev/null || {
+            echo "::error::run ${rc_run} is not a successful CI run on development that prepared ${RC_TAG}"
+            exit 1
+          }
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > rc-jobs.tsv
+          grep -Fq $'Prepare RC (tag the tested Development image)\tsuccess' rc-jobs.tsv || {
+            echo "::error::run ${rc_run} has no successful RC preparation job"
+            exit 1
+          }
+          rm -f rc-jobs.tsv
+          [[ "${rc_run}" != "${GITHUB_RUN_ID}" ]] || { echo "::error::the RC-producing run must not be this Stage run"; exit 1; }
+          {
+            echo "tag=${RC_TAG}"
+            echo "run=${rc_run}"
+            echo "gate_cycle=${gate_cycle}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Verified ${RC_TAG} (RC-producing run ${rc_run}, gate cycle ${gate_cycle})"
+
       - name: Confirm Development runs exactly this digest
         if: steps.mode.outputs.rollback != 'true'
         shell: bash
@@ -239,66 +304,6 @@ jobs:
           set -euo pipefail
           docker buildx imagetools create --tag "${IMAGE}:stage" "${IMAGE}@${DIGEST}"
 
-      - name: Create or reuse the annotated RC tag
-        id: rc
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DIGEST: ${{ steps.mode.outputs.digest }}
-          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
-        run: |
-          set -euo pipefail
-          prefix="v${BASE_VERSION}-rc."
-          # Reconcile first: every existing RC tag of this version, from the API.
-          refs="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${prefix}" --jq '.[] | [.ref, .object.type, .object.sha] | @tsv')"
-          max=0
-          reuse=""
-          while IFS=$'\t' read -r ref type sha; do
-            [[ -n "${ref}" ]] || continue
-            name="${ref#refs/tags/}"
-            number="${name#"${prefix}"}"
-            [[ "${number}" =~ ^[0-9]+$ ]] || continue
-            ((10#${number} > max)) && max=$((10#${number}))
-            [[ "${type}" == "tag" ]] || { echo "::error::${name} is not an annotated tag; refusing to continue"; exit 1; }
-            object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}")"
-            if jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" '
-                .object.sha == $c and ((.message | fromjson? // {}) | .sourceCommit == $c and .imageDigest == $d)' <<<"${object}" >/dev/null; then
-              jq -e --arg m "${MANIFEST_SHA256}" '(.message | fromjson).documentationManifestSha256 == $m' <<<"${object}" >/dev/null || {
-                echo "::error::${name} already seals this commit and image with a different documentation manifest; refusing"
-                exit 1
-              }
-              reuse="${name}"
-              break
-            fi
-          done <<<"${refs}"
-          if [[ -n "${reuse}" ]]; then
-            echo "Reusing ${reuse} (same commit and image)"
-            echo "tag=${reuse}" >> "${GITHUB_OUTPUT}"
-            echo "created=false" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-          tag="${prefix}$((max + 1))"
-          message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
-            --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" \
-            '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, documentationManifestSha256: $m}')"
-          tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
-            -f tag="${tag}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
-          [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
-          if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${tag}" -f sha="${tag_sha}" >/dev/null; then
-            # Uncertain result: reconcile by reading the ref, never create twice.
-            existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '.object.sha' || true)"
-            [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${tag}"; exit 1; }
-          fi
-          back="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}")"
-          jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg t "${tag}" '
-              .tag == $t and .object.sha == $c and ((.message | fromjson) | .sourceCommit == $c and .imageDigest == $d)' <<<"${back}" >/dev/null || {
-            echo "::error::${tag} did not read back as expected"
-            exit 1
-          }
-          echo "Created ${tag}"
-          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
-          echo "created=true" >> "${GITHUB_OUTPUT}"
-
       - name: Point the stage branch at the deployed commit
         shell: bash
         env:
@@ -323,7 +328,8 @@ jobs:
           DIGEST: ${{ steps.mode.outputs.digest }}
           PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
           ROLLBACK: ${{ steps.mode.outputs.rollback }}
-          RC_TAG: ${{ steps.rc.outputs.tag }}
+          RC_RUN: ${{ steps.rc.outputs.run }}
+          GATE_CYCLE: ${{ steps.rc.outputs.gate_cycle }}
         run: |
           set -euo pipefail
           {
@@ -336,8 +342,8 @@ jobs:
             echo "- Request: \`${REQUEST_ID}\`"
             echo "- Source commit: \`${SOURCE_SHA}\`"
             echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
-            echo "- Development run: \`${DEV_RUN_ID}\`; Stage run: \`${GITHUB_RUN_ID}\`"
-            echo "- RC tag: \`${RC_TAG}\`; documentation manifest: \`${MANIFEST_SHA256}\`"
+            echo "- Development run: \`${DEV_RUN_ID}\`; RC-producing run: \`${RC_RUN}\`; Stage run: \`${GITHUB_RUN_ID}\`"
+            echo "- RC tag consumed (not created here): \`${RC_TAG}\`; gate cycle: \`${GATE_CYCLE}\`; documentation manifest: \`${MANIFEST_SHA256}\`"
             echo "- Previous Stage image (rollback target): \`${PREVIOUS:-none}\`"
             echo "- URL: https://${STAGE_HOST}/"
             echo "- Stage branch: \`${SOURCE_SHA}\`; main is unchanged"

@@ -5,14 +5,16 @@ name: Finalize Release
 #
 # The private publisher dispatches this workflow only after the separately approved
 # release decision (a native Paperclip approval; no second GitHub approval is added).
-# Inputs are the Stage inputs plus stage_promotion_run_id and rc_tag. The run name is
-# exactly publishing:<request_id>.
+# Inputs are the seven Stage inputs (including rc_tag) plus stage_promotion_run_id. The
+# run name is exactly publishing:<request_id>.
 #
 # Before ANY write the workflow verifies: the stage branch is exactly source_commit;
 # the image is the digest published for sha-<source_commit>; the RC tag is annotated,
 # points at source_commit and its JSON message carries the same commit, digest,
-# development run, Stage run and documentation manifest; the Stage run succeeded; and
-# Stage runs exactly that digest. Then, reconciling what already exists first, it
+# development run, documentation manifest and an integer gateCycle; the RC-producing
+# run (workflowRunId of the RC) succeeded on development; the Stage run
+# (stage_promotion_run_id) is a separate successful Promote - Stage run; and Stage
+# runs exactly that digest. Then, reconciling what already exists first, it
 # writes the GHCR alias v<version> (an alias of the existing digest, never `latest`),
 # the annotated stable tag v<version> and a non-draft, non-prerelease GitHub release.
 # A retry reuses whatever already matches and refuses anything that does not.
@@ -130,6 +132,7 @@ jobs:
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Verify the digest, the RC tag, the Stage run and what Stage runs
+        id: verify
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -149,25 +152,56 @@ jobs:
             exit 1
           }
           # The RC tag: annotated, on this commit, sealing exactly this candidate.
-          ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}")"
+          ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}")" || { echo "::error::${RC_TAG} does not exist"; exit 1; }
           [[ "$(jq -r '.object.type' <<<"${ref}")" == "tag" ]] || { echo "::error::${RC_TAG} is not an annotated tag"; exit 1; }
           object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/$(jq -r '.object.sha' <<<"${ref}")")"
           jq -e --arg t "${RC_TAG}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
-              --argjson dev "${DEV_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" '
-              .tag == $t and .object.sha == $c
+              --argjson dev "${DEV_RUN_ID}" '
+              .tag == $t and .object.type == "commit" and .object.sha == $c
               and ((.message | fromjson) as $j
-                | $j.sourceCommit == $c and $j.imageDigest == $d
-                and $j.developmentRunId == $dev and $j.workflowRunId == $stage
-                and $j.documentationManifestSha256 == $m)' <<<"${object}" >/dev/null || {
-            echo "::error::${RC_TAG} does not seal this commit, digest, development run, Stage run and documentation manifest"
+                | ($j | type) == "object"
+                and $j.sourceCommit == $c and $j.imageDigest == $d
+                and $j.developmentRunId == $dev
+                and ($j.workflowRunId | type) == "number" and $j.workflowRunId >= 1 and $j.workflowRunId == ($j.workflowRunId | floor)
+                and $j.documentationManifestSha256 == $m
+                and ($j.gateCycle | type) == "number" and $j.gateCycle >= 1 and $j.gateCycle == ($j.gateCycle | floor))' <<<"${object}" >/dev/null || {
+            echo "::error::${RC_TAG} does not seal this commit, digest, development run, documentation manifest and an integer gateCycle"
             exit 1
           }
-          # The Stage run that wrote that tag.
-          jq -e '.path == ".github/workflows/promote-stage.yml" and .status == "completed" and .conclusion == "success"' \
-            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${STAGE_RUN_ID}")" >/dev/null || {
+          rc_run="$(jq -r '(.message | fromjson).workflowRunId' <<<"${object}")"
+          gate_cycle="$(jq -r '(.message | fromjson).gateCycle' <<<"${object}")"
+          [[ "${rc_run}" != "${STAGE_RUN_ID}" && "${rc_run}" != "${GITHUB_RUN_ID}" ]] || { echo "::error::the RC-producing run, the Stage run and this run must be three different runs"; exit 1; }
+          # The run that produced the RC: a successful prepare-rc run on development.
+          jq -e --arg repo "${GITHUB_REPOSITORY}" '
+              .repository.full_name == $repo
+              and .path == ".github/workflows/ci.yml"
+              and .event == "workflow_dispatch"
+              and .head_branch == "development"
+              and .status == "completed"
+              and .conclusion == "success"' <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}")" >/dev/null || {
+            echo "::error::run ${rc_run} is not a successful CI run on development that prepared ${RC_TAG}"
+            exit 1
+          }
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > rc-jobs.tsv
+          grep -Fq $'Prepare RC (tag the tested Development image)\tsuccess' rc-jobs.tsv || {
+            echo "::error::run ${rc_run} has no successful RC preparation job"
+            exit 1
+          }
+          rm -f rc-jobs.tsv
+          # The Stage run is verified separately: the successful Promote - Stage run
+          # that deployed this candidate.
+          jq -e --arg repo "${GITHUB_REPOSITORY}" '
+              .repository.full_name == $repo
+              and .path == ".github/workflows/promote-stage.yml"
+              and .status == "completed"
+              and .conclusion == "success"' <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${STAGE_RUN_ID}")" >/dev/null || {
             echo "::error::run ${STAGE_RUN_ID} is not a successful Promote - Stage run"
             exit 1
           }
+          {
+            echo "gate_cycle=${gate_cycle}"
+            echo "rc_run=${rc_run}"
+          } >> "${GITHUB_OUTPUT}"
           running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
             --header "CF-Access-Client-Id: ${CF_ID}" \
             --header "CF-Access-Client-Secret: ${CF_SECRET}" \
@@ -179,7 +213,7 @@ jobs:
             exit 1
           }
           curl --fail --silent --show-error --max-time 15 "https://${STAGE_HOST}/healthz" >/dev/null
-          echo "Verified ${RC_TAG}, Stage run ${STAGE_RUN_ID} and ${IMAGE}@${DIGEST}"
+          echo "Verified ${RC_TAG} (RC-producing run ${rc_run}), Stage run ${STAGE_RUN_ID} and ${IMAGE}@${DIGEST}"
 
       - name: Alias the existing image (no rebuild, never latest)
         shell: bash
@@ -206,6 +240,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DIGEST: ${{ steps.mode.outputs.digest }}
           BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+          GATE_CYCLE: ${{ steps.verify.outputs.gate_cycle }}
         run: |
           set -euo pipefail
           tag="v${BASE_VERSION}"
@@ -213,10 +248,11 @@ jobs:
             and ((.message | fromjson) as $j
               | $j.sourceCommit == $c and $j.imageDigest == $d
               and $j.developmentRunId == $dev and $j.stagePromotionRunId == $stage
-              and $j.rcTag == $rc and $j.documentationManifestSha256 == $m)'
+              and $j.rcTag == $rc and $j.gateCycle == $g
+              and $j.documentationManifestSha256 == $m)'
           verify() {
             jq -e --arg t "${tag}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" --arg rc "${RC_TAG}" \
-              --argjson dev "${DEV_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" "${check}" <<<"$1" >/dev/null
+              --argjson dev "${DEV_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" --argjson g "${GATE_CYCLE}" "${check}" <<<"$1" >/dev/null
           }
           # Reconcile first: an existing tag is reused only when it matches exactly.
           if ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" 2>/dev/null)"; then
@@ -227,8 +263,8 @@ jobs:
             exit 0
           fi
           message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" --arg rc "${RC_TAG}" \
-            --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" \
-            '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, stagePromotionRunId: $stage, rcTag: $rc, documentationManifestSha256: $m}')"
+            --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" --argjson g "${GATE_CYCLE}" \
+            '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, documentationManifestSha256: $m, gateCycle: $g, stagePromotionRunId: $stage, rcTag: $rc}')"
           tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
             -f tag="${tag}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
           [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
