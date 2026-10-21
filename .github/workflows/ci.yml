@@ -1,8 +1,9 @@
 name: CI
 
 # Merge gate for revrook-ce (the nine required checks from phase-plan-3), the
-# Development deployment job and the lock-file job, in ONE workflow. This
-# repository has exactly three workflows: CI, Promote - Stage, Promote - Production.
+# Development deployment job, the release-candidate job and the lock-file job, in ONE
+# workflow. This repository has exactly four workflows: CI, Promote - Stage, Finalize
+# Release and Promote - Production.
 # STRICT is "true" since phase 0 added the application: every check must run and
 # succeed, and a skipped check fails the gate. (With STRICT "false" checks whose
 # inputs do not exist are SKIPPED and reported as skipped, never as a pass.)
@@ -13,7 +14,9 @@ name: CI
 # the label "ci-go", which the CI request broker sets (one request per commit, at
 # most one per pull request every 3 minutes and 12 a day). A push to development
 # (a merge) runs the gate and then the deploy-development job. workflow_dispatch
-# with mode=ci runs the gate by hand; mode=lock runs ONLY the lock job.
+# with mode=ci runs the gate by hand; mode=lock runs ONLY the lock job; mode=prepare-rc
+# on development runs ONLY the prepare-rc job (the release candidate of the
+# publishing contract, prepared on Development before any Stage request).
 # pull_request (not pull_request_target) has a read-only token and no secrets, so
 # it is safe for every base branch, including stacked pull requests.
 on:
@@ -25,13 +28,44 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "ci runs the merge gate. lock ONLY compiles the hashed requirement files and commits them to this branch."
+        description: "ci runs the merge gate. lock ONLY compiles the hashed requirement files and commits them to this branch. prepare-rc ONLY creates the release candidate tag and prerelease on development."
         required: false
         default: ci
         type: choice
         options:
           - ci
           - lock
+          - prepare-rc
+      version:
+        description: "prepare-rc only: stable version this candidate belongs to, 27.<minor>.<patch> (a leading v is accepted)."
+        required: false
+        default: ""
+        type: string
+      source_commit:
+        description: "prepare-rc only: exact tested Development commit (full 40-character SHA)."
+        required: false
+        default: ""
+        type: string
+      image:
+        description: "prepare-rc only: immutable digest published for the commit, ghcr.io/theriark/revrook-ce@sha256:<64 hex> or sha256:<64 hex>."
+        required: false
+        default: ""
+        type: string
+      development_run_id:
+        description: "prepare-rc only: run ID of the successful CI push run on development that built and deployed the commit."
+        required: false
+        default: ""
+        type: string
+      documentation_manifest_sha256:
+        description: "prepare-rc only: reviewed documentation manifest hash (64 hex)."
+        required: false
+        default: ""
+        type: string
+      gate_cycle:
+        description: "prepare-rc only: gate cycle (integer, 1 or more) from the signed publication-gate-state."
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -56,11 +90,11 @@ jobs:
   detect:
     name: Detect which inputs exist
     # Every other gate job needs detect, so a pull request label other than ci-go
-    # and the lock mode skip the whole gate.
+    # and the lock and prepare-rc modes skip the whole gate.
     if: >-
       github.event_name == 'push' ||
       (github.event_name == 'pull_request' && github.event.label.name == 'ci-go') ||
-      (github.event_name == 'workflow_dispatch' && inputs.mode != 'lock')
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'ci')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -400,7 +434,7 @@ jobs:
       always() && (
       github.event_name == 'push' ||
       (github.event_name == 'pull_request' && github.event.label.name == 'ci-go') ||
-      (github.event_name == 'workflow_dispatch' && inputs.mode != 'lock'))
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'ci'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -514,6 +548,221 @@ jobs:
             echo "- Previous image (rollback target): \`${PREVIOUS:-none}\`"
             echo "- URL: https://${DEV_HOST}/"
             echo "- Promote to Stage with Promote - Stage (source_sha above). Roll back by running it with an earlier approved digest."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  prepare-rc:
+    name: Prepare RC (tag the tested Development image)
+    # ONLY workflow_dispatch with mode=prepare-rc on development. After the Development
+    # checks and the independent documentation review, it creates or reuses the next
+    # unused annotated release candidate tag v27.<minor>.<patch>-rc.<n> on the exact
+    # tested commit and a non-draft GitHub prerelease. It never rebuilds, never
+    # deploys and never touches stage, main or production. Promote - Stage later
+    # consumes this tag; it never creates one.
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare-rc' &&
+      github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Development secrets are needed only to read what Development runs.
+    environment: development
+    permissions:
+      actions: read
+      contents: write
+      packages: read
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      VERSION_INPUT: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source_commit }}
+      IMAGE_INPUT: ${{ inputs.image }}
+      DEV_RUN_ID: ${{ inputs.development_run_id }}
+      MANIFEST_SHA256: ${{ inputs.documentation_manifest_sha256 }}
+      GATE_CYCLE: ${{ inputs.gate_cycle }}
+      DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
+      DEV_HOST: ce-dev-revrook.theriark.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Validate the inputs and the source commit
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_commit must be a full 40-character commit SHA"; exit 1; }
+          [[ "${VERSION_INPUT}" =~ ^v?(27\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]] || { echo "::error::version must look like 27.<minor>.<patch>"; exit 1; }
+          base_version="${BASH_REMATCH[1]}"
+          [[ "${DEV_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::development_run_id must be a run ID (integer)"; exit 1; }
+          [[ "${MANIFEST_SHA256}" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::documentation_manifest_sha256 must be 64 lowercase hex characters"; exit 1; }
+          [[ "${GATE_CYCLE}" =~ ^[1-9][0-9]{0,8}$ ]] || { echo "::error::gate_cycle must be an integer of 1 or more"; exit 1; }
+          digest="${IMAGE_INPUT#"${IMAGE}@"}"
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::image must be ${IMAGE}@sha256:<64 hex> or sha256:<64 hex>"; exit 1; }
+          git fetch origin +refs/heads/development:refs/remotes/origin/development
+          git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/development || {
+            echo "::error::${SOURCE_SHA} is not a commit of development"
+            exit 1
+          }
+          {
+            echo "digest=${digest}"
+            echo "base_version=${base_version}"
+          } >> "${GITHUB_OUTPUT}"
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Verify the digest, the Development run and what Development runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          for required in DOKPLOY_URL DOKPLOY_API_KEY CF_ID CF_SECRET; do
+            [[ -n "${!required}" ]] || { echo "::error::${required} is missing from the development environment"; exit 1; }
+          done
+          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
+          [[ "${published}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
+          [[ "${published}" == "${DIGEST}" ]] || {
+            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is ${published}, not the requested ${DIGEST}; refusing"
+            exit 1
+          }
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}")"
+          jq -e --arg sha "${SOURCE_SHA}" '
+              .path == ".github/workflows/ci.yml"
+              and .event == "push"
+              and .head_branch == "development"
+              and .head_sha == $sha
+              and .status == "completed"
+              and .conclusion == "success"' <<<"${run}" >/dev/null || {
+            echo "::error::run ${DEV_RUN_ID} is not a successful CI push run on development for ${SOURCE_SHA}"
+            exit 1
+          }
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > jobs.tsv
+          grep -Fq $'Deploy Development (build once, deploy the digest)\tsuccess' jobs.tsv || {
+            echo "::error::run ${DEV_RUN_ID} has no successful Development deployment job"
+            exit 1
+          }
+          rm -f jobs.tsv
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || {
+            echo "::error::Development runs '${running}', not ${IMAGE}@${DIGEST}"
+            exit 1
+          }
+          curl --fail --silent --show-error --max-time 15 "https://${DEV_HOST}/healthz" >/dev/null
+          echo "Verified ${IMAGE}@${DIGEST}, Development run ${DEV_RUN_ID} and the running Development image"
+      - name: Create or reuse the annotated RC tag
+        id: rc
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          prefix="v${BASE_VERSION}-rc."
+          # Reconcile first: every existing RC tag of this version, from the API.
+          refs="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${prefix}" --jq '.[] | [.ref, .object.type, .object.sha] | @tsv')"
+          max=0
+          reuse=""
+          while IFS=$'\t' read -r ref type sha; do
+            [[ -n "${ref}" ]] || continue
+            name="${ref#refs/tags/}"
+            number="${name#"${prefix}"}"
+            [[ "${number}" =~ ^[0-9]+$ ]] || continue
+            ((10#${number} > max)) && max=$((10#${number}))
+            [[ "${type}" == "tag" ]] || { echo "::error::${name} is not an annotated tag; refusing to continue"; exit 1; }
+            object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}")"
+            if jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" '
+                .object.sha == $c and ((.message | fromjson? // {}) | .sourceCommit == $c and .imageDigest == $d)' <<<"${object}" >/dev/null; then
+              jq -e --arg m "${MANIFEST_SHA256}" --argjson g "${GATE_CYCLE}" '
+                  (.message | fromjson) as $j | $j.documentationManifestSha256 == $m and $j.gateCycle == $g' <<<"${object}" >/dev/null || {
+                echo "::error::${name} already seals this commit and image with a different documentation manifest or gate cycle; refusing"
+                exit 1
+              }
+              # Reusable only when the run that produced it succeeded. A tag left by
+              # a failed run stays as history and the next number is minted; an
+              # unreadable or unfinished run is uncertain and stops here.
+              prior="$(jq -r '(.message | fromjson).workflowRunId' <<<"${object}")"
+              conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${prior}" --jq '.conclusion // "unfinished"')"
+              [[ "${conclusion}" != "unfinished" ]] || { echo "::error::${name} was produced by run ${prior}, which has not finished; reconcile before retrying"; exit 1; }
+              if [[ "${conclusion}" == "success" ]]; then
+                reuse="${name}"
+                break
+              fi
+              echo "::notice::${name} was produced by run ${prior} (${conclusion}); not reusable"
+            fi
+          done <<<"${refs}"
+          if [[ -n "${reuse}" ]]; then
+            echo "Reusing ${reuse} (same commit, image, manifest and gate cycle)"
+            echo "tag=${reuse}" >> "${GITHUB_OUTPUT}"
+            echo "created=false" >> "${GITHUB_OUTPUT}"
+          else
+            tag="${prefix}$((max + 1))"
+            message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
+              --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" --argjson cycle "${GATE_CYCLE}" \
+              '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, documentationManifestSha256: $m, gateCycle: $cycle}')"
+            tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+              -f tag="${tag}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
+            [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
+            if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${tag}" -f sha="${tag_sha}" >/dev/null; then
+              # Uncertain result: reconcile by reading the ref, never create twice.
+              existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '.object.sha' || true)"
+              [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${tag}"; exit 1; }
+            fi
+            back="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}")"
+            jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg t "${tag}" --argjson g "${GATE_CYCLE}" '
+                .tag == $t and .object.sha == $c
+                and ((.message | fromjson) | .sourceCommit == $c and .imageDigest == $d and .gateCycle == $g)' <<<"${back}" >/dev/null || {
+              echo "::error::${tag} did not read back as expected"
+              exit 1
+            }
+            echo "Created ${tag}"
+            echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+            echo "created=true" >> "${GITHUB_OUTPUT}"
+          fi
+      - name: Create or reuse the GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          RC_TAG: ${{ steps.rc.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if release="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RC_TAG}" 2>/tmp/release.err)"; then
+            jq -e --arg t "${RC_TAG}" '.tag_name == $t and .draft == false and .prerelease == true' <<<"${release}" >/dev/null || {
+              echo "::error::release ${RC_TAG} exists but is a draft or a stable release; refusing to change it"
+              exit 1
+            }
+            echo "Reusing existing prerelease ${RC_TAG}"
+          else
+            grep -q "Not Found" /tmp/release.err || { echo "::error::could not read release ${RC_TAG}: $(cat /tmp/release.err)"; exit 1; }
+            gh release create "${RC_TAG}" --verify-tag --prerelease --title "revrook CE ${RC_TAG}" \
+              --notes "Release candidate. Image: \`${IMAGE}@${DIGEST}\` (source ${SOURCE_SHA}). Prepared on Development without a rebuild; not promoted to Stage."
+          fi
+          rm -f /tmp/release.err
+          jq -e --arg t "${RC_TAG}" '.tag_name == $t and .draft == false and .prerelease == true' \
+            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RC_TAG}")" >/dev/null || {
+            echo "::error::release ${RC_TAG} does not read back as a published prerelease"
+            exit 1
+          }
+          {
+            echo "## revrook-ce release candidate ${RC_TAG}"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\` (annotated tag \`${RC_TAG}\`)"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
+            echo "- Development run: \`${DEV_RUN_ID}\`; RC-producing run: \`${GITHUB_RUN_ID}\`; gate cycle: \`${GATE_CYCLE}\`"
+            echo "- Documentation manifest: \`${MANIFEST_SHA256}\`"
+            echo "- No Stage promotion, no stable release; stage and main unchanged"
           } >> "${GITHUB_STEP_SUMMARY}"
 
   lock:
