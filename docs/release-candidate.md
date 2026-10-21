@@ -5,6 +5,33 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
+## Update of 2026-10-21 (commit `c41125fd`)
+
+Read again against the `development` head `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac`,
+which the Development site ran on that day as the image
+`ghcr.io/theriark/revrook-ce@sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333`
+(the digest the registry returns for the tag `sha-<commit>`; the deployment job
+deploys the digest of that build). The findings below stand; what changed since the
+first reading:
+
+- Development is deployed automatically after every merge into `development`
+  ([ci-cd.md](ci-cd.md)), so finding R5 is answered for that day by the live site: the
+  pages link the stylesheets with the version query of this commit.
+- The release path now has a release candidate step: after the Development checks,
+  the complete documentation set ([release-notes.md](release-notes.md), the
+  [guides](guides/README.md) and the capture manifest of the screenshots), the
+  Nextcloud copy of that set and its independent review, an annotated tag
+  `v27.<minor>.<patch>-rc.<n>` and a GitHub prerelease are to be created for the exact
+  tested commit and image, without deploying Stage or publishing a stable version. No
+  such tag exists yet: the first label is pending, and the workflows that create it
+  and that promote a reviewed candidate to Stage are in an open pull request of the
+  platform engineer and not yet on `development`. Stage promotion and the stable
+  release stay separate decisions with their own approval.
+- The known limits of the candidate are listed in [release-notes.md](release-notes.md):
+  321 unverified mapping rows, no importer for `PC-END-03` and `PC-END-05`, no PDF
+  export, the open copyright holder name of the MIT licence, and the open branch
+  protection (finding R9 and the hardening note of [ci-cd.md](ci-cd.md)).
+
 ## Status
 
 - No version is released: there is no tag, no GitHub release and no published image.
