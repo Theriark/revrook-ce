@@ -77,6 +77,12 @@ def without_comments(css: str) -> str:
     return re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
 
 
+def media_blocks(until: int, css: str = FOLLOW_UP) -> list[str]:
+    """The bodies of the blocks from 768px up to this width."""
+    query = rf"@media \(min-width: 768px\) and \(max-width: {until}px\) "
+    return re.findall(query + r"\{(.*?)\n\}\n", css, re.DOTALL)
+
+
 # --- the follow-up stylesheet -----------------------------------------------------
 
 
@@ -247,27 +253,38 @@ async def test_adding_and_closing_an_exception_and_saving_details_say_so(
 
 
 def test_the_export_history_and_the_schedules_are_cards_below_the_sidebar() -> None:
-    found = re.search(
-        r"@media \(min-width: 768px\) and \(max-width: 1023px\) \{(.*?)\n\}\n",
-        FOLLOW_UP,
-        re.DOTALL,
-    )
-    assert found is not None
-    cards = found.group(1)
+    # The export history fits as a table beside the sidebar, so its cards end at
+    # 1023px; the schedules have their own block, to 1099px (the live retest).
+    narrow = media_blocks(1023)
+    assert len(narrow) == 1
+    cards = narrow[0]
     assert re.search(r"main table\.rv-exports,\n(.*\n)*?    display: block;", cards)
-    assert re.search(r"main table\.rv-schedules,\n(.*\n)*?    display: block;", cards)
     assert "content: attr(data-label);" in cards
-    assert "main .rv-exports td[data-label]::before," in cards
+    assert "main .rv-exports td[data-label]::before {" in cards
+    assert "main .rv-exports td:empty {\n    display: none;" in cards
+    assert "\n  .rv-exports thead th {\n    position: static;" in cards
     # An export is one card a row (a digest keeps one line); schedules two a row.
+    assert "display: grid;" not in cards
+    assert "rv-schedules" not in cards
+    wide = media_blocks(1099)
+    assert len(wide) == 1
+    grid = wide[0]
+    assert re.search(r"main table\.rv-schedules,\n(.*\n)*?    display: block;", grid)
+    assert "content: attr(data-label);" in grid
+    assert "main .rv-schedules td[data-label]::before {" in grid
+    assert "main .rv-schedules td:empty {\n    display: none;" in grid
+    assert "\n  .rv-schedules thead th {\n    position: static;" in grid
     assert re.search(
         r"\.rv-schedules tbody \{\n    display: grid;\n"
         r"    grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);",
-        cards,
+        grid,
     )
     assert (
         "grid-template-columns: repeat(2, minmax(0, 1fr));"
-        not in cards.split(".rv-schedules tbody {")[0]
+        not in grid.split(".rv-schedules tbody {")[0]
     )
+    assert "main .rv-schedules tbody tr {\n    margin-bottom: 0;" in grid
+    assert "rv-exports" not in grid
     assert "white-space: nowrap;" in rule(".rv-schedules code")
     # The tables carry the classes the rules address, and a cron is a code element.
     exports = (TEMPLATES / "exports.html").read_text(encoding="utf-8")
@@ -449,13 +466,10 @@ def test_the_counts_of_an_import_scroll_inside_their_card() -> None:
 # --- D2: the checklist at 768px -----------------------------------------------------
 
 
-def test_the_checklist_fits_between_768_and_1023px() -> None:
-    blocks = re.findall(
-        r"@media \(min-width: 768px\) and \(max-width: 1023px\) \{(.*?)\n\}\n",
-        FOLLOW_UP,
-        re.DOTALL,
-    )
-    checklist = [block for block in blocks if "main .rv-checklist th," in block]
+def test_the_checklist_fits_between_768_and_1079px() -> None:
+    # Six columns need 747px; the page gives 720px at 768px and 712px beside the
+    # sidebar at 1024px (the live retest), so the padding is reduced to 1079px.
+    checklist = [block for block in media_blocks(1079) if "rv-checklist" in block]
     assert len(checklist) == 1
     assert re.search(
         r"main \.rv-checklist th,\n  main \.rv-checklist td \{\n"
@@ -465,6 +479,7 @@ def test_the_checklist_fits_between_768_and_1023px() -> None:
     assert re.search(
         r"\.rv-checklist \.rv-coverage \{\n    white-space: normal;", checklist[0]
     )
+    assert "rv-checklist" not in "".join(media_blocks(1023))
     # The sticky head and the cards below 768px of revrook.css stay as they are.
     assert "white-space: nowrap;" in rule(".rv-coverage", CSS)
     assert re.search(r"\n  main table\.rv-checklist,\n  \.rv-checklist tbody,", CSS)
@@ -544,12 +559,7 @@ def test_the_exceptions_register_never_widens_the_page() -> None:
     assert "overflow-x: auto;" in rule(".rv-table-scroll", CSS)
     # Seven columns need 804px; the page gives 704px at 768px and 712px beside
     # the sidebar at 1024px, so the rows are cards until 1280px (968px of page).
-    blocks = re.findall(
-        r"@media \(min-width: 768px\) and \(max-width: 1279px\) \{(.*?)\n\}\n",
-        FOLLOW_UP,
-        re.DOTALL,
-    )
-    cards = [block for block in blocks if "main table.rv-exceptions," in block]
+    cards = [b for b in media_blocks(1279) if "main table.rv-exceptions," in b]
     assert len(cards) == 1
     assert re.search(
         r"main table\.rv-exceptions,\n(.*\n)*?    display: block;", cards[0]
@@ -570,6 +580,48 @@ def test_the_exceptions_register_never_widens_the_page() -> None:
     # Every cell of a row names its column, so a card reads whole.
     for label in ("Owner", "Reason", "Compensating control", "Review date", "State"):
         assert f'<td data-label="{label}"' in exceptions, label
+
+
+# --- After the deploy of F1: the other wide tables beside the sidebar ---------------
+
+# Measured on Development after the deploy of F1, in the sweep of every page at
+# 320, 390, 768, 769, 800, 1024 and 1440px: from 1024px the page is 312px
+# narrower than the window (712px at 1024px, with the sidebar), and two tables
+# that fit from 768px to 1023px pushed the page sideways there: the schedules by
+# 24px and the checklist by 3px. The width of each table at its narrowest, and
+# the last window width of its cards (the schedules) or of its reduced padding
+# (the checklist, 48px less over six columns).
+PAGE_BESIDE_THE_SIDEBAR = 712
+SIDEBAR_WINDOW = 1024
+WIDE_TABLES = {
+    "rv-schedules": (768, 1099),
+    "rv-exceptions": (804, 1279),
+}
+CHECKLIST = (747, 1079)
+
+
+def test_the_wide_tables_are_cards_until_the_page_beside_the_sidebar_fits() -> None:
+    for table, (width, until) in WIDE_TABLES.items():
+        fits_from = SIDEBAR_WINDOW + width - PAGE_BESIDE_THE_SIDEBAR
+        assert until + 1 >= fits_from, table
+        block = [b for b in media_blocks(until) if f"main table.{table}," in b]
+        assert len(block) == 1, table
+        assert "display: block;" in block[0], table
+    width, until = CHECKLIST
+    assert until + 1 >= SIDEBAR_WINDOW + width - PAGE_BESIDE_THE_SIDEBAR
+    padded = [b for b in media_blocks(until) if "main .rv-checklist th," in b]
+    assert len(padded) == 1 and "padding-left: 8px;" in padded[0]
+    # The export history fits beside the sidebar (712px at 1024px) and is the
+    # only table whose cards end at 1023px.
+    narrow = media_blocks(1023)
+    assert len(narrow) == 1 and "main table.rv-exports," in narrow[0]
+    for other in ("rv-schedules", "rv-checklist", "rv-exceptions"):
+        assert other not in narrow[0], other
+    # No template changed for this: the tables keep the classes the rules address.
+    system = (TEMPLATES / "system.html").read_text(encoding="utf-8")
+    checklist = (TEMPLATES / "checklist.html").read_text(encoding="utf-8")
+    assert '<table id="schedules" class="rv-table-cards rv-schedules">' in system
+    assert '<table id="checklist" class="rv-checklist">' in checklist
 
 
 # --- F2 (live retest THE-524): the border of a field against the canvas -------------
