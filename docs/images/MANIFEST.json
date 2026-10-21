@@ -1,14 +1,25 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "product": "revrook-ce",
   "repository": "Theriark/revrook-ce",
-  "documentationRevision": "feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
-  "sourceCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-  "sourceCommitEvidence": "origin/development head at capture time; the live pages link revrook.css?v=2977dd4c6d13, which equals asset_version() computed from the static files of this commit; CI run 39565730325 (push to development) is green",
-  "imageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-  "imageDigestEvidence": "manifest digest returned by ghcr.io for ghcr.io/theriark/revrook-ce:sha-c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac on 2026-10-21 (the deploy-development job deploys IMAGE@<build digest> of that tag); the Dokploy deployment record itself was not readable from this task",
+  "documentationRevision": "feat/revrook-ce-the-578-docs2 (THE-645, 2026-10-21); first capture on feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
+  "identities": {
+    "note": "Two identities, kept distinct. The capture-time facts say what the Development site ran when a picture was taken (each picture also carries its own). The deployed Development candidate is a later development commit with its own image, read from the deployment receipt. No match between a capture-time image and the deployed image is claimed; the commits between the capture-time commit and the documentation head changed documentation only, so the pictures show the same application pages.",
+    "captureTime": {
+      "sourceCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "sourceCommitEvidence": "head of origin/development at the time of the first capture (2026-10-21 13:00 to 13:11 Europe/Lisbon); the live pages linked revrook.css?v=2977dd4c6d13, which equals asset_version() computed from the static files of this commit; CI run 39565730325 (push to development) was green",
+      "imageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "imageDigestEvidence": "manifest digest returned by ghcr.io for ghcr.io/theriark/revrook-ce:sha-c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac on 2026-10-21 (the deploy-development job deploys IMAGE@<build digest> of that tag); the Dokploy deployment record itself was not readable from that task"
+    },
+    "deployedDevelopmentCandidate": {
+      "commit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
+      "imageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
+      "evidence": "deployment receipt of the Development environment (VM-09): CI run 39601882209, deployed 2026-10-21T12:55:26Z, image ghcr.io/theriark/revrook-ce@sha256:b5d6faed... with its revision label verified against the commit; re-read on 2026-10-21 from task THE-645",
+      "digestMatchClaimed": false
+    }
+  },
   "applicationVersionShown": "0.0.0.dev0 (the System page and revrook_build_info)",
-  "releaseCandidate": "pending: no v27.<minor>.<patch>-rc.<n> tag exists yet",
+  "releaseCandidate": "no tag exists in the repository (checked on 2026-10-21); the planned tag form is v27.<minor>.<patch>-rc.<n>, minted by the prepare-rc job; the labels v27.0.0-rc.<n> used so far name the review folders of the documentation package in Nextcloud, not tags",
   "environment": "https://ce-dev-revrook.theriark.dev",
   "timezone": "Europe/Lisbon (UTC+01:00 on the capture day)",
   "browser": "Theriark browser tools (Playwright, Chrome), CSS-pixel scale",
@@ -27,6 +38,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:00:18+01:00",
       "capturedAtUtc": "2026-10-21T12:00:18Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
       ]
@@ -44,6 +57,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:01:08+01:00",
       "capturedAtUtc": "2026-10-21T12:01:08Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
       ]
@@ -61,6 +76,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:01:32+01:00",
       "capturedAtUtc": "2026-10-21T12:01:32Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
       ]
@@ -78,6 +95,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:02:01+01:00",
       "capturedAtUtc": "2026-10-21T12:02:01Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/04-checklist-and-control-notes.md"
       ]
@@ -95,6 +114,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:02:35+01:00",
       "capturedAtUtc": "2026-10-21T12:02:35Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/04-checklist-and-control-notes.md"
       ]
@@ -112,6 +133,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:02:51+01:00",
       "capturedAtUtc": "2026-10-21T12:02:51Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/03-import-evidence.md"
       ]
@@ -129,6 +152,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:03:20+01:00",
       "capturedAtUtc": "2026-10-21T12:03:20Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/05-exceptions.md"
       ]
@@ -146,6 +171,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:03:40+01:00",
       "capturedAtUtc": "2026-10-21T12:03:40Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/06-reports-and-exports.md"
       ]
@@ -163,6 +190,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:04:08+01:00",
       "capturedAtUtc": "2026-10-21T12:04:08Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/06-reports-and-exports.md"
       ]
@@ -180,6 +209,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:04:28+01:00",
       "capturedAtUtc": "2026-10-21T12:04:28Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/06-reports-and-exports.md"
       ]
@@ -197,6 +228,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:04:47+01:00",
       "capturedAtUtc": "2026-10-21T12:04:47Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/01-first-start.md",
         "docs/guides/07-settings-system-and-glossary.md"
@@ -215,6 +248,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:05:06+01:00",
       "capturedAtUtc": "2026-10-21T12:05:06Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/07-settings-system-and-glossary.md"
       ]
@@ -232,6 +267,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:05:43+01:00",
       "capturedAtUtc": "2026-10-21T12:05:43Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/03-import-evidence.md"
       ]
@@ -249,6 +286,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:06:04+01:00",
       "capturedAtUtc": "2026-10-21T12:06:04Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/03-import-evidence.md"
       ]
@@ -266,6 +305,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:06:43+01:00",
       "capturedAtUtc": "2026-10-21T12:06:43Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/03-import-evidence.md"
       ]
@@ -283,6 +324,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:07:03+01:00",
       "capturedAtUtc": "2026-10-21T12:07:03Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/07-settings-system-and-glossary.md"
       ]
@@ -300,6 +343,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:07:18+01:00",
       "capturedAtUtc": "2026-10-21T12:07:18Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/07-settings-system-and-glossary.md"
       ]
@@ -317,6 +362,8 @@
       "viewportWidth": 768,
       "capturedAt": "2026-10-21T13:08:08+01:00",
       "capturedAtUtc": "2026-10-21T12:08:08Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
       ]
@@ -334,6 +381,8 @@
       "viewportWidth": 390,
       "capturedAt": "2026-10-21T13:08:25+01:00",
       "capturedAtUtc": "2026-10-21T12:08:25Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
       ]
@@ -351,6 +400,8 @@
       "viewportWidth": 390,
       "capturedAt": "2026-10-21T13:08:48+01:00",
       "capturedAtUtc": "2026-10-21T12:08:48Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
       ]
@@ -368,6 +419,8 @@
       "viewportWidth": 390,
       "capturedAt": "2026-10-21T13:09:13+01:00",
       "capturedAtUtc": "2026-10-21T12:09:13Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/04-checklist-and-control-notes.md"
       ]
@@ -385,6 +438,8 @@
       "viewportWidth": 390,
       "capturedAt": "2026-10-21T13:09:53+01:00",
       "capturedAtUtc": "2026-10-21T12:09:53Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/01-first-start.md"
       ]
@@ -402,6 +457,8 @@
       "viewportWidth": 1440,
       "capturedAt": "2026-10-21T13:10:54+01:00",
       "capturedAtUtc": "2026-10-21T12:10:54Z",
+      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
       "usedBy": [
         "docs/guides/01-first-start.md"
       ]
@@ -425,6 +482,16 @@
       "reason": "State-changing actions on the shared Development data were not performed for this capture; the pages that hold the forms are captured"
     }
   ],
+  "knownResidue": [
+    {
+      "file": [
+        "home-1440.png",
+        "home-390.png"
+      ],
+      "what": "Recent changes lists audit entries of clients that earlier automated tests added and deleted (named 'a deleted client (client 9)' and so on), and the client 'QA Retest Client THE-504' is a synthetic test client that is still present",
+      "why kept": "audit entries are kept by design after a client is deleted and cannot be removed without deleting the database, which is not a supported action on the shared Development installation; on 2026-10-21 at 20:10 Europe/Lisbon the live Home listed further deleted clients (11 and 12) from later tests, so a new capture would show more residue, not less. The pictures of the first capture are kept; nothing in them was edited"
+    }
+  ],
   "unchanged": [
     {
       "area": "Brand assets (app/static/brand)",
@@ -433,6 +500,18 @@
     {
       "area": "Report HTML files",
       "reason": "Rendered byte for byte from a snapshot; described in docs/reports.md, golden files in tests/golden/reports"
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-21",
+      "task": "THE-580",
+      "change": "first capture of 23 pictures at commit c41125fd / digest sha256:d7be8309"
+    },
+    {
+      "date": "2026-10-21",
+      "task": "THE-645",
+      "change": "schema 2: capture-time facts and the deployed Development candidate stated as distinct identities, each picture carries the commit and digest it was taken at, release candidate wording corrected, known residue of the Home pictures recorded"
     }
   ]
 }
