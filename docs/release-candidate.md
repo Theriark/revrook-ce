@@ -47,9 +47,11 @@ maintainers, and `verify-mappings --strict` is the gate if they want one.
 
 ## Release workflow check
 
-Read from `.github/workflows/ci.yml`, `promote-stage.yml` and `promote-production.yml`
-and compared with the release pipeline of the plan. The three files are unchanged by this
-work, and `.github/workflows` holds exactly those three.
+Read from `.github/workflows/ci.yml`, `promote-stage.yml`, `finalize-release.yml` and
+`promote-production.yml` and compared with the release pipeline of the plan.
+`.github/workflows` holds exactly those four files; `finalize-release.yml` and the
+`prepare-rc` job of `ci.yml` were added for the publishing contract (see
+[ci-cd.md](ci-cd.md)), and `promote-production.yml` is unchanged.
 
 | What the plan says | What the workflows do | Match |
 | --- | --- | --- |
@@ -57,10 +59,10 @@ work, and `.github/workflows` holds exactly those three.
 | The image is built once, tagged with the commit SHA, pushed, and its digest recorded | `deploy-development` (a merge to `development`, after the whole gate, and only while the repository variable `DEPLOY_DEVELOPMENT_ENABLED` is `true`) builds once, pushes only `sha-<commit>` (never `latest`) and writes the digest into the run summary | Yes (R5) |
 | Development deploys that digest | The `dokploy-deploy` action deploys `image@digest`, checks the host and the health URL and records the previous image | Yes |
 | Stage promotes the same digest on explicit request | `promote-stage.yml` is `workflow_dispatch` only, needs the current head of `development`, resolves the digest of `sha-<commit>`, confirms that Development runs exactly it, deploys it to Stage without a rebuild, tags `stage` and fast-forwards the `stage` branch | Yes |
-| Rollback redeploys the previous approved digest | `promote-stage.yml` with an earlier commit and its digest: it refuses a digest that is not the image of that commit, and the database is not downgraded | Yes |
+| Rollback redeploys the previous approved digest | `promote-stage.yml` with an earlier commit, its digest and its earlier RC: it refuses a digest that is not the image of that commit, creates no tag, and the database is not downgraded | Yes |
 | Production only after the founders authorise it | `promote-production.yml`: a guard fails while `PRODUCTION_ENABLED` is `false`; it must be dispatched from `stage`, the `stage` branch must be the source commit and Stage must run the digest; it then aliases `v<version>`, fast-forwards `main` and creates the GitHub release | Yes (R1, R2) |
-| One delivery run at a time, none cancelled while live | All three share the group `revrook-ce-delivery` with cancel-in-progress off; pull request runs have their own group, which supersedes older runs | Yes |
-| The plan names a `release.yml` | There is none; its steps are in the three files above, as `docs/ci-cd.md` states | Deviation, accepted (R3) |
+| One delivery run at a time, none cancelled while live | All four share the group `revrook-ce-delivery` with cancel-in-progress off for every run except a pull request; pull request runs have their own group, which supersedes older runs | Yes |
+| The plan names a `release.yml` | There is none; its steps are in the four files above, as `docs/ci-cd.md` states | Deviation, accepted (R3) |
 
 Findings. None is fixed here: the workflow files belong to the platform engineer.
 
@@ -77,9 +79,11 @@ Findings. None is fixed here: the workflow files belong to the platform engineer
   commit still says `0.0.0.dev0` in these files, it would tag an image whose
   `revrook_build_info` says `0.0.0.dev0`. Suggested: a guard step that reads both files
   at the source commit and fails when either differs from the input.
-- **R3, no `release.yml`.** The repository has exactly three workflows by decision, so
-  the build, the digest and the tag live in `ci.yml`, `promote-stage.yml` and
-  `promote-production.yml`. No change needed.
+- **R3, no `release.yml`.** The repository has exactly four workflows by decision, so
+  the build, the digest and the release candidate live in `ci.yml` (the `prepare-rc`
+  job), the Stage promotion in `promote-stage.yml`, the stable tag in
+  `finalize-release.yml` and the production recipe in `promote-production.yml`. No
+  change needed.
 - **R4, a known limit that was never exercised.** Moving `main` or `stage` with the
   workflow token is refused by GitHub when the move changes a file under
   `.github/workflows` (`docs/ci-cd.md`). In the production workflow the alias is written
