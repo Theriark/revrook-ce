@@ -159,3 +159,13 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
   background-color: var(--rv-charcoal);
   border-color: var(--rv-charcoal);
 }
+
+/* A link that keyboard focus scrolls into view stops 48px short of the right edge
+   of its strip, as wide as the fade, so its focus ring is never under the fade
+   (which takes no pointer and sits above the links). The main navigation scrolls
+   in nav.rv-nav; the client tabs in the nav of .rv-tabs-strip */
+.rv-header nav,
+.rv-nav,
+.rv-tabs-strip > nav {
+  scroll-padding-right: 48px;
+}

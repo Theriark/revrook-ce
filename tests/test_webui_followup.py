@@ -248,3 +248,20 @@ async def test_an_unknown_address_is_the_problem_page_with_the_database_down(
     assert structure_problems(missing.text) == []
     assert wrong.status_code == 405 and "GET" in wrong.headers["allow"]
     assert 'class="rv-nav"' not in wrong.text
+
+
+# --- L2: a focused link is never under the fade -------------------------------------
+
+
+def test_keyboard_focus_scrolls_a_link_clear_of_the_fade() -> None:
+    padded = rule(".rv-header nav,\n.rv-nav,\n.rv-tabs-strip > nav")
+    assert "scroll-padding-right: 48px;" in padded
+    # The padding equals the fade, which takes no pointer; the strips scroll in
+    # these very elements (revrook.css).
+    assert "width: 48px;" in rule(".rv-nav-strip::after", CSS)
+    assert "pointer-events: none;" in rule(".rv-nav-strip::after", CSS)
+    assert "overflow-x: auto;" in rule(".rv-header nav,\n.rv-nav", CSS)
+    assert "overflow-x: auto;" in rule("main nav", CSS)
+    assert '<div class="rv-tabs-strip">\n<nav class="rv-client-nav"' in (
+        TEMPLATES / "_client_nav.html"
+    ).read_text(encoding="utf-8")
