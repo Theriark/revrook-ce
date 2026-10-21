@@ -93,6 +93,18 @@ SYSTEM_ACTOR = "The worker"
 UNKNOWN_ACTOR = "A removed user"
 
 
+def deleted_client_name(client_id: int) -> str:
+    """How an entry of the audit trail names a client that is gone.
+
+    Deleting a client removes every row of it, its name included, and the audit
+    trail keeps counts and never content (tests/test_evidence_deletion.py checks
+    that the name is gone from a dump of the database). So the name cannot be
+    shown again; the number of the client is what tells the entries of one
+    deleted client from those of another.
+    """
+    return f"{DELETED_CLIENT} (client {client_id})"
+
+
 # --- the posture ring ---------------------------------------------------------------
 
 
@@ -818,7 +830,7 @@ def change_lines(
         name = ""
         href = ""
         if client_id is not None:
-            name = client_names.get(client_id, DELETED_CLIENT)
+            name = client_names.get(client_id) or deleted_client_name(client_id)
             if client_id in client_names and event.action != "client.deleted":
                 page = EVENT_PAGES.get(event.action)
                 href = f"/clients/{client_id}" + (f"/{page}" if page else "")

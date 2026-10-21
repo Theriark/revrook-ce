@@ -27,11 +27,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from app.db import make_engine
 from app.evidence.service import EvidenceContext
 from app.main import create_app, is_page_address
+from app.models import AuditEvent
 from app.security import SESSION_COOKIE
 from app.settings import Settings
 from app.ui.auth import templates
 from app.ui.brand import ASSET_FILES, BRAND_FILES
 from app.ui.clients import EXCEPTION_DONE
+from app.ui.dashboard import DELETED_CLIENT, change_lines, deleted_client_name
 from app.ui.profiles import RESULT_TEMPLATE
 from app.ui.reports import DETAILS_SAVED
 from helpers import NOW
@@ -378,3 +380,39 @@ def test_the_checklist_fits_between_768_and_1023px() -> None:
     # The sticky head and the cards below 768px of revrook.css stay as they are.
     assert "white-space: nowrap;" in rule(".rv-coverage", CSS)
     assert re.search(r"\n  main table\.rv-checklist,\n  \.rv-checklist tbody,", CSS)
+
+
+# --- D3: the entries of a deleted client on Home ------------------------------------
+
+
+def test_the_entries_of_a_deleted_client_are_told_apart_by_its_number() -> None:
+    # The name itself is gone with the client (deletion removes every row of it
+    # and the audit trail keeps counts only), so the number names the client.
+    when = NOW - timedelta(minutes=5)
+    events = [
+        AuditEvent(
+            occurred_at=when,
+            actor_user_id=1,
+            action="evidence.added",
+            target_type=None,
+            target_id=None,
+            detail={"client_id": 7, "source_code": "x"},
+        ),
+        AuditEvent(
+            occurred_at=when,
+            actor_user_id=None,
+            action="client.deleted",
+            target_type="client",
+            target_id="9",
+            detail={"items": 2},
+        ),
+    ]
+    lines = change_lines(events, {3: "Still here Ltd"}, {1: "admin"}, NOW)
+    assert lines[0].client_name == "a deleted client (client 7)"
+    assert lines[1].client_name == "a deleted client (client 9)"
+    assert lines[0].client_name != lines[1].client_name
+    assert lines[0].href == "" and lines[1].href == ""
+    assert deleted_client_name(7).startswith(DELETED_CLIENT)
+    # The template writes "<words> for <client>", so the entry reads as a sentence.
+    home = (TEMPLATES / "home.html").read_text(encoding="utf-8")
+    assert "{{ line.words }}{% if line.client_name %} for " in home
