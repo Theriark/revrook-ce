@@ -5,22 +5,30 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
-## Update of 2026-10-21 (commit `c41125fd`)
+## Update of 2026-10-21 (read against commit `c41125fd`)
 
-Read again against commit `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac`, the head of
-`development` at the time of reading, which the Development site ran on that day as the
-image
-`ghcr.io/theriark/revrook-ce@sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333`
-(the digest the registry returns for the tag `sha-<commit>`; the deployment job
-deploys the digest of that build). `development` has moved on since (the publishing
-workflows below were merged after this reading, and every later merge deploys a new
-image of its own commit); the commit and the digest that become the first candidate are
-fixed only when the release candidate step runs, and are read then, not from this page.
-The findings below stand; what changed since the first reading:
+Read again on 2026-10-21 against commit `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac`,
+the head of `development` at the time of that reading. Two sets of facts from that day
+are recorded here and must not be confused:
 
-- Development is deployed automatically after every merge into `development`
-  ([ci-cd.md](ci-cd.md)), so finding R5 is answered for that day by the live site: the
-  pages link the stylesheets with the version query of this commit.
+| Fact | Commit | Image digest | How it was read |
+| --- | --- | --- | --- |
+| Capture-time facts (this reading, the screenshots of the [guides](guides/README.md) and their [capture manifest](images/README.md)) | `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac` | `sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333` | the pages of the Development site linked the stylesheets with the version query of this commit; the digest is the one the registry returned for the tag `sha-c41125fd...` on that day. Four pictures (Settings, the preview page and the two of the rendered review) were captured again between 20:31 and 20:33 Europe/Lisbon while the deployed candidate below was running; the manifest marks them with its commit and digest, read from the receipt |
+| Deployed Development candidate (later the same day) | `f143e3db58fced1d8c993fe891174a8bb6f12873` | `sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0` | the deployment receipt of the Development environment (CI run 39601882209, deployed 2026-10-21T12:55:26Z); re-read on 2026-10-21 |
+
+The capture-time commit and digest are what the site ran when the pictures were taken.
+The deployed candidate is a later `development` commit with its own image; the two are
+different identities and no match between them is claimed. The documentation commits
+merged after the candidate have no CI push run and no image of their own in the
+deployment receipt (observed; the cause is not verified here), so nothing was
+redeployed for them. The commit and the digest that become the first release
+candidate are fixed only when the release candidate step runs, and are read then, not
+from this page. The findings below stand; what changed since the first reading:
+
+- Development is deployed automatically after every merge into `development` that
+  changes the application ([ci-cd.md](ci-cd.md)), so finding R5 is answered for that
+  day by the live site: the pages link the stylesheets with the version query of the
+  commit they run.
 - The release path now has a release candidate step, on `development`: after the
   Development checks, the complete documentation set
   ([release-notes.md](release-notes.md), the [guides](guides/README.md) and the capture
@@ -29,9 +37,11 @@ The findings below stand; what changed since the first reading:
   `v27.<minor>.<patch>-rc.<n>` and a GitHub prerelease for the exact tested commit and
   image, without deploying Stage or publishing a stable version; `promote-stage.yml`
   consumes that tag and `finalize-release.yml` turns it into the stable tag (the
-  "Release workflow check" below and [ci-cd.md](ci-cd.md)). No such tag exists yet: the
-  first label is pending, and none of these three has been executed. Stage promotion
-  and the stable release stay separate decisions with their own approval.
+  "Release workflow check" below and [ci-cd.md](ci-cd.md)). No such tag exists in the
+  repository (checked on 2026-10-21): the labels `v27.0.0-rc.<n>` name the review
+  folders of the documentation package in Nextcloud, not tags, and none of these three
+  workflows has been executed. Stage promotion and the stable release stay separate
+  decisions with their own approval.
 - The known limits of the candidate are listed in [release-notes.md](release-notes.md):
   321 unverified mapping rows, no importer for `PC-END-03` and `PC-END-05`, no PDF
   export, the open copyright holder name of the MIT licence, and the open branch
@@ -40,7 +50,7 @@ The findings below stand; what changed since the first reading:
 ## Status
 
 - No version is released: there is no tag, no GitHub release and no released image
-  (the image named in the update above is the build of one `development` commit,
+  (each image named in the update above is the build of one `development` commit,
   deployed to the Development environment only).
   `pyproject.toml` and `app/__init__.py` both say `0.0.0.dev0` and the
   [CHANGELOG](../CHANGELOG.md) has only an Unreleased section.
