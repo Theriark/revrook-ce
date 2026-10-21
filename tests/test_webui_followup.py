@@ -26,7 +26,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
-from test_brand_contrast import BODY_MINIMUM, VARIABLES, contrast_ratio
+from test_brand_contrast import BODY_MINIMUM, LARGE_MINIMUM, VARIABLES, contrast_ratio
 
 from app.db import make_engine
 from app.evidence.service import EvidenceContext
@@ -45,7 +45,7 @@ from app.ui.dashboard import (
     deleted_client_name,
     trend_chart,
 )
-from app.ui.profiles import RESULT_TEMPLATE
+from app.ui.profiles import PAGE_TEMPLATE, RESULT_TEMPLATE
 from app.ui.reports import DETAILS_SAVED
 from helpers import NOW
 from html_structure import structure_problems
@@ -109,12 +109,15 @@ def test_the_strip_fade_is_steeper_as_wide_as_its_tail_and_scroll_aware() -> Non
     assert "display: none;" in hidden
     # The script marks the strips; without it the stylesheet keeps the fade.
     assert 'document.querySelectorAll(".rv-nav-strip, .rv-tabs-strip")' in SCRIPT
-    assert "var STRIP_TAIL = 48;" in SCRIPT
-    remaining = "scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft"
-    assert remaining in SCRIPT
-    assert 'strip.setAttribute(\n        "data-scroll-end",' in SCRIPT
-    assert "var end = STRIP_TAIL + endPadding(scroller) + 1;" in SCRIPT
-    assert 'remaining <= end ? "true" : "false"' in SCRIPT
+    assert 'var links = scroller.querySelectorAll("a");' in SCRIPT
+    assert "var last = links[links.length - 1].getBoundingClientRect();" in SCRIPT
+    assert "var edge = box.left + scroller.clientLeft + scroller.clientWidth;" in (
+        SCRIPT
+    )
+    assert "atEnd = last.right <= edge + 1;" in SCRIPT
+    assert 'strip.setAttribute("data-scroll-end", atEnd ? "true" : "false");' in (
+        SCRIPT
+    )
     for event in ('"scroll", update', '"resize", update', '"load", update'):
         assert event in SCRIPT, event
     unwanted = ("eval(", "fetch(", "XMLHttpRequest", "innerHTML", "document.write")
@@ -132,12 +135,20 @@ def test_a_strip_is_at_its_end_only_past_the_end_padding_of_its_scroller() -> No
     assert "padding: 0 16px 4px;" in rule(".rv-header nav,\n.rv-nav", CSS)
     assert "padding" not in rule("main nav", CSS)
     assert "padding" not in rule(".rv-tabs-strip > nav", CSS)
-    # The script reads that padding from the computed style of the element that
-    # scrolls, so a second constant cannot drift from the stylesheet.
-    assert "function endPadding(scroller) {" in SCRIPT
-    assert "window.getComputedStyle(scroller)" in SCRIPT
-    assert "return parseFloat(style.paddingRight) || 0;" in SCRIPT
-    assert "var end = STRIP_TAIL + endPadding(scroller) + 1;" in SCRIPT
+    # F4 of the live retest (THE-524): the script measures the last link against
+    # the visible box of the element that scrolls (the padding is inside that
+    # box), so neither the tail nor the padding is a constant that can drift from
+    # the stylesheet, and the 4px gap before the tail counts too (with the
+    # constants the cue went 3px late at the client tabs).
+    assert "STRIP_TAIL" not in SCRIPT
+    assert "paddingRight" not in SCRIPT
+    assert "var box = scroller.getBoundingClientRect();" in SCRIPT
+    assert "var edge = box.left + scroller.clientLeft + scroller.clientWidth;" in (
+        SCRIPT
+    )
+    assert "atEnd = last.right <= edge + 1;" in SCRIPT
+    # A strip with no link at all counts as at its end: nothing to scroll to.
+    assert "var atEnd = true;\n      if (links.length > 0) {" in SCRIPT
 
 
 # --- R2 (review of the follow-up): the message after a redirect is read out ---------
@@ -516,3 +527,117 @@ def test_stacked_trend_labels_keep_air_between_them() -> None:
     lowest = max(float(line.label_y) for line in stacked.lines)
     assert lowest <= stacked.bottom - LABEL_GAP / 2
     assert min(float(line.label_y) for line in stacked.lines) >= stacked.top
+
+
+# --- F1 (live retest THE-524): the exceptions register from 768px to 1279px --------
+
+
+def test_the_exceptions_register_never_widens_the_page() -> None:
+    exceptions = (TEMPLATES / "exceptions.html").read_text(encoding="utf-8")
+    region = (
+        '<div class="rv-table-scroll rv-exceptions-scroll" role="region" '
+        'aria-label="Exceptions register" tabindex="0">\n'
+        '<table id="exceptions" class="rv-table-cards rv-exceptions">'
+    )
+    assert region in exceptions
+    assert "</tbody>\n</table>\n</div>\n{% else %}" in exceptions
+    assert "overflow-x: auto;" in rule(".rv-table-scroll", CSS)
+    # Seven columns need 804px; the page gives 704px at 768px and 712px beside
+    # the sidebar at 1024px, so the rows are cards until 1280px (968px of page).
+    blocks = re.findall(
+        r"@media \(min-width: 768px\) and \(max-width: 1279px\) \{(.*?)\n\}\n",
+        FOLLOW_UP,
+        re.DOTALL,
+    )
+    cards = [block for block in blocks if "main table.rv-exceptions," in block]
+    assert len(cards) == 1
+    assert re.search(
+        r"main table\.rv-exceptions,\n(.*\n)*?    display: block;", cards[0]
+    )
+    assert "content: attr(data-label);" in cards[0]
+    assert "main .rv-exceptions td[data-label]::before {" in cards[0]
+    assert "main .rv-exceptions td:empty {\n    display: none;" in cards[0]
+    assert "\n  .rv-exceptions thead th {\n    position: static;" in cards[0]
+    # One card a row (the reason and the compensating control are prose), and a
+    # card cell is not capped at the 20rem of a column in a scrolling table.
+    assert "display: grid;" not in cards[0]
+    assert "max-width: none;" in rule("main .rv-exceptions-scroll td")
+    assert "max-width: 24rem;" in rule(".rv-exceptions .rv-exception-text", CSS)
+    # Below 768px the cards of revrook.css take over; the thead is the sticky
+    # one of revrook.css only when the rows are a table.
+    assert re.search(r"\n  main table\.rv-table-cards,\n  \.rv-table-cards tbody,", CSS)
+    assert "position: sticky;" in rule("main table thead th", CSS)
+    # Every cell of a row names its column, so a card reads whole.
+    for label in ("Owner", "Reason", "Compensating control", "Review date", "State"):
+        assert f'<td data-label="{label}"' in exceptions, label
+
+
+# --- F2 (live retest THE-524): the border of a field against the canvas -------------
+
+
+def test_the_border_of_a_field_reaches_3_to_1_on_the_canvas_and_on_white() -> None:
+    light = ':root:not([data-theme="dark"]),\n[data-theme="light"]'
+    assert "--pico-form-element-border-color: var(--rv-text-secondary);" in rule(light)
+    border = VARIABLES["--rv-text-secondary"]
+    for surface in ("--rv-canvas", "--rv-white"):
+        assert contrast_ratio(border, VARIABLES[surface]) >= LARGE_MINIMUM, surface
+    # The gray of revrook.css is under 3:1 on the canvas a field sits on (and
+    # only just above it on white), so the rule is needed; revrook.css keeps it.
+    assert contrast_ratio(VARIABLES["--rv-gray"], VARIABLES["--rv-canvas"]) < 3
+    assert "--pico-form-element-border-color: var(--rv-gray);" in rule(light, CSS)
+    # The active border and the focus ring are as before.
+    assert "--pico-form-element-active-border-color" not in rule(light)
+    assert "outline: 3px solid var(--rv-charcoal);" in rule(
+        "html :is(a, button, input, select, textarea, summary, [tabindex])"
+        ":focus-visible",
+        CSS,
+    )
+
+
+# --- F3 (live retest THE-524): the result of an import at 390px ---------------------
+
+
+def test_the_result_of_the_profile_editor_is_announced_after_the_swap() -> None:
+    result = (TEMPLATES / "_profile_editor_result.html").read_text(encoding="utf-8")
+    saved = (
+        '<p id="rv-saved-profile" class="rv-status-protected" role="status" '
+        'tabindex="-1" data-announce data-profile-id="{{ saved.id }}">'
+    )
+    imported = (
+        '<p id="rv-imported" class="rv-status-protected" role="status" '
+        'tabindex="-1" data-announce data-item-id="{{ imported.item_id }}">'
+    )
+    assert saved in result and imported in result
+    # After the swap the script focuses the first marked message of the swapped
+    # target and scrolls it to the top of the view, under the heading of its card.
+    assert 'document.addEventListener("htmx:afterSwap", announceSwapped);' in SCRIPT
+    assert 'var message = target.querySelector("[data-announce]");' in SCRIPT
+    assert "message.focus({ preventScroll: true });" in SCRIPT
+    assert 'message.scrollIntoView({ block: "start" });' in SCRIPT
+    assert "scroll-margin-top: 72px;" in rule("[data-announce]")
+    # The messages after a redirect keep their own path (they are on the page
+    # when it loads, so no swap announces them).
+    assert "data-announce" not in (TEMPLATES / "exceptions.html").read_text(
+        encoding="utf-8"
+    )
+    # Without script the server draws the whole page with the result in place.
+    page = (TEMPLATES / PAGE_TEMPLATE).read_text(encoding="utf-8")
+    assert '<div id="rv-editor-result">' in page
+    assert f'{{% include "{RESULT_TEMPLATE}" %}}' in page
+    context: dict[str, object] = {
+        "errors": [],
+        "saved": None,
+        "imported": SimpleNamespace(
+            item_id=5, profile_id=4, facts=3, summary=[], controls=[], control_total=51
+        ),
+        "preview": None,
+        "profiles": [],
+        "profile_id": None,
+        "name": "",
+        "client_id": None,
+        "csrf_token": "x" * 32,
+        "brand_files": frozenset(BRAND_FILES),
+    }
+    html = templates.get_template(RESULT_TEMPLATE).render(context)
+    assert 'id="rv-imported"' in html
+    assert 'tabindex="-1" data-announce data-item-id="5"' in html
