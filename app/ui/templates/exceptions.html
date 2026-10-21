@@ -10,6 +10,9 @@
 <div class="rv-section-head rv-under-tabs">
 <div><h2 id="exceptions-title">Exceptions register</h2><p class="rv-section-note">An exception records that a control is knowingly not met, who owns that decision and when it must be looked at again. It never changes a status and never raises the score.</p></div>
 </div>
+{% if message %}
+<p class="rv-status-protected" role="status" id="exceptions-message"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ message }}</span></p>
+{% endif %}
 
 <section class="rv-verdict" id="exceptions-status" aria-labelledby="exceptions-status-title">
 <h3 id="exceptions-status-title" class="rv-sr-only">Where the register stands</h3>

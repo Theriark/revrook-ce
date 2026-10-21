@@ -6,6 +6,9 @@
 <div class="rv-section-head rv-under-tabs">
 <div><h2 id="builder-title">Report builder</h2><p class="rv-section-note">Three steps: choose the period, write the details, make the report. A report is made from the state of the client today, so it can be previewed and exported again exactly as it was.</p></div>
 </div>
+{% if message %}
+<p class="rv-status-protected" role="status" id="builder-message"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ message }}</span></p>
+{% endif %}
 {% if not msp_name %}
 <p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>The name of your business is not set, so a report cannot be exported yet. <a href="/settings">Set it in the settings</a>.</span></p>
 {% endif %}

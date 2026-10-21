@@ -55,6 +55,9 @@ PREVIEW_POLICY = (
     "form-action 'none'; frame-ancestors 'none'"
 )
 NO_SUCH_REPORT = "There is no such report."
+# The message of the builder after the redirect of the details form (without
+# script); with script the form shows "Saved at" in place.
+DETAILS_SAVED = "The details were saved."
 KIND_LIST = [(QBR, REPORT_NAMES[QBR]), (INSURANCE, REPORT_NAMES[INSURANCE])]
 
 
@@ -124,6 +127,7 @@ async def builder_page(
     client_id: RowId,
     period_start: str = "",
     period_end: str = "",
+    saved: str = "",
 ) -> Response:
     async def handle(user: AppUser) -> Response:
         today = clock_of(request)().date()
@@ -153,6 +157,7 @@ async def builder_page(
             "topics": topics,
             "snapshots": lines,
             "saved_at": draft.saved_at,
+            "message": DETAILS_SAVED if saved == "1" else None,
         }
         return page(request, "reports.html", user, context)
 
@@ -187,7 +192,7 @@ async def save_report_details(request: Request, client_id: RowId) -> Response:
                 now=clock_of(request)(),
             )
         if not is_htmx(request):
-            return redirect(f"/clients/{client_id}/reports")
+            return redirect(f"/clients/{client_id}/reports?saved=1")
         stamp = saved.astimezone(UTC).strftime("%H:%M:%S")
         return HTMLResponse(
             f'<span role="status">Saved at {stamp} UTC.</span>',

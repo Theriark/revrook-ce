@@ -1,0 +1,200 @@
+/*
+ * revrook follow-up stylesheet (docs/design-system.md, The shell). Loaded after
+ * revrook.css, so a rule here wins over a rule of the same specificity there. It
+ * holds the corrections of the web interface retest follow-up (THE-520); fold
+ * them into revrook.css at its next rewrite. The same tokens as revrook.css, no
+ * colour literal, no image, nothing external.
+ */
+
+/* The strips that scroll sideways (the main navigation below 1024px, the client
+   tabs at any width): the fade at the right edge is the cue that the strip goes
+   on. Three things changed against revrook.css.
+   1. The fade reaches its colour within 20 of its 48px (the 40 percent stop), so
+      a link cut near the edge is dimmed from its cut and not only in its last
+      pixels (at 768px the navigation is cut just after "System", and the hidden
+      "Glossary" got a faint cue).
+   2. The space after the last link is as wide as the fade, so scrolled to the
+      end nothing sits under it.
+   3. revrook.js marks a strip data-scroll-end="true" while nothing lies to the
+      right of what is in view, and the fade goes (at 768px every client tab was
+      in view under a fade). Without the script the stylesheet keeps the fade. */
+.rv-nav-strip::after {
+  background-image: linear-gradient(to right, transparent, var(--rv-charcoal) 40%);
+}
+
+.rv-tabs-strip::after {
+  background-image: linear-gradient(to right, transparent, var(--rv-white) 40%);
+}
+
+.rv-nav::after,
+.rv-tabs-strip > nav > ul::after {
+  width: 48px;
+}
+
+.rv-nav-strip[data-scroll-end="true"]::after,
+.rv-tabs-strip[data-scroll-end="true"]::after {
+  display: none;
+}
+
+/* The export history and the schedules from 768px to 1023px: like the clients
+   list, their rows are cards below the sidebar and not only below 768px (where
+   rv-table-cards in revrook.css takes over). With seven columns in 704px the file
+   name and the SHA-256 broke into columns of six letters and a cron expression
+   took three lines. An export is one card a row, so a 64-character digest keeps
+   one line; the schedules, short values, stand two to a row */
+@media (min-width: 768px) and (max-width: 1023px) {
+  main table.rv-exports,
+  .rv-exports tbody,
+  .rv-exports tr,
+  .rv-exports th,
+  .rv-exports td,
+  main table.rv-schedules,
+  .rv-schedules tbody,
+  .rv-schedules tr,
+  .rv-schedules th,
+  .rv-schedules td {
+    display: block;
+  }
+
+  main table.rv-exports,
+  main table.rv-schedules {
+    border: 0;
+  }
+
+  .rv-exports caption,
+  .rv-schedules caption {
+    display: block;
+  }
+
+  .rv-exports thead,
+  .rv-schedules thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-exports thead th,
+  .rv-schedules thead th {
+    position: static;
+  }
+
+  main .rv-exports tbody tr,
+  main .rv-schedules tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-exports tbody th,
+  main .rv-exports tbody td,
+  main .rv-schedules tbody th,
+  main .rv-schedules tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-exports tbody th,
+  main .rv-schedules tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-exports td[data-label]::before,
+  main .rv-schedules td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-exports td:empty,
+  main .rv-schedules td:empty {
+    display: none;
+  }
+
+  main .rv-exports tbody tr:hover > td,
+  main .rv-exports tbody tr:hover > th,
+  main .rv-schedules tbody tr:hover > td,
+  main .rv-schedules tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-exports .rv-row-actions {
+    white-space: normal;
+  }
+
+  .rv-schedules tbody {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  main .rv-schedules tbody tr {
+    margin-bottom: 0;
+  }
+}
+
+/* A cron expression never breaks across lines, at any width */
+.rv-schedules code {
+  white-space: nowrap;
+}
+
+/* An opened delete disclosure (System at 390px): Pico colours the summary of an
+   open details grey (details[open] > summary:not([role]):not(:focus)), and on a
+   touch screen the hover stays after the tap, so the words were grey on charcoal
+   (1.9:1). The open summary is the pressed button, white on charcoal (13.1:1),
+   focused or not; closed it keeps the quiet button of revrook.css */
+details.rv-confirm[open] > summary,
+details.rv-confirm[open] > summary:focus,
+details.rv-confirm[open] > summary:not([role]):not(:focus) {
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  border-color: var(--rv-charcoal);
+}
+
+/* A link that keyboard focus scrolls into view stops 48px short of the right edge
+   of its strip, as wide as the fade, so its focus ring is never under the fade
+   (which takes no pointer and sits above the links). The main navigation scrolls
+   in nav.rv-nav; the client tabs in the nav of .rv-tabs-strip */
+.rv-header nav,
+.rv-nav,
+.rv-tabs-strip > nav {
+  scroll-padding-right: 48px;
+}
+
+/* The counts of an import (the profile editor at 390px): the table was wider
+   than its card and pushed the page sideways. It scrolls inside its own region
+   like the preview of the rows, and a long count name breaks instead of
+   stretching its column */
+.rv-import-result .rv-table-scroll {
+  margin-bottom: 16px;
+}
+
+.rv-import-result .rv-table-scroll th {
+  overflow-wrap: anywhere;
+}
+
+/* The checklist from 768px to 1023px: its six columns needed 746px of the 720
+   the page gives (measured on Development: the status pill alone 181px), so
+   the page scrolled sideways by 11px. The cells lose 4px of padding each side
+   (48px over six columns) and the coverage may wrap; the table keeps its
+   sticky head, there is still no scroll box */
+@media (min-width: 768px) and (max-width: 1023px) {
+  main .rv-checklist th,
+  main .rv-checklist td {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .rv-checklist .rv-coverage {
+    white-space: normal;
+  }
+}

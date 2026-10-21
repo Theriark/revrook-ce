@@ -13,6 +13,7 @@
 <div><dt>Facts stored</dt><dd>{{ imported.facts }}</dd></div>
 </dl>
 {% if imported.summary %}
+<div class="rv-table-scroll" role="region" aria-label="What the import counted" tabindex="0">
 <table id="rv-import-summary">
 <caption>What the import counted</caption>
 <thead>
@@ -30,6 +31,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% endif %}
 <h3 class="rv-card-title" id="import-reach-title">What this export changes</h3>
 <p class="rv-import-reach" id="rv-import-reach">{% if imported.controls %}This export is read by {{ imported.controls|length }} of the {{ imported.control_total }} controls. The other controls keep the status they had: each one takes its status from the export of its own source, and stays "Not checked" until that export is imported too.{% else %}No control of the library reads this export, so the checklist does not change.{% endif %}</p>

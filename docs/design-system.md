@@ -69,8 +69,14 @@ no menu is ever hidden behind a button, and below 600 px the bar drops the editi
 badge (the footer still names the edition) so it never meets the sign-out button. The
 strip (`div.rv-nav-strip`, like `div.rv-tabs-strip` around the tabs of a client) fades
 the last visible link into its background at the right edge, so a person sees that it
-goes on; the strip ends in 32 px of space, so with the last link in view nothing is
-under the fade.
+goes on: the 48 px fade reaches its colour within 20 px, the strip ends in 48 px of
+space (as wide as the fade, so with the last link in view nothing is under it), and
+`revrook.js` marks the strip `data-scroll-end="true"` while nothing lies to the right
+of what is in view, which hides the fade; without the script the fade stays. A link
+that keyboard focus scrolls into view stops 48 px clear of the edge (`scroll-padding`).
+The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded after
+`revrook.css` so that they win by order; they belong in `revrook.css` at its next
+rewrite.
 
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
 panel with the stacked logo and three lines about the product on the left, the light
@@ -418,9 +424,14 @@ open one; a closed row is quieter. Without a row the page shows an empty state
 whose action leads to the form. The form to add one is a card
 (`section.rv-exception-card`): the control, the owner beside the review date, the
 reason, the compensating control, each with its help text, and the one primary
-button; a refusal stays `_errors.html` above the fields.
+button; a refusal stays `_errors.html` above the fields. Adding or closing one
+redirects to the register with `?done=added` or `?done=closed`, which draws a
+success strip (`#exceptions-message`) under the section head, because a message in
+the page itself would not survive the redirect of the form.
 
-The report builder. Three numbered step cards (`section.rv-step` with
+The report builder. Under the section head, a success strip (`#builder-message`)
+when the details form was posted without script and came back with `?saved=1`.
+Three numbered step cards (`section.rv-step` with
 `h3.rv-step-title`, the circle of the Home steps, because the steps are a sequence):
 the period, two date fields side by side with the quiet button and the period
 beside it; the details, the preparer, the plan with its help, and the topics of the
@@ -452,7 +463,10 @@ The export history. The section head and the success strip after an export, then
 the table (`table.rv-exports`, with `rv-table-cards`): when, the report, the file
 and the SHA-256 in `code.rv-digest` (which breaks anywhere, so a card on a phone
 never grows wider than the page), the size, who exported it and the small download
-button; or an empty state that leads to the builder.
+button; or an empty state that leads to the builder. Below 1024 px the rows are
+cards one to a row, like the clients list (`revrook-retest.css`): with the seven
+columns in 704 px at 768 px the file name and the digest broke into columns of six
+letters.
 
 Settings. The page header with the purpose, the success strip and the errors, then
 the form card: the business name and the reminder address, each with a help text
@@ -469,12 +483,15 @@ deletion, then the worker as the verdict band (`#worker-status`, the label of
 the number of schedules and the role of this process. The schedules are a table
 (`table.rv-schedules`, with `rv-table-cards`) with the enabled state as a pill and
 the runs as dates, or an empty state that says the worker adds them when it
-starts. Two cards side by side from 1024 px: the reminders and outside services as
+starts; the cron expression never wraps, and from 768 px to 1023 px the rows are
+cards two to a row. Two cards side by side from 1024 px: the reminders and outside services as
 a list (`ul.rv-services`) of a pill (set, not set, on, off) and its sentence, and
 the data export with its primary button and the way to the integrity check. The
 deletion of a client is a card with the not-protected rail (`.rv-danger-card`):
 one `details.rv-confirm` per client whose summary is the quiet button and whose
-body holds the field to type the name and the danger button.
+body holds the field to type the name and the danger button; opened, the summary
+is the pressed button, white on charcoal (Pico coloured it grey, and on a touch
+screen the hover stays after the tap).
 
 Glossary. The page header, then one card (`dl.rv-glossary`): from 768 px each term
 sits beside its meaning, on a phone above it. The closing sentence is an alert that

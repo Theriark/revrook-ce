@@ -34,6 +34,7 @@ from app.ui.dashboard import (
     attention_items,
     change_lines,
     change_since_reports,
+    deleted_client_name,
     domain_bars,
     posture_of,
     prioritised,
@@ -316,10 +317,10 @@ def test_the_audit_trail_is_put_into_words_with_the_client_and_the_person() -> N
     assert lines[0].href == "/clients/7/evidence"
     assert lines[1].href == "/clients/7/reports"
     assert lines[2].href == "/clients/7"
-    assert lines[3].client_name == DELETED_CLIENT and lines[3].href == ""
+    assert lines[3].client_name == deleted_client_name(8) and lines[3].href == ""
     assert lines[3].actor == SYSTEM_ACTOR
     assert lines[4].client_name == "" and lines[4].actor == "A removed user"
-    assert lines[5].client_name == DELETED_CLIENT and lines[5].href == ""
+    assert lines[5].client_name == deleted_client_name(8) and lines[5].href == ""
     assert lines[0].actor == "admin" and lines[0].ago == "5 minutes ago"
     assert lines[5].ago == "1 hour ago" and lines[6].ago == "2 days ago"
     assert lines[0].when_iso.endswith("+00:00")

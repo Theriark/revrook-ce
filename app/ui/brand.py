@@ -38,6 +38,7 @@ BRAND_FILES = (
 ASSET_FILES = (
     "vendor/pico/pico.min.css",
     "css/revrook.css",
+    "css/revrook-retest.css",
     "vendor/htmx/htmx.min.js",
     "js/revrook.js",
 )
