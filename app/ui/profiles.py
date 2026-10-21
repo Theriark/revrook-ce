@@ -21,6 +21,7 @@ from sqlalchemy import or_, select
 from starlette.datastructures import FormData, UploadFile
 
 from app.auth import get_user
+from app.checks.library import Control, Library
 from app.clients import pseudonym_key
 from app.evidence.assurance import Assurance
 from app.evidence.errors import (
@@ -205,6 +206,38 @@ def _display(value: FactValue) -> str:
     return str(value)
 
 
+def controls_reading(library: Library, source_code: str) -> tuple[Control, ...]:
+    """The controls that read the source of an importer, in the order of the library.
+
+    A control names the fields its rule reads, and the field map of the library
+    says which importer carries each one (the sources of a control are the letter
+    codes of the report, H for the leavers file, not importer codes). An import
+    changes only these controls; the result card names them so that a checklist
+    with most of its controls still unchecked after one import is no surprise.
+    """
+    return tuple(
+        item for item in library.controls if _reads(library, item, source_code)
+    )
+
+
+def _reads(library: Library, control: Control, source_code: str) -> bool:
+    for field_id in control.fields:
+        target = library.field_map.get(field_id)
+        if target is not None and target.adapter == source_code:
+            return True
+    return False
+
+
+def _chosen_client(request: Request, clients: list[tuple[int, str]]) -> int | None:
+    """The client the page was opened for (`?client_id=`), when it is one of the
+    listed clients; otherwise none, and the first client stays chosen."""
+    value = request.query_params.get("client_id", "")
+    if not value.isascii() or not value.isdecimal() or len(value) > MAX_ID_DIGITS:
+        return None
+    chosen = int(value)
+    return chosen if any(client_id == chosen for client_id, _ in clients) else None
+
+
 async def _base_context(request: Request, user: AppUser) -> dict[str, Any]:
     sources = editor_adapters(request.app.state.importers)
     now = clock_of(request)().astimezone(UTC)
@@ -241,6 +274,7 @@ async def editor_page(request: Request) -> Response:
     if user is None:
         return redirect("/login")
     context = await _base_context(request, user)
+    context["client_id"] = _chosen_client(request, context["clients"])
     return render(request, PAGE_TEMPLATE, context, current_session(request))
 
 
@@ -301,11 +335,17 @@ async def _import(
             )
         )
         summary: dict[str, FactValue] = found.scalars().first() or {}
+    library: Library = request.app.state.library
     context["imported"] = {
         "item_id": stored.item_id,
         "profile_id": profile_id,
         "facts": stored.facts,
         "summary": [(key, _display(value)) for key, value in summary.items()],
+        "controls": [
+            (item.id, item.title)
+            for item in controls_reading(library, context["source_code"])
+        ],
+        "control_total": len(library.controls),
     }
 
 

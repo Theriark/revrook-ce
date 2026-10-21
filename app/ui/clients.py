@@ -657,9 +657,10 @@ async def evidence_page(request: Request, client_id: RowId) -> Response:
             "refresh": refresh_list(rows),
             "items": items,
             "facts": evidence_facts(rows, views),
+            # The editor opens on this client (THE-505, defect 8).
             "client_actions": [
                 {
-                    "path": "imports/profile-editor",
+                    "path": f"imports/profile-editor?client_id={client_id}",
                     "text": "Import an export",
                     "primary": True,
                 },

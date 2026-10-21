@@ -8,7 +8,7 @@ can type or click gives one.
 """
 
 import html
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from datetime import date, timedelta
 from typing import Annotated, Any
 
@@ -45,6 +45,10 @@ FRAGMENT = (
 )
 TITLES = {404: "Not found", 409: "The copy cannot be used"}
 DEFAULT_TITLE = "The request was refused"
+# A page address the application does not answer, or answers with another method.
+NO_SUCH_PAGE = "There is no page at this address."
+WRONG_METHOD = "This address does not accept what was sent to it."
+MISSING_MESSAGES = {404: NO_SUCH_PAGE, 405: WRONG_METHOD}
 
 Handler = Callable[[AppUser], Awaitable[Response]]
 
@@ -121,6 +125,36 @@ def problem(
         "details": list(details),
     }
     return page(request, "problem.html", user, context, status_code)
+
+
+async def missing_page(
+    request: Request, status_code: int, headers: Mapping[str, str] | None = None
+) -> Response:
+    """The problem page for an address no route answers (404) or a method it does
+    not take (405), whether or not someone is signed in.
+
+    No route ran, so the page dependencies did not either: the stale-worker flag
+    is set here so the shell can read it. Signed out, the page is drawn in the
+    signed-out shell, which names nothing of the installation. `headers` are the
+    ones of the refusal (the Allow header of a 405), kept on the page.
+    """
+    request.state.worker_stale = False
+    context: dict[str, Any] = {
+        "title": TITLES.get(status_code, DEFAULT_TITLE),
+        "nav": "",
+        "status": status_code,
+        "message": MISSING_MESSAGES[status_code],
+        "details": [],
+    }
+    user = await signed_in_user(request)
+    if user is not None:
+        context["user"] = user
+    response = render(
+        request, "problem.html", context, current_session(request), status_code
+    )
+    for name, value in (headers or {}).items():
+        response.headers[name] = value
+    return response
 
 
 def status_of(error: EvidenceError) -> int:

@@ -21,7 +21,7 @@
 
 <section id="refresh" aria-labelledby="refresh-title">
 <div class="rv-section-head">
-<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. Import a fresh file with the profile editor, or through the API.</p></div>
+<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. Import a fresh file with the <a href="/imports/profile-editor?client_id={{ client_id }}">profile editor</a>, or through the API.</p></div>
 </div>
 {% if refresh %}
 <div class="rv-refresh">
@@ -100,7 +100,7 @@
 {{ i.icon("inbox", 36) }}
 <p class="rv-empty-title">Nothing imported yet</p>
 <p class="rv-empty-text">Export the first file from a tool this client uses, then import it with the profile editor or through the API. Every control that reads that source takes its status from it.</p>
-<a role="button" href="/imports/profile-editor">Import an export</a>
+<a role="button" href="/imports/profile-editor?client_id={{ client_id }}">Import an export</a>
 </div>
 {% endif %}
 </section>

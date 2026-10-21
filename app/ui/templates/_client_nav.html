@@ -11,6 +11,7 @@
 </div>
 {% endif %}
 </div>
+<div class="rv-tabs-strip">
 <nav class="rv-client-nav" aria-label="This client">
 <ul>
 <li><a class="rv-nav-link" href="/clients/{{ client_id }}"{% if section == "overview" %} aria-current="page"{% endif %}>Overview</a></li>
@@ -21,3 +22,4 @@
 <li><a class="rv-nav-link" href="/clients/{{ client_id }}/exports"{% if section == "exports" %} aria-current="page"{% endif %}>Export history</a></li>
 </ul>
 </nav>
+</div>

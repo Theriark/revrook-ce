@@ -31,7 +31,16 @@
 </tbody>
 </table>
 {% endif %}
-{% if client_id %}<p class="rv-import-next">The item counts for this client from now on: <a href="/clients/{{ client_id }}/evidence">see the evidence of this client</a>.</p>{% endif %}
+<h3 class="rv-card-title" id="import-reach-title">What this export changes</h3>
+<p class="rv-import-reach" id="rv-import-reach">{% if imported.controls %}This export is read by {{ imported.controls|length }} of the {{ imported.control_total }} controls. The other controls keep the status they had: each one takes its status from the export of its own source, and stays "Not checked" until that export is imported too.{% else %}No control of the library reads this export, so the checklist does not change.{% endif %}</p>
+{% if imported.controls %}
+<ul class="rv-import-controls" aria-labelledby="import-reach-title">
+{% for control_id, control_title in imported.controls %}
+<li>{% if client_id %}<a href="/clients/{{ client_id }}/controls/{{ control_id }}">{{ control_title }}</a>{% else %}{{ control_title }}{% endif %} <span class="rv-text-secondary">{{ control_id }}</span></li>
+{% endfor %}
+</ul>
+{% endif %}
+{% if client_id %}<p class="rv-import-next">The item counts for this client from now on: see the <a href="/clients/{{ client_id }}/checklist">checklist</a> for the new status of these controls, or the <a href="/clients/{{ client_id }}/evidence">evidence of this client</a>. The score on the clients list and on Home comes from the newest report; make a report to carry the change there.</p>{% endif %}
 </section>
 {% endif %}
 {% if preview %}
@@ -75,9 +84,15 @@
 <p>{{ preview.problem }}</p>
 </div>
 {% endif %}
-{% if preview.shown and (preview.rows or not preview.problem) %}
 <section class="rv-step" aria-labelledby="step-3-title">
 <h2 id="step-3-title" class="rv-step-title"><span class="rv-step-number">3</span>The first rows as revrook reads them</h2>
+{% if not preview.shown or (preview.problem and not preview.rows) %}
+<div class="rv-empty rv-empty-small" id="rv-preview-waiting">
+{{ i.icon("info", 28) }}
+<p class="rv-empty-title">No rows to show yet</p>
+<p class="rv-empty-text">{% if not preview.shown %}Choose a file column for the columns of the source in step 2, then update the preview.{% else %}The file would be refused as it is (see above). Fix the mapping or the file, then update the preview.{% endif %}</p>
+</div>
+{% else %}
 <p class="rv-step-lead">{{ preview.rows|length }} row(s) shown, {{ preview.rejected }} of them rejected.{% if preview.more_rows %} The file has more rows; only the first 20 are shown.{% endif %} A user, a device, a mailbox or another identifier is shown as this client's pseudonym, the way it is stored.</p>
 {% if preview.assumed_utc %}
 <p id="rv-utc-note" class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">?</span> <span>Some times have no time zone. They are read as UTC, and the import marks the file as UTC assumed.</span></p>
@@ -136,8 +151,8 @@
 <p class="rv-empty-text">Only the header line was read. Export the file again with its rows, then read it here.</p>
 </div>
 {% endif %}
-</section>
 {% endif %}
+</section>
 <fieldset class="rv-step">
 <legend><span class="rv-step-number">4</span>Save the profile</legend>
 <p class="rv-step-lead">A profile keeps this mapping for the next export of the same tool.</p>
