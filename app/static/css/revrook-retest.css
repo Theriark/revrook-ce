@@ -240,14 +240,17 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
 /* The checklist from 768px to 1079px: its six columns need 747px (measured on
    Development: the status pill alone 181px), and the page gives 720px at 768px
    and 712px beside the sidebar at 1024px, so the page scrolled sideways by 11px
-   at 768px and by 3px at 1024px. The cells lose 4px of padding each side (48px
-   over six columns) until the page is wider than the table, and the coverage
-   may wrap; the table keeps its sticky head, there is still no scroll box */
+   at 768px and by 3px at 1024px. The cells lose 6px of padding each side (72px
+   over six columns, the table 675px) until the page is wider than the table,
+   and the coverage may wrap; the table keeps its sticky head, there is still no
+   scroll box. Six and not four: with a classic 15px scrollbar the page beside
+   the sidebar is 697px at 1024px, and the 699px of the 8px cells overflowed it
+   by 2px (the review of the live retest, THE-533); 675px leaves 22px */
 @media (min-width: 768px) and (max-width: 1079px) {
   main .rv-checklist th,
   main .rv-checklist td {
-    padding-right: 8px;
-    padding-left: 8px;
+    padding-right: 6px;
+    padding-left: 6px;
   }
 
   .rv-checklist .rv-coverage {
@@ -340,6 +343,18 @@ main .rv-exceptions-scroll td {
   max-width: none;
 }
 
+/* From 1280px the register is a table that fits its page (804px in 968px), and
+   the region stops clipping: a scroll box makes the sticky head of revrook.css
+   (main table thead th) stick to the box and not to the page, so on a long
+   register scrolled at a desktop width the column names left the view (the
+   review of the live retest, THE-530). Below 1280px the rows are cards and no
+   head is shown, so the box there costs nothing and the page never widens */
+@media (min-width: 1280px) {
+  .rv-exceptions-scroll {
+    overflow-x: visible;
+  }
+}
+
 /* The border of a field (the live retest, F2): the gray of revrook.css is 2.9:1
    on the canvas a field sits on (3.2:1 on white), under the 3:1 of WCAG 1.4.11
    for the boundary of a control. The secondary text colour is 5.8:1 on the
@@ -348,6 +363,14 @@ main .rv-exceptions-scroll td {
 :root:not([data-theme="dark"]),
 [data-theme="light"] {
   --pico-form-element-border-color: var(--rv-text-secondary);
+}
+
+/* The import area is the boundary of a file control too (the review of the live
+   retest, THE-530): its dashed gray border was 2.9:1 on the canvas, so it takes
+   the same colour as the fields, 5.8:1 on the canvas; the 2px dashed line, the
+   accent on hover, focus and drag-over (revrook.css) are unchanged */
+.rv-dropzone {
+  border-color: var(--rv-text-secondary);
 }
 
 /* The message a swapped fragment brings (the live retest, F3): revrook.js moves
