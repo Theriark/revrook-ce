@@ -156,3 +156,37 @@ async def test_adding_and_closing_an_exception_and_saving_details_say_so(
         headers={"HX-Request": "true", "X-CSRF-Token": csrf},
     )
     assert fragment.status_code == 200 and "Saved at" in fragment.text
+
+
+# --- defect 11: hash, file and cron cells at 768px ----------------------------------
+
+
+def test_the_export_history_and_the_schedules_are_cards_below_the_sidebar() -> None:
+    found = re.search(
+        r"@media \(min-width: 768px\) and \(max-width: 1023px\) \{(.*?)\n\}\n",
+        FOLLOW_UP,
+        re.DOTALL,
+    )
+    assert found is not None
+    cards = found.group(1)
+    assert re.search(r"main table\.rv-exports,\n(.*\n)*?    display: block;", cards)
+    assert re.search(r"main table\.rv-schedules,\n(.*\n)*?    display: block;", cards)
+    assert "content: attr(data-label);" in cards
+    assert "main .rv-exports td[data-label]::before," in cards
+    # An export is one card a row (a digest keeps one line); schedules two a row.
+    assert re.search(
+        r"\.rv-schedules tbody \{\n    display: grid;\n"
+        r"    grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);",
+        cards,
+    )
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr));" not in cards.split(
+        ".rv-schedules tbody {"
+    )[0]
+    assert "white-space: nowrap;" in rule(".rv-schedules code")
+    # The tables carry the classes the rules address, and a cron is a code element.
+    exports = (TEMPLATES / "exports.html").read_text(encoding="utf-8")
+    system = (TEMPLATES / "system.html").read_text(encoding="utf-8")
+    assert 'class="rv-table-cards rv-exports"' in exports
+    assert '<td data-label="SHA-256"><code class="rv-digest">' in exports
+    assert 'class="rv-table-cards rv-schedules"' in system
+    assert '<td data-label="When"><code>{{ line.cron }}</code></td>' in system
