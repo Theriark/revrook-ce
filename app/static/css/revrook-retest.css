@@ -198,3 +198,105 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
     white-space: normal;
   }
 }
+
+/* The exceptions register from 768px to 1279px (the live retest, F1): seven
+   columns, two of them prose of at least 12rem, need 804px, and the page gives
+   704px at 768px and 712px beside the sidebar at 1024px (measured on
+   Development: the page scrolled sideways by 68px at 768px and 60px at 1024px,
+   and the State column was cut). Like the export history, each exception is one
+   card a row until the page is wider than the table (968px from 1280px); below
+   768px the cards of revrook.css take over. The table also sits in a scrolling
+   region (div.rv-table-scroll, like the counts of an import), so at any width a
+   register wider than the page scrolls inside its box and never the page */
+@media (min-width: 768px) and (max-width: 1279px) {
+  main table.rv-exceptions,
+  .rv-exceptions tbody,
+  .rv-exceptions tr,
+  .rv-exceptions th,
+  .rv-exceptions td {
+    display: block;
+  }
+
+  main table.rv-exceptions {
+    border: 0;
+  }
+
+  .rv-exceptions caption {
+    display: block;
+  }
+
+  .rv-exceptions thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-exceptions thead th {
+    position: static;
+  }
+
+  main .rv-exceptions tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-exceptions tbody th,
+  main .rv-exceptions tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-exceptions tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-exceptions td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-exceptions td:empty {
+    display: none;
+  }
+
+  main .rv-exceptions tbody tr:hover > td,
+  main .rv-exceptions tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+}
+
+/* A cell of a card is as wide as its card: the 20rem cap of a cell in a
+   scrolling table (revrook.css) is for columns, and the reason and the
+   compensating control keep their own 24rem measure */
+main .rv-exceptions-scroll td {
+  max-width: none;
+}
+
+/* The border of a field (the live retest, F2): the gray of revrook.css is 2.9:1
+   on the canvas a field sits on (3.2:1 on white), under the 3:1 of WCAG 1.4.11
+   for the boundary of a control. The secondary text colour is 5.8:1 on the
+   canvas and 6.5:1 on white; the active border (the accent) and the focus ring
+   are unchanged. Buttons keep their borders: their words mark them */
+:root:not([data-theme="dark"]),
+[data-theme="light"] {
+  --pico-form-element-border-color: var(--rv-text-secondary);
+}
+
+/* The message a swapped fragment brings (the live retest, F3): revrook.js moves
+   focus to it and scrolls it to the top of the view; the margin keeps the
+   heading of its card in view above it */
+[data-announce] {
+  scroll-margin-top: 72px;
+}

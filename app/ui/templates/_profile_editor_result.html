@@ -1,12 +1,12 @@
 {% import "_icons.html" as i %}
 {% include "_errors.html" %}
 {% if saved %}
-<p id="rv-saved-profile" class="rv-status-protected" role="status" data-profile-id="{{ saved.id }}"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Profile {{ saved.name }} saved (profile {{ saved.id }}). Import the file with it in step 5.</span></p>
+<p id="rv-saved-profile" class="rv-status-protected" role="status" tabindex="-1" data-announce data-profile-id="{{ saved.id }}"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Profile {{ saved.name }} saved (profile {{ saved.id }}). Import the file with it in step 5.</span></p>
 {% endif %}
 {% if imported %}
 <section class="rv-card rv-import-result" id="rv-import-result" aria-labelledby="import-result-title">
 <h2 id="import-result-title" class="rv-card-title">Imported</h2>
-<p id="rv-imported" class="rv-status-protected" role="status" data-item-id="{{ imported.item_id }}"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Imported with profile {{ imported.profile_id }} as evidence item {{ imported.item_id }}: {{ imported.facts }} facts stored.</span></p>
+<p id="rv-imported" class="rv-status-protected" role="status" tabindex="-1" data-announce data-item-id="{{ imported.item_id }}"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Imported with profile {{ imported.profile_id }} as evidence item {{ imported.item_id }}: {{ imported.facts }} facts stored.</span></p>
 <dl class="rv-facts rv-import-facts">
 <div><dt>Evidence item</dt><dd>{{ imported.item_id }}</dd></div>
 <div><dt>Profile</dt><dd>{{ imported.profile_id }}</dd></div>

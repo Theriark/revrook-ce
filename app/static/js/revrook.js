@@ -11,24 +11,14 @@
  * - the message a form leaves after its redirect (?done=added, ?saved=1): it
  *   moves focus to the message, so a screen reader reads it, and takes the query
  *   out of the address, so a reload does not repeat it; without the script the
- *   message still shows after the redirect, and the query stays.
+ *   message still shows after the redirect, and the query stays;
+ * - the message a fragment brings when htmx swaps it in (the profile editor:
+ *   the profile saved, the file imported): focus moves to it and it is scrolled
+ *   to the top of the view; without the script (and so without htmx) the server
+ *   draws the whole page with the result in place.
  */
 (function () {
   "use strict";
-
-  // The space after the last link of a strip (revrook-retest.css): with only that
-  // space left to scroll, the strip is at its end. One pixel of slack covers a
-  // fractional scroll position.
-  var STRIP_TAIL = 48;
-
-  // The end padding of the element that scrolls comes after that space (the
-  // navigation bar has 16px of it, the client tabs none), so it is counted too:
-  // with the tail alone the fade stayed over the last link of the navigation for
-  // the last 16px of scrolling.
-  function endPadding(scroller) {
-    var style = window.getComputedStyle(scroller);
-    return parseFloat(style.paddingRight) || 0;
-  }
 
   function decorate(zone) {
     var input = zone.querySelector('input[type="file"]');
@@ -66,14 +56,22 @@
     if (!scroller) {
       return;
     }
+    // The strip is at its end once the right edge of its last link is inside
+    // the visible box of the scroller. Measured, not assumed: the space after
+    // the last link (revrook-retest.css), the gap before that space and the end
+    // padding of the scroller (16px on the navigation bar, none on the tabs)
+    // count as they are, so no constant can drift from the stylesheet. One
+    // pixel of slack covers a fractional scroll position.
     function update() {
-      var remaining =
-        scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft;
-      var end = STRIP_TAIL + endPadding(scroller) + 1;
-      strip.setAttribute(
-        "data-scroll-end",
-        remaining <= end ? "true" : "false"
-      );
+      var links = scroller.querySelectorAll("a");
+      var atEnd = true;
+      if (links.length > 0) {
+        var last = links[links.length - 1].getBoundingClientRect();
+        var box = scroller.getBoundingClientRect();
+        var edge = box.left + scroller.clientLeft + scroller.clientWidth;
+        atEnd = last.right <= edge + 1;
+      }
+      strip.setAttribute("data-scroll-end", atEnd ? "true" : "false");
     }
     scroller.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -98,7 +96,27 @@
     }
   }
 
+  // A message that arrives inside a swapped fragment sits below the form that
+  // sent it, and the button that was pressed went with the swap, so focus fell
+  // to the page and at 390px the result of an import stayed off screen. The
+  // fragment marks its message data-announce (with tabindex="-1"): focus moves
+  // to it, then it is scrolled to the top of the view (scroll-margin-top in
+  // revrook-retest.css keeps the heading of its card in view).
+  function announceSwapped(event) {
+    var target = event.target;
+    if (!target || !target.querySelector) {
+      return;
+    }
+    var message = target.querySelector("[data-announce]");
+    if (!message) {
+      return;
+    }
+    message.focus({ preventScroll: true });
+    message.scrollIntoView({ block: "start" });
+  }
+
   function ready() {
+    document.addEventListener("htmx:afterSwap", announceSwapped);
     var zones = document.querySelectorAll(".rv-dropzone");
     for (var k = 0; k < zones.length; k += 1) {
       decorate(zones[k]);

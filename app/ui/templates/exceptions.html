@@ -34,6 +34,7 @@
 </section>
 
 {% if rows %}
+<div class="rv-table-scroll rv-exceptions-scroll" role="region" aria-label="Exceptions register" tabindex="0">
 <table id="exceptions" class="rv-table-cards rv-exceptions">
 <caption>Exceptions, open first, the earliest review date at the top</caption>
 <thead>
@@ -72,6 +73,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% else %}
 <div class="rv-empty" id="exceptions-empty">
 {{ i.icon("info", 36) }}
