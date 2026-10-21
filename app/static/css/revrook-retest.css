@@ -36,18 +36,93 @@
   display: none;
 }
 
-/* The export history and the schedules from 768px to 1023px: like the clients
-   list, their rows are cards below the sidebar and not only below 768px (where
-   rv-table-cards in revrook.css takes over). With seven columns in 704px the file
-   name and the SHA-256 broke into columns of six letters and a cron expression
-   took three lines. An export is one card a row, so a 64-character digest keeps
-   one line; the schedules, short values, stand two to a row */
+/* The export history from 768px to 1023px: like the clients list, its rows are
+   cards below the sidebar and not only below 768px (where rv-table-cards in
+   revrook.css takes over). With seven columns in 704px the file name and the
+   SHA-256 broke into columns of six letters. An export is one card a row, so a
+   64-character digest keeps one line. Beside the sidebar the history fits as a
+   table (712px of page at 1024px, measured on Development) */
 @media (min-width: 768px) and (max-width: 1023px) {
   main table.rv-exports,
   .rv-exports tbody,
   .rv-exports tr,
   .rv-exports th,
-  .rv-exports td,
+  .rv-exports td {
+    display: block;
+  }
+
+  main table.rv-exports {
+    border: 0;
+  }
+
+  .rv-exports caption {
+    display: block;
+  }
+
+  .rv-exports thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-exports thead th {
+    position: static;
+  }
+
+  main .rv-exports tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--rv-line);
+    border-radius: 12px;
+    box-shadow: var(--rv-shadow-1);
+  }
+
+  main .rv-exports tbody th,
+  main .rv-exports tbody td {
+    padding: 8px 16px;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  main .rv-exports tbody th {
+    padding-top: 10px;
+  }
+
+  main .rv-exports td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-white);
+  }
+
+  main .rv-exports td:empty {
+    display: none;
+  }
+
+  main .rv-exports tbody tr:hover > td,
+  main .rv-exports tbody tr:hover > th {
+    background-color: var(--rv-white);
+  }
+
+  .rv-exports .rv-row-actions {
+    white-space: normal;
+  }
+}
+
+/* The schedules from 768px to 1099px: the same cards as the export history (at
+   768px a cron expression took three lines), but the schedules, short values,
+   stand two to a row. Seven columns need 768px, and beside the sidebar the page
+   gives 712px at 1024px (measured on Development after the live retest: the
+   table pushed the page sideways by 24px, and the page is 312px narrower than
+   the window from 1024px), so the cards stay until the page is 20px wider than
+   the table */
+@media (min-width: 768px) and (max-width: 1099px) {
   main table.rv-schedules,
   .rv-schedules tbody,
   .rv-schedules tr,
@@ -56,17 +131,14 @@
     display: block;
   }
 
-  main table.rv-exports,
   main table.rv-schedules {
     border: 0;
   }
 
-  .rv-exports caption,
   .rv-schedules caption {
     display: block;
   }
 
-  .rv-exports thead,
   .rv-schedules thead {
     position: absolute;
     width: 1px;
@@ -76,22 +148,18 @@
     clip: rect(0 0 0 0);
   }
 
-  .rv-exports thead th,
   .rv-schedules thead th {
     position: static;
   }
 
-  main .rv-exports tbody tr,
   main .rv-schedules tbody tr {
-    margin-bottom: 12px;
+    margin-bottom: 0;
     padding: 6px 0;
     border: 1px solid var(--rv-line);
     border-radius: 12px;
     box-shadow: var(--rv-shadow-1);
   }
 
-  main .rv-exports tbody th,
-  main .rv-exports tbody td,
   main .rv-schedules tbody th,
   main .rv-schedules tbody td {
     padding: 8px 16px;
@@ -99,12 +167,10 @@
     text-align: left;
   }
 
-  main .rv-exports tbody th,
   main .rv-schedules tbody th {
     padding-top: 10px;
   }
 
-  main .rv-exports td[data-label]::before,
   main .rv-schedules td[data-label]::before {
     content: attr(data-label);
     display: block;
@@ -115,30 +181,19 @@
     background-color: var(--rv-white);
   }
 
-  main .rv-exports td:empty,
   main .rv-schedules td:empty {
     display: none;
   }
 
-  main .rv-exports tbody tr:hover > td,
-  main .rv-exports tbody tr:hover > th,
   main .rv-schedules tbody tr:hover > td,
   main .rv-schedules tbody tr:hover > th {
     background-color: var(--rv-white);
-  }
-
-  .rv-exports .rv-row-actions {
-    white-space: normal;
   }
 
   .rv-schedules tbody {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
-  }
-
-  main .rv-schedules tbody tr {
-    margin-bottom: 0;
   }
 }
 
@@ -182,12 +237,13 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
   overflow-wrap: anywhere;
 }
 
-/* The checklist from 768px to 1023px: its six columns needed 746px of the 720
-   the page gives (measured on Development: the status pill alone 181px), so
-   the page scrolled sideways by 11px. The cells lose 4px of padding each side
-   (48px over six columns) and the coverage may wrap; the table keeps its
-   sticky head, there is still no scroll box */
-@media (min-width: 768px) and (max-width: 1023px) {
+/* The checklist from 768px to 1079px: its six columns need 747px (measured on
+   Development: the status pill alone 181px), and the page gives 720px at 768px
+   and 712px beside the sidebar at 1024px, so the page scrolled sideways by 11px
+   at 768px and by 3px at 1024px. The cells lose 4px of padding each side (48px
+   over six columns) until the page is wider than the table, and the coverage
+   may wrap; the table keeps its sticky head, there is still no scroll box */
+@media (min-width: 768px) and (max-width: 1079px) {
   main .rv-checklist th,
   main .rv-checklist td {
     padding-right: 8px;
