@@ -90,6 +90,12 @@ router = APIRouter()
 SHOW_CHOICES = ("all", "flagged")
 MAX_REVIEW_YEARS = 5
 NO_SUCH_CONTROL = "There is no such control."
+# The message of the exceptions register after a redirect, chosen by its `done` query
+# (a message in the page itself would not survive the redirect of the form).
+EXCEPTION_DONE = {
+    "added": "The exception was added to the register.",
+    "closed": "The exception was closed. It stays in the register as closed.",
+}
 
 
 @dataclass(frozen=True)
@@ -498,6 +504,7 @@ async def exceptions_response(
     errors: list[str],
     form: dict[str, str],
     status_code: int = 200,
+    message: str | None = None,
 ) -> Response:
     now = clock_of(request)()
     async with session_factory(request)() as session:
@@ -515,14 +522,20 @@ async def exceptions_response(
         "controls": controls,
         "errors": errors,
         "form": form,
+        "message": message,
     }
     return page(request, "exceptions.html", user, context, status_code)
 
 
 @router.get("/clients/{client_id}/exceptions")
-async def exceptions_page(request: Request, client_id: RowId) -> Response:
+async def exceptions_page(
+    request: Request, client_id: RowId, done: str = ""
+) -> Response:
     async def handle(user: AppUser) -> Response:
-        return await exceptions_response(request, user, client_id, [], {})
+        message = EXCEPTION_DONE.get(done)
+        return await exceptions_response(
+            request, user, client_id, [], {}, message=message
+        )
 
     return await guarded(request, handle)
 
@@ -603,7 +616,7 @@ async def exceptions_add(
                 target_id=record.id,
                 detail={"client_id": client_id, "control_id": record.control_id},
             )
-        return redirect(f"/clients/{client_id}/exceptions")
+        return redirect(f"/clients/{client_id}/exceptions?done=added")
 
     return await guarded(request, handle)
 
@@ -628,7 +641,7 @@ async def exceptions_close(
                     target_id=record.id,
                     detail={"client_id": client_id},
                 )
-        return redirect(f"/clients/{client_id}/exceptions")
+        return redirect(f"/clients/{client_id}/exceptions?done=closed")
 
     return await guarded(request, handle)
 

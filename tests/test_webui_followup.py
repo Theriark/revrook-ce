@@ -16,9 +16,19 @@ are skipped without it.
 """
 
 import re
+from datetime import timedelta
 from pathlib import Path
 
+import httpx
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+from app.evidence.service import EvidenceContext
 from app.ui.brand import ASSET_FILES
+from app.ui.clients import EXCEPTION_DONE
+from app.ui.reports import DETAILS_SAVED
+from helpers import NOW
+from html_structure import structure_problems
+from ui_helpers import seed_client, sign_in
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / "app/static"
@@ -29,6 +39,7 @@ SCRIPT = (STATIC / "js/revrook.js").read_text(encoding="utf-8")
 BASE = (TEMPLATES / "base.html").read_text(encoding="utf-8")
 STYLESHEET = 'href="/static/css/revrook.css?v={{ asset_version }}"'
 FOLLOW_UP_LINK = 'href="/static/css/revrook-retest.css?v={{ asset_version }}"'
+CONTROL = "PC-ACC-01"
 
 
 def rule(selector: str, css: str = FOLLOW_UP) -> str:
@@ -84,3 +95,64 @@ def test_the_strip_fade_is_steeper_as_wide_as_its_tail_and_scroll_aware() -> Non
     unwanted = ("eval(", "fetch(", "XMLHttpRequest", "innerHTML", "document.write")
     for forbidden in unwanted:
         assert forbidden not in SCRIPT, forbidden
+
+
+# --- defect 10: a message that survives the redirect --------------------------------
+
+
+async def test_adding_and_closing_an_exception_and_saving_details_say_so(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    csrf = await sign_in(ui_browser, db_engine)
+    client_id = await seed_client(db_engine, ui_ctx)
+    base = f"/clients/{client_id}/exceptions"
+    review = (NOW.date() + timedelta(days=90)).isoformat()
+    added = await ui_browser.post(
+        base,
+        data={
+            "csrf_token": csrf,
+            "control_id": CONTROL,
+            "owner": "Office manager",
+            "reason": "Accepted for the test",
+            "review_date": review,
+        },
+    )
+    assert added.status_code == 303
+    assert added.headers["location"] == f"{base}?done=added"
+    listing = await ui_browser.get(added.headers["location"])
+    assert listing.status_code == 200
+    assert 'id="exceptions-message"' in listing.text
+    assert EXCEPTION_DONE["added"] in listing.text
+    assert structure_problems(listing.text) == []
+    found = re.search(rf"{base}/(\d+)/close", listing.text)
+    assert found is not None
+    closed = await ui_browser.post(
+        f"{base}/{found.group(1)}/close", data={"csrf_token": csrf}
+    )
+    assert closed.status_code == 303
+    assert closed.headers["location"] == f"{base}?done=closed"
+    after = await ui_browser.get(closed.headers["location"])
+    assert EXCEPTION_DONE["closed"] in after.text
+    # The plain page, or an unknown word, shows no message; a 422 shows the errors.
+    for query in ("", "?done=nope"):
+        plain = await ui_browser.get(f"{base}{query}")
+        assert plain.status_code == 200 and 'id="exceptions-message"' not in plain.text
+    # The details of a report, posted without script, come back with a message too.
+    builder = f"/clients/{client_id}/reports"
+    saved = await ui_browser.post(
+        f"{builder}/details", data={"csrf_token": csrf, "plan": "A line"}
+    )
+    assert saved.status_code == 303
+    assert saved.headers["location"] == f"{builder}?saved=1"
+    page = await ui_browser.get(saved.headers["location"])
+    assert page.status_code == 200
+    assert 'id="builder-message"' in page.text and DETAILS_SAVED in page.text
+    assert structure_problems(page.text) == []
+    assert 'id="builder-message"' not in (await ui_browser.get(builder)).text
+    # With script the form still gets the "Saved at" fragment in place.
+    fragment = await ui_browser.post(
+        f"{builder}/details",
+        data={"plan": "A line"},
+        headers={"HX-Request": "true", "X-CSRF-Token": csrf},
+    )
+    assert fragment.status_code == 200 and "Saved at" in fragment.text
