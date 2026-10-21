@@ -1,0 +1,11 @@
+{
+  "database": "postgres16",
+  "volumes": ["/data"],
+  "env": [
+    {"name": "SECRET_KEY", "kind": "hex32"},
+    {"name": "FERNET_KEY", "kind": "fernet"},
+    {"name": "DATABASE_URL", "kind": "postgres_url", "scheme": "postgresql+asyncpg"},
+    {"name": "BASE_URL", "kind": "base_url"},
+    {"name": "ROLE", "kind": "literal", "value": "all"}
+  ]
+}
