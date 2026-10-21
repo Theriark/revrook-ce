@@ -1,4 +1,4 @@
-"""Contract tests of the publishing workflows (publishing-contract, 2027 release family).
+"""Contract tests of the publishing workflows (2027 publishing contract).
 
 The private publisher dispatches promote-stage.yml and finalize-release.yml by input
 name and finds the run by its run name, so both are fixed here. The tests read the
@@ -85,10 +85,9 @@ def test_every_deployment_run_shares_one_group_that_is_never_cancelled(
     if name == "ci.yml":
         # Pull request runs get their own cancellable group; every other event
         # shares the delivery group.
+        expected = "${{ github.event_name == 'pull_request' }}"
         assert GROUP in concurrency["group"]
-        assert concurrency["cancel-in-progress"] == (
-            "${{ github.event_name == 'pull_request' }}"
-        )
+        assert concurrency["cancel-in-progress"] == expected
     else:
         assert concurrency == {"group": GROUP, "cancel-in-progress": False}
 
@@ -112,9 +111,8 @@ def test_a_publishing_workflow_never_rebuilds_or_deploys_production(
     assert "build-push-action" not in source
     assert ":latest" not in source
     assert not re.search(r"docker\s+(buildx\s+)?build\b", source)
-    assert "production" not in {
-        job.get("environment") for job in load(name)["jobs"].values()
-    }
+    environments = {job.get("environment") for job in load(name)["jobs"].values()}
+    assert "production" not in environments
     assert "environment: stage" in source
 
 
