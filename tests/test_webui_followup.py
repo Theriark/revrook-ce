@@ -760,10 +760,7 @@ def test_the_import_area_border_reaches_3_to_1_and_stays_dashed() -> None:
     # The dashed 2px line of revrook.css and its accent on hover, focus and
     # drag-over are untouched (their selectors outrank the single class).
     assert "border: 2px dashed var(--rv-gray);" in rule(".rv-dropzone", CSS)
-    lifted = (
-        ".rv-dropzone:hover,\n.rv-dropzone:focus-within,\n"
-        ".rv-dropzone.is-dragover"
-    )
+    lifted = ".rv-dropzone:hover,\n.rv-dropzone:focus-within,\n.rv-dropzone.is-dragover"
     assert "border-color: var(--rv-accent);" in rule(lifted, CSS)
     assert "background-color: var(--rv-canvas);" in rule(".rv-dropzone", CSS)
 
