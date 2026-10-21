@@ -14,6 +14,7 @@ from typing import Annotated, Any
 
 from fastapi import Path, Request, Response
 from fastapi.responses import HTMLResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.auth import get_user
 from app.checks.library import Library
@@ -135,8 +136,9 @@ async def missing_page(
 
     No route ran, so the page dependencies did not either: the stale-worker flag
     is set here so the shell can read it. Signed out, the page is drawn in the
-    signed-out shell, which names nothing of the installation. `headers` are the
-    ones of the refusal (the Allow header of a 405), kept on the page.
+    signed-out shell, which names nothing of the installation; so is it when the
+    database cannot say who is signed in (a 404 is never a 500). `headers` are
+    the ones of the refusal (the Allow header of a 405), kept on the page.
     """
     request.state.worker_stale = False
     context: dict[str, Any] = {
@@ -146,7 +148,10 @@ async def missing_page(
         "message": MISSING_MESSAGES[status_code],
         "details": [],
     }
-    user = await signed_in_user(request)
+    try:
+        user = await signed_in_user(request)
+    except (SQLAlchemyError, OSError):
+        user = None
     if user is not None:
         context["user"] = user
     response = render(

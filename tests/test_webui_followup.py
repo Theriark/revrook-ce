@@ -22,7 +22,11 @@ from pathlib import Path
 import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from app.db import make_engine
 from app.evidence.service import EvidenceContext
+from app.main import create_app
+from app.security import SESSION_COOKIE
+from app.settings import Settings
 from app.ui.brand import ASSET_FILES
 from app.ui.clients import EXCEPTION_DONE
 from app.ui.reports import DETAILS_SAVED
@@ -41,6 +45,8 @@ BASE = (TEMPLATES / "base.html").read_text(encoding="utf-8")
 STYLESHEET = 'href="/static/css/revrook.css?v={{ asset_version }}"'
 FOLLOW_UP_LINK = 'href="/static/css/revrook-retest.css?v={{ asset_version }}"'
 CONTROL = "PC-ACC-01"
+# A PostgreSQL address nothing listens on (tests/test_health.py uses the same).
+UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
 
 
 def rule(selector: str, css: str = FOLLOW_UP) -> str:
@@ -214,3 +220,31 @@ def test_an_opened_delete_disclosure_is_white_on_charcoal() -> None:
     assert "color: var(--rv-white);" in rule("details.rv-confirm > summary:hover", CSS)
     system = (TEMPLATES / "system.html").read_text(encoding="utf-8")
     assert '<details class="rv-confirm">\n<summary>Delete {{ client.name }}' in system
+
+
+# --- L1: an unknown address with the database down ----------------------------------
+
+
+async def test_an_unknown_address_is_the_problem_page_with_the_database_down(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_settings: Settings
+) -> None:
+    # A signed-in session cookie makes the page ask the database who is signed in.
+    await sign_in(ui_browser, db_engine)
+    cookie = ui_browser.cookies.get(SESSION_COOKIE)
+    assert cookie
+    down = create_app(ui_settings, engine=make_engine(UNREACHABLE))
+    transport = httpx.ASGITransport(app=down)
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://test", cookies={SESSION_COOKIE: cookie}
+    ) as client:
+        missing = await client.get("/no-such-page")
+        wrong = await client.post("/glossary", data={"csrf_token": "x"})
+    assert missing.status_code == 404
+    assert missing.headers["content-type"].startswith("text/html")
+    assert "There is no page at this address." in missing.text
+    # Drawn in the signed-out shell: no navigation, no user, nothing of the data.
+    assert 'class="rv-problem"' in missing.text
+    assert 'class="rv-nav"' not in missing.text
+    assert structure_problems(missing.text) == []
+    assert wrong.status_code == 405 and "GET" in wrong.headers["allow"]
+    assert 'class="rv-nav"' not in wrong.text
