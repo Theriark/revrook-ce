@@ -5,9 +5,43 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
+## Update of 2026-10-21 (commit `c41125fd`)
+
+Read again against commit `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac`, the head of
+`development` at the time of reading, which the Development site ran on that day as the
+image
+`ghcr.io/theriark/revrook-ce@sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333`
+(the digest the registry returns for the tag `sha-<commit>`; the deployment job
+deploys the digest of that build). `development` has moved on since (the publishing
+workflows below were merged after this reading, and every later merge deploys a new
+image of its own commit); the commit and the digest that become the first candidate are
+fixed only when the release candidate step runs, and are read then, not from this page.
+The findings below stand; what changed since the first reading:
+
+- Development is deployed automatically after every merge into `development`
+  ([ci-cd.md](ci-cd.md)), so finding R5 is answered for that day by the live site: the
+  pages link the stylesheets with the version query of this commit.
+- The release path now has a release candidate step, on `development`: after the
+  Development checks, the complete documentation set
+  ([release-notes.md](release-notes.md), the [guides](guides/README.md) and the capture
+  manifest of the screenshots), the Nextcloud copy of that set and its independent
+  review, the `prepare-rc` job of `ci.yml` creates an annotated tag
+  `v27.<minor>.<patch>-rc.<n>` and a GitHub prerelease for the exact tested commit and
+  image, without deploying Stage or publishing a stable version; `promote-stage.yml`
+  consumes that tag and `finalize-release.yml` turns it into the stable tag (the
+  "Release workflow check" below and [ci-cd.md](ci-cd.md)). No such tag exists yet: the
+  first label is pending, and none of these three has been executed. Stage promotion
+  and the stable release stay separate decisions with their own approval.
+- The known limits of the candidate are listed in [release-notes.md](release-notes.md):
+  321 unverified mapping rows, no importer for `PC-END-03` and `PC-END-05`, no PDF
+  export, the open copyright holder name of the MIT licence, and the open branch
+  protection (finding R9 and the hardening note of [ci-cd.md](ci-cd.md)).
+
 ## Status
 
-- No version is released: there is no tag, no GitHub release and no published image.
+- No version is released: there is no tag, no GitHub release and no released image
+  (the image named in the update above is the build of one `development` commit,
+  deployed to the Development environment only).
   `pyproject.toml` and `app/__init__.py` both say `0.0.0.dev0` and the
   [CHANGELOG](../CHANGELOG.md) has only an Unreleased section.
 - A release is a separate step with its own authorisation from the founders. The

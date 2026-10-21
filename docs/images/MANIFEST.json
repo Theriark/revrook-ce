@@ -1,0 +1,438 @@
+{
+  "schemaVersion": 1,
+  "product": "revrook-ce",
+  "repository": "Theriark/revrook-ce",
+  "documentationRevision": "feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
+  "sourceCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
+  "sourceCommitEvidence": "origin/development head at capture time; the live pages link revrook.css?v=2977dd4c6d13, which equals asset_version() computed from the static files of this commit; CI run 39565730325 (push to development) is green",
+  "imageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+  "imageDigestEvidence": "manifest digest returned by ghcr.io for ghcr.io/theriark/revrook-ce:sha-c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac on 2026-10-21 (the deploy-development job deploys IMAGE@<build digest> of that tag); the Dokploy deployment record itself was not readable from this task",
+  "applicationVersionShown": "0.0.0.dev0 (the System page and revrook_build_info)",
+  "releaseCandidate": "pending: no v27.<minor>.<patch>-rc.<n> tag exists yet",
+  "environment": "https://ce-dev-revrook.theriark.dev",
+  "timezone": "Europe/Lisbon (UTC+01:00 on the capture day)",
+  "browser": "Theriark browser tools (Playwright, Chrome), CSS-pixel scale",
+  "data": "synthetic test data of the Development site only; no credentials, personal data or other environments in any frame",
+  "screenshots": [
+    {
+      "file": "home-1440.png",
+      "sha256": "e4fcfccccc94c0bb06e357e02cfaa79b48d6385939d7a5a766afd6f8e12ec31d",
+      "bytes": 298953,
+      "width": 1440,
+      "height": 2225,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:00:18+01:00",
+      "capturedAtUtc": "2026-10-21T12:00:18Z",
+      "usedBy": [
+        "docs/guides/02-clients-and-home.md"
+      ]
+    },
+    {
+      "file": "clients-1440.png",
+      "sha256": "9293afd1e5d3d9e02a07e4913c5bff65b2c85e45f55e8296b43d610e4f21aa7b",
+      "bytes": 130774,
+      "width": 1440,
+      "height": 900,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:01:08+01:00",
+      "capturedAtUtc": "2026-10-21T12:01:08Z",
+      "usedBy": [
+        "docs/guides/02-clients-and-home.md"
+      ]
+    },
+    {
+      "file": "client-overview-1440.png",
+      "sha256": "05bd4122adb3f2f0910ce0fbd53aee17ba82bd9d600de26663b648cbabbdae8f",
+      "bytes": 414303,
+      "width": 1440,
+      "height": 2544,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:01:32+01:00",
+      "capturedAtUtc": "2026-10-21T12:01:32Z",
+      "usedBy": [
+        "docs/guides/02-clients-and-home.md"
+      ]
+    },
+    {
+      "file": "checklist-1440.png",
+      "sha256": "49aa85461caba33a573d8681ac48cd801fcb6fd8ecbfcff5bb1ae9e7f6d3e85b",
+      "bytes": 161850,
+      "width": 1440,
+      "height": 900,
+      "fullPage": false,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/checklist",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:02:01+01:00",
+      "capturedAtUtc": "2026-10-21T12:02:01Z",
+      "usedBy": [
+        "docs/guides/04-checklist-and-control-notes.md"
+      ]
+    },
+    {
+      "file": "control-1440.png",
+      "sha256": "074184fd37cd8f052c5c538bcd8e38cf7d3cd60abac08c449e5aa516e52933dc",
+      "bytes": 195153,
+      "width": 1440,
+      "height": 1336,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/controls/PC-GOV-04",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:02:35+01:00",
+      "capturedAtUtc": "2026-10-21T12:02:35Z",
+      "usedBy": [
+        "docs/guides/04-checklist-and-control-notes.md"
+      ]
+    },
+    {
+      "file": "evidence-1440.png",
+      "sha256": "3017d386bd2b682d61e38905b6068abb6983bb626c75967067c61b51148929cb",
+      "bytes": 350603,
+      "width": 1440,
+      "height": 2273,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/evidence",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:02:51+01:00",
+      "capturedAtUtc": "2026-10-21T12:02:51Z",
+      "usedBy": [
+        "docs/guides/03-import-evidence.md"
+      ]
+    },
+    {
+      "file": "exceptions-1440.png",
+      "sha256": "ea915d142ef779846c8a7d201d6660c015155934ac45ccaf51deab58f9802c77",
+      "bytes": 168207,
+      "width": 1440,
+      "height": 1379,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/exceptions",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:03:20+01:00",
+      "capturedAtUtc": "2026-10-21T12:03:20Z",
+      "usedBy": [
+        "docs/guides/05-exceptions.md"
+      ]
+    },
+    {
+      "file": "report-builder-1440.png",
+      "sha256": "54f02798592e9ff2dcb0149bf25783251a635c3ae4e422d54af5a906e8b859ee",
+      "bytes": 254242,
+      "width": 1440,
+      "height": 2418,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/reports",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:03:40+01:00",
+      "capturedAtUtc": "2026-10-21T12:03:40Z",
+      "usedBy": [
+        "docs/guides/06-reports-and-exports.md"
+      ]
+    },
+    {
+      "file": "report-preview-1440.png",
+      "sha256": "6393be11198655924e831beb05a3259db8799ed83bd35b79bc4c81452ffada12",
+      "bytes": 241327,
+      "width": 1440,
+      "height": 1328,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/reports/1",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:04:08+01:00",
+      "capturedAtUtc": "2026-10-21T12:04:08Z",
+      "usedBy": [
+        "docs/guides/06-reports-and-exports.md"
+      ]
+    },
+    {
+      "file": "export-history-1440.png",
+      "sha256": "169e7624d04c4205e8e1ec508211289e958daebc41183796e2a8d82ef7a95ed3",
+      "bytes": 107174,
+      "width": 1440,
+      "height": 900,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/exports",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:04:28+01:00",
+      "capturedAtUtc": "2026-10-21T12:04:28Z",
+      "usedBy": [
+        "docs/guides/06-reports-and-exports.md"
+      ]
+    },
+    {
+      "file": "settings-1440.png",
+      "sha256": "a3c97fc7c112c07b7808c811120763383aeca8404a9ff699f925b5203a02bcd2",
+      "bytes": 232114,
+      "width": 1440,
+      "height": 1592,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/settings",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:04:47+01:00",
+      "capturedAtUtc": "2026-10-21T12:04:47Z",
+      "usedBy": [
+        "docs/guides/01-first-start.md",
+        "docs/guides/07-settings-system-and-glossary.md"
+      ]
+    },
+    {
+      "file": "system-1440.png",
+      "sha256": "4a5254177ead731a77403db2470a249855da649e36ac92facd1019dd5850a3d2",
+      "bytes": 214638,
+      "width": 1440,
+      "height": 1352,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/system",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:05:06+01:00",
+      "capturedAtUtc": "2026-10-21T12:05:06Z",
+      "usedBy": [
+        "docs/guides/07-settings-system-and-glossary.md"
+      ]
+    },
+    {
+      "file": "evidence-integrity-1440.png",
+      "sha256": "d4049804e3df65a8af582fe758ea1813d2ce2fe04228aea16c1d5f3a4990da59",
+      "bytes": 175077,
+      "width": 1440,
+      "height": 1084,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/evidence/integrity (after Check all chains)",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:05:43+01:00",
+      "capturedAtUtc": "2026-10-21T12:05:43Z",
+      "usedBy": [
+        "docs/guides/03-import-evidence.md"
+      ]
+    },
+    {
+      "file": "profile-editor-1440.png",
+      "sha256": "21e154f4d708d4be990192c487ed767e973745218a797f461e1f58decc90f6cb",
+      "bytes": 114402,
+      "width": 1440,
+      "height": 900,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/imports/profile-editor?client_id=1",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:06:04+01:00",
+      "capturedAtUtc": "2026-10-21T12:06:04Z",
+      "usedBy": [
+        "docs/guides/03-import-evidence.md"
+      ]
+    },
+    {
+      "file": "profile-editor-preview-1440.png",
+      "sha256": "ae251e8f30fc7e07d2ddce437f48d26a741b3b234049a9331b16147fc9dab7a0",
+      "bytes": 232844,
+      "width": 1440,
+      "height": 1905,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/imports/profile-editor?client_id=1 (after Read the file with a two-row synthetic leavers CSV, source leavers-csv)",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:06:43+01:00",
+      "capturedAtUtc": "2026-10-21T12:06:43Z",
+      "usedBy": [
+        "docs/guides/03-import-evidence.md"
+      ]
+    },
+    {
+      "file": "glossary-1440.png",
+      "sha256": "656fae9605c9a03be23274dcb3b3ad27237a9de1cfc6eaa44f1c963a6c7f62c6",
+      "bytes": 212736,
+      "width": 1440,
+      "height": 1258,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/glossary",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:07:03+01:00",
+      "capturedAtUtc": "2026-10-21T12:07:03Z",
+      "usedBy": [
+        "docs/guides/07-settings-system-and-glossary.md"
+      ]
+    },
+    {
+      "file": "not-found-1440.png",
+      "sha256": "d4c3aeefc93afa758d8b814917f0e5529519186dd6de3eb0cd3083f7378b7f9e",
+      "bytes": 62778,
+      "width": 1440,
+      "height": 900,
+      "fullPage": false,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/999 (404 problem page)",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:07:18+01:00",
+      "capturedAtUtc": "2026-10-21T12:07:18Z",
+      "usedBy": [
+        "docs/guides/07-settings-system-and-glossary.md"
+      ]
+    },
+    {
+      "file": "clients-768.png",
+      "sha256": "9d1a410b161de8906eab626f6fb4cebb9cf6d82f5a194e1f258381ec3b96bfbf",
+      "bytes": 109043,
+      "width": 768,
+      "height": 1192,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 768,
+      "capturedAt": "2026-10-21T13:08:08+01:00",
+      "capturedAtUtc": "2026-10-21T12:08:08Z",
+      "usedBy": [
+        "docs/guides/02-clients-and-home.md"
+      ]
+    },
+    {
+      "file": "clients-390.png",
+      "sha256": "02d7647aa199c05fba79b6dc3b26e17ece092a66049638241a6f5dc9d4293299",
+      "bytes": 119175,
+      "width": 390,
+      "height": 1696,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 390,
+      "capturedAt": "2026-10-21T13:08:25+01:00",
+      "capturedAtUtc": "2026-10-21T12:08:25Z",
+      "usedBy": [
+        "docs/guides/02-clients-and-home.md"
+      ]
+    },
+    {
+      "file": "home-390.png",
+      "sha256": "6179fc7d29ba345cb8ba9ab80f0bc18a09d7d8eaad80929c096a2bc4f7e98001",
+      "bytes": 290539,
+      "width": 390,
+      "height": 3808,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 390,
+      "capturedAt": "2026-10-21T13:08:48+01:00",
+      "capturedAtUtc": "2026-10-21T12:08:48Z",
+      "usedBy": [
+        "docs/guides/02-clients-and-home.md"
+      ]
+    },
+    {
+      "file": "checklist-390.png",
+      "sha256": "57098218d8ecaa2d3c8efa8b8e0879507c6043b7d2863bc1e7a19e9a8f43dbc2",
+      "bytes": 63726,
+      "width": 390,
+      "height": 844,
+      "fullPage": false,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/clients/1/checklist",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 390,
+      "capturedAt": "2026-10-21T13:09:13+01:00",
+      "capturedAtUtc": "2026-10-21T12:09:13Z",
+      "usedBy": [
+        "docs/guides/04-checklist-and-control-notes.md"
+      ]
+    },
+    {
+      "file": "sign-in-390.png",
+      "sha256": "87c2d2dcc027bd5ea51db65a2f26f60fc92ef60e52d48737d734cac161c8a5e4",
+      "bytes": 45783,
+      "width": 390,
+      "height": 844,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/login (signed out)",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 390,
+      "capturedAt": "2026-10-21T13:09:53+01:00",
+      "capturedAtUtc": "2026-10-21T12:09:53Z",
+      "usedBy": [
+        "docs/guides/01-first-start.md"
+      ]
+    },
+    {
+      "file": "sign-in-1440.png",
+      "sha256": "c3711354ece093ef7f66c0ba957a58f95c95a76523e04bfd133dc5d574e7bf0b",
+      "bytes": 85326,
+      "width": 1440,
+      "height": 900,
+      "fullPage": true,
+      "environment": "https://ce-dev-revrook.theriark.dev",
+      "page": "/login (signed out)",
+      "role": "administrator (the one Community Edition account; Development test account)",
+      "viewportWidth": 1440,
+      "capturedAt": "2026-10-21T13:10:54+01:00",
+      "capturedAtUtc": "2026-10-21T12:10:54Z",
+      "usedBy": [
+        "docs/guides/01-first-start.md"
+      ]
+    }
+  ],
+  "notCaptured": [
+    {
+      "flow": "First-run page /setup",
+      "reason": "The Development installation already has its administrator; /setup redirects to /login once an account exists (app/ui/auth.py), so the page cannot be shown without re-installing"
+    },
+    {
+      "flow": "Rendered report file (Preview of the quarterly review or the insurance pack, /clients/1/reports/1/preview/<kind>)",
+      "reason": "The browser gateway faulted on the sign-in form before this capture; the file is the HTML export described in docs/reports.md"
+    },
+    {
+      "flow": "Public DNS check",
+      "reason": "Not applicable: API and worker schedule only, no page (docs/dns-check.md)"
+    },
+    {
+      "flow": "Delete-client confirmation, add-client result, add-exception result, export confirmation",
+      "reason": "State-changing actions on the shared Development data were not performed for this capture; the pages that hold the forms are captured"
+    }
+  ],
+  "unchanged": [
+    {
+      "area": "Brand assets (app/static/brand)",
+      "reason": "Copies of the approved assets; not changed by any phase"
+    },
+    {
+      "area": "Report HTML files",
+      "reason": "Rendered byte for byte from a snapshot; described in docs/reports.md, golden files in tests/golden/reports"
+    }
+  ]
+}

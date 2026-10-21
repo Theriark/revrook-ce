@@ -54,8 +54,14 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 | [docs/ci-cd.md](docs/ci-cd.md) | CI/CD flow and known gaps |
 | [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |
 | [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state and the release workflow check |
+| [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
+| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, with live screenshots ([docs/images](docs/images/README.md)) |
 
 Changes are listed in the [CHANGELOG](CHANGELOG.md).
+
+## Known limits
+
+The release candidate keeps these limits in the open ([docs/release-notes.md](docs/release-notes.md)): the 321 mapping rows to outside frameworks are unverified, so no report prints an outside identifier; there is no importer for the controls PC-END-03 and PC-END-05, which stay Not checked; there is no PDF export, the reports are HTML files with print styles; the copyright holder named in the MIT licence is still an open decision; and branch protection on the repository has not been set.
 
 ## Contributing and security
 

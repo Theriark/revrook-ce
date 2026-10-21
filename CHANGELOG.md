@@ -2,7 +2,7 @@
 
 All notable changes to revrook CE are recorded in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project will follow [Semantic Versioning](https://semver.org/) once it has a release.
 
-No version has been released: there is no tag, no GitHub release and no published image. Everything below is under Unreleased and describes the release candidate that the Development environment runs. The version in `pyproject.toml` stays `0.0.0.dev0` until a release is authorised ([docs/release-candidate.md](docs/release-candidate.md)).
+No version has been released: there is no tag, no GitHub release and no released image (the only image is the one built for each `development` commit and deployed to the Development environment). Everything below is under Unreleased and describes the release candidate that the Development environment runs. The version in `pyproject.toml` stays `0.0.0.dev0` until a release is authorised ([docs/release-candidate.md](docs/release-candidate.md)).
 
 ## [Unreleased]
 
@@ -23,6 +23,7 @@ No version has been released: there is no tag, no GitHub release and no publishe
 - `verify-mappings` command: lists the mapping rows nobody has verified, checks every NIST identifier against the pinned names extract (a consistency check against the 32 CSF and 26 SP 800-171 identifiers transcribed from the catalog at the recorded commit; it is not a comparison with the full catalog) and keeps the register of verified rows equal to the control file.
 - An upgrade test that seeds a database at each earlier schema revision, upgrades it to the newest and checks that no row is lost.
 - `tests/test_docs.py`: links between pages, the configuration table against the settings, the README statements and the format of this file.
+- Documentation of the release candidate: step-by-step guides for every flow of the web interface (`docs/guides/README.md`) with live screenshots of the Development site and a capture manifest (`docs/images/MANIFEST.json`: file, SHA-256, environment, page, viewport, capture time in Europe/Lisbon, the guide that uses each picture, and what was not captured), and release notes (`docs/release-notes.md`) that record the source commit, the image digest and the known limits: unverified mapping rows, no importer for PC-END-03 and PC-END-05, no PDF export, the open copyright holder name and the open branch protection.
 
 ### Changed
 
