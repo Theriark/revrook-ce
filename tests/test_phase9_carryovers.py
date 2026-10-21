@@ -172,7 +172,7 @@ def test_markupsafe_is_a_direct_dependency_with_a_row_in_the_licence_table() -> 
     assert "markupsafe==" in (ROOT / "requirements.txt").read_text(encoding="utf-8")
 
 
-def test_the_pdf_measurement_is_opt_in_and_the_workflows_are_untouched() -> None:
+def test_the_pdf_measurement_is_opt_in_and_the_workflow_set_is_known() -> None:
     phase_08 = (ROOT / "scripts" / "e2e" / "phase_08.sh").read_text(encoding="utf-8")
     assert 'if [[ "${RUN_PDF_SPIKE:-0}" == "1" ]]' in phase_08
     measure_call = phase_08.index("scripts/pdf-spike/measure.sh")
@@ -180,7 +180,12 @@ def test_the_pdf_measurement_is_opt_in_and_the_workflows_are_untouched() -> None
     workflows = sorted(
         path.name for path in (ROOT / ".github" / "workflows").glob("*.yml")
     )
-    assert workflows == ["ci.yml", "promote-production.yml", "promote-stage.yml"]
+    assert workflows == [
+        "ci.yml",
+        "finalize-release.yml",
+        "promote-production.yml",
+        "promote-stage.yml",
+    ]
 
 
 # --- ownership of an export (IDOR) --------------------------------------------------
