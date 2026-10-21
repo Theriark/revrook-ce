@@ -163,8 +163,7 @@ def test_the_message_after_a_redirect_is_focused_and_its_query_cleared() -> None
     assert "message.focus();" in SCRIPT
     assert "address.searchParams.delete(name);" in SCRIPT
     assert (
-        'window.history.replaceState(window.history.state, "", address.href);'
-        in SCRIPT
+        'window.history.replaceState(window.history.state, "", address.href);' in SCRIPT
     )
 
 
