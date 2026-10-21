@@ -61,7 +61,10 @@ CHART_LEFT = 36
 CHART_RIGHT = 150
 CHART_TOP = 12
 CHART_BOTTOM = 28
-LABEL_GAP = 14
+# The distance between two stacked labels at the ends of the lines, in chart
+# units: a label is 12 units of text in a box of about 14, so at 14 two labels
+# touched (seen at 768px); 18 leaves 4 units of air, and six fit in the plot.
+LABEL_GAP = 18
 NAME_LENGTH = 20
 DASHES = ("", "6 3", "2 3", "9 3 2 3", "1 3", "12 4")
 NEEDS_WORK = (NOT_PROTECTED, NEEDS_ATTENTION)
@@ -549,7 +552,7 @@ def _label_places(drawn: Sequence[_Drawn], size: ChartSize) -> dict[int, float]:
     LABEL_GAP from the label above when two ends are close. A stack that would
     reach past the plot sat on the dates of the time axis (seen with several
     clients at a score of 0), so it is moved up by the excess, keeping its gaps:
-    six labels of 14 units fit in the 180 units of the plot."""
+    six labels of 18 units fit in the 180 units of the plot."""
     labels: dict[int, float] = {}
     floor = size.top + LABEL_GAP / 2
     for item in sorted(drawn, key=lambda item: item.last_y):

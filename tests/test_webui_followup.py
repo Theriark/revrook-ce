@@ -17,12 +17,15 @@ are skipped without it.
 
 import re
 from datetime import timedelta
+from fractions import Fraction
+from itertools import pairwise
 from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
+from test_brand_contrast import BODY_MINIMUM, VARIABLES, contrast_ratio
 
 from app.db import make_engine
 from app.evidence.service import EvidenceContext
@@ -33,12 +36,19 @@ from app.settings import Settings
 from app.ui.auth import templates
 from app.ui.brand import ASSET_FILES, BRAND_FILES
 from app.ui.clients import EXCEPTION_DONE
-from app.ui.dashboard import DELETED_CLIENT, change_lines, deleted_client_name
+from app.ui.dashboard import (
+    DELETED_CLIENT,
+    LABEL_GAP,
+    ReportPoint,
+    change_lines,
+    deleted_client_name,
+    trend_chart,
+)
 from app.ui.profiles import RESULT_TEMPLATE
 from app.ui.reports import DETAILS_SAVED
 from helpers import NOW
 from html_structure import structure_problems
-from test_brand_contrast import BODY_MINIMUM, VARIABLES, contrast_ratio
+from tools.score_inputs import AS_OF
 from ui_helpers import seed_client, sign_in
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -416,3 +426,26 @@ def test_the_entries_of_a_deleted_client_are_told_apart_by_its_number() -> None:
     # The template writes "<words> for <client>", so the entry reads as a sentence.
     home = (TEMPLATES / "home.html").read_text(encoding="utf-8")
     assert "{{ line.words }}{% if line.client_name %} for " in home
+
+
+# --- D4: the labels at the ends of the trend lines ----------------------------------
+
+
+def test_stacked_trend_labels_keep_air_between_them() -> None:
+    # A label is 12 units of text in a box of about 14 (measured at 768px: the
+    # first ended where the next began), so the stack needs more than 14.
+    assert LABEL_GAP >= 18
+    assert "font-size: 12px;" in rule(".rv-chart", CSS)
+    names = {1: "Alder Ltd", 2: "Birch Ltd", 3: "Cedar Ltd"}
+    same = [ReportPoint(k, AS_OF, Fraction(70), "Good", False, 40, 5) for k in names]
+    chart = trend_chart(same, names, AS_OF + timedelta(hours=1))
+    places = sorted(float(line.label_y) for line in chart.lines)
+    for upper, lower in pairwise(places):
+        assert lower - upper >= LABEL_GAP
+    # Six labels still fit in the plot above the dates of the axis.
+    many = {k: f"Client {k}" for k in range(1, 7)}
+    floor = [ReportPoint(k, AS_OF, Fraction(0), "Poor", False, 40, 5) for k in many]
+    stacked = trend_chart(floor, many, AS_OF + timedelta(hours=1))
+    lowest = max(float(line.label_y) for line in stacked.lines)
+    assert lowest <= stacked.bottom - LABEL_GAP / 2
+    assert min(float(line.label_y) for line in stacked.lines) >= stacked.top
