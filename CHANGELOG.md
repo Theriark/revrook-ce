@@ -2,7 +2,7 @@
 
 All notable changes to revrook CE are recorded in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project will follow [Semantic Versioning](https://semver.org/) once it has a release.
 
-No version has been released: there is no tag, no GitHub release and no published image. Everything below is under Unreleased and describes the release candidate that the Development environment runs. The version in `pyproject.toml` stays `0.0.0.dev0` until a release is authorised ([docs/release-candidate.md](docs/release-candidate.md)).
+No version has been released: there is no tag, no GitHub release and no released image (the only image is the one built for each `development` commit and deployed to the Development environment). Everything below is under Unreleased and describes the release candidate that the Development environment runs. The version in `pyproject.toml` stays `0.0.0.dev0` until a release is authorised ([docs/release-candidate.md](docs/release-candidate.md)).
 
 ## [Unreleased]
 

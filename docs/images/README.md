@@ -16,7 +16,8 @@ reviewer compares the hash of each file with the manifest; the manifest changes 
 when a picture is captured again, and a picture is captured again only when the page
 it shows changed.
 
-Viewports: 1440 px for every page; 768 px and 390 px where the layout changes (the
-clients list, Home, the checklist and the sign-in page). A picture named `-1440` is
+Viewports: 1440 px for every page; 390 px for the four pages whose layout changes most
+on a phone (the clients list, Home, the checklist and the sign-in page); 768 px for the
+clients list only, where the rows become two cards to a row. A picture named `-1440` is
 the whole page at 1440 px unless the manifest says `fullPage: false` (the checklist,
 whose 51 rows would make the picture very tall, and the problem page).

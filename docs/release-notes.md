@@ -1,8 +1,10 @@
 # Release notes
 
 The notes of the release candidate that the Development environment runs. revrook CE
-has no released version yet: there is no tag, no GitHub release and no published image,
-and the version the application reports is `0.0.0.dev0`
+has no released version yet: there is no tag, no GitHub release and no released image
+(the only image is the one built for each `development` commit and deployed to the
+Development environment, named below by its digest), and the version the application
+reports is `0.0.0.dev0`
 ([release-candidate.md](release-candidate.md)). This page is kept for the first
 candidate and grows with each one; the full list of changes is the
 [CHANGELOG](../CHANGELOG.md).
