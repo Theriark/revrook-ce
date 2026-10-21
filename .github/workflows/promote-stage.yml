@@ -2,42 +2,66 @@ name: Promote - Stage
 
 # Promote an already built image to the Stage Dokploy application. Never rebuilds.
 #
-# Promote (digest left empty): source_sha must be the current development head. The
-# digest published for it by CI (deploy-development job) is resolved, Development
-# must run exactly that digest, it is deployed to Stage and verified, the image is
-# tagged `stage` and the `stage` branch is advanced to the same SHA. Before any
-# Stage write the stage branch must exist and the move must be a fast-forward.
+# The private publisher dispatches this workflow with the six inputs of the publishing
+# contract. The run name is exactly publishing:<request_id> so the publisher can find
+# the run it started. Before ANY write the workflow verifies the source commit, the
+# image digest and the Development run:
+#   - source_commit is a commit of development and the stage branch can move to it
+#     without force (promote) or is an earlier commit of stage (rollback);
+#   - image is the digest CI published for sha-<source_commit>;
+#   - development_run_id is the successful CI run on development for that commit whose
+#     deploy-development job succeeded;
+#   - on a promotion, Development runs exactly that digest right now.
+# Then the digest is deployed to the registered Stage application (title
+# "Stage <full SHA>", description "revrook-ce GitHub Actions run <run ID>"), the image
+# is tagged `stage`, the next unused annotated RC tag v27.<minor>.<patch>-rc.<n> is
+# created (an existing tag for the same commit AND image is reused) and the `stage`
+# branch is moved to the commit.
 #
-# Rollback (digest given): run this same workflow with source_sha and the earlier
-# approved digest. source_sha must be an earlier commit of development, and the
-# image published for sha-<source_sha> must be exactly that digest. The digest is
-# redeployed to Stage and verified, `stage` is re-tagged, and the `stage` branch is
-# moved back to source_sha (only when the current stage head descends from it).
-# There is no separate rollback workflow. The database is not downgraded: name any
+# Rollback is this same workflow with an earlier approved commit and its digest; there
+# is no separate rollback workflow. The database is not downgraded: name any
 # irreversible migration before rolling back.
 #
-# Explicit approval for Stage is a human step before dispatching this run; human QA
-# in Jira follows. See docs/ci-cd.md.
+# The human Stage decision is the native Paperclip approval that precedes the dispatch.
+# No second GitHub approval is added. See docs/ci-cd.md.
+
+run-name: publishing:${{ inputs.request_id }}
 
 on:
   workflow_dispatch:
     inputs:
-      source_sha:
-        description: "Exact tested commit (full 40-character SHA)."
+      request_id:
+        description: "Publisher request identifier (run name publishing:<request_id>)."
         required: true
         type: string
-      digest:
-        description: "Optional. Earlier approved image digest (sha256:<64 hex>) to ROLL BACK Stage to. Leave empty to promote what Development runs."
-        required: false
-        default: ""
+      version:
+        description: "Stable version this candidate belongs to, 27.<minor>.<patch> (a leading v is accepted)."
+        required: true
+        type: string
+      source_commit:
+        description: "Exact approved commit (full 40-character SHA)."
+        required: true
+        type: string
+      image:
+        description: "Immutable image digest published for the commit: ghcr.io/theriark/revrook-ce@sha256:<64 hex> or sha256:<64 hex>."
+        required: true
+        type: string
+      development_run_id:
+        description: "Run ID of the CI run on development that built and deployed the commit."
+        required: true
+        type: string
+      documentation_manifest_sha256:
+        description: "Reviewed documentation manifest hash (64 hex), sealed into the RC tag."
+        required: true
         type: string
 
 permissions:
+  actions: read
   contents: write
   packages: write
 
 # One delivery run at a time per repository (shared with CI on development, and
-# Promote - Production); a live run is never cancelled.
+# Promote - Production and Finalize Release); a live run is never cancelled.
 concurrency:
   group: revrook-ce-delivery
   cancel-in-progress: false
@@ -50,8 +74,12 @@ jobs:
     environment: stage
     env:
       IMAGE: ghcr.io/theriark/revrook-ce
-      SOURCE_SHA: ${{ inputs.source_sha }}
-      DIGEST_INPUT: ${{ inputs.digest }}
+      REQUEST_ID: ${{ inputs.request_id }}
+      VERSION_INPUT: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source_commit }}
+      IMAGE_INPUT: ${{ inputs.image }}
+      DEV_RUN_ID: ${{ inputs.development_run_id }}
+      MANIFEST_SHA256: ${{ inputs.documentation_manifest_sha256 }}
       DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
       DEV_HOST: ce-dev-revrook.theriark.dev
       STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
@@ -61,48 +89,59 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate the promotion source
+      - name: Validate the inputs and the promotion source
         id: mode
         shell: bash
         run: |
           set -euo pipefail
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_sha must be a full 40-character commit SHA"; exit 1; }
-          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || { echo "::error::Promote - Stage must run from development, got ${GITHUB_REF}"; exit 1; }
+          [[ "${REQUEST_ID}" =~ ^[A-Za-z0-9._:-]{1,128}$ ]] || { echo "::error::request_id must be 1 to 128 letters, digits or . _ : -"; exit 1; }
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_commit must be a full 40-character commit SHA"; exit 1; }
+          [[ "${VERSION_INPUT}" =~ ^v?(27\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]] || { echo "::error::version must look like 27.<minor>.<patch>"; exit 1; }
+          base_version="${BASH_REMATCH[1]}"
+          [[ "${DEV_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::development_run_id must be a run ID (integer)"; exit 1; }
+          [[ "${MANIFEST_SHA256}" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::documentation_manifest_sha256 must be 64 lowercase hex characters"; exit 1; }
+          digest="${IMAGE_INPUT#"${IMAGE}@"}"
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::image must be ${IMAGE}@sha256:<64 hex> or sha256:<64 hex>"; exit 1; }
+          case "${GITHUB_REF}" in
+            refs/heads/development | refs/heads/stage) ;;
+            *) echo "::error::Promote - Stage runs from development or stage, got ${GITHUB_REF}"; exit 1 ;;
+          esac
           git fetch origin +refs/heads/development:refs/remotes/origin/development
-          development_sha="$(git rev-parse refs/remotes/origin/development)"
-          if [[ -z "${DIGEST_INPUT}" ]]; then
-            echo "rollback=false" >> "${GITHUB_OUTPUT}"
-            [[ "${SOURCE_SHA}" == "${development_sha}" ]] || {
-              echo "::error::source ${SOURCE_SHA} is not current development ${development_sha}. To go back to an earlier approved image, give its digest."
-              exit 1
-            }
-          else
-            [[ "${DIGEST_INPUT}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must be sha256:<64 hex>"; exit 1; }
-            git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/development || {
-              echo "::error::${SOURCE_SHA} is not a commit of development"
-              exit 1
-            }
-            echo "rollback=true" >> "${GITHUB_OUTPUT}"
-          fi
+          git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/development || {
+            echo "::error::${SOURCE_SHA} is not a commit of development"
+            exit 1
+          }
           # The stage branch must exist and the move must be allowed BEFORE anything
           # is written to Stage, so a branch problem cannot fail the run after the
-          # deployment. Promote: stage must be an ancestor of source_sha (a
-          # fast-forward). Rollback: stage must descend from source_sha.
+          # deployment. Promote: stage must be an ancestor of source_commit (a
+          # fast-forward, also when it already equals it). Rollback: source_commit
+          # must be an earlier commit of stage.
           git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
             echo "::error::the stage branch does not exist; create it before promoting"
             exit 1
           }
-          if [[ -z "${DIGEST_INPUT}" ]]; then
-            git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}" || {
-              echo "::error::advancing stage to ${SOURCE_SHA} would not be a fast-forward"
-              exit 1
-            }
+          if git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}"; then
+            rollback=false
+            changed="$(git diff --name-only refs/remotes/origin/stage "${SOURCE_SHA}" -- .github/workflows)"
+          elif git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/stage; then
+            rollback=true
+            changed="$(git diff --name-only "${SOURCE_SHA}" refs/remotes/origin/stage -- .github/workflows)"
           else
-            git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/stage || {
-              echo "::error::stage does not descend from ${SOURCE_SHA}; refusing to roll the branch back"
-              exit 1
-            }
+            echo "::error::stage and ${SOURCE_SHA} have diverged; refusing to move the stage branch"
+            exit 1
           fi
+          # GITHUB_TOKEN has no `workflows` permission: GitHub refuses to move a branch
+          # when the move changes a file under .github/workflows. Fail now, before the
+          # Stage deployment, rather than after it.
+          if [[ -n "${changed}" ]]; then
+            echo "::error::moving stage would change workflow files (${changed//$'\n'/, }); GITHUB_TOKEN cannot do that. A reviewed workflow-only route must first bring stage to a commit with identical workflow files."
+            exit 1
+          fi
+          {
+            echo "rollback=${rollback}"
+            echo "digest=${digest}"
+            echo "base_version=${base_version}"
+          } >> "${GITHUB_OUTPUT}"
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -111,27 +150,50 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - name: Resolve the digest published for this commit
-        id: digest
+      - name: Verify the image digest published for this commit
         shell: bash
         env:
-          ROLLBACK: ${{ steps.mode.outputs.rollback }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
         run: |
           set -euo pipefail
-          digest="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
-          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
-          if [[ "${ROLLBACK}" == "true" && "${digest}" != "${DIGEST_INPUT}" ]]; then
-            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is ${digest}, not the requested ${DIGEST_INPUT}; refusing"
+          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
+          [[ "${published}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
+          [[ "${published}" == "${DIGEST}" ]] || {
+            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is ${published}, not the requested ${DIGEST}; refusing"
             exit 1
-          fi
-          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
-          echo "Resolved ${IMAGE}@${digest}"
+          }
+          echo "Verified ${IMAGE}@${DIGEST}"
+
+      - name: Verify the Development run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}")"
+          jq -e --arg sha "${SOURCE_SHA}" '
+              .path == ".github/workflows/ci.yml"
+              and .event == "push"
+              and .head_branch == "development"
+              and .head_sha == $sha
+              and .status == "completed"
+              and .conclusion == "success"' <<<"${run}" >/dev/null || {
+            echo "::error::run ${DEV_RUN_ID} is not a successful CI push run on development for ${SOURCE_SHA}"
+            exit 1
+          }
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > jobs.tsv
+          grep -Fq $'Deploy Development (build once, deploy the digest)\tsuccess' jobs.tsv || {
+            echo "::error::run ${DEV_RUN_ID} has no successful Development deployment job"
+            exit 1
+          }
+          rm -f jobs.tsv
+          echo "Verified Development run ${DEV_RUN_ID} for ${SOURCE_SHA}"
 
       - name: Confirm Development runs exactly this digest
         if: steps.mode.outputs.rollback != 'true'
         shell: bash
         env:
-          DIGEST: ${{ steps.digest.outputs.digest }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
@@ -158,7 +220,7 @@ jobs:
         with:
           application-id: ${{ env.STAGE_APPLICATION_ID }}
           expected-host: ${{ env.STAGE_HOST }}
-          image: ${{ env.IMAGE }}@${{ steps.digest.outputs.digest }}
+          image: ${{ env.IMAGE }}@${{ steps.mode.outputs.digest }}
           health-url: https://${{ env.STAGE_HOST }}/healthz
           expected-revision: ${{ env.SOURCE_SHA }}
           title: Stage ${{ env.SOURCE_SHA }}
@@ -172,10 +234,70 @@ jobs:
       - name: Tag the promoted image as stage
         shell: bash
         env:
-          DIGEST: ${{ steps.digest.outputs.digest }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
         run: |
           set -euo pipefail
           docker buildx imagetools create --tag "${IMAGE}:stage" "${IMAGE}@${DIGEST}"
+
+      - name: Create or reuse the annotated RC tag
+        id: rc
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          prefix="v${BASE_VERSION}-rc."
+          # Reconcile first: every existing RC tag of this version, from the API.
+          refs="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${prefix}" --jq '.[] | [.ref, .object.type, .object.sha] | @tsv')"
+          max=0
+          reuse=""
+          while IFS=$'\t' read -r ref type sha; do
+            [[ -n "${ref}" ]] || continue
+            name="${ref#refs/tags/}"
+            number="${name#"${prefix}"}"
+            [[ "${number}" =~ ^[0-9]+$ ]] || continue
+            ((10#${number} > max)) && max=$((10#${number}))
+            [[ "${type}" == "tag" ]] || { echo "::error::${name} is not an annotated tag; refusing to continue"; exit 1; }
+            object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}")"
+            if jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" '
+                .object.sha == $c and ((.message | fromjson? // {}) | .sourceCommit == $c and .imageDigest == $d)' <<<"${object}" >/dev/null; then
+              jq -e --arg m "${MANIFEST_SHA256}" '(.message | fromjson).documentationManifestSha256 == $m' <<<"${object}" >/dev/null || {
+                echo "::error::${name} already seals this commit and image with a different documentation manifest; refusing"
+                exit 1
+              }
+              reuse="${name}"
+              break
+            fi
+          done <<<"${refs}"
+          if [[ -n "${reuse}" ]]; then
+            echo "Reusing ${reuse} (same commit and image)"
+            echo "tag=${reuse}" >> "${GITHUB_OUTPUT}"
+            echo "created=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          tag="${prefix}$((max + 1))"
+          message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
+            --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" \
+            '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, documentationManifestSha256: $m}')"
+          tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+            -f tag="${tag}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
+          [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
+          if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${tag}" -f sha="${tag_sha}" >/dev/null; then
+            # Uncertain result: reconcile by reading the ref, never create twice.
+            existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '.object.sha' || true)"
+            [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${tag}"; exit 1; }
+          fi
+          back="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}")"
+          jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg t "${tag}" '
+              .tag == $t and .object.sha == $c and ((.message | fromjson) | .sourceCommit == $c and .imageDigest == $d)' <<<"${back}" >/dev/null || {
+            echo "::error::${tag} did not read back as expected"
+            exit 1
+          }
+          echo "Created ${tag}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "created=true" >> "${GITHUB_OUTPUT}"
 
       - name: Point the stage branch at the deployed commit
         shell: bash
@@ -198,9 +320,10 @@ jobs:
       - name: Record the Stage result
         shell: bash
         env:
-          DIGEST: ${{ steps.digest.outputs.digest }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
           PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
           ROLLBACK: ${{ steps.mode.outputs.rollback }}
+          RC_TAG: ${{ steps.rc.outputs.tag }}
         run: |
           set -euo pipefail
           {
@@ -210,8 +333,11 @@ jobs:
               echo "## revrook-ce promoted to Stage"
             fi
             echo
+            echo "- Request: \`${REQUEST_ID}\`"
             echo "- Source commit: \`${SOURCE_SHA}\`"
             echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
+            echo "- Development run: \`${DEV_RUN_ID}\`; Stage run: \`${GITHUB_RUN_ID}\`"
+            echo "- RC tag: \`${RC_TAG}\`; documentation manifest: \`${MANIFEST_SHA256}\`"
             echo "- Previous Stage image (rollback target): \`${PREVIOUS:-none}\`"
             echo "- URL: https://${STAGE_HOST}/"
             echo "- Stage branch: \`${SOURCE_SHA}\`; main is unchanged"

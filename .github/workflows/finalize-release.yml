@@ -1,0 +1,278 @@
+name: Finalize Release
+
+# Publish the stable release from the exact commit and image that Stage tested. Never
+# rebuilds, never deploys, never touches `main` and never enables production.
+#
+# The private publisher dispatches this workflow only after the separately approved
+# release decision (a native Paperclip approval; no second GitHub approval is added).
+# Inputs are the Stage inputs plus stage_promotion_run_id and rc_tag. The run name is
+# exactly publishing:<request_id>.
+#
+# Before ANY write the workflow verifies: the stage branch is exactly source_commit;
+# the image is the digest published for sha-<source_commit>; the RC tag is annotated,
+# points at source_commit and its JSON message carries the same commit, digest,
+# development run, Stage run and documentation manifest; the Stage run succeeded; and
+# Stage runs exactly that digest. Then, reconciling what already exists first, it
+# writes the GHCR alias v<version> (an alias of the existing digest, never `latest`),
+# the annotated stable tag v<version> and a non-draft, non-prerelease GitHub release.
+# A retry reuses whatever already matches and refuses anything that does not.
+
+run-name: publishing:${{ inputs.request_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Publisher request identifier (run name publishing:<request_id>)."
+        required: true
+        type: string
+      version:
+        description: "Stable version, 27.<minor>.<patch> (a leading v is accepted)."
+        required: true
+        type: string
+      source_commit:
+        description: "Exact Stage-tested commit (full 40-character SHA)."
+        required: true
+        type: string
+      image:
+        description: "Immutable image digest Stage runs: ghcr.io/theriark/revrook-ce@sha256:<64 hex> or sha256:<64 hex>."
+        required: true
+        type: string
+      development_run_id:
+        description: "Run ID of the CI run on development that built and deployed the commit."
+        required: true
+        type: string
+      documentation_manifest_sha256:
+        description: "Reviewed documentation manifest hash (64 hex), sealed into the stable tag."
+        required: true
+        type: string
+      stage_promotion_run_id:
+        description: "Run ID of the successful Promote - Stage run that deployed this candidate."
+        required: true
+        type: string
+      rc_tag:
+        description: "Annotated RC tag of this candidate, v27.<minor>.<patch>-rc.<n>."
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+  packages: write
+
+# One delivery run at a time per repository (shared with CI on development, Promote -
+# Stage and Promote - Production); a live run is never cancelled.
+concurrency:
+  group: revrook-ce-delivery
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Publish the stable tag, image alias and release without a rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Stage secrets are needed only to read what Stage runs; nothing is deployed.
+    environment: stage
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      REQUEST_ID: ${{ inputs.request_id }}
+      VERSION_INPUT: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source_commit }}
+      IMAGE_INPUT: ${{ inputs.image }}
+      DEV_RUN_ID: ${{ inputs.development_run_id }}
+      MANIFEST_SHA256: ${{ inputs.documentation_manifest_sha256 }}
+      STAGE_RUN_ID: ${{ inputs.stage_promotion_run_id }}
+      RC_TAG: ${{ inputs.rc_tag }}
+      STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
+      STAGE_HOST: ce-stg-revrook.theriark.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate the inputs and that Stage holds this commit
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${REQUEST_ID}" =~ ^[A-Za-z0-9._:-]{1,128}$ ]] || { echo "::error::request_id must be 1 to 128 letters, digits or . _ : -"; exit 1; }
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_commit must be a full 40-character commit SHA"; exit 1; }
+          [[ "${VERSION_INPUT}" =~ ^v?(27\.[0-9]+\.[0-9]+)$ ]] || { echo "::error::version must look like 27.<minor>.<patch>"; exit 1; }
+          base_version="${BASH_REMATCH[1]}"
+          [[ "${DEV_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::development_run_id must be a run ID (integer)"; exit 1; }
+          [[ "${STAGE_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::stage_promotion_run_id must be a run ID (integer)"; exit 1; }
+          [[ "${MANIFEST_SHA256}" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::documentation_manifest_sha256 must be 64 lowercase hex characters"; exit 1; }
+          [[ "${RC_TAG}" == "v${base_version}-rc."* && "${RC_TAG##*-rc.}" =~ ^[0-9]+$ ]] || { echo "::error::rc_tag must look like v${base_version}-rc.<n>"; exit 1; }
+          digest="${IMAGE_INPUT#"${IMAGE}@"}"
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::image must be ${IMAGE}@sha256:<64 hex> or sha256:<64 hex>"; exit 1; }
+          case "${GITHUB_REF}" in
+            refs/heads/development | refs/heads/stage) ;;
+            *) echo "::error::Finalize Release runs from development or stage, got ${GITHUB_REF}"; exit 1 ;;
+          esac
+          git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
+            echo "::error::the stage branch does not exist"
+            exit 1
+          }
+          [[ "$(git rev-parse refs/remotes/origin/stage)" == "${SOURCE_SHA}" ]] || {
+            echo "::error::stage is not ${SOURCE_SHA}; only the commit Stage runs can be released"
+            exit 1
+          }
+          {
+            echo "digest=${digest}"
+            echo "base_version=${base_version}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Verify the digest, the RC tag, the Stage run and what Stage runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          for required in DOKPLOY_URL DOKPLOY_API_KEY CF_ID CF_SECRET; do
+            [[ -n "${!required}" ]] || { echo "::error::${required} is missing from the stage environment"; exit 1; }
+          done
+          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
+          [[ "${published}" == "${DIGEST}" ]] || {
+            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is '${published}', not the requested ${DIGEST}; refusing"
+            exit 1
+          }
+          # The RC tag: annotated, on this commit, sealing exactly this candidate.
+          ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}")"
+          [[ "$(jq -r '.object.type' <<<"${ref}")" == "tag" ]] || { echo "::error::${RC_TAG} is not an annotated tag"; exit 1; }
+          object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/$(jq -r '.object.sha' <<<"${ref}")")"
+          jq -e --arg t "${RC_TAG}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
+              --argjson dev "${DEV_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" '
+              .tag == $t and .object.sha == $c
+              and ((.message | fromjson) as $j
+                | $j.sourceCommit == $c and $j.imageDigest == $d
+                and $j.developmentRunId == $dev and $j.workflowRunId == $stage
+                and $j.documentationManifestSha256 == $m)' <<<"${object}" >/dev/null || {
+            echo "::error::${RC_TAG} does not seal this commit, digest, development run, Stage run and documentation manifest"
+            exit 1
+          }
+          # The Stage run that wrote that tag.
+          jq -e '.path == ".github/workflows/promote-stage.yml" and .status == "completed" and .conclusion == "success"' \
+            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${STAGE_RUN_ID}")" >/dev/null || {
+            echo "::error::run ${STAGE_RUN_ID} is not a successful Promote - Stage run"
+            exit 1
+          }
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${STAGE_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || {
+            echo "::error::Stage runs '${running}', not ${IMAGE}@${DIGEST}"
+            exit 1
+          }
+          curl --fail --silent --show-error --max-time 15 "https://${STAGE_HOST}/healthz" >/dev/null
+          echo "Verified ${RC_TAG}, Stage run ${STAGE_RUN_ID} and ${IMAGE}@${DIGEST}"
+
+      - name: Alias the existing image (no rebuild, never latest)
+        shell: bash
+        env:
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          alias="${IMAGE}:v${BASE_VERSION}"
+          if existing="$(docker buildx imagetools inspect "${alias}" --format '{{.Manifest.Digest}}' 2>/dev/null)"; then
+            [[ "${existing}" == "${DIGEST}" ]] || { echo "::error::${alias} already points at ${existing}, not ${DIGEST}; refusing"; exit 1; }
+            echo "${alias} already points at ${DIGEST}"
+          else
+            docker buildx imagetools create --tag "${alias}" "${IMAGE}@${DIGEST}"
+          fi
+          [[ "$(docker buildx imagetools inspect "${alias}" --format '{{.Manifest.Digest}}')" == "${DIGEST}" ]] || {
+            echo "::error::${alias} does not read back as ${DIGEST}"
+            exit 1
+          }
+
+      - name: Create or reuse the annotated stable tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          tag="v${BASE_VERSION}"
+          check='.tag == $t and .object.sha == $c
+            and ((.message | fromjson) as $j
+              | $j.sourceCommit == $c and $j.imageDigest == $d
+              and $j.developmentRunId == $dev and $j.stagePromotionRunId == $stage
+              and $j.rcTag == $rc and $j.documentationManifestSha256 == $m)'
+          verify() {
+            jq -e --arg t "${tag}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" --arg rc "${RC_TAG}" \
+              --argjson dev "${DEV_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" "${check}" <<<"$1" >/dev/null
+          }
+          # Reconcile first: an existing tag is reused only when it matches exactly.
+          if ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" 2>/dev/null)"; then
+            [[ "$(jq -r '.object.type' <<<"${ref}")" == "tag" ]] || { echo "::error::${tag} exists and is not an annotated tag"; exit 1; }
+            object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/$(jq -r '.object.sha' <<<"${ref}")")"
+            verify "${object}" || { echo "::error::${tag} already exists for a different candidate; refusing"; exit 1; }
+            echo "Reusing existing ${tag}"
+            exit 0
+          fi
+          message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" --arg rc "${RC_TAG}" \
+            --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" --argjson stage "${STAGE_RUN_ID}" \
+            '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, stagePromotionRunId: $stage, rcTag: $rc, documentationManifestSha256: $m}')"
+          tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+            -f tag="${tag}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
+          [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
+          if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${tag}" -f sha="${tag_sha}" >/dev/null; then
+            # Uncertain result: reconcile by reading the ref, never create twice.
+            existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '.object.sha' || true)"
+            [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${tag}"; exit 1; }
+          fi
+          verify "$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}")" || { echo "::error::${tag} did not read back as expected"; exit 1; }
+          echo "Created ${tag}"
+
+      - name: Create or reuse the GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          tag="v${BASE_VERSION}"
+          if release="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}" 2>/tmp/release.err)"; then
+            jq -e --arg t "${tag}" '.tag_name == $t and .draft == false and .prerelease == false' <<<"${release}" >/dev/null || {
+              echo "::error::release ${tag} exists but is a draft or a prerelease; refusing to change it"
+              exit 1
+            }
+            echo "Reusing existing release ${tag}"
+          else
+            grep -q "Not Found" /tmp/release.err || { echo "::error::could not read release ${tag}: $(cat /tmp/release.err)"; exit 1; }
+            gh release create "${tag}" --verify-tag --latest --title "revrook CE v${BASE_VERSION}" \
+              --notes "Image: \`${IMAGE}@${DIGEST}\` (source ${SOURCE_SHA}). Release candidate ${RC_TAG}, tested on Stage. Published without a rebuild."
+          fi
+          rm -f /tmp/release.err
+          jq -e --arg t "${tag}" '.tag_name == $t and .draft == false and .prerelease == false' \
+            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}")" >/dev/null || {
+            echo "::error::release ${tag} does not read back as a published, non-prerelease release"
+            exit 1
+          }
+          {
+            echo "## revrook-ce ${tag} released"
+            echo
+            echo "- Request: \`${REQUEST_ID}\`"
+            echo "- Source commit: \`${SOURCE_SHA}\` (tag \`${tag}\`, candidate \`${RC_TAG}\`)"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (alias \`v${BASE_VERSION}\`, no rebuild)"
+            echo "- Development run: \`${DEV_RUN_ID}\`; Stage run: \`${STAGE_RUN_ID}\`; this run: \`${GITHUB_RUN_ID}\`"
+            echo "- Documentation manifest: \`${MANIFEST_SHA256}\`"
+            echo "- No production deployment, no main change, no rebuild"
+          } >> "${GITHUB_STEP_SUMMARY}"
