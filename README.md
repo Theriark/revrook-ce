@@ -14,6 +14,8 @@ This is the Community Edition (CE) and nothing else. Every file in it is under t
 
 You export evidence from the tools you already use (device, backup, network, training, leaver, mail and Microsoft 365 exports) and upload it. Revrook checks it against 51 plain-language controls, scores the result with a lower and an upper bound, and makes a quarterly security review and a cyber insurance evidence pack for each client, each as one HTML file.
 
+The Community Edition has one account: the administrator, created on the first-run page the first time a new installation is opened. There is no user management in CE (no further accounts, roles or invitations); this is by design, not a gap.
+
 ## What the output is
 
 Revrook produces a configuration evidence summary. It is not a certification, audit or legal advice. Every evidence item shows its evidence date, and every score shows the ruleset version used to produce it.
