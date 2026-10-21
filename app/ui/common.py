@@ -8,6 +8,7 @@ can type or click gives one.
 """
 
 import html
+import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from datetime import date, timedelta
 from typing import Annotated, Any
@@ -50,6 +51,8 @@ DEFAULT_TITLE = "The request was refused"
 NO_SUCH_PAGE = "There is no page at this address."
 WRONG_METHOD = "This address does not accept what was sent to it."
 MISSING_MESSAGES = {404: NO_SUCH_PAGE, 405: WRONG_METHOD}
+
+logger = logging.getLogger("revrook.web")
 
 Handler = Callable[[AppUser], Awaitable[Response]]
 
@@ -150,7 +153,14 @@ async def missing_page(
     }
     try:
         user = await signed_in_user(request)
-    except (SQLAlchemyError, OSError):
+    except (SQLAlchemyError, OSError) as error:
+        # The page is drawn signed out, and the outage leaves one line in the log:
+        # the class of the error only, because its text can hold the statement or
+        # the address of the database.
+        logger.warning(
+            "The problem page could not read who is signed in: %s",
+            type(error).__name__,
+        )
         user = None
     if user is not None:
         context["user"] = user

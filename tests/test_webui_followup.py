@@ -15,6 +15,7 @@ revrook.css, which is unchanged. The page tests need PostgreSQL (DATABASE_URL) a
 are skipped without it.
 """
 
+import logging
 import re
 from datetime import timedelta
 from fractions import Fraction
@@ -112,12 +113,59 @@ def test_the_strip_fade_is_steeper_as_wide_as_its_tail_and_scroll_aware() -> Non
     remaining = "scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft"
     assert remaining in SCRIPT
     assert 'strip.setAttribute(\n        "data-scroll-end",' in SCRIPT
-    assert 'remaining <= STRIP_TAIL + 1 ? "true" : "false"' in SCRIPT
+    assert "var end = STRIP_TAIL + endPadding(scroller) + 1;" in SCRIPT
+    assert 'remaining <= end ? "true" : "false"' in SCRIPT
     for event in ('"scroll", update', '"resize", update', '"load", update'):
         assert event in SCRIPT, event
     unwanted = ("eval(", "fetch(", "XMLHttpRequest", "innerHTML", "document.write")
     for forbidden in unwanted:
         assert forbidden not in SCRIPT, forbidden
+
+
+# --- R1 (review of the follow-up): the end padding of the scroller counts -----------
+
+
+def test_a_strip_is_at_its_end_only_past_the_end_padding_of_its_scroller() -> None:
+    # The navigation bar keeps 16px of end padding after its 48px tail (revrook.css),
+    # so its true end is 64px after the last link; with the tail alone the fade
+    # stayed over the last link for the last 16px of scrolling. The tabs have none.
+    assert "padding: 0 16px 4px;" in rule(".rv-header nav,\n.rv-nav", CSS)
+    assert "padding" not in rule("main nav", CSS)
+    assert "padding" not in rule(".rv-tabs-strip > nav", CSS)
+    # The script reads that padding from the computed style of the element that
+    # scrolls, so a second constant cannot drift from the stylesheet.
+    assert "function endPadding(scroller) {" in SCRIPT
+    assert "window.getComputedStyle(scroller)" in SCRIPT
+    assert "return parseFloat(style.paddingRight) || 0;" in SCRIPT
+    assert "var end = STRIP_TAIL + endPadding(scroller) + 1;" in SCRIPT
+
+
+# --- R2 (review of the follow-up): the message after a redirect is read out ---------
+
+
+def test_the_message_after_a_redirect_is_focused_and_its_query_cleared() -> None:
+    exceptions = (TEMPLATES / "exceptions.html").read_text(encoding="utf-8")
+    reports = (TEMPLATES / "reports.html").read_text(encoding="utf-8")
+    assert (
+        'role="status" id="exceptions-message" tabindex="-1" data-clear-query="done"'
+        in exceptions
+    )
+    assert (
+        'role="status" id="builder-message" tabindex="-1" data-clear-query="saved"'
+        in reports
+    )
+    # The script moves focus to the message (a status region already on the page
+    # when it loads is often not read out) and takes the named query off the
+    # address in place, so a reload does not repeat the message. Without the
+    # script the redirect and the message are as before: the server draws them.
+    assert 'document.querySelectorAll("[data-clear-query]")' in SCRIPT
+    assert 'var name = message.getAttribute("data-clear-query");' in SCRIPT
+    assert "message.focus();" in SCRIPT
+    assert "address.searchParams.delete(name);" in SCRIPT
+    assert (
+        'window.history.replaceState(window.history.state, "", address.href);'
+        in SCRIPT
+    )
 
 
 # --- defect 10: a message that survives the redirect --------------------------------
@@ -145,6 +193,9 @@ async def test_adding_and_closing_an_exception_and_saving_details_say_so(
     listing = await ui_browser.get(added.headers["location"])
     assert listing.status_code == 200
     assert 'id="exceptions-message"' in listing.text
+    assert 'id="exceptions-message" tabindex="-1" data-clear-query="done"' in (
+        listing.text
+    )
     assert EXCEPTION_DONE["added"] in listing.text
     assert structure_problems(listing.text) == []
     found = re.search(rf"{base}/(\d+)/close", listing.text)
@@ -170,6 +221,7 @@ async def test_adding_and_closing_an_exception_and_saving_details_say_so(
     page = await ui_browser.get(saved.headers["location"])
     assert page.status_code == 200
     assert 'id="builder-message"' in page.text and DETAILS_SAVED in page.text
+    assert 'id="builder-message" tabindex="-1" data-clear-query="saved"' in page.text
     assert structure_problems(page.text) == []
     assert 'id="builder-message"' not in (await ui_browser.get(builder)).text
     # With script the form still gets the "Saved at" fragment in place.
@@ -243,12 +295,16 @@ def test_an_opened_delete_disclosure_is_white_on_charcoal() -> None:
 
 
 async def test_an_unknown_address_is_the_problem_page_with_the_database_down(
-    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_settings: Settings
+    ui_browser: httpx.AsyncClient,
+    db_engine: AsyncEngine,
+    ui_settings: Settings,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     # A signed-in session cookie makes the page ask the database who is signed in.
     await sign_in(ui_browser, db_engine)
     cookie = ui_browser.cookies.get(SESSION_COOKIE)
     assert cookie
+    caplog.set_level(logging.WARNING, logger="revrook.web")
     down = create_app(ui_settings, engine=make_engine(UNREACHABLE))
     transport = httpx.ASGITransport(app=down)
     async with httpx.AsyncClient(
@@ -265,6 +321,17 @@ async def test_an_unknown_address_is_the_problem_page_with_the_database_down(
     assert structure_problems(missing.text) == []
     assert wrong.status_code == 405 and "GET" in wrong.headers["allow"]
     assert 'class="rv-nav"' not in wrong.text
+    # R3 (review of the follow-up): the outage leaves one warning a request, naming
+    # the class of the error and nothing of the statement or the address.
+    warnings = [r for r in caplog.records if r.name == "revrook.web"]
+    assert len(warnings) == 2
+    for record in warnings:
+        assert record.levelno == logging.WARNING
+        assert re.fullmatch(
+            r"The problem page could not read who is signed in: \w+",
+            record.getMessage(),
+        )
+        assert "unused" not in record.getMessage()  # the password of UNREACHABLE
 
 
 # --- L2: a focused link is never under the fade -------------------------------------
