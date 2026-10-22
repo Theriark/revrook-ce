@@ -390,14 +390,21 @@ main .rv-exceptions-scroll td {
    screen. The bar is a canvas band with the word Control and the Close button;
    the scrolling part holds the skeleton while the control loads (aria-busy on
    the dialog), then the control head and body in one column: the grid does not
-   split and the notes card does not stick, whatever the width */
+   split and the notes card does not stick, whatever the width.
+   Pico styles every dialog as a centred flex box that is at least the whole
+   window (min-width and min-height 100%), which is what made the sheet fill the
+   window on Development at 1440px: the sheet sets both minimums to 0 and is a
+   block while open. Only while open: Pico keeps a closed dialog display none,
+   and a rule on the closed state would show it */
 dialog.rv-drawer {
   position: fixed;
   inset: 0 0 0 auto;
   box-sizing: border-box;
   width: 38rem;
+  min-width: 0;
   max-width: 100%;
   height: 100%;
+  min-height: 0;
   max-height: 100%;
   margin: 0;
   padding: 0;
@@ -411,6 +418,7 @@ dialog.rv-drawer {
 }
 
 dialog.rv-drawer[open] {
+  display: block;
   animation: rv-drawer-in var(--rv-motion);
 }
 

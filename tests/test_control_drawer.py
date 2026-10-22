@@ -104,8 +104,15 @@ def test_the_drawer_is_a_sheet_at_the_right_edge_that_fills_a_phone() -> None:
     assert "position: fixed;" in sheet and "inset: 0 0 0 auto;" in sheet
     assert "width: 38rem;" in sheet and "max-width: 100%;" in sheet
     assert "height: 100%;" in sheet and "padding: 0;" in sheet
+    # Pico makes every dialog a centred flex box at least the whole window
+    # (min-width and min-height 100%); seen on Development at 1440px, the sheet
+    # filled the window. Both minimums are 0 and the open sheet is a block; the
+    # closed state is left to Pico (display none), so no rule shows it.
+    assert "min-width: 0;" in sheet and "min-height: 0;" in sheet
+    assert "display:" not in sheet
     assert "box-shadow: var(--rv-shadow-2);" in sheet
     opened = rule("dialog.rv-drawer[open]")
+    assert "display: block;" in opened
     assert "animation: rv-drawer-in var(--rv-motion);" in opened
     assert "@keyframes rv-drawer-in" in CSS
     veil = rule("dialog.rv-drawer::backdrop")
@@ -143,6 +150,10 @@ def test_the_script_opens_loads_focuses_and_falls_back_to_the_page() -> None:
     assert "title.focus({ preventScroll: true });" in SCRIPT
     assert "drawerOpener.focus();" in SCRIPT
     assert 'dialog.addEventListener("close", drawerClosed);' in SCRIPT
+    # Closed, the body is emptied: the next open starts from the skeleton, and a
+    # swap never meets the ids of the previous control (seen on Development: the
+    # second open logged four content security policy messages from htmx).
+    assert "body.replaceChildren();" in SCRIPT
     # A failed request leaves for the page itself; a click on the veil closes.
     assert '"htmx:responseError", drawerFailed' in SCRIPT
     assert '"htmx:sendError", drawerFailed' in SCRIPT
