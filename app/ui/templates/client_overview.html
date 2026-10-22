@@ -68,8 +68,8 @@
 {% for item in attention %}
 <li class="rv-attention-row">
 <span class="rv-attention-status">{{ s.status(item.label) }}</span>
-<span class="rv-attention-what"><a href="/{{ item.path }}">{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{% if item.gate %}Gate control{% endif %}{% if item.why %}{% if item.gate %}, {% endif %}{{ item.why }}{% endif %}</span></span>
-<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}">Open</a>
+<span class="rv-attention-what"><a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{% if item.gate %}Gate control{% endif %}{% if item.why %}{% if item.gate %}, {% endif %}{{ item.why }}{% endif %}</span></span>
+<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}" data-drawer>Open</a>
 </li>
 {% endfor %}
 </ol>
@@ -180,4 +180,5 @@
 <p class="rv-text-secondary" id="changes-empty">Nothing has changed yet.</p>
 {% endif %}
 </section>
+{% include "_drawer.html" %}
 {% endblock %}

@@ -20,7 +20,14 @@
  *   the preview of an import): the template gives each tabindex="0", so the
  *   keyboard always reaches a region that scrolls; the script takes that tab
  *   stop away while the content fits its box (card rows, a short table) and
- *   gives it back when the content overflows (a resize, a swap).
+ *   gives it back when the content overflows (a resize, a swap);
+ * - the control drawer (templates/_drawer.html): a link marked data-drawer on the
+ *   checklist, the home page or the client overview opens the native dialog at
+ *   the right edge and asks htmx to put the control into it (the server answers
+ *   the drawer target with the control without its shell); focus moves to the
+ *   title of the control and goes back to the link when the drawer closes. A
+ *   click with a modifier key, a middle click, a browser without dialogs, a page
+ *   without htmx, a failed request: all leave the link as it is, the page itself.
  */
 (function () {
   "use strict";
@@ -140,7 +147,139 @@
     }
   }
 
+  // The control drawer. The link that opened it is kept so focus can return to
+  // it; the dialog is modal (showModal), so Escape closes it, Tab stays inside and
+  // the page behind is inert. While the control loads the dialog carries aria-busy
+  // and the stylesheet shows the skeleton in place of the body.
+  var DRAWER_BODY = "control-drawer-body";
+  var drawerOpener = null;
+
+  function drawerOf() {
+    return document.getElementById("control-drawer");
+  }
+
+  function drawerLinkOf(event) {
+    if (event.defaultPrevented || event.button !== 0) {
+      return null;
+    }
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return null;
+    }
+    var node = event.target;
+    while (node && node !== document) {
+      if (node.tagName === "A" && node.hasAttribute("data-drawer")) {
+        return node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function leaveForPage(link) {
+    var dialog = drawerOf();
+    if (dialog && dialog.open) {
+      dialog.close();
+    }
+    window.location.assign(link.href);
+  }
+
+  function openDrawer(event) {
+    var link = drawerLinkOf(event);
+    var dialog = drawerOf();
+    if (!link || !dialog || !window.htmx || !window.htmx.ajax) {
+      return;
+    }
+    event.preventDefault();
+    drawerOpener = link;
+    dialog.setAttribute("aria-busy", "true");
+    dialog.removeAttribute("aria-labelledby");
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+    var pending = window.htmx.ajax("GET", link.getAttribute("href"), {
+      source: link,
+      target: "#" + DRAWER_BODY
+    });
+    if (pending && typeof pending.catch === "function") {
+      pending.catch(function () {
+        leaveForPage(link);
+      });
+    }
+  }
+
+  // The control arrived: the dialog is named by its title, which takes focus.
+  // A refusal (the short message the server sends htmx) has no title: focus
+  // goes to the Close button, so the keyboard is never left on the inert page.
+  function drawerLoaded(event) {
+    var body = event.target;
+    if (!body || body.id !== DRAWER_BODY) {
+      return;
+    }
+    var dialog = drawerOf();
+    if (!dialog) {
+      return;
+    }
+    dialog.removeAttribute("aria-busy");
+    var scroll = dialog.querySelector(".rv-drawer-scroll");
+    if (scroll) {
+      scroll.scrollTop = 0;
+    }
+    var title = body.querySelector("#control-drawer-title");
+    if (title) {
+      dialog.setAttribute("aria-labelledby", "control-drawer-title");
+      title.focus({ preventScroll: true });
+      return;
+    }
+    var close = dialog.querySelector(".rv-drawer-close");
+    if (close) {
+      close.focus();
+    }
+  }
+
+  // The request could not be made or the answer was not a page (a gateway error,
+  // a timeout): the page itself is the fallback, so the person still gets there.
+  function drawerFailed(event) {
+    var link = event.target;
+    if (link && link.hasAttribute && link.hasAttribute("data-drawer")) {
+      leaveForPage(link);
+    }
+  }
+
+  function drawerClosed() {
+    var dialog = drawerOf();
+    if (dialog) {
+      dialog.removeAttribute("aria-busy");
+    }
+    if (drawerOpener && document.body.contains(drawerOpener)) {
+      drawerOpener.focus();
+    }
+    drawerOpener = null;
+  }
+
+  // The dialog has no padding and its panel fills it, so a click that reaches the
+  // dialog itself landed on the veil beside it.
+  function closeOnVeil(event) {
+    var dialog = drawerOf();
+    if (dialog && event.target === dialog) {
+      dialog.close();
+    }
+  }
+
+  function watchDrawer() {
+    var dialog = drawerOf();
+    if (!dialog || typeof dialog.showModal !== "function") {
+      return;
+    }
+    document.addEventListener("click", openDrawer);
+    dialog.addEventListener("click", closeOnVeil);
+    dialog.addEventListener("close", drawerClosed);
+    document.addEventListener("htmx:afterSwap", drawerLoaded);
+    document.addEventListener("htmx:responseError", drawerFailed);
+    document.addEventListener("htmx:sendError", drawerFailed);
+  }
+
   function ready() {
+    watchDrawer();
     document.addEventListener("htmx:afterSwap", announceSwapped);
     document.addEventListener("htmx:afterSwap", updateRegions);
     window.addEventListener("resize", updateRegions);
