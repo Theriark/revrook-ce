@@ -126,13 +126,12 @@ def test_the_system_theme_follows_the_system_without_script() -> None:
     media = CSS.split("@media (prefers-color-scheme: dark) {", 1)
     assert len(media) == 2 and '\n  :root[data-theme="system"] {' in media[1]
     assert block(SYSTEM_SELECTOR) == block(DARK_SELECTOR)
-    # The signed-out logo follows the same rule, for both choices.
-    for theme in ("dark", "system"):
-        root = f':root[data-theme="{theme}"]'
-        hide = f"{root} .rv-signed-out .rv-logo:not(.rv-logo-on-dark)"
-        assert block(hide) == {"display": "none"}, theme
-        assert block(f"{root} .rv-logo-on-dark") == {"display": "block"}
-    assert block(".rv-logo-on-dark") == {"display": "none"}
+    # The brand needs no rule per theme: the mark is drawn on nothing, its tile
+    # is the stylesheet's and the wordmark takes the colours of the roles.
+    assert "rv-logo-on-dark" not in CSS
+    assert block(".rv-mark")["background-color"] == "var(--rv-mark-tile)"
+    assert VARIABLES["--rv-mark-tile"] == "#fffef5"
+    assert "--rv-mark-tile" not in block(DARK_SELECTOR)
 
 
 def test_the_veil_and_the_danger_face_are_roles() -> None:
@@ -199,16 +198,22 @@ def test_the_page_carries_the_theme_and_the_colour_scheme() -> None:
     assert '<meta name="color-scheme" content="dark">' in dark
 
 
-def test_the_signed_out_header_carries_both_logos() -> None:
+def test_the_signed_out_header_carries_the_lockup_for_both_themes() -> None:
     html = render("login.html")
-    light = '<img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"'
-    assert light in html
-    assert (
-        '<img class="rv-logo rv-logo-on-dark" '
-        'src="/static/brand/logo-horizontal-dark-1200x400.png"'
-    ) in html
+    mark = '<img class="rv-mark-img" src="/static/brand/logo-mark-512x512.png"'
+    assert html.count(mark) == 2  # the panel and the header
+    assert "logo-horizontal" not in html and "logo-stacked" not in html
+    # On the surface the wordmark takes the text and link colours of the theme:
+    # the rail colours are scoped to the app shell and to the sign-in panel.
+    rev = block(".rv-wordmark .rv-wordmark-rev")
+    assert rev == {"color": "var(--rv-text)", "background-color": "var(--rv-surface)"}
+    rail = block(
+        ".rv-app .rv-header .rv-wordmark .rv-wordmark-rev, "
+        ".rv-auth-panel .rv-wordmark .rv-wordmark-rev"
+    )
+    assert rail["color"] == "var(--rv-stone)"
     without = render("login.html", brand_files=frozenset())
-    assert "rv-logo-on-dark" not in without and "rv-wordmark" in without
+    assert "rv-mark" not in without and "rv-wordmark" in without
 
 
 def test_the_script_applies_the_choice_at_once() -> None:
@@ -216,6 +221,23 @@ def test_the_script_applies_the_choice_at_once() -> None:
     assert 'meta[name="color-scheme"]' in SCRIPT
     assert 'document.addEventListener("click", applyTheme);' in SCRIPT
     assert '{ light: "light", dark: "dark", system: "light dark" }' in SCRIPT
+
+
+def test_the_script_restores_the_theme_when_the_post_is_refused() -> None:
+    # A refused post (403, 422) or a failed one puts the theme back; the status
+    # is read from the request, since the page's response handling marks 403
+    # and 422 as answers and htmx then reports them as successful (THE-824).
+    assert 'document.addEventListener("htmx:afterRequest", themePosted);' in SCRIPT
+    assert 'document.addEventListener("htmx:sendError", themePosted);' in SCRIPT
+    assert "var status = detail.xhr ? detail.xhr.status : 0;" in SCRIPT
+    assert "status >= 200 && status < 300" in SCRIPT
+    assert "setTheme(themeKept);" in SCRIPT
+    assert 'form.classList.contains("rv-theme")' in SCRIPT
+    handling = re.search(r'name="htmx-config" content=\'(.*?)\'', BASE)
+    assert handling is not None
+    assert '"code": "(403|404|409|413|422|500)", "swap": true, "error": false' in (
+        handling.group(1)
+    )
 
 
 # --- the module ---------------------------------------------------------------------
@@ -297,6 +319,24 @@ async def test_a_signed_in_user_keeps_the_choice_on_the_user_row(
     )
     assert forged.status_code == 422
     assert await theme_in_database(db_engine) == "dark"
+
+    # Without the CSRF token the post is refused and nothing changes (THE-824).
+    bare = await ui_browser.post("/theme", data={"theme": "light", "next": "/"})
+    assert bare.status_code == 403
+    assert THEME_COOKIE not in bare.cookies
+    assert await theme_in_database(db_engine) == "dark"
+
+    # The way back keeps the query of the page (a filtered list, a search), and
+    # a page drawn in answer to a POST sends the switch back to the home page.
+    listed = await ui_browser.get("/clients?q=synthetic&show=all")
+    assert (
+        '<input type="hidden" name="next" value="/clients?q=synthetic&amp;show=all">'
+    ) in listed.text
+    answer = await ui_browser.post(
+        "/clients", data={"name": "", "csrf_token": token}, follow_redirects=False
+    )
+    assert answer.status_code in (200, 422)
+    assert '<input type="hidden" name="next" value="/">' in answer.text
 
     # Signed out, the sign-in page keeps the theme from the cookie.
     await ui_browser.post("/logout", data={"csrf_token": token})

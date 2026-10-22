@@ -16,6 +16,25 @@ SOURCE_NAMES = {
     "reference-csv": "Reference user list",
 }
 DNS_SOURCE = "dns-check"
+# The mark drawn beside a source (app/ui/templates/_icons.html, source_mark): one
+# drawing per family of export, never a vendor logo. A code that is not listed
+# gets the generic list mark.
+SOURCE_ICONS = {
+    "entra-registration": "cloud",
+    "secure-score": "cloud",
+    "intune-devices": "devices",
+    "conditional-access": "cloud",
+    "directory-roles": "cloud",
+    "device-inventory": "devices",
+    "backup-export": "backup",
+    "network-export": "network",
+    "training-csv": "training",
+    "leavers-csv": "leavers",
+    "exchange-export": "mail",
+    "dns-check": "globe",
+    "reference-csv": "list",
+}
+DEFAULT_SOURCE_ICON = "list"
 
 
 def source_name(code: str) -> str:
@@ -28,3 +47,8 @@ def refresh_instruction(code: str) -> str:
     if code == DNS_SOURCE:
         return "Run the public DNS check again for the mail domains of this client."
     return "Export it again from the source system and import it."
+
+
+def source_icon(code: str) -> str:
+    """The name of the icon drawn beside a source (the generic mark when unknown)."""
+    return SOURCE_ICONS.get(code, DEFAULT_SOURCE_ICON)

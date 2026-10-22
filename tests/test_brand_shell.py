@@ -29,11 +29,17 @@ LINK_ATTRIBUTE = re.compile(r'\b(?:src|href|srcset|action)="([^"]*)"')
 TEMPLATE_EXPRESSION = re.compile(r"\{\{.*?\}\}")
 TITLE = re.compile(r"<title>(.*?)</title>")
 DENSITIES = frozenset({"1x", "2x"})
-LOGO_TAG = '<img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"'
+# The rook mark of the brand lockup (_brand.html), drawn on nothing; the wordmark
+# beside it is text, so the lockup needs no composed logo file (THE-824).
+MARK_TAG = '<img class="rv-mark-img" src="/static/brand/logo-mark-512x512.png"'
 WORDMARK = (
     '<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span>'
     '<span class="rv-wordmark-rook">rook</span></span>'
 )
+# The brand link names the product itself: the stylesheet hides the wordmark on
+# narrow screens and the mark has an empty alt, so without this label the link
+# would have no accessible name there (THE-838 finding on THE-824).
+BRAND_LINK = '<a class="rv-brand" href="/" aria-label="revrook">'
 # The digest of the stylesheets and scripts of this checkout (the `v` query).
 VERSION = asset_version()
 DIGEST = re.compile(r"[0-9a-f]{12}")
@@ -100,17 +106,18 @@ def test_templates_load_nothing_from_another_origin(name: str) -> None:
             assert not url.startswith("//"), f"{url} is protocol-relative"
 
 
-def test_the_header_shows_the_approved_logo_and_favicons() -> None:
+def test_the_header_shows_the_approved_mark_and_favicons() -> None:
     html = render_login(frozenset(BRAND_FILES))
-    assert LOGO_TAG in html
-    assert "/static/brand/logo-horizontal-2400x800.png 2x" in html
-    assert 'height="36"' in html
-    assert 'alt="revrook"' in html
+    assert MARK_TAG in html
+    assert "/static/brand/logo-mark-1024x1024.png 2x" in html
+    assert 'width="512" height="512" alt=""' in html
+    assert "logo-horizontal" not in html and "logo-stacked" not in html
     assert 'rel="icon" type="image/png" sizes="32x32"' in html
     assert 'href="/static/brand/favicon-32x32.png"' in html
     assert 'rel="apple-touch-icon" sizes="180x180"' in html
     assert 'href="/static/brand/favicon-180x180.png"' in html
-    assert WORDMARK not in html
+    # The wordmark is the text beside the mark, so the name is read, not an alt.
+    assert WORDMARK in html
     assert title_of(html) == "Sign in - revrook"
 
 
@@ -118,6 +125,14 @@ def test_without_the_brand_files_the_text_wordmark_is_shown() -> None:
     html = render_login(frozenset())
     assert "/static/brand/" not in html
     assert WORDMARK in html
+
+
+def test_the_brand_link_keeps_its_name_when_the_wordmark_is_hidden() -> None:
+    # Signed out, the header hides the wordmark below 1024px; signed in, the rail
+    # hides it below 600px. The link is still read as "revrook" in both shells.
+    html = render_login(frozenset(BRAND_FILES))
+    assert html.count(BRAND_LINK) == 1
+    assert template_source("base.html").count(BRAND_LINK) == 2
 
 
 def test_the_layout_links_the_stylesheets_script_and_footer() -> None:
@@ -233,4 +248,5 @@ async def test_the_login_and_home_pages_use_the_layout(
     assert home.status_code == 200
     assert title_of(home.text) == "Home - revrook"
     assert 'aria-current="page"' in home.text
+    assert home.text.count(BRAND_LINK) == 1
     assert "Signed in as admin" in home.text

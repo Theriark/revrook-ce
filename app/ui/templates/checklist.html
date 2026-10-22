@@ -42,7 +42,7 @@
 </table>
 {% else %}
 <div class="rv-empty" id="checklist-empty">
-{{ i.icon("check", 36) }}
+{{ i.icon("check", "xl") }}
 <p class="rv-empty-title">Nothing changed and nothing needs a look</p>
 <p class="rv-empty-text">{% if has_earlier %}Every control has the status it had at the last report, its evidence is current and no exception is open.{% else %}No control has old evidence or an open exception. A change of status appears here once a report has been made to compare against.{% endif %}</p>
 <a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/checklist">Show all controls</a>

@@ -54,7 +54,7 @@
 <tbody>
 {% for row in sources %}
 <tr>
-<th scope="row">{{ row.name }}</th>
+<th scope="row"><span class="rv-source-name">{{ i.source_mark(row.code) }}<span>{{ row.name }}</span></span></th>
 <td data-label="State">{{ s.status(row.state) }}</td>
 <td data-label="Newest export" class="rv-date">{{ s.day(row.captured_at) }}</td>
 <td data-label="Stale after" class="rv-date">{{ s.day(row.expires_at) }}</td>
@@ -97,7 +97,7 @@
 </table>
 {% else %}
 <div class="rv-empty" id="items-empty">
-{{ i.icon("inbox", 36) }}
+{{ i.icon("inbox", "xl") }}
 <p class="rv-empty-title">Nothing imported yet</p>
 <p class="rv-empty-text">Export the first file from a tool this client uses, then import it with the profile editor or through the API. Every control that reads that source takes its status from it.</p>
 <a role="button" href="/imports/profile-editor?client_id={{ client_id }}">Import an export</a>

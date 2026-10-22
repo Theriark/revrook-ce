@@ -29,8 +29,11 @@
  *   click with a modifier key, a middle click, a browser without dialogs, a page
  *   without htmx, a failed request: all leave the link as it is, the page itself.
  * - the theme switch (templates/_theme.html): the choice is applied the moment a
- *   button is pressed and htmx posts it; without the script the form posts and
- *   the page comes back in the chosen theme.
+ *   button is pressed and htmx posts it; if the server refuses the post (a
+ *   session that ended, 403; a value it does not know, 422) or the request
+ *   fails, the theme goes back to the one in use, since nothing was remembered;
+ *   without the script the form posts and the page comes back in the chosen
+ *   theme.
  */
 (function () {
   "use strict";
@@ -297,6 +300,22 @@
   // and scrollbars), and the pressed button moves. Without script the form
   // posts and the page comes back in the chosen theme.
   var COLOR_SCHEMES = { light: "light", dark: "dark", system: "light dark" };
+  // The theme the server drew the page in, or the last one it accepted: the
+  // one to go back to when a post is refused (the page's response handling
+  // treats 403 and 422 as answers, not errors, so afterRequest is the signal).
+  var themeKept = null;
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    var meta = document.querySelector('meta[name="color-scheme"]');
+    if (meta) {
+      meta.setAttribute("content", COLOR_SCHEMES[theme]);
+    }
+    var buttons = document.querySelectorAll('.rv-theme button[name="theme"]');
+    for (var k = 0; k < buttons.length; k += 1) {
+      buttons[k].setAttribute("aria-pressed", buttons[k].value === theme ? "true" : "false");
+    }
+  }
 
   function themeButtonOf(event) {
     var node = event.target;
@@ -314,21 +333,38 @@
     if (!button || !COLOR_SCHEMES[button.value]) {
       return;
     }
-    var theme = button.value;
-    document.documentElement.setAttribute("data-theme", theme);
-    var meta = document.querySelector('meta[name="color-scheme"]');
-    if (meta) {
-      meta.setAttribute("content", COLOR_SCHEMES[theme]);
+    if (themeKept === null) {
+      themeKept = document.documentElement.getAttribute("data-theme") || "system";
     }
-    var buttons = document.querySelectorAll('.rv-theme button[name="theme"]');
-    for (var k = 0; k < buttons.length; k += 1) {
-      buttons[k].setAttribute("aria-pressed", buttons[k].value === theme ? "true" : "false");
+    setTheme(button.value);
+  }
+
+  // The post of the switch came back: accepted (204), the choice is the one to
+  // keep from now on; refused (403, 422) or failed (no answer), the page goes
+  // back to the theme it had, since the server remembered nothing. The status
+  // is read from the request itself: the page's response handling marks 403
+  // and 422 as answers rather than errors, so htmx reports them as successful.
+  function themePosted(event) {
+    var form = event.target;
+    if (!form || !form.classList || !form.classList.contains("rv-theme")) {
+      return;
+    }
+    var detail = event.detail || {};
+    var status = detail.xhr ? detail.xhr.status : 0;
+    if (event.type === "htmx:afterRequest" && status >= 200 && status < 300) {
+      themeKept = document.documentElement.getAttribute("data-theme") || "system";
+      return;
+    }
+    if (themeKept !== null && COLOR_SCHEMES[themeKept]) {
+      setTheme(themeKept);
     }
   }
 
   function ready() {
     watchDrawer();
     document.addEventListener("click", applyTheme);
+    document.addEventListener("htmx:afterRequest", themePosted);
+    document.addEventListener("htmx:sendError", themePosted);
     document.addEventListener("htmx:afterSwap", announceSwapped);
     document.addEventListener("htmx:afterSwap", updateRegions);
     window.addEventListener("resize", updateRegions);

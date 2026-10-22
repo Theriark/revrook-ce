@@ -1,4 +1,5 @@
 {% import "_icons.html" as i -%}
+{% import "_brand.html" as b -%}
 <!doctype html>
 <html lang="en" data-theme="{{ theme|default('system') }}">
 <head>
@@ -22,19 +23,15 @@
 <script src="/static/js/revrook.js?v={{ asset_version }}" defer></script>
 </head>
 {#- Signed in: the charcoal rail (brand, navigation, user) and the page column.
-    Signed out: the rook panel on the left and the form on the right. -#}
+    Signed out: the rook panel on the left and the form on the right. The brand is
+    the lockup of _brand.html in all three places: the rook mark in its tile and the
+    wordmark, drawn for the surface it sits on in either theme. -#}
 {% if user is defined %}
 <body class="rv-app">
 <a class="rv-skip-link" href="#main">Skip to content</a>
 <header class="rv-header">
-<a class="rv-brand" href="/">
-{% if "logo-horizontal-dark-1200x400.png" in brand_files %}
-<img class="rv-logo-dark" src="/static/brand/logo-horizontal-dark-1200x400.png"
-{% if "logo-horizontal-dark-2400x800.png" in brand_files %} srcset="/static/brand/logo-horizontal-dark-1200x400.png 1x, /static/brand/logo-horizontal-dark-2400x800.png 2x"{% endif %}
- width="144" height="48" alt="revrook">
-{% else %}
-<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span><span class="rv-wordmark-rook">rook</span></span>
-{% endif %}
+<a class="rv-brand" href="/" aria-label="revrook">
+{{ b.lockup(brand_files) }}
 <span class="rv-edition">Community Edition</span>
 </a>
 {% block nav %}{% include "_nav.html" %}{% endblock %}
@@ -45,31 +42,18 @@
 <a class="rv-skip-link" href="#main">Skip to content</a>
 <div class="rv-auth-layout">
 <aside class="rv-auth-panel" aria-label="About revrook">
-{% if "logo-stacked-dark-1000x1000.png" in brand_files %}
-<img class="rv-auth-logo" src="/static/brand/logo-stacked-dark-1000x1000.png" width="200" height="200" alt="">
-{% endif %}
+{{ b.lockup(brand_files, "stack") }}
 <p class="rv-auth-tagline">See where every client stands, with the evidence to show for it.</p>
 <ul class="rv-auth-points">
-<li>{{ i.icon("check") }}<span>One plain-language security checklist for each client</span></li>
-<li>{{ i.icon("check") }}<span>Evidence kept in a hash chain you can verify at any time</span></li>
-<li>{{ i.icon("check") }}<span>The quarterly review and the insurance pack from the same facts</span></li>
+<li>{{ i.icon("check", "md") }}<span>One plain-language security checklist for each client</span></li>
+<li>{{ i.icon("check", "md") }}<span>Evidence kept in a hash chain you can verify at any time</span></li>
+<li>{{ i.icon("check", "md") }}<span>The quarterly review and the insurance pack from the same facts</span></li>
 </ul>
 </aside>
 <div class="rv-auth-side">
 <header class="rv-header">
-<a class="rv-brand" href="/">
-{% if "logo-horizontal-1200x400.png" in brand_files %}
-<img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"
-{% if "logo-horizontal-2400x800.png" in brand_files %} srcset="/static/brand/logo-horizontal-1200x400.png 1x, /static/brand/logo-horizontal-2400x800.png 2x"{% endif %}
- width="108" height="36" alt="revrook">
-{% if "logo-horizontal-dark-1200x400.png" in brand_files %}
-<img class="rv-logo rv-logo-on-dark" src="/static/brand/logo-horizontal-dark-1200x400.png"
-{% if "logo-horizontal-dark-2400x800.png" in brand_files %} srcset="/static/brand/logo-horizontal-dark-1200x400.png 1x, /static/brand/logo-horizontal-dark-2400x800.png 2x"{% endif %}
- width="108" height="36" alt="revrook">
-{% endif %}
-{% else %}
-<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span><span class="rv-wordmark-rook">rook</span></span>
-{% endif %}
+<a class="rv-brand" href="/" aria-label="revrook">
+{{ b.lockup(brand_files) }}
 </a>
 <div class="rv-header-tools">
 <span class="rv-edition">Community Edition</span>

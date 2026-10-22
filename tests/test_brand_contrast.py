@@ -71,6 +71,30 @@ STATUS_TOKENS = (
 )
 # Tokens that may only be text on the surface (white in the light theme).
 SURFACE_ONLY_TOKENS = (*STATUS_TOKENS, "--rv-text-secondary")
+# Non-text contrast (WCAG 1.4.11): the boundary of a control and a graphic that
+# carries meaning need 3 to 1 against what they sit on, in both themes. Each pair
+# is (where, foreground token, background token). --rv-line-strong is not in the
+# list: it draws decoration only (a dashed border, the underline of a link, the
+# track of the busy indicator) and is 2.09 to 1 on the dark surface (THE-824).
+NON_TEXT_MINIMUM = 3.0
+NON_TEXT_PAIRS = (
+    (
+        "the border of a field",
+        "--pico-form-element-border-color",
+        "--pico-form-element-background-color",
+    ),
+    ("the focus ring on the surface", "--rv-focus", "--rv-surface"),
+    ("the focus ring on the canvas", "--rv-focus", "--rv-canvas"),
+    ("the focus ring on the rail and the panel", "--rv-white", "--rv-rail"),
+    ("the mark of a checkbox or a radio", "--rv-primary", "--rv-surface"),
+    ("the arc of a posture ring", "--rv-primary", "--rv-surface"),
+    ("the sparkline and the trend line", "--rv-primary", "--rv-surface"),
+    ("the track of a ring with thin evidence", "--rv-text-secondary", "--rv-surface"),
+    ("the protected segment of a bar", "--rv-status-protected", "--rv-surface"),
+    ("the needs-attention segment", "--rv-status-needs-attention", "--rv-surface"),
+    ("the not-protected segment", "--rv-status-not-protected", "--rv-surface"),
+    ("the not-checked segment", "--rv-status-not-checked", "--rv-surface"),
+)
 # Palette colours no rule draws text or a surface with: a role stands for them,
 # so the dark theme changes the role alone. The accent face of a button
 # (background and border) is the one exception, kept in both themes.
@@ -301,6 +325,38 @@ def test_no_rule_draws_text_or_a_surface_with_a_palette_colour() -> None:
             continue
         assert background not in PALETTE_SURFACES, selector
     assert faces == 1, "only the face of a button keeps the brand accent"
+
+
+@pytest.mark.parametrize("theme", THEME_NAMES)
+@pytest.mark.parametrize(("where", "foreground", "background"), NON_TEXT_PAIRS)
+def test_every_control_boundary_and_graphic_meets_three_to_one(
+    theme: str, where: str, foreground: str, background: str
+) -> None:
+    variables = THEMES[theme]
+    first = resolve(f"var({foreground})", variables)
+    second = resolve(f"var({background})", variables)
+    assert first is not None and second is not None, where
+    ratio = contrast_ratio(first, second)
+    assert ratio >= NON_TEXT_MINIMUM, f"{where} ({theme}): {ratio:.2f} is below 3"
+
+
+def test_the_graphics_that_carry_meaning_are_drawn_with_checked_tokens() -> None:
+    rules = dict(RULES)
+    assert rules[".rv-rook-insufficient .rv-ring-track"]["stroke"] == (
+        "var(--rv-text-secondary)"
+    )
+    assert rules[".rv-posture-insufficient .rv-ring-track"]["stroke"] == (
+        "var(--rv-text-secondary)"
+    )
+    assert rules[".rv-seg-not-checked"]["fill"] == "var(--rv-status-not-checked)"
+    assert rules[".rv-ring-arc"]["stroke"] == "var(--rv-primary)"
+    assert rules[".rv-spark polyline"]["stroke"] == "var(--rv-primary)"
+    assert VARIABLES["--pico-form-element-border-color"] == "var(--rv-gray)"
+    # The strong line never draws a stroke or a fill: those carry meaning.
+    for selector, declarations in RULES:
+        for name in ("stroke", "fill", "accent-color", "outline"):
+            value = declarations.get(name, "")
+            assert "--rv-line-strong" not in value, f"{selector}: {name}"
 
 
 def test_the_stylesheet_loads_nothing_external() -> None:

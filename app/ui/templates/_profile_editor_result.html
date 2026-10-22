@@ -90,7 +90,7 @@
 <h2 id="step-3-title" class="rv-step-title"><span class="rv-step-number">3</span>The first rows as revrook reads them</h2>
 {% if not preview.shown or (preview.problem and not preview.rows) %}
 <div class="rv-empty rv-empty-small" id="rv-preview-waiting">
-{{ i.icon("info", 28) }}
+{{ i.icon("info", "lg") }}
 <p class="rv-empty-title">No rows to show yet</p>
 <p class="rv-empty-text">{% if not preview.shown %}Choose a file column for the columns of the source in step 2, then update the preview.{% else %}The file would be refused as it is (see above). Fix the mapping or the file, then update the preview.{% endif %}</p>
 </div>
@@ -148,7 +148,7 @@
 </div>
 {% else %}
 <div class="rv-empty rv-empty-small" id="rv-preview-empty">
-{{ i.icon("info", 28) }}
+{{ i.icon("info", "lg") }}
 <p class="rv-empty-title">The file has no data rows</p>
 <p class="rv-empty-text">Only the header line was read. Export the file again with its rows, then read it here.</p>
 </div>
@@ -193,7 +193,7 @@
 </div>
 {% else %}
 <div class="rv-empty rv-empty-small" id="rv-no-profile">
-{{ i.icon("mapping", 28) }}
+{{ i.icon("mapping", "lg") }}
 <p class="rv-empty-title">No saved profile for this client and source yet</p>
 <p class="rv-empty-text">Save the mapping in step 4. It appears here, and the file can be imported with it.</p>
 </div>
@@ -201,7 +201,7 @@
 </fieldset>
 {% elif not imported %}
 <div class="rv-empty rv-empty-small" id="rv-editor-hint">
-{{ i.icon("mapping", 28) }}
+{{ i.icon("mapping", "lg") }}
 <p class="rv-empty-title">The columns appear here</p>
 <p class="rv-empty-text">Choose a client, a source and a file, then read the file to map its columns.</p>
 </div>
