@@ -245,10 +245,19 @@
     }
   }
 
+  // Closed: the body is emptied, so the next open starts from the skeleton and
+  // never from the previous control. It also keeps the console clean: a swap
+  // into a body that still holds the same ids (the four note fields) makes htmx
+  // copy attributes between the old and the new elements, and the content
+  // security policy logs each of those as an inline style it blocked.
   function drawerClosed() {
     var dialog = drawerOf();
     if (dialog) {
       dialog.removeAttribute("aria-busy");
+    }
+    var body = document.getElementById(DRAWER_BODY);
+    if (body && typeof body.replaceChildren === "function") {
+      body.replaceChildren();
     }
     if (drawerOpener && document.body.contains(drawerOpener)) {
       drawerOpener.focus();
