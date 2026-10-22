@@ -355,7 +355,11 @@ def evidence_summary(rows: Iterable[SourceRow]) -> EvidenceSummary:
 
 @dataclass(frozen=True)
 class ReportPoint:
-    """One stored report: its score and the counts its labels give."""
+    """One stored report: its score and the counts its labels give.
+
+    `snapshot_id` is the row of the report, so a mark on a chart can open it; 0
+    when the point was read without its row (the report page then opens the list).
+    """
 
     client_id: int
     as_of: datetime
@@ -364,9 +368,20 @@ class ReportPoint:
     insufficient: bool
     protected: int
     needs_work: int
+    snapshot_id: int = 0
+
+    @property
+    def path(self) -> str:
+        """The report this point is, without its leading slash; the template
+        writes the slash, so every link is visibly same-origin."""
+        if self.snapshot_id:
+            return f"clients/{self.client_id}/reports/{self.snapshot_id}"
+        return f"clients/{self.client_id}/reports"
 
 
-def point_of(client_id: int, snapshot: SnapshotInput) -> ReportPoint:
+def point_of(
+    client_id: int, snapshot: SnapshotInput, snapshot_id: int = 0
+) -> ReportPoint:
     result = score_snapshot(snapshot)
     labels = previous_labels(snapshot).values()
     return ReportPoint(
@@ -377,18 +392,25 @@ def point_of(client_id: int, snapshot: SnapshotInput) -> ReportPoint:
         insufficient=result.insufficient,
         protected=sum(1 for label in labels if label == PROTECTED),
         needs_work=sum(1 for label in labels if label in NEEDS_WORK),
+        snapshot_id=snapshot_id,
     )
 
 
-def report_points(rows: Iterable[tuple[int, Mapping[str, Any]]]) -> list[ReportPoint]:
-    """The points of stored snapshot documents, oldest first; a bad one is skipped."""
+def report_points(rows: Iterable[Sequence[Any]]) -> list[ReportPoint]:
+    """The points of stored snapshot documents, oldest first; a bad one is skipped.
+
+    A row is (client id, document) or (client id, document, snapshot id), as a
+    tuple or a row of a query; with the id, the point knows the report it opens.
+    """
     points: list[ReportPoint] = []
-    for client_id, document in rows:
+    for row in rows:
+        client_id = int(row[0])
+        snapshot_id = int(row[2]) if len(row) > 2 else 0
         try:
-            snapshot = parse_snapshot(document_bytes(dict(document)))
+            snapshot = parse_snapshot(document_bytes(dict(row[1])))
         except SnapshotError:
             continue
-        points.append(point_of(client_id, snapshot))
+        points.append(point_of(client_id, snapshot, snapshot_id))
     return sorted(points, key=lambda point: (point.as_of, point.client_id))
 
 
@@ -427,25 +449,75 @@ def weekly_series(
     return series
 
 
+def spark_points(
+    values: Sequence[int | Fraction | None],
+    width: int = SPARK_WIDTH,
+    height: int = SPARK_HEIGHT,
+) -> list[tuple[int, str, str]]:
+    """(index, x, y) of every known value on the box of a sparkline; empty below
+    two known values, since one point is not a line."""
+    known = [(index, value) for index, value in enumerate(values) if value is not None]
+    if len(known) < 2:
+        return []
+    low = min(value for _, value in known)
+    high = max(value for _, value in known)
+    span = (high - low) or 1
+    steps = max(len(values) - 1, 1)
+    found: list[tuple[int, str, str]] = []
+    for index, value in known:
+        x = SPARK_PAD + (width - 2 * SPARK_PAD) * index / steps
+        y = height - SPARK_PAD - (height - 2 * SPARK_PAD) * float(value - low) / span
+        found.append((index, f"{x:.1f}", f"{y:.1f}"))
+    return found
+
+
 def sparkline(
     values: Sequence[int | Fraction | None],
     width: int = SPARK_WIDTH,
     height: int = SPARK_HEIGHT,
 ) -> str:
     """The points of a polyline through the known values; empty below two."""
-    known = [(index, value) for index, value in enumerate(values) if value is not None]
-    if len(known) < 2:
-        return ""
-    low = min(value for _, value in known)
-    high = max(value for _, value in known)
-    span = (high - low) or 1
-    steps = max(len(values) - 1, 1)
-    parts: list[str] = []
-    for index, value in known:
-        x = SPARK_PAD + (width - 2 * SPARK_PAD) * index / steps
-        y = height - SPARK_PAD - (height - 2 * SPARK_PAD) * float(value - low) / span
-        parts.append(f"{x:.1f},{y:.1f}")
-    return " ".join(parts)
+    return " ".join(f"{x},{y}" for _, x, y in spark_points(values, width, height))
+
+
+@dataclass(frozen=True)
+class SparkMark:
+    """One week on a sparkline: where it sits, its value and the tooltip words."""
+
+    x: str
+    y: str
+    value: str
+    tip: str
+
+
+def spark_marks(
+    values: Sequence[int | Fraction | None],
+    weeks: Sequence[WeekPoint],
+    what: str,
+) -> tuple[SparkMark, ...]:
+    """A mark per known week, with the week and the exact value in words."""
+    marks: list[SparkMark] = []
+    for index, x, y in spark_points(values):
+        value = values[index]
+        if value is None:
+            continue
+        end = iso_date(weeks[index].end)
+        marks.append(SparkMark(x, y, str(value), f"Week ending {end}\n{value} {what}"))
+    return tuple(marks)
+
+
+@dataclass(frozen=True)
+class Mark:
+    """One stored report on a trend line: the point to land on, the report it
+    opens (a path without its leading slash) and the exact values in words."""
+
+    x: str
+    y: str
+    day: str
+    score: str
+    band: str
+    path: str
+    tip: str
 
 
 @dataclass(frozen=True)
@@ -460,6 +532,7 @@ class TrendLine:
     label_y: str
     dash: str
     rows: tuple[tuple[str, str, str], ...]
+    marks: tuple[Mark, ...] = ()
 
     @property
     def short_name(self) -> str:
@@ -532,6 +605,26 @@ class _Drawn:
     polyline: str
     dash: str
     rows: tuple[tuple[str, str, str], ...]
+    marks: tuple[Mark, ...]
+
+
+def mark_of(point: ReportPoint, name: str, x: float, y: float) -> Mark:
+    """The mark of one report, with the words its tooltip and its table row show."""
+    day = iso_date(point.as_of)
+    score = format_fixed(point.score)
+    if point.insufficient:
+        words = f"{day}: lower bound {score}, {point.band}"
+    else:
+        words = f"{day}: score {score}, {point.band}"
+    return Mark(
+        x=f"{x:.1f}",
+        y=f"{y:.1f}",
+        day=day,
+        score=score,
+        band=point.band,
+        path=point.path,
+        tip=f"{name}\n{words}",
+    )
 
 
 def _chart_x(
@@ -610,9 +703,14 @@ def trend_chart(
             (iso_date(point.as_of), format_fixed(point.score), point.band)
             for point in series
         )
+        name = names.get(client_id, DELETED_CLIENT)
+        marks = tuple(
+            mark_of(point, name, x, y)
+            for point, (x, y) in zip(series, pairs, strict=True)
+        )
         last_x, last_y = pairs[-1]
         dash = DASHES[number % len(DASHES)]
-        drawn.append(_Drawn(client_id, last_x, last_y, polyline, dash, rows))
+        drawn.append(_Drawn(client_id, last_x, last_y, polyline, dash, rows, marks))
     labels = _label_places(drawn, size)
     lines = tuple(
         TrendLine(
@@ -624,6 +722,7 @@ def trend_chart(
             label_y=f"{labels[item.client_id]:.1f}",
             dash=item.dash,
             rows=item.rows,
+            marks=item.marks,
         )
         for item in drawn
     )
@@ -667,6 +766,15 @@ class Stat:
     change: str
     spark: str
     href: str
+    marks: tuple[SparkMark, ...] = ()
+
+    @property
+    def spark_label(self) -> str:
+        """What the sparkline is, for a screen reader: the weeks and the values."""
+        if not self.marks:
+            return ""
+        values = ", ".join(mark.value for mark in self.marks)
+        return f"{self.label}, week by week: {values}"
 
     @property
     def anchor(self) -> str:
@@ -712,6 +820,9 @@ def stat_cards(
     counted = sum(item.counted for item in postures)
     needs_work = sum(item.needs_work for item in postures)
     share = percent(Fraction(protected, counted)) if counted else "0"
+    client_weeks = [week.clients for week in weekly]
+    protected_weeks = [week.protected for week in weekly]
+    work_weeks = [week.needs_work for week in weekly]
     return [
         Stat(
             key="clients",
@@ -719,8 +830,9 @@ def stat_cards(
             value=str(len(postures)),
             note=f"{with_evidence} with evidence imported",
             change="",
-            spark=sparkline([week.clients for week in weekly]),
+            spark=sparkline(client_weeks),
             href="/clients",
+            marks=spark_marks(client_weeks, weekly, "clients"),
         ),
         Stat(
             key="protected",
@@ -728,8 +840,9 @@ def stat_cards(
             value=str(protected),
             note=f"of {counted} counted controls ({share}%)",
             change=change_since_reports(postures, "protected"),
-            spark=sparkline([week.protected for week in weekly]),
+            spark=sparkline(protected_weeks),
             href="/clients",
+            marks=spark_marks(protected_weeks, weekly, "controls protected"),
         ),
         Stat(
             key="needs-work",
@@ -737,8 +850,9 @@ def stat_cards(
             value=str(needs_work),
             note="not protected, or needing attention",
             change=change_since_reports(postures, "needs_work"),
-            spark=sparkline([week.needs_work for week in weekly]),
+            spark=sparkline(work_weeks),
             href="#needs-attention",
+            marks=spark_marks(work_weeks, weekly, "controls that need work"),
         ),
         Stat(
             key="evidence",
