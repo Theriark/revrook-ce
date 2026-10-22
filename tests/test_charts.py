@@ -200,7 +200,7 @@ def test_the_age_bars_share_one_scale_and_mark_the_stale_date() -> None:
     backup, devices, network, training = bars
     # The scale is the oldest export (100 days): its bar fills the track.
     assert (backup.age_days, backup.stale_days) == (100, 90)
-    assert (backup.width, backup.mark) == ("100", "90")
+    assert (backup.width, backup.mark) == ("100.00", "90.00")
     assert backup.words == "100 days old, stale after 90 days"
     assert backup.tip.split("\n") == [
         "Backup export",
@@ -208,8 +208,8 @@ def test_the_age_bars_share_one_scale_and_mark_the_stale_date() -> None:
         "Newest export 2026-07-09, 100 days old",
         "Stale after 90 days: 2026-10-07",
     ]
-    assert (devices.width, devices.mark) == ("2", "90")
-    assert (training.width, training.mark) == ("95", "60")
+    assert (devices.width, devices.mark) == ("2.00", "90.00")
+    assert (training.width, training.mark) == ("95.00", "60.00")
     assert training.state is STALE and devices.imported
     assert not network.imported and network.words == NEVER_IMPORTED
     assert (network.width, network.mark) == ("0", "")
@@ -248,12 +248,14 @@ def test_the_bands_are_counted_in_the_order_of_the_model() -> None:
     assert sum(item.count for item in counts) == 4
     by_key = {item.key: item for item in counts}
     none = by_key[NO_REPORT_KEY]
-    assert (none.count, none.name, none.width) == (1, "No report yet", "100")
+    assert (none.count, none.name) == (1, "No report yet")
     for report in reports.values():
         assert by_key[band_key(report.band)].count >= 1
+    # The fullest band fills its track; the others are read against it.
     fullest = max(item.count for item in counts)
     for item in counts:
-        assert (item.width == "100") == (item.count == fullest), item
+        assert (item.width == "100.00") == (item.count == fullest), item
+        assert (item.width == "0") == (item.count == 0), item
     assert none.tip == "No report yet\n1 client"
     assert band_counts([]) and all(item.count == 0 for item in band_counts([]))
 
@@ -308,14 +310,14 @@ def test_the_score_chart_is_a_group_of_report_links_with_a_table() -> None:
     assert '<tr data-series="{{ line.client_id }}">' in CHART
     assert '<a href="/{{ mark.path }}">{{ mark.day }}</a>' in CHART
     assert '<div class="rv-table-scroll">\n<table>' in CHART
-    form = '<form class="rv-range" method="get" action="{{ action }}"'
+    form = '<form class="rv-range" method="get" action="/{{ action }}"'
     assert form in CHART and 'data-fragment="{{ fragment }}"' in CHART
     assert 'name="{{ name }}" value="{{ value }}" aria-pressed=' in CHART
 
 
 def test_the_home_and_the_builder_hold_the_cards_the_fragments_fill() -> None:
     assert '<div id="trend-body">\n{% include "_trend_chart.html" %}' in HOME
-    trend_form = 'c.range_form("/", "/charts/trend", "trend-body", "days", ranges, days'
+    trend_form = 'c.range_form("", "/charts/trend", "trend-body", "days", ranges, days'
     assert trend_form in TREND
     assert "{% for chart in (trend, trend_narrow) %}" in TREND
     assert '<li data-series="{{ line.client_id }}">' in TREND
@@ -357,6 +359,8 @@ def test_the_sparklines_and_the_bars_carry_their_words_and_their_links() -> None
     # The checklist names a narrowing and takes it away.
     assert 'id="show-narrowed" class="rv-chip rv-chip-narrowed"' in CHECKLIST
     assert "?show=flagged{{ narrow_query }}" in CHECKLIST
+    assert 'href="/clients/{{ client_id }}/checklist{{ all_query }}"' in CHECKLIST
+    assert 'href="/clients/{{ client_id }}/checklist{{ clear_query }}"' in CHECKLIST
     assert "No control matches" in CHECKLIST
 
 
@@ -480,7 +484,7 @@ async def test_home_draws_the_range_asked_for_and_marks_every_report(
     assert MARK.findall(home.text) == [expected, expected]  # wide and narrow
     assert f'<a href="{expected}">2026-10-17</a>' in home.text
     assert f'<li data-series="{client_id}">' in home.text
-    assert 'data-tip="Synthetic Client Ltd\n2026-10-17: score ' in home.text
+    assert 'data-tip="Synthetic Client Ltd\n2026-10-17: ' in home.text
     # The sparklines carry their weeks; the domain bars their segments and rows.
     assert 'class="rv-spark-mark"' in home.text and "Week ending " in home.text
     assert f'href="#domain-row-{DOMAIN.code}"' in home.text

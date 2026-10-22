@@ -7,7 +7,7 @@
     card (`?days=`). -#}
 {% import "_icons.html" as i %}
 {% import "_chart.html" as c %}
-{{ c.range_form("/", "/charts/trend", "trend-body", "days", ranges, days, "Range of the chart") }}
+{{ c.range_form("", "/charts/trend", "trend-body", "days", ranges, days, "Range of the chart") }}
 <p class="rv-card-subtitle">From the stored reports of each client over the last {{ days }} days. Up to six clients are drawn, the ones with the newest reports.</p>
 {% if trend.lines %}
 {#- The chart twice, wide and narrow (app/ui/dashboard.py, ChartSize); the stylesheet

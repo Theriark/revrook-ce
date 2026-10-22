@@ -52,9 +52,10 @@
 {#- The range of a chart: real submit buttons of a GET form, so the page draws the
     chosen range without script; with script charts.js asks data-fragment for the
     card body and swaps it into data-target in place. The pressed one is the range
-    drawn. -#}
+    drawn. `action` is the page that holds the chart without its leading slash
+    (the template writes the slash, so the address is visibly same-origin). -#}
 {% macro range_form(action, fragment, target, name, choices, chosen, label) -%}
-<form class="rv-range" method="get" action="{{ action }}" data-fragment="{{ fragment }}" data-target="{{ target }}" aria-label="{{ label }}">
+<form class="rv-range" method="get" action="/{{ action }}" data-fragment="{{ fragment }}" data-target="{{ target }}" aria-label="{{ label }}">
 <span class="rv-range-label">Show</span>
 {% for value, words in choices %}<button type="submit" class="rv-range-choice" name="{{ name }}" value="{{ value }}" aria-pressed="{{ 'true' if value == chosen else 'false' }}">{{ words }}</button>{% endfor %}
 </form>
