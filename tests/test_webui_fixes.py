@@ -198,7 +198,7 @@ def test_a_details_summary_keeps_the_focus_ring() -> None:
     # Pico's details summary:focus-visible:not([role]) outranked the shared ring
     # and drew a hairline in the (transparent) focus colour instead.
     ring = rule("html details summary:focus-visible:not([role])")
-    assert "outline: 3px solid var(--rv-charcoal);" in ring
+    assert "outline: 3px solid var(--rv-focus);" in ring
     assert "outline-offset: 2px;" in ring
 
 
@@ -208,10 +208,10 @@ def test_a_details_summary_keeps_the_focus_ring() -> None:
 def test_the_scrolling_strips_fade_their_last_link_as_the_cue() -> None:
     nav_fade = rule(".rv-nav-strip::after")
     fade = "linear-gradient(to right, transparent, var(--rv-{}) 70%)"
-    assert fade.format("charcoal") in nav_fade
+    assert fade.format("rail") in nav_fade
     assert "pointer-events: none;" in nav_fade
     tabs_fade = rule(".rv-tabs-strip::after")
-    assert fade.format("white") in tabs_fade
+    assert fade.format("surface") in tabs_fade
     # Space after the last link, so with it in view nothing sits under the fade.
     assert "width: 32px;" in rule(".rv-nav::after")
     assert "width: 32px;" in rule(".rv-tabs-strip > nav > ul::after")

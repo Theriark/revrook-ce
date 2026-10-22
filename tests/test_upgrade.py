@@ -40,7 +40,7 @@ from app.models import Client, Schedule
 ROOT = Path(__file__).resolve().parent.parent
 SCRATCH = "revrook_upgrade_check"
 # The revisions that hold tables: 0001 is an empty baseline.
-SEEDED_REVISIONS = ["0002", "0003", "0004"]
+SEEDED_REVISIONS = ["0002", "0003", "0004", "0005"]
 TABLES = [
     "app_user",
     "api_token",
