@@ -54,6 +54,9 @@ from ui_helpers import STATUS, STATUS_SPAN, make_report, seed_client, sign_in
 LIBRARY = load_library()
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = (ROOT / "app/ui/templates/home.html").read_text(encoding="utf-8")
+# The body of the trend card and the chart macros it draws with (THE-850).
+TREND = (ROOT / "app/ui/templates/_trend_chart.html").read_text(encoding="utf-8")
+CHART = (ROOT / "app/ui/templates/_chart.html").read_text(encoding="utf-8")
 SECTIONS = ("stats", "rookery", "needs-attention", "trend", "domains", "recent-changes")
 RING_TITLE = re.compile(r'<title id="ring-(\d+)-title">([^<]+)</title>')
 POLYLINE = re.compile(r'<polyline points="([^"]+)"')
@@ -335,9 +338,12 @@ def test_the_template_draws_every_part_without_an_image_or_a_colour_alone() -> N
         assert f'id="{part}"' in TEMPLATE, part
     assert 'id="home-empty"' in TEMPLATE
     assert "<img" not in TEMPLATE and "url(" not in TEMPLATE
-    # The ring and the trend chart, which is drawn once for every width it has
+    # The ring and the sparkline; the trend chart holds links, so it is a group
+    # (the _chart.html macro), drawn once for every width it has (_trend_chart.html)
     assert TEMPLATE.count('role="img"') == 2
-    assert 'aria-labelledby="trend-title trend-desc' in TEMPLATE
+    assert '<div id="trend-body">\n{% include "_trend_chart.html" %}' in TEMPLATE
+    assert 'c.score_chart(chart, "trend-title", "trend"' in TREND
+    assert 'role="group" aria-labelledby="{{ title_id }} {{ prefix }}-desc' in CHART
     assert "s.status(" in TEMPLATE and "Signed in as {{ user.username }}" in TEMPLATE
     assert "<details" in TEMPLATE and "<caption>" in TEMPLATE
 
@@ -359,10 +365,11 @@ def test_the_breakdown_by_domain_is_a_bar_per_domain_with_the_counts_folded() ->
 
 def test_the_numbers_behind_the_trend_scroll_inside_their_card() -> None:
     # A long client name in the first column must not widen the card on a phone:
-    # the table scrolls inside the card, like the table of the breakdown.
-    trend = TEMPLATE.split('id="trend"', 1)[1].split("</section>", 1)[0]
-    assert SCROLLED_TABLE in trend
-    assert trend.count("<table>") == 1
+    # the table scrolls inside the card, like the table of the breakdown. The
+    # table is the score_table macro of _chart.html, which the trend card draws.
+    assert "c.score_table(trend," in TREND
+    assert SCROLLED_TABLE in CHART
+    assert CHART.count("<table>") == 1
 
 
 # --- the page -----------------------------------------------------------------------
