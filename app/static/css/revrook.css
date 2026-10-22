@@ -1,39 +1,60 @@
 /*
  * revrook design system (docs/design-system.md), one file on top of the vendored
  * Pico CSS, which is kept only as a reset and for element defaults. No build
- * chain, system fonts only, light theme only, nothing loaded from outside.
+ * chain, system fonts only, nothing loaded from outside.
  *
- * Contrast convention, enforced by tests/test_brand_contrast.py: every rule that
- * sets a text colour also sets its background-color, so each foreground and
- * background pair is declared here explicitly. Text of 24px (1.5rem) or larger
- * declares that font-size in the same rule. Gray (--rv-gray) is never text on
- * white or stone; violet-blue (--rv-accent) is never text on charcoal; the status
- * colours and secondary text are text on white only.
+ * Two themes from one set of rules. The brand palette (the five approved colours)
+ * never changes; every rule draws with a role token (text, surface, canvas, line,
+ * rail, ink, link, primary, focus) or a derived token. The :root block holds the
+ * light values; :root[data-theme="dark"] redefines only the roles, and the same
+ * values apply to :root[data-theme="system"] when the system prefers dark
+ * (tests/test_brand_contrast.py checks that the two blocks are identical). Dark
+ * is a variant drawn from the brand charcoal, not an inversion: the rail stays
+ * the darkest surface, the page is a blue-charcoal and the canvas lifts above it.
+ *
+ * Contrast convention, enforced by tests/test_brand_contrast.py in both themes:
+ * every rule that sets a text colour also sets its background-color, so each
+ * foreground and background pair is declared here explicitly. Text of 24px
+ * (1.5rem) or larger declares that font-size in the same rule. Gray (--rv-gray)
+ * is never text on the surface or the canvas; the link colour is never text on
+ * the rail; the status colours and secondary text are text on the surface only.
  *
  * Scale: type 12, 13, 14, 15, 16, 20, 28; spacing 4, 8, 12, 16, 24, 32, 48;
  * radius 8 (controls) and 12 (cards); two elevations; motion 150ms ease-out.
  */
 
-:root:not([data-theme="dark"]),
-[data-theme="light"] {
-  /* Brand palette (approved brand guide, never changed here) */
+:root {
+  /* Brand palette (approved brand guide, never changed here, in either theme) */
   --rv-charcoal: #2d2f3a;
   --rv-accent: #4c5bd4;
   --rv-stone: #d9d6cf;
   --rv-gray: #8a8f98;
   --rv-white: #ffffff;
-  --rv-text-secondary: #5a5e6b;
 
-  /* Derived surfaces and lines, all checked against the text they carry */
+  /* Roles, light: what a rule draws with. A rule never names a palette colour
+     for a surface or for text, so the dark block can give each role its own
+     value. The accent face of a button (background and border) is the one
+     place a rule keeps the brand accent in both themes. */
+  --rv-text: var(--rv-charcoal);
+  --rv-text-secondary: #5a5e6b;
+  --rv-surface: var(--rv-white);
   --rv-canvas: #f4f3ef;
   --rv-line: #e4e2db;
+  --rv-line-strong: var(--rv-stone);
+  --rv-rail: var(--rv-charcoal);
   --rv-charcoal-deep: #22242d;
   --rv-charcoal-soft: #3a3d4b;
   --rv-stone-dim: #a9a69e;
+  --rv-ink: var(--rv-charcoal);
+  --rv-link: var(--rv-accent);
+  --rv-primary: var(--rv-accent);
   --rv-accent-deep: #3a47b5;
   --rv-accent-tint: #eceefa;
+  --rv-focus: var(--rv-charcoal);
+  --rv-danger-fill: #b3261e;
+  --rv-veil: rgba(45, 47, 58, 0.55);
 
-  /* Status colours: text on white only, always with an icon and a text label */
+  /* Status colours: text on the surface only, always with an icon and a text label */
   --rv-status-protected: #1b6e3c;
   --rv-status-needs-attention: #8a5a00;
   --rv-status-not-protected: #b3261e;
@@ -44,7 +65,7 @@
   --rv-shadow-2: 0 12px 32px rgba(45, 47, 58, 0.18), 0 2px 6px rgba(45, 47, 58, 0.08);
   --rv-motion: 150ms ease-out;
 
-  /* Pico CSS variables: the reset follows the same tokens */
+  /* Pico CSS variables: the reset follows the same roles in both themes */
   color-scheme: light;
   --pico-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
@@ -58,28 +79,28 @@
   --pico-form-element-spacing-vertical: 0.5rem;
   --pico-form-element-spacing-horizontal: 0.75rem;
   --pico-transition: 150ms ease-out;
-  --pico-background-color: var(--rv-white);
-  --pico-color: var(--rv-charcoal);
-  --pico-h1-color: var(--rv-charcoal);
-  --pico-h2-color: var(--rv-charcoal);
-  --pico-h3-color: var(--rv-charcoal);
+  --pico-background-color: var(--rv-surface);
+  --pico-color: var(--rv-text);
+  --pico-h1-color: var(--rv-text);
+  --pico-h2-color: var(--rv-text);
+  --pico-h3-color: var(--rv-text);
   --pico-muted-color: var(--rv-text-secondary);
   --pico-muted-border-color: var(--rv-line);
   --pico-table-border-color: var(--rv-line);
-  --pico-primary: var(--rv-accent);
+  --pico-primary: var(--rv-link);
   --pico-primary-background: var(--rv-accent);
   --pico-primary-border: var(--rv-accent);
-  --pico-primary-underline: var(--rv-accent);
+  --pico-primary-underline: var(--rv-link);
   --pico-primary-inverse: var(--rv-white);
-  --pico-primary-hover: var(--rv-charcoal);
-  --pico-primary-hover-background: var(--rv-charcoal);
-  --pico-primary-hover-border: var(--rv-charcoal);
-  --pico-primary-hover-underline: var(--rv-charcoal);
+  --pico-primary-hover: var(--rv-text);
+  --pico-primary-hover-background: var(--rv-ink);
+  --pico-primary-hover-border: var(--rv-ink);
+  --pico-primary-hover-underline: var(--rv-text);
   --pico-primary-focus: transparent;
-  --pico-form-element-background-color: var(--rv-white);
-  --pico-form-element-color: var(--rv-charcoal);
+  --pico-form-element-background-color: var(--rv-surface);
+  --pico-form-element-color: var(--rv-text);
   --pico-form-element-border-color: var(--rv-gray);
-  --pico-form-element-active-border-color: var(--rv-accent);
+  --pico-form-element-active-border-color: var(--rv-primary);
   --pico-form-element-focus-color: transparent;
   --pico-form-element-placeholder-color: var(--rv-text-secondary);
 
@@ -99,6 +120,69 @@
   --pico-icon-invalid: none;
 }
 
+/* Dark: the roles only, derived from the brand charcoal with its hue kept. The
+   page is a blue-charcoal, the canvas lifts above it, the rail is the darkest
+   surface, as in the light theme. The accent face of a button keeps the brand
+   accent (white reads on it in both themes); links, marks, rings and sparklines
+   take a lighter accent that reaches 4.5 to 1 on the dark surface; every status
+   colour has a dark value and keeps its icon and words. The shadows deepen, the
+   veil darkens and the focus ring turns white. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --rv-text: #e6e7ec;
+  --rv-text-secondary: #aab0bd;
+  --rv-surface: #1e2028;
+  --rv-canvas: #272a34;
+  --rv-line: #3a3e4b;
+  --rv-line-strong: #4d5261;
+  --rv-rail: #15161c;
+  --rv-charcoal-deep: #0e0f13;
+  --rv-charcoal-soft: #2a2d38;
+  --rv-ink: #5563dc;
+  --rv-link: #8b97f2;
+  --rv-primary: #8b97f2;
+  --rv-accent-deep: #aeb7f6;
+  --rv-accent-tint: #2b3050;
+  --rv-focus: #ffffff;
+  --rv-veil: rgba(0, 0, 0, 0.6);
+  --rv-status-protected: #4fbf7a;
+  --rv-status-needs-attention: #e0a93c;
+  --rv-status-not-protected: #ff8a80;
+  --rv-status-not-checked: #aab0bd;
+  --rv-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
+  --rv-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* System: the same values when the system prefers dark; the light roles otherwise */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --rv-text: #e6e7ec;
+    --rv-text-secondary: #aab0bd;
+    --rv-surface: #1e2028;
+    --rv-canvas: #272a34;
+    --rv-line: #3a3e4b;
+    --rv-line-strong: #4d5261;
+    --rv-rail: #15161c;
+    --rv-charcoal-deep: #0e0f13;
+    --rv-charcoal-soft: #2a2d38;
+    --rv-ink: #5563dc;
+    --rv-link: #8b97f2;
+    --rv-primary: #8b97f2;
+    --rv-accent-deep: #aeb7f6;
+    --rv-accent-tint: #2b3050;
+    --rv-focus: #ffffff;
+    --rv-veil: rgba(0, 0, 0, 0.6);
+    --rv-status-protected: #4fbf7a;
+    --rv-status-needs-attention: #e0a93c;
+    --rv-status-not-protected: #ff8a80;
+    --rv-status-not-checked: #aab0bd;
+    --rv-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 1px rgba(0, 0, 0, 0.3);
+    --rv-shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+}
+
+
 /* ---------- Base type ---------- */
 
 html {
@@ -110,8 +194,8 @@ body {
   min-height: 100%;
   font-size: 15px;
   line-height: 1.5;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -126,8 +210,8 @@ h2,
 h3,
 h4 {
   letter-spacing: -0.01em;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 h1 {
@@ -177,7 +261,7 @@ samp {
   font-size: 13px;
   border-radius: 6px;
   padding: 0.1rem 0.35rem;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -188,7 +272,7 @@ hr {
 
 /* Visible focus ring: 3px charcoal with a 2px offset on every focusable control */
 html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 3px solid var(--rv-charcoal);
+  outline: 3px solid var(--rv-focus);
   outline-offset: 2px;
 }
 
@@ -203,7 +287,7 @@ html :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible 
    tokens above make transparent) outranked the ring, so "Show the numbers" and
    the delete confirmations showed no ring when reached with the keyboard */
 html details summary:focus-visible:not([role]) {
-  outline: 3px solid var(--rv-charcoal);
+  outline: 3px solid var(--rv-focus);
   outline-offset: 2px;
 }
 
@@ -226,7 +310,7 @@ html details summary:focus-visible:not([role]) {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
 }
 
 .rv-skip-link:focus {
@@ -252,7 +336,7 @@ body.rv-app {
   gap: 8px 16px;
   padding: 10px 16px 8px;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-brand {
@@ -281,26 +365,26 @@ body.rv-app {
 }
 
 .rv-wordmark .rv-wordmark-rev {
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-wordmark .rv-wordmark-rook {
-  color: var(--rv-accent);
-  background-color: var(--rv-white);
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
 }
 
 /* On charcoal the wordmark is stone and gray, large text only (gray 4.09) */
 .rv-header .rv-wordmark .rv-wordmark-rev {
   font-size: 1.75rem;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-header .rv-wordmark .rv-wordmark-rook {
   font-size: 1.75rem;
   color: var(--rv-gray);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-edition {
@@ -313,7 +397,7 @@ body.rv-app {
   line-height: 1.6;
   white-space: nowrap;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 /* On a narrow phone the bar has no room for the badge next to the sign-out
@@ -345,7 +429,7 @@ body.rv-app {
   bottom: 4px;
   width: 48px;
   pointer-events: none;
-  background-image: linear-gradient(to right, transparent, var(--rv-charcoal) 70%);
+  background-image: linear-gradient(to right, transparent, var(--rv-rail) 70%);
 }
 
 .rv-header nav,
@@ -393,7 +477,7 @@ body.rv-app {
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--rv-stone-dim);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-header .rv-nav-link {
@@ -410,7 +494,7 @@ body.rv-app {
   white-space: nowrap;
   text-decoration: none;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
   transition: background-color var(--rv-motion), color var(--rv-motion);
 }
 
@@ -422,7 +506,7 @@ body.rv-app {
 .rv-header .rv-nav-link[aria-current="page"] {
   color: var(--rv-white);
   background-color: var(--rv-charcoal-deep);
-  box-shadow: inset 3px 0 0 var(--rv-accent);
+  box-shadow: inset 3px 0 0 var(--rv-primary);
 }
 
 .rv-icon {
@@ -468,14 +552,14 @@ body.rv-app {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-user-note {
   font-size: 12px;
   white-space: nowrap;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-inline-form {
@@ -494,7 +578,7 @@ body.rv-app {
   font-weight: 600;
   white-space: nowrap;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-header .rv-button-quiet:hover {
@@ -656,7 +740,7 @@ body.rv-app {
   margin: 4px 0 0;
   font-size: 15px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-page-actions {
@@ -667,23 +751,23 @@ body.rv-app {
 
 .rv-text-secondary {
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* Links on white */
 main a:not([role="button"]) {
-  color: var(--rv-accent);
-  background-color: var(--rv-white);
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-decoration-color: var(--rv-stone);
+  text-decoration-color: var(--rv-line-strong);
   text-underline-offset: 3px;
   transition: color var(--rv-motion), text-decoration-color var(--rv-motion);
 }
 
 main a:not([role="button"]):hover {
   color: var(--rv-accent-deep);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
   text-decoration-color: var(--rv-accent-deep);
 }
 
@@ -703,7 +787,7 @@ main a:not([role="button"]):hover {
   bottom: 1px;
   width: 48px;
   pointer-events: none;
-  background-image: linear-gradient(to right, transparent, var(--rv-white) 70%);
+  background-image: linear-gradient(to right, transparent, var(--rv-surface) 70%);
 }
 
 main nav {
@@ -741,20 +825,20 @@ main .rv-nav-link {
   font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 main .rv-nav-link:hover {
   color: var(--rv-accent-deep);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 main .rv-nav-link[aria-current="page"] {
-  border-bottom-color: var(--rv-accent);
+  border-bottom-color: var(--rv-primary);
   font-weight: 600;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 /* ---------- Buttons ---------- */
@@ -781,8 +865,8 @@ main .rv-nav-link[aria-current="page"] {
 
 :is(button, [type="submit"], [type="button"], [role="button"]):hover {
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
-  border-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
+  border-color: var(--rv-ink);
 }
 
 :is(button, [type="submit"], [type="button"])[disabled],
@@ -804,29 +888,29 @@ input[type="submit"] {
 /* Quiet (secondary) buttons: charcoal on white with a gray border */
 .rv-button-quiet,
 .rv-button-quiet:not(:hover) {
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
   border-color: var(--rv-gray);
 }
 
 .rv-button-quiet:hover {
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
-  border-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
+  border-color: var(--rv-ink);
 }
 
 /* Danger buttons: for deletions, next to a confirmation */
 .rv-button-danger,
 .rv-button-danger:not(:hover) {
   color: var(--rv-white);
-  background-color: var(--rv-status-not-protected);
-  border-color: var(--rv-status-not-protected);
+  background-color: var(--rv-danger-fill);
+  border-color: var(--rv-danger-fill);
 }
 
 .rv-button-danger:hover {
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
-  border-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
+  border-color: var(--rv-ink);
 }
 
 .rv-button-small {
@@ -857,8 +941,8 @@ fieldset legend {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 input:not([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"]),
@@ -868,8 +952,8 @@ textarea {
   font-size: 15px;
   line-height: 1.5;
   border-radius: 8px;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
   transition: border-color var(--rv-motion);
 }
 
@@ -924,7 +1008,7 @@ select:not([multiple], [size]) {
   margin: 0 8px 0 0;
   border: 0;
   background-image: none;
-  accent-color: var(--rv-accent);
+  accent-color: var(--rv-primary);
   vertical-align: -2px;
 }
 
@@ -983,7 +1067,7 @@ fieldset legend {
   font-size: 13px;
   line-height: 1.45;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-field-error {
@@ -992,7 +1076,7 @@ fieldset legend {
   font-size: 13px;
   font-weight: 600;
   color: var(--rv-status-not-protected);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-check {
@@ -1027,7 +1111,7 @@ main table caption {
   caption-side: top;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 main table th,
@@ -1036,8 +1120,8 @@ main table td {
   border-bottom: 1px solid var(--rv-line);
   vertical-align: top;
   text-align: left;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 main table thead th {
@@ -1047,7 +1131,7 @@ main table thead th {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -1105,8 +1189,8 @@ main table th .rv-text-secondary {
 .rv-pseudonym {
   font-family: var(--pico-font-family-monospace);
   font-size: 13px;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-utc-flag {
@@ -1122,8 +1206,8 @@ main table th .rv-text-secondary {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-card > :last-child {
@@ -1140,7 +1224,7 @@ main table th .rv-text-secondary {
   margin: 0 0 16px;
   font-size: 14px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-grid {
@@ -1160,8 +1244,8 @@ main table th .rv-text-secondary {
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-stat-label {
@@ -1169,7 +1253,7 @@ main table th .rv-text-secondary {
   margin-top: 6px;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* ---------- Status: icon plus words, never colour alone, on white only ---------- */
@@ -1183,23 +1267,23 @@ main table th .rv-text-secondary {
 
 .rv-status-protected {
   color: var(--rv-status-protected);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-status-needs-attention {
   color: var(--rv-status-needs-attention);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-status-not-protected {
   color: var(--rv-status-not-protected);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-status-not-checked,
 .rv-status-not-applicable {
   color: var(--rv-status-not-checked);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* As a badge (span): a pill with a border in the status colour. Its words stay
@@ -1251,9 +1335,9 @@ p.rv-status-not-protected a {
   flex-direction: column;
   gap: 4px;
   font-weight: 400;
-  border-left-color: var(--rv-accent);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  border-left-color: var(--rv-primary);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-alert-success {
@@ -1285,8 +1369,8 @@ p.rv-status-not-protected a {
   border: 1px solid var(--rv-line);
   border-left: 4px solid var(--rv-status-not-protected);
   border-radius: 8px;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-errors ul {
@@ -1302,7 +1386,7 @@ p.rv-status-not-protected a {
   margin-bottom: 4px;
   font-weight: 700;
   color: var(--rv-status-not-protected);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* ---------- Empty states ---------- */
@@ -1310,11 +1394,11 @@ p.rv-status-not-protected a {
 .rv-empty {
   margin-bottom: 24px;
   padding: 40px 24px;
-  border: 1px dashed var(--rv-stone);
+  border: 1px dashed var(--rv-line-strong);
   border-radius: 12px;
   text-align: center;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-empty .rv-icon {
@@ -1322,7 +1406,7 @@ p.rv-status-not-protected a {
   height: 36px;
   margin-bottom: 8px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-empty-title {
@@ -1335,7 +1419,7 @@ p.rv-status-not-protected a {
   max-width: 36rem;
   margin: 0 auto 16px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-empty > :last-child {
@@ -1358,7 +1442,7 @@ p.rv-status-not-protected a {
   border-radius: 12px;
   text-align: center;
   cursor: pointer;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
   transition: border-color var(--rv-motion), background-color var(--rv-motion);
 }
@@ -1366,7 +1450,7 @@ p.rv-status-not-protected a {
 .rv-dropzone:hover,
 .rv-dropzone:focus-within,
 .rv-dropzone.is-dragover {
-  border-color: var(--rv-accent);
+  border-color: var(--rv-primary);
   background-color: var(--rv-accent-tint);
 }
 
@@ -1426,8 +1510,8 @@ details.rv-confirm > summary {
   line-height: 1.4;
   list-style: none;
   cursor: pointer;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 details.rv-confirm > summary::-webkit-details-marker,
@@ -1437,8 +1521,8 @@ details.rv-confirm > summary::after {
 
 details.rv-confirm > summary:hover {
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
-  border-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
+  border-color: var(--rv-ink);
 }
 
 .rv-confirm-body {
@@ -1448,8 +1532,8 @@ details.rv-confirm > summary:hover {
   border: 1px solid var(--rv-line);
   border-left: 4px solid var(--rv-status-not-protected);
   border-radius: 8px;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-confirm-body > :last-child {
@@ -1463,12 +1547,12 @@ dialog.rv-dialog {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-2);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 dialog.rv-dialog::backdrop {
-  background-color: rgba(45, 47, 58, 0.55);
+  background-color: var(--rv-veil);
 }
 
 .rv-dialog h2 {
@@ -1503,8 +1587,8 @@ dialog.rv-dialog::backdrop {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--rv-stone);
-  border-top-color: var(--rv-accent);
+  border: 2px solid var(--rv-line-strong);
+  border-top-color: var(--rv-primary);
   border-radius: 50%;
   vertical-align: -3px;
   animation: rv-spin 0.8s linear infinite;
@@ -1530,13 +1614,13 @@ dialog.rv-dialog::backdrop {
   padding: 16px;
   border-top: 1px solid var(--rv-line);
   font-size: 13px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
 .rv-footer p {
   margin-bottom: 4px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -1547,7 +1631,7 @@ dialog.rv-dialog::backdrop {
 .rv-footer .rv-disclaimer {
   max-width: 64rem;
   font-size: 13px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -1580,7 +1664,7 @@ body.rv-signed-out {
   gap: 16px;
   padding: 24px 24px 20px;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-auth-logo {
@@ -1596,7 +1680,7 @@ body.rv-signed-out {
   font-weight: 600;
   line-height: 1.35;
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-auth-points {
@@ -1615,7 +1699,7 @@ body.rv-signed-out {
   font-size: 15px;
   line-height: 1.45;
   color: var(--rv-stone);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-rail);
 }
 
 .rv-auth-points .rv-icon {
@@ -1634,14 +1718,14 @@ body.rv-signed-out {
   justify-content: space-between;
   gap: 16px;
   padding: 20px 24px;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-signed-out .rv-edition {
   border-color: var(--rv-line);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-signed-out .rv-content {
@@ -1666,7 +1750,7 @@ body.rv-signed-out {
   margin-bottom: 24px;
   font-size: 15px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-auth form {
@@ -1716,7 +1800,7 @@ body.rv-signed-out {
   .rv-auth-tagline {
     font-size: 24px;
     color: var(--rv-white);
-    background-color: var(--rv-charcoal);
+    background-color: var(--rv-rail);
   }
 }
 
@@ -1759,7 +1843,7 @@ body.rv-signed-out {
   margin: 0;
   font-size: 14px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* Stat cards: the number, its label, its context, its change and a sparkline.
@@ -1798,38 +1882,38 @@ main .rv-stat .rv-stat-value {
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
   text-decoration: none;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 main .rv-stat .rv-stat-value:hover {
   font-size: 28px;
   text-decoration: underline;
-  text-decoration-color: var(--rv-accent);
+  text-decoration-color: var(--rv-primary);
   color: var(--rv-accent-deep);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-stat .rv-stat-label {
   margin-top: 4px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-stat-note {
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-stat-change {
   margin-top: 4px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-spark {
@@ -1843,7 +1927,7 @@ main .rv-stat .rv-stat-value:hover {
 
 .rv-spark polyline {
   fill: none;
-  stroke: var(--rv-accent);
+  stroke: var(--rv-primary);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -1870,8 +1954,8 @@ main .rv-stat .rv-stat-value:hover {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 main .rv-rook-link {
@@ -1881,14 +1965,14 @@ main .rv-rook-link {
   align-items: center;
   column-gap: 12px;
   text-decoration: none;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 main .rv-rook-link:hover {
   text-decoration: none;
   color: var(--rv-accent-deep);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-ring {
@@ -1904,13 +1988,13 @@ main .rv-rook-link:hover {
 }
 
 .rv-rook-insufficient .rv-ring-track {
-  stroke: var(--rv-stone);
+  stroke: var(--rv-line-strong);
   stroke-dasharray: 3 4;
 }
 
 .rv-ring-arc {
   fill: none;
-  stroke: var(--rv-accent);
+  stroke: var(--rv-primary);
   stroke-width: 7;
   stroke-linecap: round;
 }
@@ -1943,7 +2027,7 @@ main .rv-rook-link:hover {
   font-size: 13px;
   line-height: 1.4;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-rook-meta:first-of-type {
@@ -1958,8 +2042,8 @@ main .rv-rook-link:hover {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-attention-row {
@@ -2000,7 +2084,7 @@ main .rv-attention-what a:hover {
 .rv-attention-client {
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 @media (max-width: 599px) {
@@ -2071,19 +2155,19 @@ main .rv-attention-what a:hover {
 
 .rv-chart-line polyline {
   fill: none;
-  stroke: var(--rv-charcoal);
+  stroke: var(--rv-text);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .rv-chart-line circle {
-  fill: var(--rv-charcoal);
+  fill: var(--rv-text);
 }
 
 .rv-chart-line text {
   font-weight: 600;
-  fill: var(--rv-charcoal);
+  fill: var(--rv-text);
 }
 
 /* The chart is drawn twice, in a wide and a narrow geometry, and the width
@@ -2130,7 +2214,7 @@ main .rv-attention-what a:hover {
 }
 
 .rv-chart-key line {
-  stroke: var(--rv-charcoal);
+  stroke: var(--rv-text);
   stroke-width: 2;
 }
 
@@ -2191,7 +2275,7 @@ main .rv-attention-what a:hover {
   line-height: 1.4;
   white-space: nowrap;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-domains .rv-bar {
@@ -2224,7 +2308,7 @@ main .rv-attention-what a:hover {
 }
 
 .rv-seg-not-checked {
-  fill: var(--rv-stone);
+  fill: var(--rv-line-strong);
 }
 
 .rv-legend {
@@ -2270,9 +2354,9 @@ main .rv-attention-what a:hover {
   left: -27px;
   width: 12px;
   height: 12px;
-  border: 2px solid var(--rv-white);
+  border: 2px solid var(--rv-surface);
   border-radius: 50%;
-  background-color: var(--rv-accent);
+  background-color: var(--rv-primary);
 }
 
 .rv-timeline-what {
@@ -2285,7 +2369,7 @@ main .rv-attention-what a:hover {
   margin: 0;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* The first visit: what to do first, as three steps */
@@ -2325,7 +2409,7 @@ main .rv-attention-what a:hover {
   line-height: 24px;
   text-align: center;
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
 }
 
 /* ---------- Clients list and client overview (docs/design-system.md, Clients) ---------- */
@@ -2363,7 +2447,7 @@ main .rv-client-kicker a:hover {
   padding: 12px 16px;
   border: 1px solid var(--rv-line);
   border-radius: 12px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -2374,7 +2458,7 @@ main .rv-client-kicker a:hover {
 .rv-toolbar label {
   margin-bottom: 4px;
   font-size: 13px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -2386,7 +2470,7 @@ main .rv-client-kicker a:hover {
   flex-basis: 100%;
   margin: 0;
   font-size: 13px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -2454,18 +2538,18 @@ main a.rv-chip {
   line-height: 1.4;
   white-space: nowrap;
   text-decoration: none;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
   transition: background-color var(--rv-motion), color var(--rv-motion),
     border-color var(--rv-motion);
 }
 
 main a.rv-chip:hover,
 main a.rv-chip[aria-current="true"] {
-  border-color: var(--rv-charcoal);
+  border-color: var(--rv-ink);
   text-decoration: none;
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
 }
 
 .rv-chip-count {
@@ -2476,7 +2560,7 @@ main a.rv-chip[aria-current="true"] {
 .rv-chip-off {
   border-color: var(--rv-line);
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-density {
@@ -2529,7 +2613,7 @@ main .rv-clients a.rv-client-name:hover {
 }
 
 .rv-posture-insufficient .rv-ring-track {
-  stroke: var(--rv-stone);
+  stroke: var(--rv-line-strong);
   stroke-dasharray: 3 4;
 }
 
@@ -2576,7 +2660,7 @@ main a.rv-sort {
   align-items: center;
   gap: 4px;
   text-decoration: none;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -2627,7 +2711,7 @@ main .rv-table-compact td {
 .rv-pager-status {
   font-size: 14px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-pager-links {
@@ -2715,12 +2799,12 @@ main .rv-table-compact td {
     font-size: 12px;
     font-weight: 600;
     color: var(--rv-text-secondary);
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   main .rv-clients tbody tr:hover > td,
   main .rv-clients tbody tr:hover > th {
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   .rv-clients .rv-row-actions {
@@ -2796,8 +2880,8 @@ main .rv-table-compact td {
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-facts {
@@ -2815,7 +2899,7 @@ main .rv-table-compact td {
   font-size: 13px;
   font-weight: 500;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-facts dd {
@@ -2890,7 +2974,7 @@ main .rv-table-compact td {
   margin-top: 4px;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* ---------- Checklist and control detail (docs/design-system.md, Checklist) ---------- */
@@ -2920,13 +3004,13 @@ main .rv-checklist a.rv-control-link:hover {
 .rv-checklist .rv-cell-note {
   font-weight: 400;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* A row whose status changed since the last report carries the violet mark of
    the rail on its heading cell; the words beside it say what it was */
 .rv-checklist tr[data-changed="true"] > th {
-  box-shadow: inset 3px 0 0 var(--rv-accent);
+  box-shadow: inset 3px 0 0 var(--rv-primary);
 }
 
 .rv-coverage {
@@ -2957,7 +3041,7 @@ main .rv-checklist a.rv-control-link:hover {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
 }
 
 .rv-flag-changed {
@@ -3032,7 +3116,7 @@ main .rv-checklist a.rv-control-link:hover {
     font-size: 12px;
     font-weight: 600;
     color: var(--rv-text-secondary);
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   main .rv-checklist td:empty {
@@ -3041,7 +3125,7 @@ main .rv-checklist a.rv-control-link:hover {
 
   main .rv-checklist tbody tr:hover > td,
   main .rv-checklist tbody tr:hover > th {
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   .rv-coverage {
@@ -3084,7 +3168,7 @@ main .rv-control-kicker a:hover {
   list-style: none;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-control-meta li {
@@ -3110,7 +3194,7 @@ main .rv-control-kicker a:hover {
   padding: 20px 24px;
   border: 1px solid var(--rv-line);
   border-radius: 12px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -3133,12 +3217,12 @@ main .rv-control-kicker a:hover {
 }
 
 .rv-verdict-facts dt {
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
 .rv-verdict-facts dd {
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -3178,7 +3262,7 @@ main .rv-control-kicker a:hover {
 .rv-rule {
   margin: 0 0 12px;
   padding: 2px 0 2px 14px;
-  border-left: 3px solid var(--rv-charcoal);
+  border-left: 3px solid var(--rv-text);
   font-size: 15px;
   font-weight: 500;
   line-height: 1.5;
@@ -3224,7 +3308,7 @@ main .rv-control-kicker a:hover {
 .rv-exception .rv-exception-meta {
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* A compact empty state inside a card */
@@ -3246,7 +3330,7 @@ main .rv-control-kicker a:hover {
   padding: 10px 14px;
   border: 1px solid var(--rv-line);
   border-radius: 8px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -3254,7 +3338,7 @@ main .rv-control-kicker a:hover {
   margin: 0 0 2px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -3262,7 +3346,7 @@ main .rv-control-kicker a:hover {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -3293,7 +3377,7 @@ main .rv-control-kicker a:hover {
   margin-top: 10px;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-notes-status .rv-errors {
@@ -3339,8 +3423,8 @@ main .rv-control-kicker a:hover {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-refresh li {
@@ -3375,7 +3459,7 @@ main .rv-control-kicker a:hover {
   line-height: 24px;
   text-align: center;
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
 }
 
 .rv-refresh strong {
@@ -3387,21 +3471,21 @@ main .rv-control-kicker a:hover {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-refresh-how {
   flex-basis: 100%;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* The item id under the source name in the table of everything imported */
 .rv-items .rv-cell-note {
   font-weight: 400;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 /* The profile editor: five steps as cards. The legend of a fieldset floats
@@ -3415,8 +3499,8 @@ section.rv-step {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-step > legend {
@@ -3427,8 +3511,8 @@ section.rv-step {
   font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-step > legend + * {
@@ -3453,14 +3537,14 @@ section.rv-step {
   margin: 0 0 16px;
   font-size: 14px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-step-note {
   margin: 0 0 16px;
   font-size: 13px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-step > :last-child {
@@ -3491,8 +3575,8 @@ section.rv-step {
   gap: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-editor-busy.htmx-request {
@@ -3598,7 +3682,7 @@ section.rv-step {
     font-size: 12px;
     font-weight: 600;
     color: var(--rv-text-secondary);
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   main .rv-table-cards td:empty {
@@ -3607,7 +3691,7 @@ section.rv-step {
 
   main .rv-table-cards tbody tr:hover > td,
   main .rv-table-cards tbody tr:hover > th {
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   .rv-chains tr[data-ok="false"] > th {
@@ -3638,13 +3722,13 @@ section.rv-step {
 .rv-exceptions tr.rv-exception-closed > th a,
 .rv-exceptions tr.rv-exception-closed > td {
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-exceptions .rv-cell-note {
   font-weight: 400;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-exception-card {
@@ -3734,7 +3818,7 @@ fieldset.rv-topics {
   padding: 32px 24px;
   border: 1px solid var(--rv-line);
   border-radius: 12px;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -3743,10 +3827,10 @@ fieldset.rv-topics {
   max-width: 36rem;
   margin: 0 auto;
   padding: 32px 36px 28px;
-  border: 1px solid var(--rv-stone);
+  border: 1px solid var(--rv-line-strong);
   box-shadow: var(--rv-shadow-2);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-sheet-head {
@@ -3759,7 +3843,7 @@ fieldset.rv-topics {
   border-bottom: 1px solid var(--rv-gray);
   font-size: 12px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-sheet-title {
@@ -3768,16 +3852,16 @@ fieldset.rv-topics {
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.01em;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-sheet-subtitle {
   margin: 0 0 24px;
   font-size: 20px;
   line-height: 1.3;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-sheet-facts {
@@ -3795,14 +3879,14 @@ fieldset.rv-topics {
 .rv-sheet-facts dt {
   margin: 0;
   font-weight: 600;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-sheet-facts dd {
   margin: 0;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 @media (min-width: 600px) {
@@ -3814,7 +3898,7 @@ fieldset.rv-topics {
 .rv-sheet-rule {
   height: 3px;
   margin: 24px 0 20px;
-  background-color: var(--rv-accent);
+  background-color: var(--rv-primary);
 }
 
 .rv-sheet-heading {
@@ -3822,8 +3906,8 @@ fieldset.rv-topics {
   font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-sheet-summary p {
@@ -3863,7 +3947,7 @@ fieldset.rv-topics {
   font-size: 12px;
   line-height: 1.5;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 @media (max-width: 599px) {
@@ -3902,7 +3986,7 @@ fieldset.rv-topics {
   margin: 0 0 12px;
   font-size: 14px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-kind-actions {
@@ -3945,7 +4029,7 @@ fieldset.rv-topics {
 .rv-quote {
   margin: 0;
   padding: 2px 0 2px 14px;
-  border-left: 3px solid var(--rv-charcoal);
+  border-left: 3px solid var(--rv-text);
   font-size: 15px;
   line-height: 1.55;
 }
@@ -4092,8 +4176,8 @@ fieldset.rv-topics {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-glossary > div {
@@ -4112,16 +4196,16 @@ fieldset.rv-topics {
   font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-glossary dd {
   margin: 0;
   font-size: 14px;
   line-height: 1.55;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 @media (min-width: 768px) {
@@ -4139,8 +4223,8 @@ fieldset.rv-topics {
   border: 1px solid var(--rv-line);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-1);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 .rv-problem-code {
@@ -4149,8 +4233,8 @@ fieldset.rv-topics {
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  color: var(--rv-accent);
-  background-color: var(--rv-white);
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
 }
 
 .rv-problem h1 {
@@ -4173,7 +4257,7 @@ fieldset.rv-topics {
   margin: 0 0 20px;
   font-size: 14px;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-problem .rv-actions {
@@ -4185,4 +4269,134 @@ fieldset.rv-topics {
     margin-top: 8px;
     padding: 20px;
   }
+}
+
+/* ---------- Theme switch (_theme.html) ---------- */
+
+/* Three real buttons in one pill: light, dark, or the theme the system prefers.
+   The pressed one (aria-pressed) is the theme in use; each button posts the
+   form, so the switch works without script. In the rail it takes its own line
+   above the sign-out button and shows its words; in the bar and signed out it
+   shows the icons only, each named for assistive technology */
+.rv-theme {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--rv-charcoal-soft);
+  border-radius: 999px;
+  background-color: var(--rv-rail);
+}
+
+.rv-theme button,
+.rv-theme button:not(:hover) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  margin: 0;
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--rv-stone);
+  background-color: var(--rv-rail);
+}
+
+.rv-theme button:hover,
+.rv-theme button[aria-pressed="true"] {
+  border-color: transparent;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal-soft);
+}
+
+.rv-theme .rv-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.rv-theme-text {
+  display: none;
+}
+
+/* On a narrow phone the bar holds the brand, the pill and the sign-out button
+   on one line, so the pill is tighter */
+@media (max-width: 599px) {
+  .rv-app .rv-theme button,
+  .rv-app .rv-theme button:not(:hover) {
+    padding: 5px 7px;
+  }
+}
+
+/* Signed out the pill sits on the surface, beside the edition badge */
+.rv-signed-out .rv-theme {
+  border-color: var(--rv-line);
+  background-color: var(--rv-surface);
+}
+
+.rv-signed-out .rv-theme button,
+.rv-signed-out .rv-theme button:not(:hover) {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-signed-out .rv-theme button:hover,
+.rv-signed-out .rv-theme button[aria-pressed="true"] {
+  color: var(--rv-white);
+  background-color: var(--rv-ink);
+}
+
+@media (min-width: 1024px) {
+  .rv-app .rv-theme {
+    display: flex;
+    flex-basis: 100%;
+  }
+
+  .rv-app .rv-theme button,
+  .rv-app .rv-theme button:not(:hover) {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .rv-app .rv-theme-text {
+    display: inline;
+  }
+}
+
+/* Signed out the header carries both horizontal logos, the one for a light
+   surface and the one for a dark surface; the theme shows one of them (the rail
+   always carries the dark-surface logo). With the system theme the choice
+   follows the system, without script */
+.rv-logo-on-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .rv-signed-out .rv-logo:not(.rv-logo-on-dark) {
+  display: none;
+}
+
+:root[data-theme="dark"] .rv-logo-on-dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .rv-signed-out .rv-logo:not(.rv-logo-on-dark) {
+    display: none;
+  }
+
+  :root[data-theme="system"] .rv-logo-on-dark {
+    display: block;
+  }
+}
+
+/* Signed out, the edition badge and the theme switch share the right of the header */
+.rv-header-tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
 }
