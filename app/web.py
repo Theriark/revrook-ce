@@ -15,6 +15,7 @@ from app.security import (
     csrf_matches,
     new_csrf_token,
 )
+from app.theme import THEME_COOKIE, THEME_COOKIE_MAX_AGE
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 CSRF_HEADER = "x-csrf-token"
@@ -111,3 +112,20 @@ async def csrf_protect(request: Request) -> None:
         supplied = value if isinstance(value, str) else None
     if session is None or not supplied or not csrf_matches(session.csrf, supplied):
         raise HTTPException(status_code=403, detail="CSRF token missing or invalid")
+
+
+def set_theme_cookie(response: Response, request: Request, theme: str) -> None:
+    """Remember the theme for the pages drawn before anyone is signed in.
+
+    The same flags as the session cookie; the value is one of the three words of
+    app/theme.py and nothing a page would act on without checking it again.
+    """
+    response.set_cookie(
+        THEME_COOKIE,
+        theme,
+        max_age=THEME_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=_secure_cookies(request),
+        samesite="lax",
+        path="/",
+    )

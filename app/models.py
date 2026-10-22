@@ -72,6 +72,10 @@ class AppUser(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, server_default=true()
     )
+    # The theme of the interface: light, dark or system (app/theme.py).
+    theme: Mapped[str] = mapped_column(
+        String(8), default="system", server_default=text("'system'")
+    )
     failed_login_count: Mapped[int] = mapped_column(
         Integer, default=0, server_default=text("0")
     )

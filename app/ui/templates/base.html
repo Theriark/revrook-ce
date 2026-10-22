@@ -1,10 +1,10 @@
 {% import "_icons.html" as i -%}
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="{{ theme|default('system') }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="{{ color_scheme|default('light dark') }}">
 <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false, "responseHandling": [{"code": "204", "swap": false}, {"code": "[23]..", "swap": true}, {"code": "(403|404|409|413|422|500)", "swap": true, "error": false}, {"code": "[45]..", "swap": false, "error": true}]}'>
 <title>{{ title }} - revrook</title>
 {#- The stylesheets and scripts carry the digest of their files as the `v` query, so a
@@ -62,11 +62,19 @@
 <img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"
 {% if "logo-horizontal-2400x800.png" in brand_files %} srcset="/static/brand/logo-horizontal-1200x400.png 1x, /static/brand/logo-horizontal-2400x800.png 2x"{% endif %}
  width="108" height="36" alt="revrook">
+{% if "logo-horizontal-dark-1200x400.png" in brand_files %}
+<img class="rv-logo rv-logo-on-dark" src="/static/brand/logo-horizontal-dark-1200x400.png"
+{% if "logo-horizontal-dark-2400x800.png" in brand_files %} srcset="/static/brand/logo-horizontal-dark-1200x400.png 1x, /static/brand/logo-horizontal-dark-2400x800.png 2x"{% endif %}
+ width="108" height="36" alt="revrook">
+{% endif %}
 {% else %}
 <span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span><span class="rv-wordmark-rook">rook</span></span>
 {% endif %}
 </a>
+<div class="rv-header-tools">
 <span class="rv-edition">Community Edition</span>
+{% include "_theme.html" %}
+</div>
 </header>
 {% endif %}
 {% if request is defined and request.state.worker_stale %}
