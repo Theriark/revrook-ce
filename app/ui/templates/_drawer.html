@@ -1,0 +1,27 @@
+{#- The control drawer (docs/design-system.md, Checklist and control detail): a
+    native dialog at the right edge of the page that the checklist, the home page
+    and the client overview carry closed. A link marked data-drawer opens it with
+    the control it names, loaded by htmx into #control-drawer-body
+    (app/static/js/revrook.js); without script, or with a modifier key, the link
+    is the page itself. The dialog is modal, so Escape closes it, Tab stays inside
+    it and the page behind is inert; Close is a dialog form, which needs no script.
+    The skeleton shows while the control loads (aria-busy on the dialog). -#}
+<dialog class="rv-drawer" id="control-drawer" aria-label="Control">
+<div class="rv-drawer-panel">
+<div class="rv-drawer-bar">
+<p class="rv-drawer-eyebrow">Control</p>
+<form method="dialog" class="rv-drawer-close-form"><button type="submit" class="rv-button-quiet rv-button-small rv-drawer-close">Close</button></form>
+</div>
+<div class="rv-drawer-scroll">
+<div class="rv-drawer-loading" aria-hidden="true">
+<span class="rv-skeleton rv-skeleton-title"></span>
+<span class="rv-skeleton"></span>
+<span class="rv-skeleton rv-skeleton-short"></span>
+<span class="rv-skeleton rv-skeleton-band"></span>
+<span class="rv-skeleton"></span>
+<span class="rv-skeleton rv-skeleton-short"></span>
+</div>
+<div id="control-drawer-body" class="rv-drawer-body"></div>
+</div>
+</div>
+</dialog>

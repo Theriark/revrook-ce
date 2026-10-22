@@ -80,8 +80,8 @@
 {% for item in attention %}
 <li class="rv-attention-row">
 <span class="rv-attention-status">{{ s.status(item.label) }}</span>
-<span class="rv-attention-what"><a href="/{{ item.path }}">{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{{ item.client_name }}{% if item.gate %}, gate control{% endif %}{% if item.why %}, {{ item.why }}{% endif %}</span></span>
-<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}">Open</a>
+<span class="rv-attention-what"><a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{{ item.client_name }}{% if item.gate %}, gate control{% endif %}{% if item.why %}, {{ item.why }}{% endif %}</span></span>
+<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}" data-drawer>Open</a>
 </li>
 {% endfor %}
 </ol>
@@ -214,4 +214,5 @@
 {% endif %}
 </section>
 {% endif %}
+{% include "_drawer.html" %}
 {% endblock %}

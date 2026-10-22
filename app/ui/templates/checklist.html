@@ -30,7 +30,7 @@
 <tbody>
 {% for item in rows %}
 <tr data-control="{{ item.row.control_id }}" data-changed="{{ 'true' if item.changed else 'false' }}" data-flagged="{{ 'true' if item.flagged else 'false' }}">
-<th scope="row"><a class="rv-control-link" href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}">{{ item.row.title }}</a><span class="rv-cell-note">{{ item.row.control_id }}{% if item.row.gate %}, gate control{% endif %}</span></th>
+<th scope="row"><a class="rv-control-link" href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}" data-drawer>{{ item.row.title }}</a><span class="rv-cell-note">{{ item.row.control_id }}{% if item.row.gate %}, gate control{% endif %}</span></th>
 <td data-label="Status">{{ s.status(item.row.label) }}</td>
 <td data-label="Coverage" class="rv-coverage">{{ item.coverage }}</td>
 <td data-label="Evidence dated" class="rv-coverage">{{ s.day(item.row.evidence_at) }}</td>
@@ -48,4 +48,5 @@
 <a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/checklist">Show all controls</a>
 </div>
 {% endif %}
+{% include "_drawer.html" %}
 {% endblock %}

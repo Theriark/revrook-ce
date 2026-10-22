@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{% import "_status.html" as s %}
-{% import "_icons.html" as i %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
@@ -14,92 +12,5 @@
 <li>Weight {{ control.weight }}</li>
 </ul>
 </div>
-
-<section class="rv-verdict" id="control-status" aria-labelledby="verdict-title">
-<h3 id="verdict-title" class="rv-sr-only">Status</h3>
-<div class="rv-verdict-status">{{ s.status(row.label) }}</div>
-<dl class="rv-facts rv-verdict-facts">
-<div><dt>Evidence dated</dt><dd>{{ s.day(row.evidence_at) }}</dd></div>
-<div><dt>State of the evidence</dt><dd>{{ row.evidence_state }}</dd></div>
-<div><dt>Evidence type</dt><dd>{{ row.assurance }}</dd></div>
-<div><dt>Coverage</dt><dd>{{ coverage }}</dd></div>
-</dl>
-</section>
-
-<div class="rv-control-grid">
-<div class="rv-control-main">
-<section class="rv-card" id="checked" aria-labelledby="checked-title">
-<h3 id="checked-title" class="rv-card-title">What was checked</h3>
-<p class="rv-rule">{{ control.rule.text }}</p>
-<p class="rv-result-detail">{{ result.detail }}</p>
-{% if reason %}<p class="rv-text-secondary">{{ reason }}</p>{% endif %}
-{% if result.notes %}
-<ul class="rv-flags">
-{% for note in result.notes %}
-<li>{{ note }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-</section>
-
-<section class="rv-card" id="exceptions" aria-labelledby="exceptions-title">
-<h3 id="exceptions-title" class="rv-card-title">Exceptions for this control</h3>
-<p class="rv-card-subtitle">An exception records that the control is knowingly not met, who owns that decision and when to look again. It never changes the status or raises the score.</p>
-{% if exceptions %}
-<ul class="rv-exception-list" id="control-exceptions">
-{% for entry, overdue in exceptions %}
-<li class="rv-exception">
-<p class="rv-exception-head"><span class="rv-exception-owner">{{ entry.owner }}</span> {% if overdue %}<span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Overdue</span>{% else %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Open</span>{% endif %}</p>
-<p class="rv-exception-reason">{{ entry.reason }}</p>
-{% if entry.compensating_control %}<p class="rv-exception-meta">Instead: {{ entry.compensating_control }}</p>{% endif %}
-<p class="rv-exception-meta">Review by <time datetime="{{ entry.review_date.isoformat() }}">{{ entry.review_date.isoformat() }}</time>.</p>
-</li>
-{% endfor %}
-</ul>
-{% else %}
-<div class="rv-empty rv-empty-small" id="exceptions-empty">
-{{ i.icon("info", 28) }}
-<p class="rv-empty-title">No open exception</p>
-<p class="rv-empty-text">There is no open exception for this control. Record one when the client knowingly accepts the gap.</p>
-<a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/exceptions">Add one on the exceptions page</a>
-</div>
-{% endif %}
-</section>
-</div>
-
-<section class="rv-card rv-notes-card" id="notes" aria-labelledby="notes-title">
-<h3 id="notes-title" class="rv-card-title">Your notes</h3>
-<p class="rv-card-subtitle">The four lines the report prints for this control. Notes are saved as you type.</p>
-<div class="rv-suggestion">
-<p class="rv-suggestion-label">Suggested wording</p>
-<p id="suggestion" class="rv-suggestion-text">{{ suggestion }}</p>
-</div>
-<form id="note-form" method="post" action="/clients/{{ client_id }}/controls/{{ control.id }}/note" hx-post="/clients/{{ client_id }}/controls/{{ control.id }}/note" hx-trigger="input changed delay:1s, change" hx-target="#note-status" hx-swap="innerHTML">
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<div class="rv-field">
-<label for="did">What we did</label>
-<textarea id="did" name="did" rows="3" maxlength="2000">{{ finding.did }}</textarea>
-</div>
-<div class="rv-field">
-<label for="recommend">What we recommend</label>
-<textarea id="recommend" name="recommend" rows="3" maxlength="2000">{{ finding.recommend }}</textarea>
-</div>
-<div class="rv-field">
-<label for="need">What we need from you</label>
-<textarea id="need" name="need" rows="3" maxlength="2000">{{ finding.need }}</textarea>
-</div>
-<div class="rv-field">
-<label for="by_when">By when</label>
-<input id="by_when" name="by_when" type="text" maxlength="2000" value="{{ finding.by_when }}" aria-describedby="by_when-help">
-<small class="rv-help" id="by_when-help">A date or a plain phrase, as the report should print it.</small>
-</div>
-<div class="rv-notes-actions">
-<button type="submit">Save notes</button>
-<span class="rv-notes-saving" aria-hidden="true"><span class="rv-busy"></span> Saving</span>
-</div>
-<div id="note-status" class="rv-notes-status" aria-live="polite">Notes are saved as you type.</div>
-</form>
-</section>
-</div>
-<p class="rv-control-foot">To change this status, import newer evidence on the <a href="/clients/{{ client_id }}/evidence">evidence page</a>, with the <a href="/imports/profile-editor?client_id={{ client_id }}">profile editor</a> or through the API.</p>
+{% include "_control_body.html" %}
 {% endblock %}

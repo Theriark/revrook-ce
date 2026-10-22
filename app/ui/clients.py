@@ -88,6 +88,10 @@ from app.web import cipher_of, clock_of, session_factory
 
 router = APIRouter()
 SHOW_CHOICES = ("all", "flagged")
+# The control drawer (templates/_drawer.html): a control asked for by htmx with this
+# target is answered as the fragment the drawer holds, not as the whole page.
+DRAWER_TARGET = "control-drawer-body"
+DRAWER_TEMPLATE = "_control_drawer.html"
 MAX_REVIEW_YEARS = 5
 NO_SUCH_CONTROL = "There is no such control."
 # The message of the exceptions register after a redirect, chosen by its `done` query
@@ -371,6 +375,11 @@ def suggested_sentence(row: ControlRow) -> str:
     return f"{base} The evidence is dated {iso_date(row.evidence_at)} ({kind})."
 
 
+def wants_drawer(request: Request) -> bool:
+    """Whether the control was asked for by the drawer (htmx names its target)."""
+    return is_htmx(request) and request.headers.get("hx-target") == DRAWER_TARGET
+
+
 def control_of(request: Request, control_id: str) -> Control:
     """The control of the library with this id; FormError (404) when there is none."""
     for control in library_of(request).controls:
@@ -408,7 +417,8 @@ async def control_page(
             reason=reason_text(result.reason),
             coverage=coverage_text(result),
         )
-        return page(request, "control.html", user, context)
+        name = DRAWER_TEMPLATE if wants_drawer(request) else "control.html"
+        return page(request, name, user, context)
 
     return await guarded(request, handle)
 
