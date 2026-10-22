@@ -5,7 +5,7 @@
 {% block content %}
 <div class="rv-page-header">
 <div><h1>Clients</h1><p class="rv-page-purpose">Every client, the posture of its last report and the age of its newest evidence.</p></div>
-<div class="rv-page-actions"><a role="button" href="#add-client">{{ i.icon("plus", 16) }}<span>Add a client</span></a></div>
+<div class="rv-page-actions"><a role="button" href="#add-client">{{ i.icon("plus", "sm") }}<span>Add a client</span></a></div>
 </div>
 {% include "_errors.html" %}
 {% if total %}
@@ -16,7 +16,7 @@
 {% if query.density != "comfortable" %}<input type="hidden" name="density" value="{{ query.density }}">{% endif %}
 <div class="rv-toolbar-search">
 <label for="q" class="rv-sr-only">Search clients by name</label>
-{{ i.icon("search", 16) }}
+{{ i.icon("search", "sm") }}
 <input id="q" name="q" type="search" value="{{ query.q }}" placeholder="Search by name" maxlength="200" autocomplete="off">
 <button type="submit" class="rv-button-quiet rv-button-small">Search</button>
 </div>
@@ -92,7 +92,7 @@
 {% endif %}
 {% else %}
 <div class="rv-empty" id="clients-none">
-{{ i.icon("search", 36) }}
+{{ i.icon("search", "xl") }}
 <p class="rv-empty-title">No client matches</p>
 <p class="rv-empty-text">{% if query.q %}No client name contains "{{ query.q }}"{% if query.show != "all" %} under this filter{% endif %}.{% else %}No client is in this group right now.{% endif %}</p>
 <a role="button" class="rv-button-quiet" href="/clients">Show all clients</a>
@@ -100,7 +100,7 @@
 {% endif %}
 {% else %}
 <div class="rv-empty" id="clients-empty">
-{{ i.icon("clients", 36) }}
+{{ i.icon("clients", "xl") }}
 <p class="rv-empty-title">Add the first client</p>
 <p class="rv-empty-text">A client is a company you look after. Add it below, import an export from a tool you already use, and its checklist, score and reports follow from that evidence.</p>
 </div>

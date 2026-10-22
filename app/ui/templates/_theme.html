@@ -9,6 +9,6 @@
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <input type="hidden" name="next" value="{{ theme_next|default('/') }}">
 {% for value, word, glyph in (("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "System", "monitor")) -%}
-<button type="submit" name="theme" value="{{ value }}" aria-pressed="{{ 'true' if theme|default('system') == value else 'false' }}" aria-label="{{ word }}" title="{{ word }} theme">{{ i.icon(glyph, 16) }}<span class="rv-theme-text">{{ word }}</span></button>
+<button type="submit" name="theme" value="{{ value }}" aria-pressed="{{ 'true' if theme|default('system') == value else 'false' }}" aria-label="{{ word }}" title="{{ word }} theme">{{ i.icon(glyph, "sm") }}<span class="rv-theme-text">{{ word }}</span></button>
 {% endfor -%}
 </form>

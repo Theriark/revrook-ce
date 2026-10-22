@@ -1,0 +1,15 @@
+{#- The brand lockup (docs/design-system.md, The shell): the rook mark in its cream
+    tile beside, or above, the text wordmark. It is built from the approved mark
+    (`logo-mark-512x512.png`, drawn on nothing) and the wordmark as text, so the
+    lockup sits on the rail, on the sign-in panel and on the surface of either theme
+    without the surround that the composed logo files carry. Without the mark file
+    the wordmark alone stands for the brand, as before. -#}
+{% macro lockup(brand_files, layout="row") -%}
+<span class="rv-lockup rv-lockup-{{ layout }}">
+{%- if "logo-mark-512x512.png" in brand_files %}
+<span class="rv-mark"><img class="rv-mark-img" src="/static/brand/logo-mark-512x512.png"
+{%- if "logo-mark-1024x1024.png" in brand_files %} srcset="/static/brand/logo-mark-512x512.png 1x, /static/brand/logo-mark-1024x1024.png 2x"{% endif %} width="512" height="512" alt=""></span>
+{%- endif %}
+<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span><span class="rv-wordmark-rook">rook</span></span>
+</span>
+{%- endmacro %}
