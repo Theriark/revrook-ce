@@ -15,9 +15,9 @@ dense and readable: charcoal and white with one violet-blue accent, status alway
 an icon and its words, and nothing that moves unless the person did something.
 
 The one signature of revrook is the charcoal rail on the left: the rook's plumage,
-carrying the dark logo, the navigation and the signed-in user, with a 3 px violet-blue
+carrying the brand lockup, the navigation and the signed-in user, with a 3 px violet-blue
 mark on the current page. Signed-out pages show the same charcoal as a panel with the
-stacked logo next to the form.
+stacked lockup next to the form.
 
 ## Tokens
 
@@ -40,7 +40,8 @@ themes, `tests/test_theme.py` the recorded values and the switch.
 | `--rv-surface` | white | `#1e2028` | The page and every surface that carries status text |
 | `--rv-canvas` | `#f4f3ef` | `#272a34` | Table headers, code, the footer, the import area, toolbars and bands |
 | `--rv-line` | `#e4e2db` | `#3a3e4b` | Borders and dividers |
-| `--rv-line-strong` | stone | `#4d5261` | Dashed borders, the ring track of thin evidence, the not-checked segment |
+| `--rv-line-strong` | stone | `#4d5261` | Decoration only: dashed borders, the underline of a link, the track of the busy indicator; never the boundary of a control or a graphic that carries meaning (2.09 to 1 on the dark surface) |
+| `--rv-mark-tile` | `#fffef5` | same | The tile behind the rook mark of the brand lockup: the cream of the approved logo files |
 | `--rv-rail` | charcoal | `#15161c` | The rail and the sign-in panel: the darkest surface in both themes |
 | `--rv-charcoal-deep` | `#22242d` | `#0e0f13` | The current page in the rail |
 | `--rv-charcoal-soft` | `#3a3d4b` | `#2a2d38` | Hover in the rail, the avatar, the pressed theme button |
@@ -98,14 +99,21 @@ choice is kept on the user row (`app_user.theme`, revision 0006, `app/theme.py`)
 that it follows the person to every browser, and mirrored in the `rv_theme` cookie (a
 year, HttpOnly, SameSite=Lax, Secure under https) so that the sign-in page is drawn
 in the same theme. Signed out, the switch sets the cookie only and the way back is
-the sign-in page. The signed-out header carries both horizontal logos and the theme
-shows one of them; the rail always carries the logo for a dark surface.
+the sign-in page. With script, a post the server refuses (403 when the session ended,
+422 for a value it does not know) or that fails puts the theme back to the one in use,
+since nothing was remembered. The brand is the same lockup in both themes (The shell).
+
+Non-text contrast. The boundary of a control (the border of a field, the focus ring,
+the mark of a checkbox) and a graphic that carries meaning (the arc and the track of a
+posture ring, the sparkline, the segments of a bar) reach 3 to 1 against what they
+sit on in both themes; `tests/test_brand_contrast.py` lists those pairs. The strong
+line is decoration and is kept out of them.
 
 ## The shell
 
 `app/ui/templates/base.html` draws one of two shells. A page rendered with a `user` in
-its context gets the app shell: the charcoal rail (`header.rv-header`) with the dark
-logo, the "Community Edition" badge, the grouped navigation of `_nav.html` and the
+its context gets the app shell: the charcoal rail (`header.rv-header`) with the brand
+lockup, the "Community Edition" badge, the grouped navigation of `_nav.html` and the
 signed-in user with the sign-out button; then the page column with the stale-worker
 banner, `main.rv-content` and the footer with the disclaimer. From 1024 px the rail is
 a 248 px sidebar that stays in view, with the sign-out button on its own line under the
@@ -124,9 +132,24 @@ The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded a
 rewrite.
 
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
-panel with the stacked logo and three lines about the product on the left, the light
-logo, the badge, the form and the footer on the right. Below 768 px the panel becomes a
-short band above the form.
+panel with the stacked lockup and three lines about the product on the left, the
+lockup in a row, the badge, the form and the footer on the right. Below 768 px the
+panel becomes a short band above the form.
+
+The brand lockup (`_brand.html`, `{{ b.lockup(brand_files) }}` or
+`b.lockup(brand_files, "stack")`) is the rook mark in its cream tile beside, or above,
+the wordmark as text (rev and rook, bold Helvetica or Arial). The mark is the approved
+`logo-mark-512x512.png`, drawn on nothing, so the tile is the stylesheet's
+(`.rv-mark`, `--rv-mark-tile`) and the lockup sits on the rail, on the sign-in panel
+and on the surface of either theme; the composed logo files carry a charcoal surround
+that showed as a lighter box on the darker rail of the dark theme, so they are not
+drawn. The tile is 40 px in the bar, 48 px in the rail, 44 px in the signed-out header
+and 72 px, then 128 px from 768 px, on the panel; the wordmark is 28 px in the rail
+and on the panel (stone and gray, large text), 24 px in the bar, and the text and
+link colours on the surface. Below 600 px the bar shows the tile alone, and the
+signed-out header does so below 1024 px, where it shares its line with the badge and
+the theme switch beside the panel (which still carries the whole lockup). Without the
+mark file the wordmark alone is the brand, as before.
 
 A page marks where it is with `nav` in its context: `home`, `clients`,
 `profile-editor`, `integrity`, `settings`, `system` or `glossary`. The link of that
@@ -135,7 +158,18 @@ page carries `aria-current="page"` and the violet-blue mark.
 Icons come from the macro in `app/ui/templates/_icons.html`:
 `{% import "_icons.html" as i %}` then `{{ i.icon("clients") }}`. Every icon is an
 inline stroke drawing in the current colour, hidden from assistive technology, with
-the words next to it carrying the meaning. Add an icon there, never as an image file
+the words next to it carrying the meaning. An icon has one of four named sizes, so
+the icons of a kind are the same size on every page (`--rv-icon-sm` to
+`--rv-icon-xl`; `tests/test_icons.py`): `sm` (18 px) inside a button, a pill or a
+field (sign out, add, search, the theme switch); `md` (22 px, the default) beside a
+line of text (the navigation, list markers, the marks of the sources); `lg` (36 px)
+the mark of a card (the import area, a small empty state, the drawer); `xl` (48 px)
+the mark of an empty state that fills a page or a section. A number is never passed.
+The marks of the evidence sources (`i.source_mark(code)`, `source_icon` in
+`app/sources.py`) are the icon of the source's family (cloud, devices, backup,
+network, training, leavers, mail, globe, list) in a canvas tile beside the name, on
+the sources table of the evidence page and among the integrations of the home empty
+state; never a vendor logo. Add an icon there, never as an image file
 or a data: URL: the content security policy (`default-src 'self'`) blocks `data:`
 images, which is why the control icons of Pico (select arrow, date picker, checkbox
 mark) were blank. The stylesheet switches every Pico icon variable off and shows the
@@ -186,8 +220,8 @@ Alerts: `div.rv-alert` with `p.rv-alert-title` and text; `rv-alert-success`,
 `rv-alert-warning` and `rv-alert-danger` change the rail. Form errors use
 `_errors.html`.
 
-Empty state: `div.rv-empty` with an icon, `p.rv-empty-title`, `p.rv-empty-text` and
-the one action that fills it. It says what to do first, never only that nothing is
+Empty state: `div.rv-empty` with its `xl` icon (`lg` in `rv-empty-small`),
+`p.rv-empty-title`, `p.rv-empty-text` and the one action that fills it. It says what to do first, never only that nothing is
 there.
 
 Import area: a `label.rv-dropzone` around the file input. The input covers the whole

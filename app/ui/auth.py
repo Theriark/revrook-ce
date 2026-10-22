@@ -21,6 +21,7 @@ from app.auth import (
 from app.models import AppUser
 from app.ratelimit import ConcurrencyGate
 from app.security import SessionData, new_csrf_token
+from app.sources import source_icon
 from app.theme import COLOR_SCHEMES, theme_of
 from app.ui.brand import asset_version, available_brand_files
 from app.web import clock_of, current_session, session_factory, set_session_cookie
@@ -29,6 +30,8 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["brand_files"] = available_brand_files()
 # Read once at start-up: the files of the image do not change while it runs.
 templates.env.globals["asset_version"] = asset_version()
+# The mark of an evidence source (_icons.html, source_mark).
+templates.env.globals["source_icon"] = source_icon
 router = APIRouter()
 
 SETUP_TITLE = "Create the administrator"
@@ -43,6 +46,20 @@ def redirect(url: str) -> RedirectResponse:
     return RedirectResponse(url, status_code=303)
 
 
+def theme_next_of(request: Request) -> str:
+    """Where the theme switch comes back to when it posts without script.
+
+    The page the person is on, with its query (a filtered list, a search, a page
+    number), so the switch does not lose their place. A page drawn in answer to a
+    POST (a form that came back with its errors) has no address a GET would show
+    again, so the way back is the home page.
+    """
+    if request.method != "GET":
+        return "/"
+    query = request.url.query
+    return f"{request.url.path}?{query}" if query else request.url.path
+
+
 def render(
     request: Request,
     name: str,
@@ -53,7 +70,8 @@ def render(
     """A page with the CSRF token and the theme (app/theme.py) in its context.
 
     The theme is the user's when the context has one, else the one the cookie
-    remembers; `theme_next` is where the switch comes back to.
+    remembers; `theme_next` is where the switch comes back to without script
+    (theme_next_of).
     """
     user = context.get("user")
     theme = theme_of(request, user if isinstance(user, AppUser) else None)
@@ -65,7 +83,7 @@ def render(
             "csrf_token": session.csrf,
             "theme": theme,
             "color_scheme": COLOR_SCHEMES[theme],
-            "theme_next": request.url.path,
+            "theme_next": theme_next_of(request),
         },
         status_code=status_code,
     )
