@@ -585,7 +585,14 @@ def test_the_sign_in_and_first_run_pages_show_the_rook_panel() -> None:
         assert 'class="rv-logo"' in html and 'height="36"' in html
         assert 'class="rv-auth-lead"' in html
         assert 'class="rv-button-block"' in html
-        assert 'class="rv-nav"' not in html and "logo-horizontal-dark" not in html
+        assert 'class="rv-nav"' not in html
+        # The signed-out header carries the light logo and, for the dark theme,
+        # the dark one; the stylesheet shows one at a time (THE-808).
+        assert 'src="/static/brand/logo-horizontal-1200x400.png"' in html
+        assert (
+            '<img class="rv-logo rv-logo-on-dark" '
+            'src="/static/brand/logo-horizontal-dark-1200x400.png"'
+        ) in html
         bare = render(name, frozenset())
         assert structure_problems(bare) == [], name
         assert "/static/brand/" not in bare
