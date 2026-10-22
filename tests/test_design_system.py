@@ -66,6 +66,9 @@ NAV_LINKS = (
     ("/system", "System"),
     ("/glossary", "Glossary"),
 )
+# The sun, the moon and the monitor of the theme switch (_theme.html), drawn in
+# the rail and in the signed-out header (THE-808).
+THEME_ICONS = 3
 COMPONENTS = (
     ".rv-page-header",
     ".rv-button-quiet",
@@ -558,10 +561,12 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         assert [href for href, _ in links] == [href for href, _ in NAV_LINKS]
         assert [href for href, flag in links if flag] == [current]
         assert html.count('aria-current="page"') == 1
-        # The rail draws one icon per link and one on the sign-out button; the page
-        # below it may draw its own (the Home empty state does).
+        # The rail draws one icon per link, one on the sign-out button and the
+        # three of the theme switch; the page below it may draw its own (the Home
+        # empty state does).
         rail = html.split("</header>", 1)[0]
-        assert rail.count('<svg class="rv-icon"') == len(NAV_LINKS) + 1
+        icons = len(NAV_LINKS) + 1 + THEME_ICONS
+        assert rail.count('<svg class="rv-icon"') == icons
         assert '<span class="rv-user-name">admin</span>' in html
         assert 'action="/logout"' in html and ">Sign out</span>" in html
         assert 'class="rv-footer"' in html
@@ -575,7 +580,8 @@ def test_the_sign_in_and_first_run_pages_show_the_rook_panel() -> None:
         assert '<body class="rv-signed-out">' in html
         assert '<aside class="rv-auth-panel" aria-label="About revrook">' in html
         assert 'src="/static/brand/logo-stacked-dark-1000x1000.png"' in html
-        assert html.count('<svg class="rv-icon"') == 3
+        # The three points of the panel and the three icons of the theme switch.
+        assert html.count('<svg class="rv-icon"') == 3 + THEME_ICONS
         assert 'class="rv-logo"' in html and 'height="36"' in html
         assert 'class="rv-auth-lead"' in html
         assert 'class="rv-button-block"' in html

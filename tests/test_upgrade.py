@@ -219,6 +219,10 @@ async def test_a_database_with_data_upgrades_to_the_newest_revision(
         with pytest.raises(IntegrityError):
             async with engine.begin() as connection:
                 await connection.execute(text(REMINDER))
+        # The row goes again: from revision 0005 the table survives the downgrade
+        # of step 5, and the row step 5 inserts would otherwise be refused.
+        async with engine.begin() as connection:
+            await connection.execute(text("DELETE FROM reminder_sent"))
     finally:
         await engine.dispose()
 
