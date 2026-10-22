@@ -36,6 +36,10 @@ WORDMARK = (
     '<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span>'
     '<span class="rv-wordmark-rook">rook</span></span>'
 )
+# The brand link names the product itself: the stylesheet hides the wordmark on
+# narrow screens and the mark has an empty alt, so without this label the link
+# would have no accessible name there (THE-838 finding on THE-824).
+BRAND_LINK = '<a class="rv-brand" href="/" aria-label="revrook">'
 # The digest of the stylesheets and scripts of this checkout (the `v` query).
 VERSION = asset_version()
 DIGEST = re.compile(r"[0-9a-f]{12}")
@@ -121,6 +125,14 @@ def test_without_the_brand_files_the_text_wordmark_is_shown() -> None:
     html = render_login(frozenset())
     assert "/static/brand/" not in html
     assert WORDMARK in html
+
+
+def test_the_brand_link_keeps_its_name_when_the_wordmark_is_hidden() -> None:
+    # Signed out, the header hides the wordmark below 1024px; signed in, the rail
+    # hides it below 600px. The link is still read as "revrook" in both shells.
+    html = render_login(frozenset(BRAND_FILES))
+    assert html.count(BRAND_LINK) == 1
+    assert template_source("base.html").count(BRAND_LINK) == 2
 
 
 def test_the_layout_links_the_stylesheets_script_and_footer() -> None:
@@ -236,4 +248,5 @@ async def test_the_login_and_home_pages_use_the_layout(
     assert home.status_code == 200
     assert title_of(home.text) == "Home - revrook"
     assert 'aria-current="page"' in home.text
+    assert home.text.count(BRAND_LINK) == 1
     assert "Signed in as admin" in home.text
