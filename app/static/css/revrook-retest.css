@@ -1,8 +1,9 @@
 /*
  * revrook follow-up stylesheet (docs/design-system.md, The shell). Loaded after
  * revrook.css, so a rule here wins over a rule of the same specificity there. It
- * holds the corrections of the web interface retest follow-up (THE-520); fold
- * them into revrook.css at its next rewrite. The same tokens as revrook.css, no
+ * holds the corrections of the web interface retest follow-up (THE-520) and
+ * the control drawer of phase 9 (THE-735); fold them into revrook.css at its
+ * next rewrite. The same tokens as revrook.css, no
  * colour literal, no image, nothing external.
  */
 
@@ -378,4 +379,153 @@ main .rv-exceptions-scroll td {
    heading of its card in view above it */
 [data-announce] {
   scroll-margin-top: 72px;
+}
+
+/* The control drawer (_drawer.html): the control without its shell, as a sheet
+   at the right edge of the page over a charcoal veil, opened from a control link
+   of the checklist, the home page or the client overview. A native dialog:
+   modal, so Escape closes it and Tab stays inside; the page behind is inert. It
+   slides in over the motion token and comes at once under reduced motion. From
+   768px it is 38rem wide and the page shows beside it; on a phone it is the whole
+   screen. The bar is a canvas band with the word Control and the Close button;
+   the scrolling part holds the skeleton while the control loads (aria-busy on
+   the dialog), then the control head and body in one column: the grid does not
+   split and the notes card does not stick, whatever the width */
+dialog.rv-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  box-sizing: border-box;
+  width: 38rem;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid var(--rv-line);
+  border-radius: 0;
+  box-shadow: var(--rv-shadow-2);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+dialog.rv-drawer[open] {
+  animation: rv-drawer-in var(--rv-motion);
+}
+
+@keyframes rv-drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+dialog.rv-drawer::backdrop {
+  background-color: rgba(45, 47, 58, 0.55);
+}
+
+.rv-drawer-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.rv-drawer-bar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--rv-line);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-drawer-eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-canvas);
+}
+
+.rv-drawer-close-form {
+  margin: 0;
+}
+
+.rv-drawer-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 24px 24px;
+  overflow-y: auto;
+}
+
+.rv-drawer-loading {
+  display: none;
+}
+
+dialog.rv-drawer[aria-busy="true"] .rv-drawer-loading {
+  display: grid;
+  gap: 12px;
+}
+
+dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
+  display: none;
+}
+
+.rv-skeleton-title {
+  width: 70%;
+  height: 28px;
+}
+
+.rv-skeleton-short {
+  width: 40%;
+}
+
+.rv-skeleton-band {
+  height: 72px;
+  border-radius: 12px;
+}
+
+.rv-drawer-head {
+  margin-top: 0;
+}
+
+.rv-drawer-client {
+  margin-right: 12px;
+  font-weight: 500;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+.rv-drawer .rv-control-title {
+  font-size: 20px;
+}
+
+.rv-drawer .rv-control-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rv-drawer .rv-notes-card {
+  position: static;
+}
+
+@media (max-width: 767px) {
+  dialog.rv-drawer {
+    width: 100%;
+    border-left: 0;
+  }
+
+  .rv-drawer-bar,
+  .rv-drawer-scroll {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
 }
