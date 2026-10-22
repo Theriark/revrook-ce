@@ -48,11 +48,23 @@ the System page. Their first capture showed a second synthetic test client whose
 carried an internal ticket number; that client was deleted through **System**,
 **Delete a client** (typing its name, the only route the product offers), the only
 state change made for the capture, and the pages were captured again. The manifest
-records what each picture replaced. Two pictures keep a test label from an earlier
-test because the product offers no route to change it without deleting the sample
-client: the closed exception in `exceptions-1440.png` (its owner and reason) and the
-saved profile name in the **Saved profile** list of `profile-editor-preview-1440.png`.
-Both labels are synthetic and the manifest lists them under `knownResidue`.
+records what each picture replaced.
+
+Three pictures were captured again on 2026-10-22 between 08:35 and 08:38
+(Europe/Lisbon), while the deployed Development candidate of that day was running:
+`evidence-integrity-1440.png`, `exceptions-1440.png` and
+`profile-editor-preview-1440.png`. Their first capture still showed test labels with
+internal ticket numbers that the product offers no route to edit on the sample client
+(the chain of a since-deleted test client, the owner and reason of a closed exception,
+and a saved profile name). Evidence integrity was captured on the shared data after
+**Check all chains**, where every deleted client is named by its number only. For the
+other two a throwaway client with a neutral invented name was added, one open exception
+with a neutral owner and reason was recorded on it, a two-row synthetic leavers file was
+read in the profile editor and its mapping saved under a neutral profile name, and the
+throwaway client was then deleted through **System**, **Delete a client** (typing its
+name); the sample client was not changed. For these three the manifest carries the
+commit and digest of the deployed candidate, read from the deployment receipt before
+and after the capture.
 
 Viewports: 1440 px for every page; 390 px for the four pages whose layout changes most
 on a phone (the clients list, Home, the checklist and the sign-in page); 768 px for the
