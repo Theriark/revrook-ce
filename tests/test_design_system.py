@@ -161,6 +161,9 @@ COMPONENTS = (
     ".rv-tabs-strip",
     ".rv-chart-legend",
     ".rv-import-reach",
+    # The theme switch and the tools of the signed-out header (THE-808)
+    ".rv-theme",
+    ".rv-header-tools",
 )
 # A placeholder for the CSRF field of a rendered template; not a real token.
 PLACEHOLDER_TOKEN = "x" * 32
@@ -200,7 +203,7 @@ def test_native_controls_replace_the_blocked_icons() -> None:
     assert select is not None and "appearance: auto" in select.group(1)
     checkbox = re.search(r'\[type="checkbox"\],\n\[type="radio"\] \{([^}]*)\}', CSS)
     assert checkbox is not None and "appearance: auto" in checkbox.group(1)
-    assert "accent-color: var(--rv-accent)" in checkbox.group(1)
+    assert "accent-color: var(--rv-primary)" in checkbox.group(1)
     picker = re.search(r"::-webkit-calendar-picker-indicator \{([^}]*)\}", CSS)
     assert picker is not None and "opacity: 1" in picker.group(1)
 
@@ -292,7 +295,7 @@ def test_the_clients_table_becomes_cards_below_the_sidebar_not_a_scroll_box() ->
     before = re.search(r"td\[data-label\]::before \{([^}]*)\}", block)
     assert before is not None
     assert "content: attr(data-label);" in before.group(1)
-    assert "background-color: var(--rv-white);" in before.group(1)
+    assert "background-color: var(--rv-surface);" in before.group(1)
     # The caption shrank to one word a line at 390px while it was still a
     # table caption inside the block the table had become
     assert re.search(r"\.rv-clients caption \{[^}]*display: block;", block)
@@ -318,7 +321,7 @@ def test_the_checklist_becomes_cards_on_a_phone_and_marks_a_changed_row() -> Non
     changed = re.search(
         r'\n\.rv-checklist tr\[data-changed="true"\] > th \{([^}]*)\}', CSS
     )
-    assert changed is not None and "var(--rv-accent)" in changed.group(1)
+    assert changed is not None and "var(--rv-primary)" in changed.group(1)
 
 
 def test_the_verdict_band_and_the_suggestion_keep_every_text_on_the_canvas() -> None:
@@ -367,7 +370,7 @@ def test_the_evidence_tables_become_cards_on_a_phone() -> None:
     assert re.search(r"\.rv-table-cards thead \{[^}]*clip: rect\(0 0 0 0\);", phone)
     before = re.search(r"td\[data-label\]::before \{([^}]*)\}", phone)
     assert before is not None and "content: attr(data-label);" in before.group(1)
-    assert "background-color: var(--rv-white);" in before.group(1)
+    assert "background-color: var(--rv-surface);" in before.group(1)
     assert re.search(r"\.rv-table-cards caption \{[^}]*display: block;", phone)
     assert re.search(r"main \.rv-table-cards td:empty \{[^}]*display: none;", phone)
     cells = re.search(r"main \.rv-table-cards tbody td \{([^}]*)\}", phone)
@@ -421,12 +424,13 @@ def test_the_report_sheet_is_white_paper_on_the_canvas_band() -> None:
     band = re.search(r"\n\.rv-sheet-band \{([^}]*)\}", CSS)
     assert band is not None and "background-color: var(--rv-canvas);" in band.group(1)
     sheet = re.search(r"\n\.rv-sheet \{([^}]*)\}", CSS)
-    assert sheet is not None and "background-color: var(--rv-white);" in sheet.group(1)
+    assert sheet is not None
+    assert "background-color: var(--rv-surface);" in sheet.group(1)
     assert "box-shadow: var(--rv-shadow-2);" in sheet.group(1)
     title = re.search(r"\n\.rv-sheet-title \{([^}]*)\}", CSS)
     assert title is not None and "font-size: 28px;" in title.group(1)
     rule = re.search(r"\n\.rv-sheet-rule \{([^}]*)\}", CSS)
-    assert rule is not None and "background-color: var(--rv-accent);" in rule.group(1)
+    assert rule is not None and "background-color: var(--rv-primary);" in rule.group(1)
     report = (ROOT / "app/ui/templates/report.html").read_text(encoding="utf-8")
     sheet_tag = '<article class="rv-sheet" id="sheet" aria-labelledby="sheet-title">'
     assert sheet_tag in report
@@ -493,7 +497,7 @@ def test_the_administration_pages_use_header_cards_and_confirmation() -> None:
     assert '<p class="rv-problem-code">' in problem and "{{ status }}" in problem
     assert problem.count('role="button"') == 2
     code = re.search(r"\n\.rv-problem-code \{([^}]*)\}", CSS)
-    assert code is not None and "color: var(--rv-accent);" in code.group(1)
+    assert code is not None and "color: var(--rv-link);" in code.group(1)
     assert "font-size: 28px;" in code.group(1)
 
 
