@@ -1,0 +1,62 @@
+{#- The score chart (app/ui/dashboard.py, trend_chart): one line per client from the
+    stored reports, drawn on the server and made interactive by charts.js. Every
+    stored report is a mark, a real link to that report, with the exact values in
+    its title and in data-tip (the tooltip); the marks of a chart are one tab stop
+    with roving focus (data-roving), so the arrow keys walk the trail of reports
+    and Enter opens one. The drawing carries role="group", not img, because it
+    holds links. Used by _trend_chart.html (Home) and _history_chart.html (one
+    client). `title_id` names the heading of the card; `prefix` the ids of the
+    descriptions. -#}
+{% macro score_chart(chart, title_id, prefix, words) -%}
+<svg class="rv-chart rv-chart-{{ chart.kind }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="group" aria-labelledby="{{ title_id }} {{ prefix }}-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}" data-roving>
+<desc id="{{ prefix }}-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}">{{ words }} Each point is a stored report: the arrow keys move between the points and Enter opens the report. The numbers are in the table that follows.</desc>
+<g class="rv-chart-grid">
+{% for y, label in chart.y_ticks %}
+<line x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ y }}" y2="{{ y }}"/>
+<text x="{{ chart.left - 8 }}" y="{{ y }}" text-anchor="end" dominant-baseline="middle">{{ label }}</text>
+{% endfor %}
+</g>
+<g class="rv-chart-axis">
+{% for x, label, anchor in chart.x_ticks %}
+<text x="{{ x }}" y="{{ chart.bottom + 18 }}" text-anchor="{{ anchor }}">{{ label }}</text>
+{% endfor %}
+</g>
+{% for line in chart.lines %}
+<g class="rv-chart-line" data-series="{{ line.client_id }}">
+{% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
+{% for mark in line.marks %}<a class="rv-mark" href="/{{ mark.path }}" data-tip="{{ mark.tip }}"><title>{{ mark.tip }}</title><circle cx="{{ mark.x }}" cy="{{ mark.y }}" r="3.5"/></a>{% endfor %}
+{% if chart.labelled %}<text x="{{ chart.right + 10 }}" y="{{ line.label_y }}" dominant-baseline="middle">{{ line.short_name }}</text>{% endif %}
+</g>
+{% endfor %}
+</svg>
+{%- endmacro %}
+
+{#- The numbers behind a score chart: every report of every line, each a link. -#}
+{% macro score_table(chart, caption) -%}
+<details class="rv-chart-data">
+<summary>Show the numbers</summary>
+<div class="rv-table-scroll">
+<table>
+<caption>{{ caption }}</caption>
+<thead><tr><th scope="col">Client</th><th scope="col">Report date</th><th scope="col">Score</th><th scope="col">Band</th></tr></thead>
+<tbody>
+{% for line in chart.lines %}{% for mark in line.marks %}
+<tr data-series="{{ line.client_id }}"><th scope="row">{{ line.name }}</th><td><a href="/{{ mark.path }}">{{ mark.day }}</a></td><td class="rv-numeric">{{ mark.score }}</td><td>{{ mark.band }}</td></tr>
+{% endfor %}{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{%- endmacro %}
+
+{#- The range of a chart: real submit buttons of a GET form, so the page draws the
+    chosen range without script; with script charts.js asks data-fragment for the
+    card body and swaps it into data-target in place. The pressed one is the range
+    drawn. `action` is the page that holds the chart without its leading slash
+    (the template writes the slash, so the address is visibly same-origin). -#}
+{% macro range_form(action, fragment, target, name, choices, chosen, label) -%}
+<form class="rv-range" method="get" action="/{{ action }}" data-fragment="{{ fragment }}" data-target="{{ target }}" aria-label="{{ label }}">
+<span class="rv-range-label">Show</span>
+{% for value, words in choices %}<button type="submit" class="rv-range-choice" name="{{ name }}" value="{{ value }}" aria-pressed="{{ 'true' if value == chosen else 'false' }}">{{ words }}</button>{% endfor %}
+</form>
+{%- endmacro %}

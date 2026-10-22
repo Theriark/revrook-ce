@@ -30,6 +30,7 @@ from app.system import worker_banner
 from app.ui import auth as ui_auth
 from app.ui import clients as ui_clients
 from app.ui import evidence as ui_evidence
+from app.ui import fragments as ui_fragments
 from app.ui import home as ui_home
 from app.ui import profiles as ui_profiles
 from app.ui import reports as ui_reports
@@ -205,6 +206,7 @@ def create_app(
     app.include_router(ui_home.router)
     app.include_router(ui_clients.router)
     app.include_router(ui_evidence.router)
+    app.include_router(ui_fragments.router)
     app.include_router(ui_profiles.router)
     app.include_router(ui_reports.router)
     app.include_router(ui_site.router)

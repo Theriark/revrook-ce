@@ -14,6 +14,7 @@
 {% if query.sort != "name" %}<input type="hidden" name="sort" value="{{ query.sort }}">{% endif %}
 {% if query.order != "asc" %}<input type="hidden" name="order" value="{{ query.order }}">{% endif %}
 {% if query.density != "comfortable" %}<input type="hidden" name="density" value="{{ query.density }}">{% endif %}
+{% if query.band %}<input type="hidden" name="band" value="{{ query.band }}">{% endif %}
 <div class="rv-toolbar-search">
 <label for="q" class="rv-sr-only">Search clients by name</label>
 {{ i.icon("search", "sm") }}
@@ -30,9 +31,25 @@
 <li><a class="rv-chip" href="/clients{{ query.params(density='compact') }}"{% if query.density == "compact" %} aria-current="true"{% endif %}>Compact</a></li>
 </ul>
 </form>
+<section class="rv-card rv-bands-card" id="bands" aria-labelledby="bands-title">
+<h2 id="bands-title" class="rv-card-title">Clients by band</h2>
+<p class="rv-card-subtitle">Where every client stood at its last report, under the search and the filter above. A band shows only those clients.</p>
+<ul class="rv-bands" aria-label="Bands of the last reports" data-roving>
+{% for item in bands %}
+<li class="rv-band">
+<a class="rv-band-link" href="/clients{{ query.params(band=item.key, page=1) }}" data-tip="{{ item.tip }}"{% if query.band == item.key %} aria-current="true"{% endif %}>
+<span class="rv-band-name">{{ item.name }}</span>
+<svg class="rv-bar rv-band-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="rv-band-track" x="0" y="0" width="100" height="10"/>{% if item.count %}<rect class="rv-band-fill" x="0" y="0" width="{{ item.width }}" height="10"/>{% endif %}</svg>
+<span class="rv-band-count">{{ item.count }}</span>
+</a>
+</li>
+{% endfor %}
+</ul>
+{% if query.band %}<p class="rv-bands-note"><a href="/clients{{ query.params(band='', page=1) }}">Show every band</a></p>{% endif %}
+</section>
 {% if rows %}
 <table id="clients" class="rv-clients{% if query.density == "compact" %} rv-table-compact{% endif %}">
-<caption>{{ page.start }} to {{ page.end }} of {{ page.total }} client{% if page.total != 1 %}s{% endif %}{% if query.q %} matching "{{ query.q }}"{% endif %}, by {{ query.sort_words }}</caption>
+<caption>{{ page.start }} to {{ page.end }} of {{ page.total }} client{% if page.total != 1 %}s{% endif %}{% if query.q %} matching "{{ query.q }}"{% endif %}{% for item in bands %}{% if query.band == item.key %}, {{ item.name|lower }}{% endif %}{% endfor %}, by {{ query.sort_words }}</caption>
 <thead>
 <tr>
 <th scope="col"{% if query.aria_sort('name') %} aria-sort="{{ query.aria_sort('name') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='name', order=query.next_order('name'), page=1) }}">Client{% if query.sort == "name" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>

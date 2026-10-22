@@ -8,7 +8,7 @@ check, an immutable copy under its SHA-256 and one row of history. A download re
 that copy back and checks it against its hash, for the client named in the address.
 """
 
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, Request, Response
@@ -20,7 +20,7 @@ from app.audit import add_audit_event
 from app.drafts import load_draft, save_details
 from app.evidence.errors import ClientNotFoundError
 from app.evidence.locking import lock_client
-from app.models import AppUser, Client, EvidenceItem
+from app.models import AppUser, Client, EvidenceItem, Snapshot
 from app.posture import load_live, open_exceptions, view_from
 from app.preferences import get_msp_name
 from app.reports.completeness import completeness_problems
@@ -38,6 +38,7 @@ from app.snapshots import (
 )
 from app.sources import source_name
 from app.ui.auth import redirect
+from app.ui.charts import HISTORY_RANGES, history_days, read_range
 from app.ui.common import (
     FormError,
     RowId,
@@ -46,6 +47,13 @@ from app.ui.common import (
     library_of,
     page,
     read_period,
+)
+from app.ui.dashboard import (
+    MAX_SNAPSHOTS,
+    NARROW_CHART,
+    ReportPoint,
+    report_points,
+    trend_chart,
 )
 from app.web import clock_of, files_of, session_factory
 
@@ -59,6 +67,40 @@ NO_SUCH_REPORT = "There is no such report."
 # script); with script the form shows "Saved at" in place.
 DETAILS_SAVED = "The details were saved."
 KIND_LIST = [(QBR, REPORT_NAMES[QBR]), (INSURANCE, REPORT_NAMES[INSURANCE])]
+
+
+async def client_points(session: AsyncSession, client_id: int) -> list[ReportPoint]:
+    """Every stored report of the client as a point, oldest first (the newest
+    MAX_SNAPSHOTS of them), each with the id of its row so a mark can open it."""
+    found = await session.execute(
+        select(Snapshot.client_id, Snapshot.inputs, Snapshot.id)
+        .where(Snapshot.client_id == client_id)
+        .order_by(Snapshot.as_of.desc(), Snapshot.id.desc())
+        .limit(MAX_SNAPSHOTS)
+    )
+    return report_points(
+        [(owner, document, snapshot_id) for owner, document, snapshot_id in found.all()]
+    )
+
+
+async def history_of(
+    session: AsyncSession, client_id: int, name: str, now: datetime, span: str
+) -> dict[str, Any]:
+    """The score history chart of one client over `span` (a key of HISTORY_RANGES):
+    one line through every stored report of the range, drawn wide and narrow like
+    the Home trend, with a mark per report that opens it."""
+    points = await client_points(session, client_id)
+    days = history_days(span, points, now)
+    names = {client_id: name}
+    return {
+        "history": trend_chart(points, names, now, days=days, max_lines=1),
+        "history_narrow": trend_chart(
+            points, names, now, days=days, max_lines=1, size=NARROW_CHART
+        ),
+        "span": span,
+        "spans": HISTORY_RANGES,
+        "reports_total": len(points),
+    }
 
 
 def check_kind(kind: str) -> str:
@@ -128,10 +170,13 @@ async def builder_page(
     period_start: str = "",
     period_end: str = "",
     saved: str = "",
+    span: str = "",
 ) -> Response:
     async def handle(user: AppUser) -> Response:
-        today = clock_of(request)().date()
+        now = clock_of(request)()
+        today = now.date()
         start, end = read_period(period_start.strip(), period_end.strip(), today)
+        chosen = read_range(span)
         async with session_factory(request)() as session:
             client = await session.get(Client, client_id)
             if client is None:
@@ -139,6 +184,7 @@ async def builder_page(
             draft = await load_draft(session, client_id)
             lines = await list_snapshots(session, client_id)
             msp_name = await get_msp_name(session)
+            history = await history_of(session, client_id, client.name, now, chosen)
         topics: list[tuple[Topic, str, bool]] = []
         for topic in TOPICS:
             asked = draft.asked is None or topic.key in draft.asked
@@ -158,6 +204,7 @@ async def builder_page(
             "snapshots": lines,
             "saved_at": draft.saved_at,
             "message": DETAILS_SAVED if saved == "1" else None,
+            **history,
         }
         return page(request, "reports.html", user, context)
 

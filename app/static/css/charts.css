@@ -1,0 +1,407 @@
+/*
+ * revrook chart stylesheet (docs/design-system.md, Charts), loaded after
+ * revrook.css and revrook-retest.css. Every chart is still the server's SVG
+ * and its table; these rules draw what app/static/js/charts.js adds on top (the
+ * tooltip, the pressed range, the series toggles, the focus of a mark) and the
+ * two charts that are new (the age of each export, the clients by band). Role
+ * tokens of revrook.css only, so both themes are served by the same rules, and
+ * every rule that sets a text colour also sets its background, as there
+ * (tests/test_charts.py checks each pair in both themes). A status is never
+ * told by colour alone: the words sit in the tooltip, the title of the mark and
+ * the table. Motion is 120 to 180ms on a person's action only, and the
+ * prefers-reduced-motion rule of revrook.css turns it off.
+ */
+/* The tooltip: one element the script moves beside the mark under the pointer
+   or the keyboard; rail-dark in both themes, white words, the first line bold */
+.rv-tip {
+  position: absolute;
+  z-index: 30;
+  max-width: 18rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: var(--rv-shadow-2);
+  font-size: 13px;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  color: var(--rv-white);
+  background-color: var(--rv-rail);
+  transition: opacity 120ms ease-out;
+}
+
+.rv-tip.is-shown {
+  opacity: 1;
+}
+
+.rv-tip-line {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-white);
+  background-color: var(--rv-rail);
+}
+
+.rv-tip-line:first-child {
+  font-weight: 600;
+}
+
+/* The range of a chart: a row of real submit buttons drawn as chips; the
+   pressed one is the range drawn. Pico gives a button the width of its form
+   and the accent face: both are taken back here */
+.rv-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.rv-range-label {
+  margin-right: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+main .rv-range button.rv-range-choice {
+  width: auto;
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--rv-gray);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  transition: background-color var(--rv-motion), color var(--rv-motion),
+    border-color var(--rv-motion);
+}
+
+main .rv-range button.rv-range-choice:hover,
+main .rv-range button.rv-range-choice[aria-pressed="true"] {
+  border-color: var(--rv-ink);
+  color: var(--rv-white);
+  background-color: var(--rv-ink);
+}
+
+/* While the script fetches another range the card body says so (aria-busy) and
+   the drawing fades; the body that arrives rises into place once, 180ms, and
+   not at all under prefers-reduced-motion (the rule at the top of the file) */
+[aria-busy="true"] > .rv-chart,
+[aria-busy="true"] > .rv-chart-legend {
+  opacity: 0.5;
+  transition: opacity 120ms ease-out;
+}
+
+.rv-chart-enter {
+  animation: rv-chart-in 180ms ease-out;
+}
+
+@keyframes rv-chart-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A mark on a score chart is a link: the circle grows under the pointer and
+   under keyboard focus, where it also takes the focus ring as a stroke, since
+   an outline does not follow an element inside an SVG */
+.rv-chart a.rv-mark {
+  cursor: pointer;
+  outline: none;
+}
+
+.rv-chart a.rv-mark circle {
+  fill: var(--rv-text);
+  stroke: var(--rv-surface);
+  stroke-width: 1.5;
+  transition: r 120ms ease-out, stroke-width 120ms ease-out;
+}
+
+.rv-chart a.rv-mark:hover circle,
+.rv-chart a.rv-mark:focus circle {
+  r: 5.5;
+}
+
+.rv-chart a.rv-mark:focus-visible circle {
+  stroke: var(--rv-focus);
+  stroke-width: 3;
+}
+
+/* A line the person switched off in the legend stays off in both drawings and
+   in the table */
+.rv-chart-line[hidden],
+.rv-chart-data tr[hidden] {
+  display: none;
+}
+
+/* With the script, the legend shows at every width (the wide drawing names its
+   lines at their ends; the legend is then the row of series toggles) and each
+   client is a real button: pressed, the line is drawn; not pressed, it is off */
+html[data-charts="ready"] .rv-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+main .rv-chart-legend button.rv-series {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  transition: background-color var(--rv-motion), border-color var(--rv-motion);
+}
+
+main .rv-chart-legend button.rv-series:hover {
+  border-color: var(--rv-gray);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+main .rv-chart-legend button.rv-series[aria-pressed="false"] {
+  text-decoration: line-through;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key line {
+  stroke: var(--rv-text-secondary);
+}
+
+/* A segment of a stacked bar is a link too: the segments beside the one under
+   the pointer or the keyboard step back, and the focused one takes the ring as
+   a stroke that keeps its width whatever the stretch of the bar */
+.rv-bar a.rv-seg-link,
+.rv-mix-bar a.rv-seg-link {
+  cursor: pointer;
+  outline: none;
+}
+
+.rv-bar a.rv-seg-link rect,
+.rv-mix-bar a.rv-seg-link rect {
+  transition: opacity 120ms ease-out;
+}
+
+.rv-bar:hover a.rv-seg-link:not(:hover) rect,
+.rv-bar:focus-within a.rv-seg-link:not(:focus) rect,
+.rv-mix-bar:hover a.rv-seg-link:not(:hover) rect,
+.rv-mix-bar:focus-within a.rv-seg-link:not(:focus) rect {
+  opacity: 0.55;
+}
+
+.rv-bar a.rv-seg-link:focus-visible rect,
+.rv-mix-bar a.rv-seg-link:focus-visible rect {
+  stroke: var(--rv-focus);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* A row of the numbers a segment leads to, and a row of the sources table an
+   age bar leads to, is focused by the script when it arrives */
+.rv-chart-data tr:focus,
+.rv-sources tr:focus {
+  outline: 3px solid var(--rv-focus);
+  outline-offset: -3px;
+}
+
+/* The sparkline of a stat card is one tab stop: the marks on it show the week
+   and the value under the pointer, and the arrow keys walk them; the active
+   mark is drawn, the others are only there to be pointed at */
+.rv-spark[tabindex] {
+  cursor: default;
+}
+
+.rv-spark-mark {
+  fill: transparent;
+  stroke: none;
+}
+
+.rv-spark-mark.is-active {
+  fill: var(--rv-primary);
+}
+
+/* How old is each export: one bar per source on a shared scale, the state
+   colour of the export as its fill (the words sit beside it), the stale date as
+   a mark in the secondary text colour, which reaches 3 to 1 in both themes */
+.rv-ages {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-age {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 12px;
+  margin: 0;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-age:last-child {
+  border-bottom: 0;
+}
+
+.rv-age-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rv-age-words {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  text-align: right;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-ages .rv-age-bar {
+  grid-column: 1 / -1;
+  display: block;
+  width: 100%;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.rv-age-track {
+  fill: var(--rv-line);
+}
+
+.rv-age-mark {
+  fill: var(--rv-text-secondary);
+}
+
+/* Clients by band: one bar per band of the scoring model, all in the accent,
+   the count beside each; a band is a link that narrows the list, the chosen
+   one carries aria-current */
+.rv-bands-card {
+  margin-bottom: 24px;
+}
+
+.rv-bands {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-band {
+  margin: 0;
+  padding: 0;
+}
+
+main a.rv-band-link {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) 3ch;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  transition: background-color var(--rv-motion);
+}
+
+main a.rv-band-link:hover,
+main a.rv-band-link[aria-current="true"] {
+  text-decoration: none;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-band-name {
+  font-weight: 600;
+}
+
+main a.rv-band-link[aria-current="true"] .rv-band-name {
+  text-decoration: underline;
+  text-decoration-color: var(--rv-primary);
+  text-underline-offset: 3px;
+}
+
+.rv-bands .rv-band-bar {
+  display: block;
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.rv-band-track {
+  fill: var(--rv-line);
+}
+
+.rv-band-fill {
+  fill: var(--rv-primary);
+}
+
+.rv-band-count {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rv-bands-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+@media (max-width: 599px) {
+  main a.rv-band-link {
+    grid-template-columns: minmax(0, 1fr) 3ch;
+  }
+
+  .rv-bands .rv-band-bar {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The chip that names a narrowing of the checklist (a domain, a status, both)
+   and takes it away: the cross says what the click does */
+main a.rv-chip-narrowed {
+  gap: 8px;
+}
+
+.rv-chip-remove {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* The score history card of the report builder sits between the steps and the
+   list of reports, as wide as the page */
+.rv-history {
+  margin: 24px 0 32px;
+}
+
+.rv-history .rv-empty-small {
+  padding: 24px 16px;
+}

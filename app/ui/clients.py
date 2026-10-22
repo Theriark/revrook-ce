@@ -7,7 +7,7 @@ report is made (app/ui/reports.py). The list reads the newest stored snapshot of
 client for its posture (app/ui/clientlist.py) and runs no check.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Any
 
@@ -35,11 +35,13 @@ from app.models import (
 )
 from app.posture import LiveClient, load_live, view_of
 from app.reports.completeness import MAX_SHORT, MAX_TEXT
+from app.reports.status import COUNTED_LABELS, StatusLabel
 from app.reports.view import ControlRow, Finding, ReportContext, ReportView, iso_date
 from app.snapshots import earlier_bytes
 from app.sources import source_name
 from app.textcheck import control_character, normalise_breaks
 from app.ui.auth import redirect
+from app.ui.charts import age_bars, band_counts
 from app.ui.clientlist import (
     FILTERS,
     NO_EVIDENCE,
@@ -47,6 +49,7 @@ from app.ui.clientlist import (
     ListQuery,
     filter_counts,
     last_reports,
+    matches,
     paginate,
     read_query,
     select_rows,
@@ -88,6 +91,7 @@ from app.web import cipher_of, clock_of, session_factory
 
 router = APIRouter()
 SHOW_CHOICES = ("all", "flagged")
+STATUS_CHOICES = tuple(label.key for label in COUNTED_LABELS)
 # The control drawer (templates/_drawer.html): a control asked for by htmx with this
 # target is answered as the fragment the drawer holds, not as the whole page.
 DRAWER_TARGET = "control-drawer-body"
@@ -163,6 +167,9 @@ async def clients_response(
     cards = await client_cards(request, clock_of(request)())
     shown = paginate(select_rows(cards, query), query.page)
     counts = filter_counts(cards, query)
+    # The bands follow the search and the filter, not the band chosen, so the
+    # chart still shows the other bands to move to.
+    unbanded = replace(query, band="")
     context: dict[str, Any] = {
         "title": "Clients",
         "nav": "clients",
@@ -170,6 +177,7 @@ async def clients_response(
         "page": shown,
         "query": query,
         "filters": [(key, label, counts[key]) for key, label in FILTERS],
+        "bands": band_counts([card for card in cards if matches(card, unbanded)]),
         "total": len(cards),
         "no_evidence": NO_EVIDENCE,
         "errors": errors,
@@ -187,9 +195,10 @@ async def clients_page(
     order: str = "asc",
     density: str = "comfortable",
     page: str = "1",
+    band: str = "",
 ) -> Response:
     async def handle(user: AppUser) -> Response:
-        query = read_query(q, show, sort, order, density, page)
+        query = read_query(q, show, sort, order, density, page, band)
         return await clients_response(request, user, [], "", query=query)
 
     return await guarded(request, handle)
@@ -335,11 +344,39 @@ async def overview(
     return await guarded(request, handle)
 
 
+def domain_name_of(request: Request, code: str) -> str:
+    """The name of a domain of the library; FormError (422) for a code it has not."""
+    for domain in library_of(request).domains:
+        if domain.code == code:
+            return domain.name
+    codes = ", ".join(domain.code for domain in library_of(request).domains)
+    raise FormError(f"Domain must be one of {codes}.")
+
+
+def status_of_key(key: str) -> StatusLabel:
+    """The counted status with this key; FormError (422) when there is none."""
+    for label in COUNTED_LABELS:
+        if label.key == key:
+            return label
+    raise FormError(f"Status must be one of {', '.join(STATUS_CHOICES)}.")
+
+
 @router.get("/clients/{client_id}/checklist")
-async def checklist(request: Request, client_id: RowId, show: str = "all") -> Response:
+async def checklist(
+    request: Request,
+    client_id: RowId,
+    show: str = "all",
+    domain: str = "",
+    status: str = "",
+) -> Response:
+    """The checklist, narrowed by `show` (all or flagged) and, from a segment of a
+    chart, by `domain` (a code of the library) and `status` (a counted label)."""
+
     async def handle(user: AppUser) -> Response:
         if show not in SHOW_CHOICES:
             raise FormError("Show must be all or flagged.")
+        domain_name = domain_name_of(request, domain) if domain else ""
+        status_label = status_of_key(status) if status else None
         start, end = read_period("", "", clock_of(request)().date())
         loaded = await load_client(request, user, client_id, start, end)
         async with session_factory(request)() as session:
@@ -353,12 +390,27 @@ async def checklist(request: Request, client_id: RowId, show: str = "all") -> Re
             excepted,
         )
         flagged = only_flagged(rows)
+        shown = flagged if show == "flagged" else rows
+        if domain:
+            shown = [item for item in shown if item.row.domain_code == domain]
+        if status_label is not None:
+            shown = [item for item in shown if item.row.label == status_label]
+        narrowed = ""
+        if domain_name and status_label is not None:
+            narrowed = f"{domain_name}, {status_label.text.lower()}"
+        elif domain_name:
+            narrowed = domain_name
+        elif status_label is not None:
+            narrowed = status_label.text
         context = client_context(loaded, "checklist", "Checklist")
         context.update(
-            rows=flagged if show == "flagged" else rows,
+            rows=shown,
             total=len(rows),
             flagged_total=len(flagged),
             show=show,
+            domain=domain,
+            status=status,
+            narrowed=narrowed,
             has_earlier=loaded.earlier is not None,
         )
         return page(request, "checklist.html", user, context)
@@ -678,6 +730,7 @@ async def evidence_page(request: Request, client_id: RowId) -> Response:
             "section": "evidence",
             "sources": rows,
             "refresh": refresh_list(rows),
+            "ages": age_bars(rows, now),
             "items": items,
             "facts": evidence_facts(rows, views),
             # The editor opens on this client (THE-505, defect 8).

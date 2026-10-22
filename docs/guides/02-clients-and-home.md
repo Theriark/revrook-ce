@@ -16,8 +16,10 @@ From top to bottom:
    (**Insufficient evidence**).
 3. **Needs attention**: the gate controls first, then what is not protected, by weight,
    across all clients. **Open** goes to the control page.
-4. **Score over the last 90 days** from the stored reports, and **Controls by domain**
-   as one bar per domain; **Show the numbers** opens the table behind each chart.
+4. **Score over time** from the stored reports of the last 7, 30 or 90 days, and
+   **Controls by domain** as one bar per domain; **Show the numbers** opens the table
+   behind each chart. Point at a mark or a segment, or reach it with Tab and the
+   arrow keys, for its exact values; a mark opens that report.
 5. **Recent changes**: the newest entries of the audit trail that changed a client, its
    evidence or its reports. A deleted client is named by its number.
 

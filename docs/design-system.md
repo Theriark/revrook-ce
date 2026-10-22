@@ -286,17 +286,21 @@ Its parts, in order:
   client, gate controls first, then what is not protected, by weight. Every row is the
   status pill, the control, the client and the reason beyond the status (old evidence,
   an open exception), and one action.
-- Score over the last 90 days (`.rv-chart`): one line per client from the stored
-  reports, up to six, labelled at its end and told apart by its dash pattern; a table
-  under the chart carries every number. The chart is drawn twice (`ChartSize` in
-  `app/ui/dashboard.py`): the wide drawing of 640 units, and below 600 px a narrow one
-  of 320 units whose labels keep their size on a phone, with the clients named in a
-  legend (`ul.rv-chart-legend`) under it. Controls by domain (`.rv-domains`): one
-  stacked bar per domain across the whole card with the domain and its protected
-  share above it, a legend of status pills, and every count in a table folded under
-  "Show the numbers" (`details.rv-chart-data`, the same fold as the chart; the table
-  sits in `div.rv-table-scroll` so a narrow phone scrolls the table, never the page).
-  The two cards sit side by side from 1024 px and share one height.
+- Score over time (`.rv-chart`, the body of the card in `_trend_chart.html`): one
+  line per client from the stored reports of the last 7, 30 or 90 days, up to six,
+  labelled at its end and told apart by its dash pattern; every stored report is a
+  mark on its line, a link to that report; a table under the chart carries every
+  number, each date a link too. The chart is drawn twice (`ChartSize` in
+  `app/ui/dashboard.py`, the `score_chart` macro of `_chart.html`): the wide drawing
+  of 640 units, and below 600 px a narrow one of 320 units whose labels keep their
+  size on a phone, with the clients named in a legend (`ul.rv-chart-legend`) under
+  it. The range is a row of real submit buttons (`form.rv-range`, `?days=`). Controls
+  by domain (`.rv-domains`): one stacked bar per domain across the whole card with
+  the domain and its protected share above it, each segment a link to its row of the
+  numbers, a legend of status pills, and every count in a table folded under "Show
+  the numbers" (`details.rv-chart-data`, the same fold as the chart; the table sits
+  in `div.rv-table-scroll` so a narrow phone scrolls the table, never the page). The
+  two cards sit side by side from 1024 px and share one height.
 - Recent changes (`.rv-timeline`): the newest audit entries that changed a client,
   its evidence or its reports, with who did it and when (the exact time on hover).
 
@@ -309,10 +313,75 @@ of the two side-by-side cards is centred in the height of its neighbour. The pag
 rendered whole on the server: there is no part that loads later, so there is no
 loading state to show.
 
-Charts are inline SVG drawn on the server with the brand colours only: the sparkline
-and the ring arc in the accent, the lines in charcoal, the domain bars in the status
-colours with the counts beside them, so nothing is told by colour alone. No library,
-no image, nothing loaded from outside.
+Charts are inline SVG drawn on the server with the role tokens only: the sparkline
+and the ring arc in the accent, the lines in the text colour, the domain bars in the
+status colours with the counts beside them, so nothing is told by colour alone. No
+library, no image, nothing loaded from outside. How they answer the pointer and the
+keyboard is the section Charts below.
+
+## Charts
+
+Every chart of the product is fed by data the application already stores, is drawn
+on the server as SVG with a table of its numbers under it, and works without script:
+a mark is a link to its report, a segment is a link to its list, a range is a GET
+form, the title of a mark is its native tooltip. One first-party script,
+`app/static/js/charts.js` (no library, nothing loaded from outside, same origin
+under the content security policy), layers the interaction on what is in the page,
+with its rules in `app/static/css/charts.css`, loaded after the stylesheet and its
+follow-up and drawn with the role tokens only; the pure view models are
+`app/ui/charts.py` and `app/ui/dashboard.py`, and `tests/test_charts.py` pins all of
+it, each text pair of the chart stylesheet in both themes included.
+
+The charts and what feeds each:
+
+| Where | Chart | Data | Drills down to |
+| --- | --- | --- | --- |
+| Home, stat cards | Sparkline of the last twelve weeks (`.rv-spark`) | The stored reports and the clients that existed at the end of each week | The page the number leads to |
+| Home | Score over time (`#trend`) | Every stored report of every active client in the last 7, 30 or 90 days (`Snapshot` rows) | The report behind each mark |
+| Home | Controls by domain (`#domains`) | The live view of every client, controls by status | The row of the domain under "Show the numbers" |
+| Clients | Clients by band (`#bands`) | The newest stored report of every client, by the band of the scoring model | The list narrowed to that band (`?band=`) |
+| Client overview | Controls by status (`.rv-mix-bar`) | The live view of the client | The checklist narrowed to that status (`?status=`) |
+| Client overview | Coverage by domain (`#domains`) | The live view of the client | The checklist narrowed to that domain and status (`?domain=`, `?status=`) |
+| Evidence and imports | How old is each export (`#ages`) | The newest export of every source and the date it goes stale (`SourceRow`) | The row of the source in the Sources table |
+| Report builder | Score over time (`#history`) | Every stored report of the client, over 90 days, a year or all of them (`?span=`) | The report behind each mark |
+
+How a chart answers:
+
+- Tooltip: a mark, a segment, a band or a week of a sparkline carries `data-tip`,
+  the exact values in words written on the server (`Mark.tip`, `AgeBar.tip`,
+  `BandCount.tip`, `SparkMark.tip`); the script shows them in one element
+  (`.rv-tip`, rail-dark with white words in both themes, the first line bold) beside
+  the mark under the pointer or the keyboard, and hides it on leave, blur, Escape,
+  scroll and resize. The same words are the `<title>` of the mark, so a screen
+  reader hears them and the tooltip itself is hidden from it.
+- Keyboard: the marks of one chart are one tab stop (`data-roving`); the arrow keys
+  move between them, Home and End to the first and the last, Enter follows the link.
+  A sparkline is one tab stop too (`data-spark`): the arrow keys walk its weeks. A
+  focused mark grows and takes the focus ring as a stroke that keeps its width
+  whatever the stretch of a bar (`vector-effect: non-scaling-stroke`).
+- Range: the row of buttons above a score chart (`form.rv-range`, the `range_form`
+  macro) is a GET form whose pressed button (`aria-pressed`) is the range drawn.
+  With script the button asks `data-fragment` (`/charts/trend?days=30`,
+  `/clients/{id}/charts/history?span=365`, `app/ui/fragments.py`) for the body of
+  the card through htmx and swaps it into `data-target` in place, then writes the
+  range into the address (`replaceState`) so a reload keeps it; the card says
+  `aria-busy` while it waits and the drawing that arrives rises into place once
+  (`.rv-chart-enter`, 180 ms, off under `prefers-reduced-motion`). A fragment asked
+  for as a page redirects to the page that holds the chart with that range; signed
+  out it answers as every page does; a range that is not known is a 422.
+- Series: the legend of the Home trend becomes a row of pressed buttons
+  (`button.rv-series`); not pressed, the line, its marks and its rows are hidden in
+  both drawings (the `hidden` attribute, since an SVG group has no such property).
+- Drill-down: every link is a real address. A link into a folded table opens the
+  fold and focuses the row; a segment of the overview opens the checklist with a
+  third chip that names the narrowing (`a.rv-chip-narrowed`) and takes it away.
+- Motion: 120 ms for a tooltip or a stepped-back segment, 180 ms for a swapped
+  drawing, on a person's action only; nothing moves on load.
+- Status: never colour alone. A segment, a bar and a band carry their words in the
+  tooltip, the title and the table; the age bars take the state token of the export
+  as their fill with the state in words beside them, and the stale date as a mark in
+  the secondary text colour, which reaches 3 to 1 in both themes
+  (`tests/test_brand_contrast.py`).
 
 ## Clients
 
@@ -336,12 +405,17 @@ yet" pill.
 
 Above the table a toolbar carries the search (by name, case-insensitive), the filter
 chips with their counts (all, needs work, no report yet, no evidence yet), and the
-density (comfortable or compact, `table.rv-table-compact`). The column headings of
+density (comfortable or compact, `table.rv-table-compact`). Under it the card
+"Clients by band" (`#bands`, `band_counts` in `app/ui/charts.py`): one bar per band
+of the scoring model, in the accent, with the count beside it, for the clients the
+search and the filter leave, each a link that narrows the list to that band
+(`?band=strong` ... `?band=none` for the clients without a report; the chosen one
+carries `aria-current` and a link shows every band again). The column headings of
 the name, the last report and the newest evidence are sort links with `aria-sort`;
 the first click on the score sorts the lowest first and on the evidence the newest
 first, and a client without the value a column sorts by comes last whichever the
 order. Fifty rows make a page (`.rv-pager`). Every one of these is a query parameter
-of `GET /clients` (`q`, `show`, `sort`, `order`, `density`, `page`), read by
+of `GET /clients` (`q`, `show`, `sort`, `order`, `density`, `page`, `band`), read by
 `read_query`, which refuses a value it does not know with a 422 like the checklist
 filter does; a page number past the end gives the last page.
 
@@ -364,7 +438,8 @@ and the tabs. Under it the period toolbar (`form.rv-period`), then:
   and the three summary sentences of the report (`#summary`). A client whose
   evidence is too thin shows a dashed ring and the lower bound in words.
 - Controls by status (`#status-counts`): one stacked bar (`.rv-mix-bar`) and the
-  count beside each status pill, with the way to the checklist.
+  count beside each status pill, with the way to the checklist; a segment of the bar
+  opens the checklist narrowed to that status.
 - Needs attention (`#needs-attention`): the eight most urgent controls of this
   client in the order of the report (gate controls first, then what is not
   protected, by weight), each with its status, the reasons beyond the status and
@@ -372,7 +447,8 @@ and the tabs. Under it the period toolbar (`form.rv-period`), then:
   what fills it.
 - Coverage by domain (`#domains`): one stacked bar per domain of the control library
   with its protected share, its weight and its score, a legend of status pills and
-  every number under "Show the numbers".
+  every number under "Show the numbers"; a segment opens the checklist narrowed to
+  that domain and status (the Charts section).
 - How fresh is the evidence (`#freshness`): the strip that names how many sources
   need a fresh export (or that every source is current) and the table of sources.
 - Recent changes (`#recent-changes`): the audit entries of this client only, read
@@ -451,7 +527,11 @@ verdict (`section.rv-verdict`, the band of the control page): the state of the
 client's evidence as one large pill (every export current; `1 stale`; `1 expired, 2
 not imported`; no evidence yet) beside four facts (sources, current, to refresh,
 items imported), computed by `evidence_facts` in `app/ui/viewmodels.py` from the
-source rows the page shows. Then three parts, each with a section head at h3:
+source rows the page shows. Then four parts, each with a section head at h3:
+"How old is each export" (`#ages`, `age_bars` in `app/ui/charts.py`), one bar per
+source on one shared scale with the age of its newest export in words, the state
+token of the export as its fill and the date it goes stale as a mark, each bar a link
+to the row of the source in the Sources table (the Charts section);
 "Refresh these exports", an ordered list (`.rv-refresh`, the oldest export first and
 then the sources never imported) whose numbers are the order to work in, with the
 state pill, the date of the newest export and what to do, or a success strip when
@@ -538,9 +618,12 @@ insurer in `fieldset.rv-topics`, one row each (`div.rv-topic`) with the checkbox
 beside the owner field, then the quiet save button with the "Saving" indicator
 (`.rv-notes-saving`, shown while htmx posts the form) and the status line
 (`#details-status`, `aria-live="polite"`) that receives "Saved at" or the refusal;
-and the one primary action of the page, making the report. Then "Reports made
-before", a table (`table.rv-snapshots`) of period, pack date and the way to each
-report, or an empty state that says to make the first one.
+and the one primary action of the page, making the report. Then "Score over time"
+(`#history`, `_history_chart.html`), the score of the client at every stored report
+over 90 days, a year or all of them, each a mark that opens the report (the Charts
+section). Then "Reports made before", a table (`table.rv-snapshots`) of period,
+pack date and the way to each report, or an empty state that says to make the
+first one.
 
 The report page. The control head gives the way back to the builder, the title and
 the facts of the report (period, pack date, snapshot). Then the export readiness as

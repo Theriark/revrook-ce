@@ -46,6 +46,9 @@ TEMPLATES = ROOT / "app/ui/templates"
 NAV = (TEMPLATES / "_nav.html").read_text(encoding="utf-8")
 CLIENT_NAV = (TEMPLATES / "_client_nav.html").read_text(encoding="utf-8")
 HOME = (TEMPLATES / "home.html").read_text(encoding="utf-8")
+# The body of the trend card of Home and the chart macros it draws with (THE-850).
+TREND = (TEMPLATES / "_trend_chart.html").read_text(encoding="utf-8")
+CHART = (TEMPLATES / "_chart.html").read_text(encoding="utf-8")
 LIBRARY = load_library()
 # A placeholder for the CSRF field of a rendered template; not a real token.
 PLACEHOLDER_TOKEN = "x" * 32
@@ -284,12 +287,13 @@ def test_a_stack_of_labels_never_sits_on_the_dates_of_the_axis() -> None:
 
 def test_the_home_template_draws_both_charts_and_a_legend() -> None:
     trend = HOME.split('id="trend"', 1)[1].split("</section>", 1)[0]
-    assert "{% for chart in (trend, trend_narrow) %}" in trend
-    assert 'class="rv-chart rv-chart-{{ chart.kind }}"' in trend
-    assert "{% if chart.labelled %}" in trend
-    assert 'text-anchor="{{ anchor }}"' in trend
-    assert '<ul class="rv-chart-legend" aria-label="The clients drawn">' in trend
-    assert 'class="rv-chart-key"' in trend and "{{ line.name }}" in trend
+    assert '{% include "_trend_chart.html" %}' in trend
+    assert "{% for chart in (trend, trend_narrow) %}" in TREND
+    assert 'class="rv-chart rv-chart-{{ chart.kind }}"' in CHART
+    assert "{% if chart.labelled %}" in CHART
+    assert 'text-anchor="{{ anchor }}"' in CHART
+    assert '<ul class="rv-chart-legend" aria-label="The clients drawn">' in TREND
+    assert 'class="rv-chart-key"' in TREND and "{{ line.name }}" in TREND
     assert "display: none;" in rule(".rv-chart-narrow,\n.rv-chart-legend")
     phone = re.search(
         r"@media \(max-width: 599px\) \{\n  \.rv-chart-wide \{([^}]*)\}", CSS

@@ -48,7 +48,7 @@
 <section class="rv-card" id="status-counts" aria-labelledby="mix-title">
 <h2 id="mix-title" class="rv-card-title">Controls by status</h2>
 <p class="rv-card-subtitle">Every counted control of the library, by the status it has today.</p>
-<svg class="rv-mix-bar" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">{% for seg in status_segments %}<rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="12"/>{% endfor %}</svg>
+<svg class="rv-mix-bar" viewBox="0 0 100 12" preserveAspectRatio="none" role="group" aria-label="Controls by status; a segment opens the checklist narrowed to that status" data-roving>{% for seg in status_segments %}<a class="rv-seg-link" href="/clients/{{ client_id }}/checklist?status={{ seg.label.key }}" data-tip="{{ seg.label.text }}&#10;{{ seg.count }} of {{ posture.counted }} controls&#10;Open these on the checklist"><title>{{ seg.label.text }}: {{ seg.count }} of {{ posture.counted }} controls. Open these on the checklist.</title><rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="12"/></a>{% endfor %}</svg>
 <ul class="rv-mix-list">
 {% for label, count in view.counts %}
 <li><span class="rv-mix-count">{{ count }}</span> {{ s.status(label) }}</li>
@@ -89,13 +89,13 @@
 <div class="rv-two rv-two-even">
 <section class="rv-card" id="domains" aria-labelledby="domains-title">
 <h2 id="domains-title" class="rv-card-title">Coverage by domain</h2>
-<p class="rv-card-subtitle">Each bar is one domain of the control library: its controls by status, with the weight of the domain and its score.</p>
+<p class="rv-card-subtitle">Each bar is one domain of the control library: its controls by status, with the weight of the domain and its score. A segment opens those controls on the checklist.</p>
 <ul class="rv-domains">
 {% for bar in domains %}
 <li class="rv-domain">
 <span class="rv-domain-name">{{ bar.name }}</span>
 <span class="rv-domain-sum">{{ bar.protected }} of {{ bar.total }} protected</span>
-<svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">{% for seg in bar.segments %}<rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/>{% endfor %}</svg>
+<svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="group" aria-label="{{ bar.name }} by status; a segment opens the checklist narrowed to that domain and status" data-roving>{% for seg in bar.segments %}<a class="rv-seg-link" href="/clients/{{ client_id }}/checklist?domain={{ bar.code }}&amp;status={{ seg.label.key }}" data-tip="{{ bar.name }}&#10;{{ seg.count }} {{ seg.label.text|lower }} of {{ bar.total }}&#10;Open these on the checklist"><title>{{ bar.name }}: {{ seg.count }} {{ seg.label.text|lower }} of {{ bar.total }}. Open these on the checklist.</title><rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/></a>{% endfor %}</svg>
 <span class="rv-domain-meta">Weight {{ bar.weight }}, score {{ bar.score_text }}</span>
 </li>
 {% endfor %}

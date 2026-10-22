@@ -1,0 +1,31 @@
+{#- The body of the "Score over time" card of Home: the range (7, 30 or 90 days),
+    the chart drawn wide and narrow (app/ui/dashboard.py, ChartSize; the stylesheet
+    shows the one that suits the width), the legend that charts.js turns into
+    series toggles, and the numbers. Rendered inside #trend-body by home.html and
+    on its own by app/ui/fragments.py when the chart script asks for another
+    range; without script the form posts its range to Home, which draws the same
+    card (`?days=`). -#}
+{% import "_icons.html" as i %}
+{% import "_chart.html" as c %}
+{{ c.range_form("", "/charts/trend", "trend-body", "days", ranges, days, "Range of the chart") }}
+<p class="rv-card-subtitle">From the stored reports of each client over the last {{ days }} days. Up to six clients are drawn, the ones with the newest reports.</p>
+{% if trend.lines %}
+{#- The chart twice, wide and narrow (app/ui/dashboard.py, ChartSize); the stylesheet
+    shows the one that suits the width. The narrow drawing has no labels at the ends
+    of its lines: the legend under it names the clients. -#}
+{% for chart in (trend, trend_narrow) %}
+{{ c.score_chart(chart, "trend-title", "trend", "Score from 0 to 100 by report date, one line per client.") }}
+{% endfor %}
+<ul class="rv-chart-legend" aria-label="The clients drawn">
+{% for line in trend.lines %}
+<li data-series="{{ line.client_id }}"><svg class="rv-chart-key" viewBox="0 0 28 8" width="28" height="8" aria-hidden="true" focusable="false"><line x1="1" y1="4" x2="27" y2="4"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/></svg><span>{{ line.name }}</span></li>
+{% endfor %}
+</ul>
+{{ c.score_table(trend, "Score by report date, " ~ trend.reports ~ (" report" if trend.reports == 1 else " reports") ~ " in the last " ~ days ~ " days") }}
+{% else %}
+<div class="rv-empty" id="trend-empty">
+{{ i.icon("system", "xl") }}
+<p class="rv-empty-title">No reports in the last {{ days }} days</p>
+<p class="rv-empty-text">{% if days != 90 %}Show 90 days to see older reports. {% endif %}A line appears for a client once a report has been made for it, from the Reports page of that client.</p>
+</div>
+{% endif %}
