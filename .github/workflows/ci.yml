@@ -1,0 +1,849 @@
+name: CI
+
+# Merge gate for revrook-ce (the nine required checks from phase-plan-3), the
+# Development deployment job, the release-candidate job and the lock-file job, in ONE
+# workflow. This repository has exactly four workflows: CI, Promote - Stage, Finalize
+# Release and Promote - Production.
+# STRICT is "true" since phase 0 added the application: every check must run and
+# succeed, and a skipped check fails the gate. (With STRICT "false" checks whose
+# inputs do not exist are SKIPPED and reported as skipped, never as a pass.)
+# See docs/ci-cd.md.
+
+# How CI is started: a push to a feature branch never runs this workflow. For pull
+# requests the ONLY trigger is the label event, and a run does anything only for
+# the label "ci-go", which the CI request broker sets (one request per commit, at
+# most one per pull request every 3 minutes and 12 a day). A push to development
+# (a merge) runs the gate and then the deploy-development job. workflow_dispatch
+# with mode=ci runs the gate by hand; mode=lock runs ONLY the lock job; mode=prepare-rc
+# on development runs ONLY the prepare-rc job (the release candidate of the
+# publishing contract, prepared on Development before any Stage request).
+# pull_request (not pull_request_target) has a read-only token and no secrets, so
+# it is safe for every base branch, including stacked pull requests.
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "ci runs the merge gate. lock ONLY compiles the hashed requirement files and commits them to this branch. prepare-rc ONLY creates the release candidate tag and prerelease on development."
+        required: false
+        default: ci
+        type: choice
+        options:
+          - ci
+          - lock
+          - prepare-rc
+      version:
+        description: "prepare-rc only: stable version this candidate belongs to, 27.<minor>.<patch> (a leading v is accepted)."
+        required: false
+        default: ""
+        type: string
+      source_commit:
+        description: "prepare-rc only: exact tested Development commit (full 40-character SHA)."
+        required: false
+        default: ""
+        type: string
+      image:
+        description: "prepare-rc only: immutable digest published for the commit, ghcr.io/theriark/revrook-ce@sha256:<64 hex> or sha256:<64 hex>."
+        required: false
+        default: ""
+        type: string
+      development_run_id:
+        description: "prepare-rc only: run ID of the successful CI push run on development that built and deployed the commit."
+        required: false
+        default: ""
+        type: string
+      documentation_manifest_sha256:
+        description: "prepare-rc only: reviewed documentation manifest hash (64 hex)."
+        required: false
+        default: ""
+        type: string
+      gate_cycle:
+        description: "prepare-rc only: gate cycle (integer, 1 or more) from the signed publication-gate-state."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+# Pull request runs: one group per ref, superseded runs are cancelled, and a label
+# other than ci-go gets its own unique group (all its jobs are skipped), so it can
+# never cancel a ci-go run. Every other event (merge to development, manual gate,
+# lock) uses the single repository group shared with Promote - Stage and Promote -
+# Production: those runs never overlap and a live deployment is never cancelled.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}-{1}', github.ref, github.event.label.name == 'ci-go' && 'run' || github.run_id) || 'revrook-ce-delivery' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHON_VERSION: "3.12"
+  # "true": no check may skip; any result other than success fails the gate.
+  # "false": skips are tolerated only while no application file exists (detect
+  # fails if one does). Set to "true" by phase 0 (the application exists).
+  STRICT: "true"
+
+jobs:
+  detect:
+    name: Detect which inputs exist
+    # Every other gate job needs detect, so a pull request label other than ci-go
+    # and the lock and prepare-rc modes skip the whole gate.
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'ci-go') ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'ci')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      app: ${{ steps.probe.outputs.app }}
+      alembic: ${{ steps.probe.outputs.alembic }}
+      licence_script: ${{ steps.probe.outputs.licence_script }}
+      content: ${{ steps.probe.outputs.content }}
+      docker: ${{ steps.probe.outputs.docker }}
+      compose_smoke: ${{ steps.probe.outputs.compose_smoke }}
+      strict: ${{ steps.probe.outputs.strict }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - id: probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${STRICT}" in
+            true|false) ;;
+            *) echo "::error::STRICT must be the literal true or false, got '${STRICT}'"; exit 1 ;;
+          esac
+          echo "strict=${STRICT}" >> "$GITHUB_OUTPUT"
+          # In strict mode every flag is true, so a missing input makes its check
+          # run and fail loudly instead of skipping.
+          flag() { if [[ "${STRICT}" == "true" || -e "$2" ]]; then echo "$1=true" >> "$GITHUB_OUTPUT"; else echo "$1=false" >> "$GITHUB_OUTPUT"; fi; }
+          flag app pyproject.toml
+          flag alembic alembic.ini
+          flag licence_script tools/licence_audit.py
+          flag content data
+          flag docker Dockerfile
+          flag compose_smoke docker-compose.yml
+          # Tripwire: the application must not land while STRICT is still false, and
+          # deleting one input must not quietly switch its check off.
+          if [[ "${STRICT}" != "true" ]]; then
+            for f in pyproject.toml requirements.txt requirements-dev.txt app tests alembic.ini Dockerfile docker-compose.yml tools/licence_audit.py; do
+              if [[ -e "${f}" ]]; then
+                echo "::error::${f} exists but STRICT is false. Set STRICT to \"true\" in .github/workflows/ci.yml."
+                exit 1
+              fi
+            done
+          fi
+          cat "$GITHUB_OUTPUT"
+
+  lint:
+    name: 1 - ruff check and format
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          ruff check .
+          ruff format --check .
+
+  typecheck:
+    name: 2 - mypy (strict for checks, scoring, evidence, importers)
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          # Strict per-package settings live in pyproject.toml.
+          mypy app
+
+  test:
+    name: 3 - pytest with PostgreSQL 16 and coverage thresholds
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revrook
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: revrook_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revrook -d revrook_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+asyncpg://revrook:ci-only-not-a-secret@localhost:5432/revrook_test
+      SECRET_KEY: ci-only-secret-key-not-for-deployment
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          FERNET_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          echo "::add-mask::${FERNET_KEY}"
+          export FERNET_KEY
+          # Overall 80 percent. 95 percent for the four core packages is enforced
+          # by the second report below. In coverage.py a single * does not cross a
+          # directory separator, so ** is needed to include nested subpackages.
+          # The 95 percent report is aggregate over those packages, nested ones
+          # included. A per-module floor for nested subpackages is not enforced yet.
+          pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80 \
+            --junitxml="${RUNNER_TEMP}/pytest-junit.xml"
+          # Skip guard: the PostgreSQL tests skip when DATABASE_URL is unset, so a
+          # lost variable must not turn them into a silent pass. No test may skip.
+          python - "${RUNNER_TEMP}/pytest-junit.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.argv[1]).getroot()
+          suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
+          tests = sum(int(s.get("tests", 0)) for s in suites)
+          skipped = sum(int(s.get("skipped", 0)) for s in suites)
+          print(f"pytest: {tests} tests, {skipped} skipped")
+          if skipped:
+              print(f"::error::{skipped} test(s) were skipped; CI requires zero skips (is DATABASE_URL set?)")
+              sys.exit(1)
+          PY
+          coverage report --fail-under=95 \
+            --include='app/checks/**,app/scoring/**,app/evidence/**,app/importers/**'
+
+  migrations:
+    name: 4 - alembic up, check, down, up
+    needs: detect
+    if: needs.detect.outputs.app == 'true' && needs.detect.outputs.alembic == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: revrook
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: revrook_migrate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revrook -d revrook_migrate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+asyncpg://revrook:ci-only-not-a-secret@localhost:5432/revrook_migrate
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          alembic upgrade head
+          alembic check
+          alembic downgrade -1
+          alembic upgrade head
+
+  audit:
+    # pip-audit has no severity filter: it fails on ANY known vulnerability, which
+    # is stricter than the plan's "medium or higher". Exceptions are recorded IDs.
+    name: 5 - pip-audit (any known vulnerability)
+    needs: detect
+    if: needs.detect.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          # Exact version: pypa/pip-audit tag v2.10.1 (commit 8894eb8c). Dependabot
+          # does not track this line; raise it by hand in a reviewed change.
+          python -m pip install --upgrade pip "pip-audit==2.10.1"
+          # Recorded exceptions live in .pip-audit-exceptions (one ID per line,
+          # with a reason comment). An empty or absent file means none.
+          ARGS=()
+          if [[ -f .pip-audit-exceptions ]]; then
+            while read -r id _; do
+              [[ -z "${id}" || "${id}" == \#* ]] && continue
+              ARGS+=(--ignore-vuln "${id}")
+            done < .pip-audit-exceptions
+          fi
+          pip-audit --require-hashes -r requirements.txt "${ARGS[@]}"
+
+  licences:
+    name: 6 - SPDX licence audit
+    needs: detect
+    if: needs.detect.outputs.app == 'true' && needs.detect.outputs.licence_script == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements.txt
+          python tools/licence_audit.py
+          if grep -qiE '^[[:space:]]*psycopg' requirements.txt; then
+            echo "::error::psycopg must not appear in the lock file"
+            exit 1
+          fi
+
+  content-licences:
+    name: 7 - content licence check
+    needs: detect
+    if: needs.detect.outputs.content == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          [[ -f LICENSES-CONTENT.md ]] || { echo "::error::LICENSES-CONTENT.md is missing"; exit 1; }
+          missing=0
+          while IFS= read -r f; do
+            # Exact path match: a row for data/a.json.bak must not satisfy data/a.json.
+            pat="$(printf '%s' "${f}" | sed 's/[][\.*^$+?(){}|/]/\\&/g')"
+            if ! grep -qE "(^|[^A-Za-z0-9_./-])${pat}($|[^A-Za-z0-9_./-])" LICENSES-CONTENT.md; then
+              echo "::error::${f} has no row in LICENSES-CONTENT.md"
+              missing=1
+            fi
+          done < <(git ls-files data | grep -v '/\.gitkeep$' || true)
+          exit "${missing}"
+
+  docker-build:
+    name: 8 - docker build
+    # Tests precede the build. lint, typecheck, test and audit must have SUCCEEDED
+    # (a skip is not enough). With STRICT, every prerequisite must have succeeded.
+    needs: [detect, lint, typecheck, test, migrations, audit, licences, content-licences]
+    if: >-
+      always() && needs.detect.outputs.docker == 'true' &&
+      needs.lint.result == 'success' && needs.typecheck.result == 'success' &&
+      needs.test.result == 'success' && needs.audit.result == 'success' &&
+      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
+      (needs.detect.outputs.strict != 'true' || !contains(needs.*.result, 'skipped'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: revrook-ce:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Image must run as non-root
+        shell: bash
+        run: |
+          set -euo pipefail
+          user="$(docker image inspect revrook-ce:ci --format '{{.Config.User}}')"
+          [[ -n "${user}" && "${user}" != "root" && "${user}" != "0" ]] || { echo "::error::image runs as root"; exit 1; }
+
+  compose-smoke:
+    name: 9 - compose smoke test
+    needs: [detect, docker-build]
+    if: needs.detect.outputs.compose_smoke == 'true' && needs.docker-build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - shell: bash
+        run: |
+          set -euo pipefail
+          # Throwaway values only (see .env.example). Compose reads them through
+          # --env-file so SECRET_KEY and FERNET_KEY resolve.
+          cp .env.example .env.ci
+          docker compose --env-file .env.ci up -d --build --wait
+          ready=false
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/readyz; then ready=true; break; fi
+            sleep 2
+          done
+          [[ "${ready}" == "true" ]] || { echo "::error::/readyz did not answer 200 on port 8080"; exit 1; }
+          # Phase 0 end-to-end script: /healthz, /readyz, uid 10001 and no
+          # development package in the image. tests/e2e/run.sh is optional.
+          bash scripts/e2e/phase_00.sh
+          if [[ -f tests/e2e/run.sh ]]; then bash tests/e2e/run.sh; fi
+      - if: failure()
+        shell: bash
+        run: docker compose --env-file .env.ci logs --no-color --tail 200 || true
+      - if: always()
+        shell: bash
+        run: docker compose --env-file .env.ci down -v || true
+
+  gate:
+    name: Merge gate summary
+    needs:
+      - detect
+      - lint
+      - typecheck
+      - test
+      - migrations
+      - audit
+      - licences
+      - content-licences
+      - docker-build
+      - compose-smoke
+    if: >-
+      always() && (
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'ci-go') ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'ci'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          STRICT: ${{ needs.detect.outputs.strict }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## revrook-ce merge gate (STRICT=${STRICT:-unknown})"
+            echo
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "${RESULTS}" | jq -r 'to_entries[] | "| \(.key) | \(.value.result) |"'
+            echo
+            echo "A result of \`skipped\` is not a pass. It is tolerated only while STRICT is false (see docs/ci-cd.md)."
+          } >> "${GITHUB_STEP_SUMMARY}"
+          if echo "${RESULTS}" | jq -e '[.[].result] | any(. == "failure" or . == "cancelled")' >/dev/null; then
+            echo "::error::at least one required check failed"
+            exit 1
+          fi
+          if [[ "${STRICT}" == "true" ]]; then
+            # Every needed job (detect and checks 1 to 9) must be exactly success.
+            if ! echo "${RESULTS}" | jq -e 'all(.[]; .result == "success")' >/dev/null; then
+              echo "::error::STRICT is true: every check must succeed, a skipped check fails the gate"
+              exit 1
+            fi
+          elif [[ "${STRICT}" != "false" ]]; then
+            echo "::error::STRICT value unavailable (detect did not complete)"
+            exit 1
+          fi
+
+  deploy-development:
+    name: Deploy Development (build once, deploy the digest)
+    # Only a merge (push) to development, and only after the whole gate succeeded:
+    # nothing is deployed from an unverified commit. Feature branches and pull
+    # requests never reach this job. It is also gated on the repository variable
+    # DEPLOY_DEVELOPMENT_ENABLED, which is unset by default: until a human sets it
+    # to "true" (see docs/ci-cd.md), a merge deploys nothing and pushes no image.
+    needs: gate
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/development' &&
+      vars.DEPLOY_DEVELOPMENT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: development
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      SOURCE_SHA: ${{ github.sha }}
+      DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
+      DEV_HOST: ce-dev-revrook.theriark.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: true
+          # Built once. Only the source SHA tag is pushed (never latest); every
+          # later step uses the digest.
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Require a valid digest
+        shell: bash
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          [[ "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::build produced no valid digest"; exit 1; }
+      - id: deploy
+        uses: ./.github/actions/dokploy-deploy
+        with:
+          application-id: ${{ env.DEV_APPLICATION_ID }}
+          expected-host: ${{ env.DEV_HOST }}
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          health-url: https://${{ env.DEV_HOST }}/healthz
+          expected-revision: ${{ github.sha }}
+          title: Development ${{ github.sha }}
+          dokploy-url: ${{ secrets.DOKPLOY_URL }}
+          dokploy-api-key: ${{ secrets.DOKPLOY_API_KEY }}
+          cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          cf-access-client-secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      - name: Record immutable Development result
+        shell: bash
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## revrook-ce deployed to Development"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\`"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\`"
+            echo "- Previous image (rollback target): \`${PREVIOUS:-none}\`"
+            echo "- URL: https://${DEV_HOST}/"
+            echo "- Promote to Stage with Promote - Stage (source_sha above). Roll back by running it with an earlier approved digest."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  prepare-rc:
+    name: Prepare RC (tag the tested Development image)
+    # ONLY workflow_dispatch with mode=prepare-rc on development. After the Development
+    # checks and the independent documentation review, it creates or reuses the next
+    # unused annotated release candidate tag v27.<minor>.<patch>-rc.<n> on the exact
+    # tested commit and a non-draft GitHub prerelease. It never rebuilds, never
+    # deploys and never touches stage, main or production. Promote - Stage later
+    # consumes this tag; it never creates one.
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare-rc' &&
+      github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Development secrets are needed only to read what Development runs.
+    environment: development
+    permissions:
+      actions: read
+      contents: write
+      packages: read
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      VERSION_INPUT: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source_commit }}
+      IMAGE_INPUT: ${{ inputs.image }}
+      DEV_RUN_ID: ${{ inputs.development_run_id }}
+      MANIFEST_SHA256: ${{ inputs.documentation_manifest_sha256 }}
+      GATE_CYCLE: ${{ inputs.gate_cycle }}
+      DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
+      DEV_HOST: ce-dev-revrook.theriark.dev
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Validate the inputs and the source commit
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_commit must be a full 40-character commit SHA"; exit 1; }
+          [[ "${VERSION_INPUT}" =~ ^v?(27\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]] || { echo "::error::version must look like 27.<minor>.<patch>"; exit 1; }
+          base_version="${BASH_REMATCH[1]}"
+          [[ "${DEV_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::development_run_id must be a run ID (integer)"; exit 1; }
+          [[ "${MANIFEST_SHA256}" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::documentation_manifest_sha256 must be 64 lowercase hex characters"; exit 1; }
+          [[ "${GATE_CYCLE}" =~ ^[1-9][0-9]{0,8}$ ]] || { echo "::error::gate_cycle must be an integer of 1 or more"; exit 1; }
+          digest="${IMAGE_INPUT#"${IMAGE}@"}"
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::image must be ${IMAGE}@sha256:<64 hex> or sha256:<64 hex>"; exit 1; }
+          git fetch origin +refs/heads/development:refs/remotes/origin/development
+          git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/development || {
+            echo "::error::${SOURCE_SHA} is not a commit of development"
+            exit 1
+          }
+          {
+            echo "digest=${digest}"
+            echo "base_version=${base_version}"
+          } >> "${GITHUB_OUTPUT}"
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Verify the digest, the Development run and what Development runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          for required in DOKPLOY_URL DOKPLOY_API_KEY CF_ID CF_SECRET; do
+            [[ -n "${!required}" ]] || { echo "::error::${required} is missing from the development environment"; exit 1; }
+          done
+          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
+          [[ "${published}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
+          [[ "${published}" == "${DIGEST}" ]] || {
+            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is ${published}, not the requested ${DIGEST}; refusing"
+            exit 1
+          }
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}")"
+          jq -e --arg sha "${SOURCE_SHA}" '
+              .path == ".github/workflows/ci.yml"
+              and .event == "push"
+              and .head_branch == "development"
+              and .head_sha == $sha
+              and .status == "completed"
+              and .conclusion == "success"' <<<"${run}" >/dev/null || {
+            echo "::error::run ${DEV_RUN_ID} is not a successful CI push run on development for ${SOURCE_SHA}"
+            exit 1
+          }
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > jobs.tsv
+          grep -Fq $'Deploy Development (build once, deploy the digest)\tsuccess' jobs.tsv || {
+            echo "::error::run ${DEV_RUN_ID} has no successful Development deployment job"
+            exit 1
+          }
+          rm -f jobs.tsv
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || {
+            echo "::error::Development runs '${running}', not ${IMAGE}@${DIGEST}"
+            exit 1
+          }
+          curl --fail --silent --show-error --max-time 15 "https://${DEV_HOST}/healthz" >/dev/null
+          echo "Verified ${IMAGE}@${DIGEST}, Development run ${DEV_RUN_ID} and the running Development image"
+      - name: Create or reuse the annotated RC tag
+        id: rc
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          BASE_VERSION: ${{ steps.mode.outputs.base_version }}
+        run: |
+          set -euo pipefail
+          prefix="v${BASE_VERSION}-rc."
+          # Reconcile first: every existing RC tag of this version, from the API.
+          refs="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/git/matching-refs/tags/${prefix}" --jq '.[] | [.ref, .object.type, .object.sha] | @tsv')"
+          max=0
+          reuse=""
+          while IFS=$'\t' read -r ref type sha; do
+            [[ -n "${ref}" ]] || continue
+            name="${ref#refs/tags/}"
+            number="${name#"${prefix}"}"
+            [[ "${number}" =~ ^[0-9]+$ ]] || continue
+            ((10#${number} > max)) && max=$((10#${number}))
+            [[ "${type}" == "tag" ]] || { echo "::error::${name} is not an annotated tag; refusing to continue"; exit 1; }
+            object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${sha}")"
+            if jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" '
+                .object.sha == $c and ((.message | fromjson? // {}) | .sourceCommit == $c and .imageDigest == $d)' <<<"${object}" >/dev/null; then
+              jq -e --arg m "${MANIFEST_SHA256}" --argjson g "${GATE_CYCLE}" '
+                  (.message | fromjson) as $j | $j.documentationManifestSha256 == $m and $j.gateCycle == $g' <<<"${object}" >/dev/null || {
+                echo "::error::${name} already seals this commit and image with a different documentation manifest or gate cycle; refusing"
+                exit 1
+              }
+              # Reusable only when the run that produced it succeeded. A tag left by
+              # a failed run stays as history and the next number is minted; an
+              # unreadable or unfinished run is uncertain and stops here.
+              prior="$(jq -r '(.message | fromjson).workflowRunId' <<<"${object}")"
+              conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${prior}" --jq '.conclusion // "unfinished"')"
+              [[ "${conclusion}" != "unfinished" ]] || { echo "::error::${name} was produced by run ${prior}, which has not finished; reconcile before retrying"; exit 1; }
+              if [[ "${conclusion}" == "success" ]]; then
+                reuse="${name}"
+                break
+              fi
+              echo "::notice::${name} was produced by run ${prior} (${conclusion}); not reusable"
+            fi
+          done <<<"${refs}"
+          if [[ -n "${reuse}" ]]; then
+            echo "Reusing ${reuse} (same commit, image, manifest and gate cycle)"
+            echo "tag=${reuse}" >> "${GITHUB_OUTPUT}"
+            echo "created=false" >> "${GITHUB_OUTPUT}"
+          else
+            tag="${prefix}$((max + 1))"
+            message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
+              --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" --argjson cycle "${GATE_CYCLE}" \
+              '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run, documentationManifestSha256: $m, gateCycle: $cycle}')"
+            tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+              -f tag="${tag}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
+            [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
+            if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${tag}" -f sha="${tag_sha}" >/dev/null; then
+              # Uncertain result: reconcile by reading the ref, never create twice.
+              existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '.object.sha' || true)"
+              [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${tag}"; exit 1; }
+            fi
+            back="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}")"
+            jq -e --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg t "${tag}" --argjson g "${GATE_CYCLE}" '
+                .tag == $t and .object.sha == $c
+                and ((.message | fromjson) | .sourceCommit == $c and .imageDigest == $d and .gateCycle == $g)' <<<"${back}" >/dev/null || {
+              echo "::error::${tag} did not read back as expected"
+              exit 1
+            }
+            echo "Created ${tag}"
+            echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+            echo "created=true" >> "${GITHUB_OUTPUT}"
+          fi
+      - name: Create or reuse the GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.mode.outputs.digest }}
+          RC_TAG: ${{ steps.rc.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if release="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RC_TAG}" 2>/tmp/release.err)"; then
+            jq -e --arg t "${RC_TAG}" '.tag_name == $t and .draft == false and .prerelease == true' <<<"${release}" >/dev/null || {
+              echo "::error::release ${RC_TAG} exists but is a draft or a stable release; refusing to change it"
+              exit 1
+            }
+            echo "Reusing existing prerelease ${RC_TAG}"
+          else
+            grep -q "Not Found" /tmp/release.err || { echo "::error::could not read release ${RC_TAG}: $(cat /tmp/release.err)"; exit 1; }
+            gh release create "${RC_TAG}" --verify-tag --prerelease --title "revrook CE ${RC_TAG}" \
+              --notes "Release candidate. Image: \`${IMAGE}@${DIGEST}\` (source ${SOURCE_SHA}). Prepared on Development without a rebuild; not promoted to Stage."
+          fi
+          rm -f /tmp/release.err
+          jq -e --arg t "${RC_TAG}" '.tag_name == $t and .draft == false and .prerelease == true' \
+            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RC_TAG}")" >/dev/null || {
+            echo "::error::release ${RC_TAG} does not read back as a published prerelease"
+            exit 1
+          }
+          {
+            echo "## revrook-ce release candidate ${RC_TAG}"
+            echo
+            echo "- Source commit: \`${SOURCE_SHA}\` (annotated tag \`${RC_TAG}\`)"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
+            echo "- Development run: \`${DEV_RUN_ID}\`; RC-producing run: \`${GITHUB_RUN_ID}\`; gate cycle: \`${GATE_CYCLE}\`"
+            echo "- Documentation manifest: \`${MANIFEST_SHA256}\`"
+            echo "- No Stage promotion, no stable release; stage and main unchanged"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  lock:
+    name: Lock - compile and commit hashed requirements
+    # ONLY for workflow_dispatch with mode=lock, same-repository, non-protected
+    # branches. Nothing else in this workflow runs in that mode.
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.mode == 'lock' &&
+      github.event.repository.fork == false &&
+      github.ref_type == 'branch' &&
+      github.actor != 'github-actions[bot]' &&
+      !contains(fromJSON('["main","development","stage","production"]'), github.ref_name)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      # Exact tool versions so two runs on the same inputs agree.
+      PIP_VERSION: "25.1.1"
+      PIP_TOOLS_VERSION: "7.5.0"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Compile the runtime lock, then the development lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Both tools are pinned: pip-tools reaches into pip internals, so a newer
+          # pip than the pip-tools release supports breaks pip-compile.
+          python -m pip install "pip==${PIP_VERSION}" "pip-tools==${PIP_TOOLS_VERSION}"
+          python --version
+          pip --version
+          pip-compile --version
+          # On failure keep the tail of the output as an annotation (visible in
+          # the check run) because the full log needs a signed-in session.
+          fail() {
+            echo "::error::pip-compile failed: $(tail -n 12 compile.log | tr '\n' '|' | cut -c1-900)"
+            exit 1
+          }
+          # Runtime first: requirements-dev.in uses requirements.txt as a constraint.
+          # --allow-unsafe pins setuptools (a dependency of pip-tools): without it
+          # the lock omits setuptools and pip --require-hashes refuses to install it.
+          pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements.txt requirements.in > compile.log 2>&1 || fail
+          cat compile.log
+          pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file requirements-dev.txt requirements-dev.in > compile.log 2>&1 || fail
+          cat compile.log
+          rm -f compile.log
+      - name: Commit changed locks to the branch
+        id: commit
+        shell: bash
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git add requirements.txt requirements-dev.txt
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lock files are already up to date. Nothing committed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update hashed requirements lock files"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Summary
+        if: steps.commit.outputs.changed == 'true'
+        shell: bash
+        env:
+          BRANCH: ${{ github.ref_name }}
+          NEW_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          {
+            echo "## Lock files committed"
+            echo
+            echo "- Branch: \`${BRANCH}\`"
+            echo "- New head: \`${NEW_SHA}\`"
+            echo "- CI was NOT started. Request one run for this head with the CI request broker (label \`ci-go\`)."
+          } >> "${GITHUB_STEP_SUMMARY}"
