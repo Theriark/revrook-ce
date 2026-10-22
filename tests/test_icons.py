@@ -23,7 +23,7 @@ TEMPLATES = ROOT / "app/ui/templates"
 ICONS = (TEMPLATES / "_icons.html").read_text(encoding="utf-8")
 BRAND = (TEMPLATES / "_brand.html").read_text(encoding="utf-8")
 SIZES = {"sm": 18, "md": 22, "lg": 36, "xl": 48}
-ICON_CALL = re.compile(r'i\.icon\(([^)]*)\)')
+ICON_CALL = re.compile(r"i\.icon\(([^)]*)\)")
 NAMED_CALL = re.compile(r'^"[a-z-]+"(?:, "(?:sm|md|lg|xl)")?$|^glyph, "sm"$')
 EMPTY = re.compile(
     r'<div class="rv-empty([^"]*)"[^>]*>\s*\{\{ i\.icon\("[a-z-]+", "(\w+)"\)'
