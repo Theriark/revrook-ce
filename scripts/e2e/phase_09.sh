@@ -204,6 +204,17 @@ control_page="$(browser "${BASE_URL}/clients/${client_id}/controls/${control}")"
 [[ "${control_page}" == *"Phase 09 e2e note"* ]] || fail "the saved note is not on the control page"
 echo "phase_09: a note autosaved and read back"
 
+# The control drawer: asked for with the drawer target, the control comes without its shell.
+code="$(browser -o "${work}/drawer.html" -w '%{http_code}' -H 'HX-Request: true' -H 'HX-Target: control-drawer-body' \
+  "${BASE_URL}/clients/${client_id}/controls/${control}")"
+[[ "${code}" == "200" ]] || fail "the drawer request returned ${code}"
+grep -q 'id="control-drawer-title"' "${work}/drawer.html" || fail "the drawer answer has no title"
+grep -q 'Open as a page' "${work}/drawer.html" || fail "the drawer answer does not lead to the page"
+! grep -q '<html' "${work}/drawer.html" || fail "the drawer answer is a whole page"
+[[ "${control_page}" == *'id="control-drawer-title"'* ]] && fail "the control page carries the drawer title"
+grep -q 'id="control-drawer"' "${work}/checklist-all.html" || fail "the checklist has no drawer"
+echo "phase_09: the control drawer answers with the control without its shell"
+
 # An exception, then the settings: the MSP name that goes on the cover.
 review_date="$(date -u -d '+1 year' +%Y-%m-%d)"
 code="$(browser -o /dev/null -w '%{http_code}' -d "csrf_token=${csrf}" -d "control_id=${control}" \

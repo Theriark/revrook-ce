@@ -335,6 +335,26 @@ on "By when", the primary button, a "Saving" indicator (`.rv-notes-saving`, show
 while htmx posts, when the form carries `htmx-request`) and the `aria-live` status
 line that receives "Saved at" or the refusal.
 
+The control drawer. The checklist, the home page and the client overview carry a
+closed native dialog (`_drawer.html`, `dialog.rv-drawer`) at the right edge of the
+page. A link to a control marked `data-drawer` (the control of a checklist row, the
+control and the Open button of a "Needs attention" row) opens it: `revrook.js`
+shows the dialog as a modal, so Escape closes it, Tab stays inside and the page
+behind is inert, then asks htmx for the control with the drawer as its target
+(`HX-Target: control-drawer-body`), which the server answers with
+`_control_drawer.html`, the control head and body without the shell. The page and
+the drawer share `_control_body.html`, so the verdict band, what was checked, the
+exceptions and the autosaved notes are the same in both. The bar of the drawer is a
+canvas band with the word Control and the Close button (a `method="dialog"` form);
+under it the skeleton shows while the control loads (`aria-busy` on the dialog),
+then the head, whose kicker names the client and leads to the control as a page
+("Open as a page", for a bookmark or a second tab), the title (which names the
+dialog and takes focus) and the body in one column. Closing returns focus to the
+link. From 768 px the drawer is 38 rem wide beside the veiled page; on a phone it
+is the whole screen. A click with a modifier key, a middle click, a browser without
+dialogs, a page without htmx or a request that fails leave the link as it is: the
+control page.
+
 ## Evidence imports, the profile editor and the integrity check
 
 The evidence page of one client (`app/ui/templates/evidence_imports.html`) is where
