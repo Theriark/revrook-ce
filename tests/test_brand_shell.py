@@ -29,7 +29,9 @@ LINK_ATTRIBUTE = re.compile(r'\b(?:src|href|srcset|action)="([^"]*)"')
 TEMPLATE_EXPRESSION = re.compile(r"\{\{.*?\}\}")
 TITLE = re.compile(r"<title>(.*?)</title>")
 DENSITIES = frozenset({"1x", "2x"})
-LOGO_TAG = '<img class="rv-logo" src="/static/brand/logo-horizontal-1200x400.png"'
+# The rook mark of the brand lockup (_brand.html), drawn on nothing; the wordmark
+# beside it is text, so the lockup needs no composed logo file (THE-824).
+MARK_TAG = '<img class="rv-mark-img" src="/static/brand/logo-mark-512x512.png"'
 WORDMARK = (
     '<span class="rv-wordmark"><span class="rv-wordmark-rev">rev</span>'
     '<span class="rv-wordmark-rook">rook</span></span>'
@@ -100,17 +102,18 @@ def test_templates_load_nothing_from_another_origin(name: str) -> None:
             assert not url.startswith("//"), f"{url} is protocol-relative"
 
 
-def test_the_header_shows_the_approved_logo_and_favicons() -> None:
+def test_the_header_shows_the_approved_mark_and_favicons() -> None:
     html = render_login(frozenset(BRAND_FILES))
-    assert LOGO_TAG in html
-    assert "/static/brand/logo-horizontal-2400x800.png 2x" in html
-    assert 'height="36"' in html
-    assert 'alt="revrook"' in html
+    assert MARK_TAG in html
+    assert "/static/brand/logo-mark-1024x1024.png 2x" in html
+    assert 'width="512" height="512" alt=""' in html
+    assert "logo-horizontal" not in html and "logo-stacked" not in html
     assert 'rel="icon" type="image/png" sizes="32x32"' in html
     assert 'href="/static/brand/favicon-32x32.png"' in html
     assert 'rel="apple-touch-icon" sizes="180x180"' in html
     assert 'href="/static/brand/favicon-180x180.png"' in html
-    assert WORDMARK not in html
+    # The wordmark is the text beside the mark, so the name is read, not an alt.
+    assert WORDMARK in html
     assert title_of(html) == "Sign in - revrook"
 
 
