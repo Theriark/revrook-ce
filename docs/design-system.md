@@ -87,8 +87,10 @@ accent, while links, marks, rings and sparklines take a lighter accent that reac
 
 The switch (`_theme.html`) is a form of three real buttons, Light, Dark and System,
 with the sun, moon and monitor icons; the pressed one carries `aria-pressed="true"`.
-It sits in the rail above the sign-out button (with its words from 1024 px, icons
-only in the bar) and beside the edition badge on the signed-out pages. A button posts
+It sits in the rail above the sign-out button (its words alone from 1024 px: three
+icons beside three words did not fit the 248 px rail, so `revrook-retest.css` hides the
+icons there; below 1024 px the bar shows the icons alone) and beside the edition badge
+on the signed-out pages, with the icons alone. A button posts
 the form to `/theme` (`app/ui/site.py`); with script, `revrook.js` applies the theme
 the moment the button is pressed and htmx posts the form with nothing swapped (the
 server answers 204), and without script the page comes back in the new theme. The

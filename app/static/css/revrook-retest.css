@@ -536,3 +536,21 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
     padding-left: 16px;
   }
 }
+
+/* The theme switch in the rail (_theme.html, THE-808): from 1024px the rail is
+   248px wide and the pill has 220px, and the three icons beside the three words
+   of revrook.css measured 253px, so "System" was cut (seen in the preview of the
+   dark theme on Development at 1440px). The rail shows the words alone, which
+   are the clearer label at reading distance; the bar below 1024px and the
+   signed-out header keep the icons alone, each named for assistive technology.
+   Measured after the change: the pill 208px, three buttons of 66px */
+@media (min-width: 1024px) {
+  .rv-app .rv-theme .rv-icon {
+    display: none;
+  }
+
+  .rv-app .rv-theme button,
+  .rv-app .rv-theme button:not(:hover) {
+    padding: 5px 6px;
+  }
+}

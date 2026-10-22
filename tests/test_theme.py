@@ -157,6 +157,15 @@ def test_the_switch_has_its_own_rules_in_both_shells() -> None:
         r"@media \(min-width: 1024px\) \{\n  \.rv-app \.rv-theme \{([^}]*)\}", CSS
     )
     assert rail is not None and "flex-basis: 100%;" in rail.group(1)
+    # In the 248px rail the three words fit and the icons go (icons beside the
+    # words were 253px in 220px on Development); the bar keeps the icons only.
+    assert "\n.rv-theme-text {\n  display: none;\n}\n" in CSS
+    assert "  .rv-app .rv-theme-text {\n    display: inline;\n  }" in CSS
+    rail_fix = re.search(
+        r"@media \(min-width: 1024px\) \{\n  \.rv-app \.rv-theme \.rv-icon \{([^}]*)\}",
+        FOLLOW_UP,
+    )
+    assert rail_fix is not None and "display: none;" in rail_fix.group(1)
 
 
 # --- the templates and the script ---------------------------------------------
