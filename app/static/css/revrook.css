@@ -64,6 +64,15 @@
   --rv-shadow-1: 0 1px 2px rgba(45, 47, 58, 0.06), 0 1px 1px rgba(45, 47, 58, 0.04);
   --rv-shadow-2: 0 12px 32px rgba(45, 47, 58, 0.18), 0 2px 6px rgba(45, 47, 58, 0.08);
   --rv-motion: 150ms ease-out;
+  /* The icon scale (_icons.html): sm inside a control, md beside a line of text,
+     lg the mark of a card, xl the mark of an empty state */
+  --rv-icon-sm: 18px;
+  --rv-icon-md: 22px;
+  --rv-icon-lg: 36px;
+  --rv-icon-xl: 48px;
+  /* The tile behind the rook mark: the cream of the approved logo files, the
+     same in both themes (the mark itself is drawn on nothing) */
+  --rv-mark-tile: #fffef5;
 
   /* Pico CSS variables: the reset follows the same roles in both themes */
   color-scheme: light;
@@ -348,11 +357,40 @@ body.rv-app {
   text-decoration: none;
 }
 
-.rv-logo,
-.rv-logo-dark {
-  display: block;
-  width: auto;
+/* The brand lockup (_brand.html): the rook mark in its cream tile beside the
+   wordmark. The mark file is drawn on nothing, so the tile is the stylesheet's
+   and the lockup sits on the rail, on the sign-in panel and on the surface of
+   either theme without the surround the composed logo files carry. The rook
+   sits left of centre in its file; the shift centres it in the tile */
+.rv-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rv-lockup-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rv-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
   height: 40px;
+  overflow: hidden;
+  border-radius: 24%;
+  background-color: var(--rv-mark-tile);
+}
+
+.rv-mark-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: translateX(13%);
 }
 
 /* Text wordmark: rev in charcoal, rook in violet-blue, bold Helvetica or Arial */
@@ -374,17 +412,33 @@ body.rv-app {
   background-color: var(--rv-surface);
 }
 
-/* On charcoal the wordmark is stone and gray, large text only (gray 4.09) */
-.rv-header .rv-wordmark .rv-wordmark-rev {
+/* On the rail and on the sign-in panel the wordmark is stone and gray, large
+   text only (gray 4.09); in the bar below 1024px it is 24px beside the 40px
+   tile, and below 600px the tile alone is the brand in the bar (the footer and
+   the title of every page name the product) */
+.rv-app .rv-header .rv-wordmark .rv-wordmark-rev,
+.rv-auth-panel .rv-wordmark .rv-wordmark-rev {
   font-size: 1.75rem;
   color: var(--rv-stone);
   background-color: var(--rv-rail);
 }
 
-.rv-header .rv-wordmark .rv-wordmark-rook {
+.rv-app .rv-header .rv-wordmark .rv-wordmark-rook,
+.rv-auth-panel .rv-wordmark .rv-wordmark-rook {
   font-size: 1.75rem;
   color: var(--rv-gray);
   background-color: var(--rv-rail);
+}
+
+.rv-app .rv-header .rv-wordmark .rv-wordmark-rev,
+.rv-app .rv-header .rv-wordmark .rv-wordmark-rook {
+  font-size: 24px;
+}
+
+@media (max-width: 599px) {
+  .rv-app .rv-header .rv-wordmark {
+    display: none;
+  }
 }
 
 .rv-edition {
@@ -483,9 +537,9 @@ body.rv-app {
 .rv-header .rv-nav-link {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin: 0;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border: 0;
   border-radius: 8px;
   font-size: 14px;
@@ -509,10 +563,26 @@ body.rv-app {
   box-shadow: inset 3px 0 0 var(--rv-primary);
 }
 
+/* The four sizes of the icon set (_icons.html); an icon never sets its own */
 .rv-icon {
   flex: none;
-  width: 18px;
-  height: 18px;
+  width: var(--rv-icon-md);
+  height: var(--rv-icon-md);
+}
+
+.rv-icon-sm {
+  width: var(--rv-icon-sm);
+  height: var(--rv-icon-sm);
+}
+
+.rv-icon-lg {
+  width: var(--rv-icon-lg);
+  height: var(--rv-icon-lg);
+}
+
+.rv-icon-xl {
+  width: var(--rv-icon-xl);
+  height: var(--rv-icon-xl);
 }
 
 /* Who is signed in, and the way out */
@@ -569,7 +639,7 @@ body.rv-app {
 .rv-header .rv-button-quiet {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
   padding: 6px 10px;
   border: 1px solid var(--rv-charcoal-soft);
@@ -624,8 +694,18 @@ body.rv-app {
     padding: 0 8px;
   }
 
-  .rv-logo-dark {
+  .rv-app .rv-header .rv-mark {
+    width: 48px;
     height: 48px;
+  }
+
+  .rv-app .rv-header .rv-wordmark .rv-wordmark-rev,
+  .rv-app .rv-header .rv-wordmark .rv-wordmark-rook {
+    font-size: 1.75rem;
+  }
+
+  .rv-app .rv-nav-link {
+    font-size: 15px;
   }
 
   .rv-nav-strip {
@@ -1402,9 +1482,7 @@ p.rv-status-not-protected a {
 }
 
 .rv-empty .rv-icon {
-  width: 36px;
-  height: 36px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -1465,9 +1543,7 @@ p.rv-status-not-protected a {
 }
 
 .rv-dropzone .rv-icon {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .rv-dropzone-title {
@@ -1667,10 +1743,9 @@ body.rv-signed-out {
   background-color: var(--rv-rail);
 }
 
-.rv-auth-logo {
-  display: block;
-  width: 96px;
-  height: 96px;
+.rv-auth-panel .rv-mark {
+  width: 72px;
+  height: 72px;
 }
 
 .rv-auth-tagline {
@@ -1703,7 +1778,7 @@ body.rv-signed-out {
 }
 
 .rv-auth-points .rv-icon {
-  margin-top: 3px;
+  margin-top: 0;
 }
 
 .rv-auth-side {
@@ -1771,9 +1846,9 @@ body.rv-signed-out {
     padding: 48px 40px;
   }
 
-  .rv-auth-logo {
-    width: 200px;
-    height: 200px;
+  .rv-auth-panel .rv-mark {
+    width: 128px;
+    height: 128px;
   }
 
   .rv-auth-points {
@@ -1784,7 +1859,8 @@ body.rv-signed-out {
     padding: 24px 40px;
   }
 
-  .rv-signed-out .rv-logo {
+  .rv-signed-out .rv-header .rv-mark {
+    width: 44px;
     height: 44px;
   }
 
@@ -1988,7 +2064,7 @@ main .rv-rook-link:hover {
 }
 
 .rv-rook-insufficient .rv-ring-track {
-  stroke: var(--rv-line-strong);
+  stroke: var(--rv-text-secondary);
   stroke-dasharray: 3 4;
 }
 
@@ -2308,7 +2384,7 @@ main .rv-attention-what a:hover {
 }
 
 .rv-seg-not-checked {
-  fill: var(--rv-line-strong);
+  fill: var(--rv-status-not-checked);
 }
 
 .rv-legend {
@@ -2494,9 +2570,7 @@ main .rv-client-kicker a:hover {
   position: absolute;
   top: 50%;
   left: 12px;
-  width: 16px;
-  height: 16px;
-  margin-top: -8px;
+  margin-top: -9px;
   pointer-events: none;
 }
 
@@ -2504,7 +2578,7 @@ main .rv-client-kicker a:hover {
   flex: 1;
   min-width: 0;
   margin: 0;
-  padding-left: 36px;
+  padding-left: 40px;
 }
 
 /* Chips: the filters of a list with their counts, and the pages. An item is
@@ -2613,7 +2687,7 @@ main .rv-clients a.rv-client-name:hover {
 }
 
 .rv-posture-insufficient .rv-ring-track {
-  stroke: var(--rv-line-strong);
+  stroke: var(--rv-text-secondary);
   stroke-dasharray: 3 4;
 }
 
@@ -2809,6 +2883,13 @@ main .rv-table-compact td {
 
   .rv-clients .rv-row-actions {
     white-space: normal;
+  }
+
+  /* The signed-out header shares its line with the badge and the theme switch
+     beside a panel that takes 40% of the width: below 1024px the tile alone is
+     the brand there (the wordmark was cut against the badge at 768px) */
+  .rv-signed-out .rv-header .rv-wordmark {
+    display: none;
   }
 }
 
@@ -3317,9 +3398,47 @@ main .rv-control-kicker a:hover {
   padding: 24px 16px;
 }
 
-.rv-empty-small .rv-icon {
-  width: 28px;
-  height: 28px;
+/* The mark of an evidence source (_icons.html, source_mark): the icon of its
+   family in a canvas tile beside the name, the same on the sources table and on
+   the integrations of the home empty state; never a vendor logo */
+.rv-source-mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--rv-line);
+  border-radius: 10px;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-source-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rv-integrations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  max-width: 46rem;
+  margin: 0 auto 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-integrations li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
 }
 
 /* Your notes: the suggestion on canvas, one field per line, the saving
@@ -4314,11 +4433,6 @@ fieldset.rv-topics {
   background-color: var(--rv-charcoal-soft);
 }
 
-.rv-theme .rv-icon {
-  width: 16px;
-  height: 16px;
-}
-
 .rv-theme-text {
   display: none;
 }
@@ -4367,31 +4481,9 @@ fieldset.rv-topics {
   }
 }
 
-/* Signed out the header carries both horizontal logos, the one for a light
-   surface and the one for a dark surface; the theme shows one of them (the rail
-   always carries the dark-surface logo). With the system theme the choice
-   follows the system, without script */
-.rv-logo-on-dark {
-  display: none;
-}
-
-:root[data-theme="dark"] .rv-signed-out .rv-logo:not(.rv-logo-on-dark) {
-  display: none;
-}
-
-:root[data-theme="dark"] .rv-logo-on-dark {
-  display: block;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="system"] .rv-signed-out .rv-logo:not(.rv-logo-on-dark) {
-    display: none;
-  }
-
-  :root[data-theme="system"] .rv-logo-on-dark {
-    display: block;
-  }
-}
+/* Signed out the header carries the same lockup on the surface: the wordmark in
+   the text and link colours of the theme (the .rv-wordmark rules), the tile as
+   on the rail. One drawing for both themes, nothing to switch */
 
 /* Signed out, the edition badge and the theme switch share the right of the header */
 .rv-header-tools {
