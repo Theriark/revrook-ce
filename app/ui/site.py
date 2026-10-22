@@ -3,8 +3,8 @@
 from datetime import UTC
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Form, Request, Response
-from sqlalchemy import select
+from fastapi import APIRouter, Form, HTTPException, Request, Response
+from sqlalchemy import select, update
 
 from app.models import AppUser
 from app.preferences import (
@@ -15,9 +15,17 @@ from app.preferences import (
 )
 from app.reports.disclaimer import DISCLAIMER
 from app.settings import Settings
+from app.theme import THEMES, safe_next
 from app.ui.auth import redirect
-from app.ui.common import guarded, library_of, page, sentence
-from app.web import clock_of, session_factory
+from app.ui.common import (
+    guarded,
+    is_htmx,
+    library_of,
+    page,
+    sentence,
+    signed_in_user,
+)
+from app.web import clock_of, session_factory, set_theme_cookie
 from app.worker.mail import mail_configured
 
 router = APIRouter()
@@ -107,3 +115,35 @@ async def glossary_page(request: Request) -> Response:
         return page(request, "glossary.html", user, context)
 
     return await guarded(request, handle)
+
+
+@router.post("/theme")
+async def theme_save(
+    request: Request,
+    theme: Annotated[str, Form()] = "",
+    next_path: Annotated[str, Form(alias="next")] = "/",
+) -> Response:
+    """Remember the theme chosen with the switch (_theme.html, app/theme.py).
+
+    Signed in, it is written on the user row and the page comes back in the new
+    theme; the cookie is set too, so the sign-in page follows. Signed out (the
+    sign-in and first-run pages) only the cookie is set, and the way back is the
+    sign-in page, as for every form posted without a user. htmx gets 204: the
+    script has applied the theme already.
+    """
+    if theme not in THEMES:
+        raise HTTPException(
+            status_code=422, detail="The theme must be light, dark or system."
+        )
+    user = await signed_in_user(request)
+    if user is not None and user.theme != theme:
+        async with session_factory(request)() as session, session.begin():
+            await session.execute(
+                update(AppUser).where(AppUser.id == user.id).values(theme=theme)
+            )
+    if is_htmx(request):
+        response: Response = Response(status_code=204)
+    else:
+        response = redirect(safe_next(next_path) if user is not None else "/login")
+    set_theme_cookie(response, request, theme)
+    return response

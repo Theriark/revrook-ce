@@ -126,7 +126,8 @@ def test_the_layout_links_the_stylesheets_script_and_footer() -> None:
     assert f'href="/static/css/revrook.css?v={VERSION}"' in html
     assert script_tag("/static/vendor/htmx/htmx.min.js") in html
     assert script_tag("/static/js/revrook.js") in html
-    assert 'data-theme="light"' in html
+    assert 'data-theme="system"' in html
+    assert '<meta name="color-scheme" content="light dark">' in html
     assert 'class="rv-footer"' in html
     assert "not a certification, audit or attestation" in html
 

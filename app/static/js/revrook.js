@@ -1,6 +1,6 @@
 /*
  * revrook shell script (docs/design-system.md). Same origin, no eval, no network.
- * Three decorations, none needed for a page to work:
+ * Decorations, none needed for a page to work:
  * - the drag-and-drop import area: the file input covers the whole area, so
  *   dropping and choosing a file work without this script; it adds the drag-over
  *   state and shows the names of the chosen files;
@@ -28,6 +28,9 @@
  *   title of the control and goes back to the link when the drawer closes. A
  *   click with a modifier key, a middle click, a browser without dialogs, a page
  *   without htmx, a failed request: all leave the link as it is, the page itself.
+ * - the theme switch (templates/_theme.html): the choice is applied the moment a
+ *   button is pressed and htmx posts it; without the script the form posts and
+ *   the page comes back in the chosen theme.
  */
 (function () {
   "use strict";
@@ -287,8 +290,45 @@
     document.addEventListener("htmx:sendError", drawerFailed);
   }
 
+  // The theme switch (_theme.html): the choice is applied the moment a button
+  // is pressed, so the page does not wait for the answer; htmx then posts the
+  // form (hx-post, nothing swapped) and the server remembers it. The root
+  // element carries the theme, the color-scheme meta follows it (form controls
+  // and scrollbars), and the pressed button moves. Without script the form
+  // posts and the page comes back in the chosen theme.
+  var COLOR_SCHEMES = { light: "light", dark: "dark", system: "light dark" };
+
+  function themeButtonOf(event) {
+    var node = event.target;
+    while (node && node !== document) {
+      if (node.tagName === "BUTTON" && node.name === "theme") {
+        return node.form && node.form.classList.contains("rv-theme") ? node : null;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function applyTheme(event) {
+    var button = themeButtonOf(event);
+    if (!button || !COLOR_SCHEMES[button.value]) {
+      return;
+    }
+    var theme = button.value;
+    document.documentElement.setAttribute("data-theme", theme);
+    var meta = document.querySelector('meta[name="color-scheme"]');
+    if (meta) {
+      meta.setAttribute("content", COLOR_SCHEMES[theme]);
+    }
+    var buttons = document.querySelectorAll('.rv-theme button[name="theme"]');
+    for (var k = 0; k < buttons.length; k += 1) {
+      buttons[k].setAttribute("aria-pressed", buttons[k].value === theme ? "true" : "false");
+    }
+  }
+
   function ready() {
     watchDrawer();
+    document.addEventListener("click", applyTheme);
     document.addEventListener("htmx:afterSwap", announceSwapped);
     document.addEventListener("htmx:afterSwap", updateRegions);
     window.addEventListener("resize", updateRegions);

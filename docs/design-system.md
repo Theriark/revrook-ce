@@ -21,40 +21,85 @@ stacked logo next to the form.
 
 ## Tokens
 
-Colours. The five brand colours are never changed; the derived ones are checked
-against the text they carry by `tests/test_brand_contrast.py` and
-`tests/test_design_system.py`.
+Colours. The five brand colours are never changed, in either theme. Every rule draws
+with a role (what the colour is for) or a derived token, never with a palette colour
+for text or a surface, so the dark theme redefines the roles and nothing else; the
+accent face of a primary button is the one rule that keeps the brand accent in both
+themes. `tests/test_brand_contrast.py` checks every pair of the stylesheet in both
+themes, `tests/test_theme.py` the recorded values and the switch.
 
-| Token | Value | Role |
-| --- | --- | --- |
-| `--rv-charcoal` | `#2d2f3a` | Text on white; the rail and the sign-in panel |
-| `--rv-accent` | `#4c5bd4` | Links, primary buttons, the mark of the current page |
-| `--rv-stone` | `#d9d6cf` | Text on charcoal; dashed borders |
-| `--rv-gray` | `#8a8f98` | Control borders; text only on charcoal at 24 px or more |
-| `--rv-white` | `#ffffff` | The page and every surface that carries status text |
-| `--rv-text-secondary` | `#5a5e6b` | Secondary text, on white only |
-| `--rv-canvas` | `#f4f3ef` | Table headers, code, the footer, the import area, toolbars |
-| `--rv-line` | `#e4e2db` | Borders and dividers |
-| `--rv-charcoal-deep` | `#22242d` | The current page in the rail |
-| `--rv-charcoal-soft` | `#3a3d4b` | Hover in the rail, the avatar |
-| `--rv-stone-dim` | `#a9a69e` | Group labels in the rail |
-| `--rv-accent-deep` | `#3a47b5` | Links on hover |
-| `--rv-accent-tint` | `#eceefa` | The import area while a file is dragged over it |
-| `--rv-status-protected` | `#1b6e3c` | Protected, on white only, with an icon |
-| `--rv-status-needs-attention` | `#8a5a00` | Needs attention, on white only, with an icon |
-| `--rv-status-not-protected` | `#b3261e` | Not protected, on white only, with an icon |
-| `--rv-status-not-checked` | `#5a5e6b` | Not checked and not applicable, on white only |
+| Token | Light | Dark | Role |
+| --- | --- | --- | --- |
+| `--rv-charcoal` | `#2d2f3a` | same | Brand: the value of text, rail, ink and focus in the light theme |
+| `--rv-accent` | `#4c5bd4` | same | Brand: the face of a primary button in both themes; links and marks in light |
+| `--rv-stone` | `#d9d6cf` | same | Brand: text on the rail; the strong line in light |
+| `--rv-gray` | `#8a8f98` | same | Brand: control borders; text only on the rail at 24 px or more |
+| `--rv-white` | `#ffffff` | same | Brand: text on the rail, on ink and on a button face; the surface in light |
+| `--rv-text` | charcoal | `#e6e7ec` | Text on the surface and the canvas; chart lines and the quote rule |
+| `--rv-text-secondary` | `#5a5e6b` | `#aab0bd` | Secondary text, on the surface only; the border of a field |
+| `--rv-surface` | white | `#1e2028` | The page and every surface that carries status text |
+| `--rv-canvas` | `#f4f3ef` | `#272a34` | Table headers, code, the footer, the import area, toolbars and bands |
+| `--rv-line` | `#e4e2db` | `#3a3e4b` | Borders and dividers |
+| `--rv-line-strong` | stone | `#4d5261` | Dashed borders, the ring track of thin evidence, the not-checked segment |
+| `--rv-rail` | charcoal | `#15161c` | The rail and the sign-in panel: the darkest surface in both themes |
+| `--rv-charcoal-deep` | `#22242d` | `#0e0f13` | The current page in the rail |
+| `--rv-charcoal-soft` | `#3a3d4b` | `#2a2d38` | Hover in the rail, the avatar, the pressed theme button |
+| `--rv-stone-dim` | `#a9a69e` | same | Group labels in the rail |
+| `--rv-ink` | charcoal | `#5563dc` | A pressed or hovered control with white words: button hover, the selected chip, the skip link, step numbers |
+| `--rv-link` | accent | `#8b97f2` | Links and words in the accent |
+| `--rv-primary` | accent | `#8b97f2` | Marks and lines in the accent: the current-page mark, ring arcs, sparklines, checkboxes, the violet rule of the sheet |
+| `--rv-accent-deep` | `#3a47b5` | `#aeb7f6` | Links on hover |
+| `--rv-accent-tint` | `#eceefa` | `#2b3050` | The import area while a file is dragged over it |
+| `--rv-focus` | charcoal | `#ffffff` | The focus ring (white on the rail in both themes) |
+| `--rv-danger-fill` | `#b3261e` | same | The face of a danger button, white words in both themes |
+| `--rv-veil` | charcoal at 55 % | black at 60 % | Behind a dialog and the control drawer |
+| `--rv-status-protected` | `#1b6e3c` | `#4fbf7a` | Protected, on the surface only, with an icon |
+| `--rv-status-needs-attention` | `#8a5a00` | `#e0a93c` | Needs attention, on the surface only, with an icon |
+| `--rv-status-not-protected` | `#b3261e` | `#ff8a80` | Not protected, on the surface only, with an icon |
+| `--rv-status-not-checked` | `#5a5e6b` | `#aab0bd` | Not checked and not applicable, on the surface only |
 
 Rules the tests enforce: every rule that sets a text colour also sets its background;
-gray is never text on white or stone; the accent is never text on charcoal; the status
-colours and secondary text are text on white only; a status is never shown by colour
-alone.
+no rule draws text or a surface with a palette colour (the accent face of a button is
+the one exception); gray is never text on the surface or the canvas; the link colour
+is never text on the rail or on ink; the status colours and secondary text are text
+on the surface only; a status is never shown by colour alone; the dark block
+redefines roles only, and the block for the system theme holds the same values.
 
 Type: the system stack (`system-ui`, Segoe UI, Roboto, Helvetica, Arial). Sizes 12,
 13, 14, 15 (body), 16, 20, 24 and 28 px; the text wordmark is bold Helvetica or Arial.
 Spacing 4, 8, 12, 16, 24, 32 and 48 px. Radius 8 px on controls and 12 px on cards and
 tables. Two elevations (`--rv-shadow-1` for cards, `--rv-shadow-2` for dialogs).
 Motion 150 ms ease-out on hover and focus only, off under `prefers-reduced-motion`.
+
+## Themes
+
+Light, dark, or the theme the system prefers. The root element carries the choice as
+`data-theme` (`light`, `dark` or `system`, the default) and the `color-scheme` meta
+follows it, so form controls and scrollbars match. The stylesheet holds the light
+roles in `:root`, the dark roles in `:root[data-theme="dark"]`, and the same dark
+roles in `:root[data-theme="system"]` under `prefers-color-scheme: dark`; the server
+renders the attribute, so a page is never drawn in one theme and repainted in
+another. Dark is a variant drawn from the brand charcoal, not an inversion: the rail
+stays the darkest surface, the page is a blue-charcoal, the canvas lifts above it,
+the shadows deepen and the veil darkens; the accent face of a button keeps the brand
+accent, while links, marks, rings and sparklines take a lighter accent that reaches
+4.5 to 1 on the dark surface. Every status keeps its icon and words in both themes.
+
+The switch (`_theme.html`) is a form of three real buttons, Light, Dark and System,
+with the sun, moon and monitor icons; the pressed one carries `aria-pressed="true"`.
+It sits in the rail above the sign-out button (its words alone from 1024 px: three
+icons beside three words did not fit the 248 px rail, so `revrook-retest.css` hides the
+icons there; below 1024 px the bar shows the icons alone) and beside the edition badge
+on the signed-out pages, with the icons alone. A button posts
+the form to `/theme` (`app/ui/site.py`); with script, `revrook.js` applies the theme
+the moment the button is pressed and htmx posts the form with nothing swapped (the
+server answers 204), and without script the page comes back in the new theme. The
+choice is kept on the user row (`app_user.theme`, revision 0006, `app/theme.py`) so
+that it follows the person to every browser, and mirrored in the `rv_theme` cookie (a
+year, HttpOnly, SameSite=Lax, Secure under https) so that the sign-in page is drawn
+in the same theme. Signed out, the switch sets the cookie only and the way back is
+the sign-in page. The signed-out header carries both horizontal logos and the theme
+shows one of them; the rail always carries the logo for a dark surface.
 
 ## The shell
 

@@ -1,0 +1,14 @@
+{#- The theme switch: light, dark, or the theme the system prefers. Three real
+    buttons, so it works without script (the page comes back in the new theme);
+    with script revrook.js applies the choice the moment a button is pressed and
+    htmx posts the form (hx-post, nothing swapped; the server answers 204).
+    `theme` is the theme in use and `theme_next` the address to come back to,
+    both set by render in app/ui/auth.py. -#}
+{% import "_icons.html" as i %}
+<form class="rv-theme" method="post" action="/theme" hx-post="/theme" hx-swap="none" aria-label="Theme">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="next" value="{{ theme_next|default('/') }}">
+{% for value, word, glyph in (("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "System", "monitor")) -%}
+<button type="submit" name="theme" value="{{ value }}" aria-pressed="{{ 'true' if theme|default('system') == value else 'false' }}" aria-label="{{ word }}" title="{{ word }} theme">{{ i.icon(glyph, 16) }}<span class="rv-theme-text">{{ word }}</span></button>
+{% endfor -%}
+</form>

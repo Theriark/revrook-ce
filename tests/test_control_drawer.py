@@ -116,7 +116,7 @@ def test_the_drawer_is_a_sheet_at_the_right_edge_that_fills_a_phone() -> None:
     assert "animation: rv-drawer-in var(--rv-motion);" in opened
     assert "@keyframes rv-drawer-in" in CSS
     veil = rule("dialog.rv-drawer::backdrop")
-    assert "background-color: rgba(45, 47, 58, 0.55);" in veil
+    assert "background-color: var(--rv-veil);" in veil
     phone = re.search(
         r"@media \(max-width: 767px\) \{\n  dialog\.rv-drawer \{([^}]*)\}", CSS
     )

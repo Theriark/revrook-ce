@@ -101,8 +101,8 @@ def test_the_follow_up_stylesheet_is_linked_after_the_main_one_and_versioned() -
 
 def test_the_strip_fade_is_steeper_as_wide_as_its_tail_and_scroll_aware() -> None:
     fade = "linear-gradient(to right, transparent, var(--rv-{}) 40%)"
-    assert fade.format("charcoal") in rule(".rv-nav-strip::after")
-    assert fade.format("white") in rule(".rv-tabs-strip::after")
+    assert fade.format("rail") in rule(".rv-nav-strip::after")
+    assert fade.format("surface") in rule(".rv-tabs-strip::after")
     # revrook.css keeps the 48px fade that takes no pointer; only its stop moved.
     assert "width: 48px;" in rule(".rv-nav-strip::after", CSS)
     assert "pointer-events: none;" in rule(".rv-tabs-strip::after", CSS)
@@ -121,9 +121,7 @@ def test_the_strip_fade_is_steeper_as_wide_as_its_tail_and_scroll_aware() -> Non
         SCRIPT
     )
     assert "atEnd = last.right <= edge + 1;" in SCRIPT
-    assert 'strip.setAttribute("data-scroll-end", atEnd ? "true" : "false");' in (
-        SCRIPT
-    )
+    assert 'strip.setAttribute("data-scroll-end", atEnd ? "true" : "false");' in SCRIPT
     for event in ('"scroll", update', '"resize", update', '"load", update'):
         assert event in SCRIPT, event
     unwanted = ("eval(", "fetch(", "XMLHttpRequest", "innerHTML", "document.write")
@@ -305,14 +303,14 @@ def test_an_opened_delete_disclosure_is_white_on_charcoal() -> None:
         "details.rv-confirm[open] > summary:not([role]):not(:focus)"
     )
     assert "color: var(--rv-white);" in open_summary
-    assert "background-color: var(--rv-charcoal);" in open_summary
+    assert "background-color: var(--rv-ink);" in open_summary
     white, charcoal = VARIABLES["--rv-white"], VARIABLES["--rv-charcoal"]
     assert contrast_ratio(white, charcoal) >= BODY_MINIMUM
     # The grey Pico used (the muted colour) fails on charcoal, so the rule is needed.
     grey = VARIABLES["--rv-text-secondary"]
     assert contrast_ratio(grey, charcoal) < BODY_MINIMUM
     # The closed summary and its hover are unchanged in revrook.css.
-    assert "color: var(--rv-charcoal);" in rule("details.rv-confirm > summary", CSS)
+    assert "color: var(--rv-text);" in rule("details.rv-confirm > summary", CSS)
     assert "color: var(--rv-white);" in rule("details.rv-confirm > summary:hover", CSS)
     system = (TEMPLATES / "system.html").read_text(encoding="utf-8")
     assert '<details class="rv-confirm">\n<summary>Delete {{ client.name }}' in system
@@ -682,7 +680,7 @@ def test_the_wide_tables_are_cards_until_the_page_beside_the_sidebar_fits() -> N
 
 
 def test_the_border_of_a_field_reaches_3_to_1_on_the_canvas_and_on_white() -> None:
-    light = ':root:not([data-theme="dark"]),\n[data-theme="light"]'
+    light = ":root"
     assert "--pico-form-element-border-color: var(--rv-text-secondary);" in rule(light)
     border = VARIABLES["--rv-text-secondary"]
     for surface in ("--rv-canvas", "--rv-white"):
@@ -693,7 +691,7 @@ def test_the_border_of_a_field_reaches_3_to_1_on_the_canvas_and_on_white() -> No
     assert "--pico-form-element-border-color: var(--rv-gray);" in rule(light, CSS)
     # The active border and the focus ring are as before.
     assert "--pico-form-element-active-border-color" not in rule(light)
-    assert "outline: 3px solid var(--rv-charcoal);" in rule(
+    assert "outline: 3px solid var(--rv-focus);" in rule(
         "html :is(a, button, input, select, textarea, summary, [tabindex])"
         ":focus-visible",
         CSS,
@@ -761,7 +759,7 @@ def test_the_import_area_border_reaches_3_to_1_and_stays_dashed() -> None:
     # drag-over are untouched (their selectors outrank the single class).
     assert "border: 2px dashed var(--rv-gray);" in rule(".rv-dropzone", CSS)
     lifted = ".rv-dropzone:hover,\n.rv-dropzone:focus-within,\n.rv-dropzone.is-dragover"
-    assert "border-color: var(--rv-accent);" in rule(lifted, CSS)
+    assert "border-color: var(--rv-primary);" in rule(lifted, CSS)
     assert "background-color: var(--rv-canvas);" in rule(".rv-dropzone", CSS)
 
 
