@@ -27,6 +27,7 @@ from app.reports.status import (
 )
 from app.reports.view import iso_date
 from app.scoring.display import format_fixed
+from app.scoring.model import DEFAULT_THRESHOLDS
 from app.scoring.snapshot import (
     SnapshotError,
     SnapshotInput,
@@ -57,6 +58,29 @@ ORDERS = ("asc", "desc")
 DENSITIES = ("comfortable", "compact")
 NO_EVIDENCE = StatusLabel("not-checked", "No evidence yet", "question")
 ALL_PROTECTED = StatusLabel("protected", "All checked controls protected", "check")
+# The bands of the scoring model in their order, each with the key of its filter
+# (`?band=strong`), and the key of the clients without a report.
+BAND_NAMES = tuple(name for name, _ in DEFAULT_THRESHOLDS.bands) + (
+    DEFAULT_THRESHOLDS.lowest_band,
+    DEFAULT_THRESHOLDS.insufficient_band,
+)
+BAND_KEYS = tuple(name.split()[0].lower() for name in BAND_NAMES)
+NO_REPORT_KEY = "none"
+NO_REPORT_NAME = "No report yet"
+BAND_CHOICES = (*BAND_KEYS, NO_REPORT_KEY)
+
+
+def band_key(band: str) -> str:
+    """The filter key of a band name ("Insufficient evidence" is "insufficient")."""
+    return band.split()[0].lower() if band else NO_REPORT_KEY
+
+
+def read_band(text: str) -> str:
+    """The band filter of the list; empty for none, FormError (422) if unknown."""
+    value = text.strip()
+    if value and value not in BAND_CHOICES:
+        raise FormError(f"Band must be one of {', '.join(BAND_CHOICES)}.")
+    return value
 
 
 @dataclass(frozen=True)
@@ -176,6 +200,7 @@ class ListQuery:
     order: str = "asc"
     density: str = "comfortable"
     page: int = 1
+    band: str = ""
 
     def params(self, **changes: object) -> str:
         """The query part of the list's address with these changes, starting with
@@ -211,7 +236,13 @@ class ListQuery:
 
 
 def read_query(
-    q: str, show: str, sort: str, order: str, density: str, page: str
+    q: str,
+    show: str,
+    sort: str,
+    order: str,
+    density: str,
+    page: str,
+    band: str = "",
 ) -> ListQuery:
     """The query of the list; FormError (422) when a value is not one of the known."""
     if show not in FILTER_KEYS:
@@ -232,13 +263,18 @@ def read_query(
         order=order,
         density=density,
         page=int(number),
+        band=read_band(band),
     )
 
 
 def matches(card: ClientCard, query: ListQuery) -> bool:
-    """Whether a client is shown under this search and filter."""
+    """Whether a client is shown under this search, filter and band."""
     if query.q and query.q.casefold() not in card.name.casefold():
         return False
+    if query.band:
+        key = NO_REPORT_KEY if card.report is None else band_key(card.report.band)
+        if key != query.band:
+            return False
     if query.show == "needs-work":
         return card.needs_work
     if query.show == "no-report":

@@ -44,7 +44,7 @@
 <span class="rv-stat-label">{{ stat.label }}</span>
 <span class="rv-stat-note">{{ stat.note }}</span>
 {% if stat.change %}<span class="rv-stat-change">{{ stat.change }}</span>{% endif %}
-{% if stat.spark %}<svg class="rv-spark" viewBox="0 0 96 28" width="96" height="28" aria-hidden="true" focusable="false"><polyline points="{{ stat.spark }}"/></svg>{% endif %}
+{% if stat.spark %}<svg class="rv-spark" viewBox="0 0 96 28" width="96" height="28" role="img" tabindex="0" aria-label="{{ stat.spark_label }}" data-spark><polyline points="{{ stat.spark }}"/>{% for mark in stat.marks %}<circle class="rv-spark-mark" cx="{{ mark.x }}" cy="{{ mark.y }}" r="4" data-tip="{{ mark.tip }}"/>{% endfor %}</svg>{% endif %}
 </div>
 {% endfor %}
 </div>
@@ -104,72 +104,23 @@
 
 <div class="rv-two">
 <section class="rv-card" id="trend" aria-labelledby="trend-title">
-<h2 id="trend-title" class="rv-card-title">Score over the last {{ history_days }} days</h2>
-<p class="rv-card-subtitle">From the stored reports of each client. Up to six clients are drawn, the ones with the newest reports.</p>
-{% if trend.lines %}
-{#- The chart twice, wide and narrow (app/ui/dashboard.py, ChartSize); the stylesheet
-    shows the one that suits the width. The narrow drawing has no labels at the ends
-    of its lines: the legend under it names the clients. -#}
-{% for chart in (trend, trend_narrow) %}
-<svg class="rv-chart rv-chart-{{ chart.kind }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img" aria-labelledby="trend-title trend-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}">
-<desc id="trend-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}">Score from 0 to 100 by report date, one line per client. The numbers are in the table that follows.</desc>
-<g class="rv-chart-grid">
-{% for y, label in chart.y_ticks %}
-<line x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ y }}" y2="{{ y }}"/>
-<text x="{{ chart.left - 8 }}" y="{{ y }}" text-anchor="end" dominant-baseline="middle">{{ label }}</text>
-{% endfor %}
-</g>
-<g class="rv-chart-axis">
-{% for x, label, anchor in chart.x_ticks %}
-<text x="{{ x }}" y="{{ chart.bottom + 18 }}" text-anchor="{{ anchor }}">{{ label }}</text>
-{% endfor %}
-</g>
-{% for line in chart.lines %}
-<g class="rv-chart-line">
-{% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
-<circle cx="{{ line.last_x }}" cy="{{ line.last_y }}" r="3.5"/>
-{% if chart.labelled %}<text x="{{ chart.right + 10 }}" y="{{ line.label_y }}" dominant-baseline="middle">{{ line.short_name }}</text>{% endif %}
-</g>
-{% endfor %}
-</svg>
-{% endfor %}
-<ul class="rv-chart-legend" aria-label="The clients drawn">
-{% for line in trend.lines %}
-<li><svg class="rv-chart-key" viewBox="0 0 28 8" width="28" height="8" aria-hidden="true" focusable="false"><line x1="1" y1="4" x2="27" y2="4"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/></svg><span>{{ line.name }}</span></li>
-{% endfor %}
-</ul>
-<details class="rv-chart-data">
-<summary>Show the numbers</summary>
-<div class="rv-table-scroll">
-<table>
-<caption>Score by report date, {{ trend.reports }} report{% if trend.reports != 1 %}s{% endif %}</caption>
-<thead><tr><th scope="col">Client</th><th scope="col">Report date</th><th scope="col">Score</th><th scope="col">Band</th></tr></thead>
-<tbody>
-{% for line in trend.lines %}{% for day, score, band in line.rows %}
-<tr><th scope="row">{{ line.name }}</th><td>{{ day }}</td><td class="rv-numeric">{{ score }}</td><td>{{ band }}</td></tr>
-{% endfor %}{% endfor %}
-</tbody>
-</table>
+<h2 id="trend-title" class="rv-card-title">Score over time</h2>
+{#- The body of the card (_trend_chart.html) is what the chart script swaps when a
+    range is chosen; app/ui/fragments.py renders it alone for that. -#}
+<div id="trend-body">
+{% include "_trend_chart.html" %}
 </div>
-</details>
-{% else %}
-<div class="rv-empty" id="trend-empty">
-{{ i.icon("system", "xl") }}
-<p class="rv-empty-title">No reports yet</p>
-<p class="rv-empty-text">A line appears for a client once a report has been made for it, from the Reports page of that client.</p>
-</div>
-{% endif %}
 </section>
 
 <section class="rv-card" id="domains" aria-labelledby="domains-title">
 <h2 id="domains-title" class="rv-card-title">Controls by domain</h2>
-<p class="rv-card-subtitle">Every control of every client, by the status it has today. Each bar is one domain; the numbers are under the bars.</p>
+<p class="rv-card-subtitle">Every control of every client, by the status it has today. Each bar is one domain; a segment opens its numbers under the bars.</p>
 <ul class="rv-domains">
 {% for bar in domains %}
 <li class="rv-domain">
 <span class="rv-domain-name">{{ bar.name }}</span>
 <span class="rv-domain-sum">{% for label, count in bar.counts %}{% if label.key == "protected" %}{{ count }}{% endif %}{% endfor %} of {{ bar.total }} protected</span>
-<svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">{% for seg in bar.segments %}<rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/>{% endfor %}</svg>
+<svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="group" aria-label="{{ bar.name }} by status" data-roving>{% for seg in bar.segments %}<a class="rv-seg-link" href="#domain-row-{{ bar.code }}" data-tip="{{ bar.name }}&#10;{{ seg.count }} {{ seg.label.text|lower }} of {{ bar.total }}"><title>{{ bar.name }}: {{ seg.count }} {{ seg.label.text|lower }} of {{ bar.total }}</title><rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/></a>{% endfor %}</svg>
 </li>
 {% endfor %}
 </ul>
@@ -186,7 +137,7 @@
 <thead><tr><th scope="col">Domain</th><th scope="col" class="rv-numeric">Protected</th><th scope="col" class="rv-numeric">Attention</th><th scope="col" class="rv-numeric">Not protected</th><th scope="col" class="rv-numeric">Not checked</th><th scope="col" class="rv-numeric">All</th></tr></thead>
 <tbody>
 {% for bar in domains %}
-<tr>
+<tr id="domain-row-{{ bar.code }}" tabindex="-1">
 <th scope="row">{{ bar.name }}</th>
 {% for label, count in bar.counts %}<td class="rv-numeric">{{ count }}</td>{% endfor %}
 <td class="rv-numeric">{{ bar.total }}</td>

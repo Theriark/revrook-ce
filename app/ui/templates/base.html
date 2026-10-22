@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/static/vendor/pico/pico.min.css?v={{ asset_version }}">
 <link rel="stylesheet" href="/static/css/revrook.css?v={{ asset_version }}">
 <link rel="stylesheet" href="/static/css/revrook-retest.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/css/charts.css?v={{ asset_version }}">
 {% if "favicon-32x32.png" in brand_files %}
 <link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png">
 {% endif %}
@@ -21,6 +22,7 @@
 {% endif %}
 <script src="/static/vendor/htmx/htmx.min.js?v={{ asset_version }}" defer></script>
 <script src="/static/js/revrook.js?v={{ asset_version }}" defer></script>
+<script src="/static/js/charts.js?v={{ asset_version }}" defer></script>
 </head>
 {#- Signed in: the charcoal rail (brand, navigation, user) and the page column.
     Signed out: the rook panel on the left and the form on the right. The brand is

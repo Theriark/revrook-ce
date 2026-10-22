@@ -19,6 +19,33 @@
 </dl>
 </section>
 
+<section id="ages" aria-labelledby="ages-title">
+<div class="rv-section-head">
+<div><h3 id="ages-title">How old is each export</h3><p class="rv-section-note">The newest export of every source against the date it goes stale, the mark on its bar. Every bar is on the same scale; a bar past its mark counts for less, and for nothing at twice the age. A bar opens its row in the sources table.</p></div>
+</div>
+{% if ages %}
+<ul class="rv-ages">
+{% for bar in ages %}
+<li class="rv-age" id="age-{{ bar.code }}">
+<span class="rv-age-name">{{ i.source_mark(bar.code) }}<span>{{ bar.name }}</span></span>
+<span class="rv-age-words">{{ bar.words }}</span>
+{% if bar.imported %}
+<svg class="rv-bar rv-age-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="group" aria-label="{{ bar.name }}: {{ bar.words }}" data-roving><rect class="rv-age-track" x="0" y="0" width="100" height="10"/><a class="rv-seg-link" href="#source-{{ bar.code }}" data-tip="{{ bar.tip }}"><title>{{ bar.tip }}</title><rect class="rv-seg-{{ bar.state.key }}" x="0" y="0" width="{{ bar.width }}" height="10"/></a>{% if bar.mark %}<rect class="rv-age-mark" x="{{ bar.mark }}" y="0" width="0.6" height="10"/>{% endif %}</svg>
+{% else %}
+<svg class="rv-bar rv-age-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="rv-age-track" x="0" y="0" width="100" height="10"/></svg>
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+<ul class="rv-legend">
+{% for state in ages|map(attribute="state")|unique %}
+<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-seg-{{ state.key }}" width="12" height="12" rx="3"/></svg> {{ s.status(state) }}</li>
+{% endfor %}
+<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-age-mark" x="5" width="2" height="12"/></svg> Goes stale</li>
+</ul>
+{% endif %}
+</section>
+
 <section id="refresh" aria-labelledby="refresh-title">
 <div class="rv-section-head">
 <div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. Import a fresh file with the <a href="/imports/profile-editor?client_id={{ client_id }}">profile editor</a>, or through the API.</p></div>
@@ -53,7 +80,7 @@
 </thead>
 <tbody>
 {% for row in sources %}
-<tr>
+<tr id="source-{{ row.code }}" tabindex="-1">
 <th scope="row"><span class="rv-source-name">{{ i.source_mark(row.code) }}<span>{{ row.name }}</span></span></th>
 <td data-label="State">{{ s.status(row.state) }}</td>
 <td data-label="Newest export" class="rv-date">{{ s.day(row.captured_at) }}</td>

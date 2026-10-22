@@ -8,9 +8,14 @@
 <div><h2 id="checklist-title">Checklist</h2><p class="rv-section-note">Every control of the library as a report made today would show it, with the evidence behind each status.</p></div>
 </div>
 <div class="rv-toolbar rv-checklist-toolbar">
+{#- A segment of a chart on the overview narrows the list to a domain and a status
+    (`?domain=`, `?status=`): the two chips keep that narrowing, and a third chip
+    names it and takes it away. -#}
+{% set narrow_query = ("&domain=" ~ domain if domain else "") ~ ("&status=" ~ status if status else "") %}
 <ul class="rv-chips" aria-label="Show">
-<li><a id="show-all" class="rv-chip" href="/clients/{{ client_id }}/checklist"{% if show == "all" %} aria-current="true"{% endif %}>All controls <span class="rv-chip-count">{{ total }}</span></a></li>
-<li><a id="show-flagged" class="rv-chip" href="/clients/{{ client_id }}/checklist?show=flagged"{% if show == "flagged" %} aria-current="true"{% endif %}>Changed or needs a look <span class="rv-chip-count">{{ flagged_total }}</span></a></li>
+<li><a id="show-all" class="rv-chip" href="/clients/{{ client_id }}/checklist{% if narrow_query %}?{{ narrow_query[1:] }}{% endif %}"{% if show == "all" %} aria-current="true"{% endif %}>All controls <span class="rv-chip-count">{{ total }}</span></a></li>
+<li><a id="show-flagged" class="rv-chip" href="/clients/{{ client_id }}/checklist?show=flagged{{ narrow_query }}"{% if show == "flagged" %} aria-current="true"{% endif %}>Changed or needs a look <span class="rv-chip-count">{{ flagged_total }}</span></a></li>
+{% if narrowed %}<li><a id="show-narrowed" class="rv-chip rv-chip-narrowed" href="/clients/{{ client_id }}/checklist{% if show != "all" %}?show={{ show }}{% endif %}" aria-current="true">{{ narrowed }} <span class="rv-chip-count">{{ rows|length }}</span><span class="rv-chip-remove" aria-hidden="true">&#10005;</span><span class="rv-sr-only">, remove this narrowing</span></a></li>{% endif %}
 </ul>
 <p class="rv-toolbar-note" id="checklist-count">{{ rows|length }} of {{ total }} controls shown.{% if not has_earlier %} No report has been made for this client yet, so no control is marked as changed.{% endif %}</p>
 </div>
@@ -43,8 +48,13 @@
 {% else %}
 <div class="rv-empty" id="checklist-empty">
 {{ i.icon("check", "xl") }}
+{% if narrowed %}
+<p class="rv-empty-title">No control matches</p>
+<p class="rv-empty-text">No control of {{ narrowed|lower }} is on this list today.</p>
+{% else %}
 <p class="rv-empty-title">Nothing changed and nothing needs a look</p>
 <p class="rv-empty-text">{% if has_earlier %}Every control has the status it had at the last report, its evidence is current and no exception is open.{% else %}No control has old evidence or an open exception. A change of status appears here once a report has been made to compare against.{% endif %}</p>
+{% endif %}
 <a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/checklist">Show all controls</a>
 </div>
 {% endif %}

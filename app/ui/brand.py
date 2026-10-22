@@ -39,8 +39,10 @@ ASSET_FILES = (
     "vendor/pico/pico.min.css",
     "css/revrook.css",
     "css/revrook-retest.css",
+    "css/charts.css",
     "vendor/htmx/htmx.min.js",
     "js/revrook.js",
+    "js/charts.js",
 )
 
 

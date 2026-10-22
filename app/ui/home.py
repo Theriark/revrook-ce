@@ -23,8 +23,16 @@ from app.posture import load_live, view_of
 from app.reports.view import DomainRow, ReportContext, ReportError
 from app.snapshots import earlier_bytes
 from app.ui.auth import redirect, render
+from app.ui.charts import RANGE_DAYS, RANGE_WORDS, read_days
 from app.ui.clients import needed_sources
-from app.ui.common import library_of, read_period, signed_in_user, to_login
+from app.ui.common import (
+    FormError,
+    library_of,
+    problem,
+    read_period,
+    signed_in_user,
+    to_login,
+)
 from app.ui.dashboard import (
     EVENT_WORDS,
     HISTORY_DAYS,
@@ -82,16 +90,35 @@ async def usernames(session: AsyncSession) -> dict[int, str]:
 
 async def recent_snapshots(
     session: AsyncSession, since: datetime
-) -> list[tuple[int, dict[str, Any]]]:
-    """The stored reports of the active clients since `since`, newest first."""
+) -> list[tuple[int, dict[str, Any], int]]:
+    """The stored reports of the active clients since `since`, newest first, each
+    with the id of its row so a mark on a chart can open it."""
     found = await session.execute(
-        select(Snapshot.client_id, Snapshot.inputs)
+        select(Snapshot.client_id, Snapshot.inputs, Snapshot.id)
         .join(Client, Client.id == Snapshot.client_id)
         .where(Client.archived_at.is_(None), Snapshot.as_of >= since)
         .order_by(Snapshot.as_of.desc(), Snapshot.id.desc())
         .limit(MAX_SNAPSHOTS)
     )
-    return [(client_id, document) for client_id, document in found.all()]
+    return [
+        (client_id, document, snapshot_id)
+        for client_id, document, snapshot_id in found.all()
+    ]
+
+
+async def trend_context(request: Request, now: datetime, days: int) -> dict[str, Any]:
+    """The trend chart alone, for the range swapped in by the chart script: the
+    stored reports of the last `days` and the names of the clients."""
+    since = now - timedelta(days=days)
+    async with session_factory(request)() as session:
+        points = report_points(await recent_snapshots(session, since))
+        names = await client_names(session)
+    return {
+        "trend": trend_chart(points, names, now, days=days),
+        "trend_narrow": trend_chart(points, names, now, days=days, size=NARROW_CHART),
+        "days": days,
+        "ranges": [(value, RANGE_WORDS[value]) for value in RANGE_DAYS],
+    }
 
 
 async def recent_events(session: AsyncSession) -> list[AuditEvent]:
@@ -104,8 +131,11 @@ async def recent_events(session: AsyncSession) -> list[AuditEvent]:
     return list(found.scalars())
 
 
-async def load_board(request: Request, user: AppUser, now: datetime) -> dict[str, Any]:
-    """Everything the dashboard shows, read in one database session."""
+async def load_board(
+    request: Request, user: AppUser, now: datetime, days: int = HISTORY_DAYS
+) -> dict[str, Any]:
+    """Everything the dashboard shows, read in one database session. `days` is
+    the range of the trend chart; the sparklines keep their twelve weeks."""
     library = library_of(request)
     wanted = needed_sources(request)
     start, end = read_period("", "", now.date())
@@ -154,23 +184,30 @@ async def load_board(request: Request, user: AppUser, now: datetime) -> dict[str
         "stats": stat_cards(postures, weekly, evidence_summary(sources)),
         "attention": prioritised(attention)[:MAX_ATTENTION],
         "attention_total": len(attention),
-        "trend": trend_chart(points, names, now),
-        "trend_narrow": trend_chart(points, names, now, size=NARROW_CHART),
+        "trend": trend_chart(points, names, now, days=days),
+        "trend_narrow": trend_chart(points, names, now, days=days, size=NARROW_CHART),
         "domains": domain_bars(domain_rows),
         "changes": change_lines(events, names, users, now),
-        "history_days": HISTORY_DAYS,
+        "days": days,
+        "ranges": [(value, RANGE_WORDS[value]) for value in RANGE_DAYS],
     }
 
 
 @router.get("/")
-async def home(request: Request) -> Response:
-    """Home: setup first, then sign-in, then the dashboard."""
+async def home(request: Request, days: str = "") -> Response:
+    """Home: setup first, then sign-in, then the dashboard. `days` is the range
+    of the trend chart (7, 30 or 90), the way the chart's own form asks for it
+    without script; a value that is not known is refused with a 422."""
     async with session_factory(request)() as db:
         if await count_users(db) == 0:
             return redirect("/setup")
     user = await signed_in_user(request)
     if user is None:
         return to_login(request)
-    board = await load_board(request, user, clock_of(request)())
+    try:
+        chosen = read_days(days)
+    except FormError as error:
+        return problem(request, user, error.status_code, str(error))
+    board = await load_board(request, user, clock_of(request)(), chosen)
     context: dict[str, Any] = {"title": "Home", "nav": "home", "user": user, **board}
     return render(request, "home.html", context, current_session(request))

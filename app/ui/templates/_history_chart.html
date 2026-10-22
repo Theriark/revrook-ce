@@ -1,0 +1,21 @@
+{#- The body of the "Score over time" card of the report builder: the span (90
+    days, a year, every report), the score of this client at every stored report
+    drawn wide and narrow, and the numbers. Rendered inside #history-body by
+    reports.html and on its own by app/ui/fragments.py when the chart script asks
+    for another span; without script the form posts its span to the builder, which
+    draws the same card (`?span=`). -#}
+{% import "_icons.html" as i %}
+{% import "_chart.html" as c %}
+{{ c.range_form("/clients/" ~ client_id ~ "/reports", "/clients/" ~ client_id ~ "/charts/history", "history-body", "span", spans, span, "Span of the chart") }}
+{% if history.lines %}
+{% for chart in (history, history_narrow) %}
+{{ c.score_chart(chart, "history-title", "history", "The score of this client at every report, from 0 to 100 by report date.") }}
+{% endfor %}
+{{ c.score_table(history, "Score by report date, " ~ history.reports ~ (" report" if history.reports == 1 else " reports") ~ " in this span") }}
+{% else %}
+<div class="rv-empty rv-empty-small" id="history-empty">
+{{ i.icon("system", "lg") }}
+<p class="rv-empty-title">{% if reports_total %}No report in this span{% else %}No report yet{% endif %}</p>
+<p class="rv-empty-text">{% if reports_total %}Show all reports to see the {{ reports_total }} made before.{% else %}The score of this client is drawn here once a report has been made with step 3.{% endif %}</p>
+</div>
+{% endif %}
