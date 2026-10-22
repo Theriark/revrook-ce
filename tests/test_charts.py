@@ -255,7 +255,7 @@ def test_the_bands_are_counted_in_the_order_of_the_model() -> None:
     fullest = max(item.count for item in counts)
     for item in counts:
         assert (item.width == "100.00") == (item.count == fullest), item
-        assert (item.width == "0") == (item.count == 0), item
+        assert (item.width == "0.00") == (item.count == 0), item
     assert none.tip == "No report yet\n1 client"
     assert band_counts([]) and all(item.count == 0 for item in band_counts([]))
 
