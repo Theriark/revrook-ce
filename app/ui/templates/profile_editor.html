@@ -6,7 +6,7 @@
 </div>
 {% if not clients %}
 <div class="rv-empty" id="editor-empty">
-{{ i.icon("clients", 36) }}
+{{ i.icon("clients", "xl") }}
 <p class="rv-empty-title">No clients yet</p>
 <p class="rv-empty-text">A profile belongs to one client. Add the client first, then come back to map its first export.</p>
 <a role="button" href="/clients">Add a client</a>
@@ -36,7 +36,7 @@
 </div>
 </div>
 <label class="rv-dropzone">
-{{ i.icon("upload") }}
+{{ i.icon("upload", "lg") }}
 <span class="rv-dropzone-title">Drop the vendor export here, or choose a file</span>
 <span class="rv-dropzone-hint">CSV, at most {{ max_megabytes }} MB. The preview only reads the file; nothing is stored until you import it.</span>
 <input id="file" name="file" type="file" accept=".csv,text/csv" required>
