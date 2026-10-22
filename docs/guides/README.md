@@ -3,10 +3,11 @@
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
 in the order a new installation meets them. Each guide shows the live Development site
 (`https://ce-dev-revrook.theriark.dev`) as captured on 2026-10-21 with invented demo
-data (four pictures were captured again later that day, see the manifest); the
-pictures are in [docs/images](../images/README.md) with a capture manifest. What the
-output is, and is not, is in the [README](../../README.md): a configuration evidence
-summary, not a certification.
+data (four pictures were captured again later that day, and the pictures that showed
+test names with internal ticket numbers were captured again on 2026-10-22 with neutral
+names, see the manifest); the pictures are in [docs/images](../images/README.md) with a
+capture manifest. What the output is, and is not, is in the [README](../../README.md):
+a configuration evidence summary, not a certification.
 
 | Guide | What you do |
 | --- | --- |
@@ -20,7 +21,10 @@ summary, not a certification.
 
 Every guide uses the same test installation and its one administrator account. Names
 such as "Design Review Sample Client", "Sample MSP" (the business name of the test
-installation) and "QA Retest Client THE-504", and the earlier test label "FE Retest
-MSP THE-497" that the first capture of the Settings and preview pages showed, are
-synthetic test data of the Development site; nothing in the pictures is a real
-customer, a real address or a credential.
+installation), the sample leavers profile and the exception owner in the exceptions
+picture are synthetic test data of the Development site; nothing in the pictures is a
+real customer, a real address or a credential. A second test client that earlier
+automated tests had left in the pictures was deleted and the pages captured again; two
+test labels (the owner of the closed exception and a saved profile name) remain
+because the product offers no route to change them (see the capture manifest for what
+each picture replaced and what is kept).

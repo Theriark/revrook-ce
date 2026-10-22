@@ -1,10 +1,10 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "product": "revrook-ce",
   "repository": "Theriark/revrook-ce",
-  "documentationRevision": "feat/revrook-ce-the-578-docs2 (THE-645, 2026-10-21); first capture on feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
+  "documentationRevision": "feat/revrook-ce-the-703 (THE-703, 2026-10-22: pictures captured again with neutral synthetic names); feat/revrook-ce-the-578-docs2 (THE-645, 2026-10-21); first capture on feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
   "identities": {
-    "note": "Two identities, kept distinct. The capture-time facts say what the Development site ran when a picture was taken (each picture also carries its own). The deployed Development candidate is a later development commit with its own image, read from the deployment receipt. No match between a capture-time image and the deployed image is claimed; the commits between the capture-time commit and the documentation head changed documentation only, so the pictures show the same application pages. Four pictures were captured again later on the same day, while the deployed candidate was running (see recaptureTime).",
+    "note": "Three capture identities and the deployed Development candidate, kept distinct. The capture-time facts say what the Development site ran when a picture was taken (each picture also carries its own). The first capture (2026-10-21, 13:00 to 13:11) and the four pictures captured again later that day carry earlier commits and digests; no match between those images and the deployed image is claimed, and the commits in between changed documentation only, so the pictures show the same application pages. The pictures captured again on 2026-10-22 (recaptureTime2) carry the commit and digest the deployment receipt returned before and after the capture, which is the deployed Development candidate below; the pages themselves were not asked.",
     "captureTime": {
       "sourceCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
       "sourceCommitEvidence": "head of origin/development at the time of the first capture (2026-10-21 13:00 to 13:11 Europe/Lisbon); the live pages linked revrook.css?v=2977dd4c6d13, which equals asset_version() computed from the static files of this commit; CI run 39565730325 (push to development) was green",
@@ -24,10 +24,24 @@
       "readFromThePage": false
     },
     "deployedDevelopmentCandidate": {
-      "commit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
-      "imageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
-      "evidence": "deployment receipt of the Development environment (VM-09): CI run 39601882209, deployed 2026-10-21T12:55:26Z, image ghcr.io/theriark/revrook-ce@sha256:b5d6faed... with its revision label verified against the commit; re-read on 2026-10-21 from task THE-645",
-      "digestMatchClaimed": false
+      "commit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "imageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
+      "evidence": "deployment receipt of the Development environment (VM-09): CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, image ghcr.io/theriark/revrook-ce@sha256:13d25242... with its revision label verified against the commit (dockerImageProof verified true); read on 2026-10-22 from task THE-703 before the captures and again after the package upload, identical",
+      "digestMatchClaimed": "only as the receipt reports it: the pictures of 2026-10-22 carry the commit and digest the receipt returned before and after; the pictures of 2026-10-21 keep their earlier identities, for which no match is claimed"
+    },
+    "recaptureTime2": {
+      "sourceCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "imageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
+      "pictures": [
+        "clients-1440.png",
+        "clients-390.png",
+        "clients-768.png",
+        "home-1440.png",
+        "home-390.png",
+        "system-1440.png"
+      ],
+      "evidence": "these six pictures were taken on 2026-10-22 between 01:29 and 01:31 Europe/Lisbon with the Theriark browser tools; the deployment receipt of the Development environment (development_receipt), read from task THE-703 before the captures and again after the package upload, both times named commit 6247addf, digest sha256:13d25242..., CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, dockerImageProof verified true, and no later deployment; the commit and digest of these pictures are taken from that receipt, not read from the page",
+      "readFromThePage": false
     }
   },
   "applicationVersionShown": "0.0.0.dev0 (the System page and revrook_build_info)",
@@ -39,8 +53,8 @@
   "screenshots": [
     {
       "file": "home-1440.png",
-      "sha256": "e4fcfccccc94c0bb06e357e02cfaa79b48d6385939d7a5a766afd6f8e12ec31d",
-      "bytes": 298953,
+      "sha256": "a6c8b568934af91055cae77679338eaa1b0e70e996f8baf475f35c3a42b73b79",
+      "bytes": 291949,
       "width": 1440,
       "height": 2225,
       "fullPage": true,
@@ -48,18 +62,23 @@
       "page": "/",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:00:18+01:00",
-      "capturedAtUtc": "2026-10-21T12:00:18Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T01:30:27+01:00",
+      "capturedAtUtc": "2026-10-22T00:30:27Z",
+      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "e4fcfccccc94c0bb06e357e02cfaa79b48d6385939d7a5a766afd6f8e12ec31d",
+        "capturedAt": "2026-10-21T13:00:18+01:00",
+        "reason": "the first capture showed the synthetic test client 'QA Retest Client THE-504' in Posture by client and in the chart legend; captured again after that client was deleted through System (THE-703). Recent changes still lists audit residue of deleted test clients, now by number only"
+      }
     },
     {
       "file": "clients-1440.png",
-      "sha256": "9293afd1e5d3d9e02a07e4913c5bff65b2c85e45f55e8296b43d610e4f21aa7b",
-      "bytes": 130774,
+      "sha256": "658cf8f29e1ba10f69853f6939e541c933f41d1dad9c15191860ace81a408f02",
+      "bytes": 112737,
       "width": 1440,
       "height": 900,
       "fullPage": true,
@@ -67,13 +86,18 @@
       "page": "/clients",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:01:08+01:00",
-      "capturedAtUtc": "2026-10-21T12:01:08Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T01:29:32+01:00",
+      "capturedAtUtc": "2026-10-22T00:29:32Z",
+      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "9293afd1e5d3d9e02a07e4913c5bff65b2c85e45f55e8296b43d610e4f21aa7b",
+        "capturedAt": "2026-10-21T13:01:08+01:00",
+        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504', a name with an internal ticket number; that client was deleted on 2026-10-22 through System, Delete a client (typed-name confirmation; the only supported route) and the page was captured again (THE-703)"
+      }
     },
     {
       "file": "client-overview-1440.png",
@@ -297,22 +321,27 @@
     },
     {
       "file": "system-1440.png",
-      "sha256": "4a5254177ead731a77403db2470a249855da649e36ac92facd1019dd5850a3d2",
-      "bytes": 214638,
+      "sha256": "15e20f04abb18dcbacd47102019160492ef2e7cc4e6c5266e26b76da5c957b38",
+      "bytes": 210158,
       "width": 1440,
-      "height": 1352,
+      "height": 1306,
       "fullPage": true,
       "environment": "https://ce-dev-revrook.theriark.dev",
       "page": "/system",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:05:06+01:00",
-      "capturedAtUtc": "2026-10-21T12:05:06Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T01:30:43+01:00",
+      "capturedAtUtc": "2026-10-22T00:30:43Z",
+      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
       "usedBy": [
         "docs/guides/07-settings-system-and-glossary.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "4a5254177ead731a77403db2470a249855da649e36ac92facd1019dd5850a3d2",
+        "capturedAt": "2026-10-21T13:05:06+01:00",
+        "reason": "the first capture showed the delete button 'Delete QA Retest Client THE-504'; captured again after that client was deleted through this page (THE-703)"
+      }
     },
     {
       "file": "evidence-integrity-1440.png",
@@ -411,8 +440,8 @@
     },
     {
       "file": "clients-768.png",
-      "sha256": "9d1a410b161de8906eab626f6fb4cebb9cf6d82f5a194e1f258381ec3b96bfbf",
-      "bytes": 109043,
+      "sha256": "e525c8810181de8f4dbd4aea72e8367b08d517ef9134b4d5a7dbb4de49817fd5",
+      "bytes": 105329,
       "width": 768,
       "height": 1192,
       "fullPage": true,
@@ -420,51 +449,66 @@
       "page": "/clients",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 768,
-      "capturedAt": "2026-10-21T13:08:08+01:00",
-      "capturedAtUtc": "2026-10-21T12:08:08Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T01:29:48+01:00",
+      "capturedAtUtc": "2026-10-22T00:29:48Z",
+      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "9d1a410b161de8906eab626f6fb4cebb9cf6d82f5a194e1f258381ec3b96bfbf",
+        "capturedAt": "2026-10-21T13:08:08+01:00",
+        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504'; captured again after that client was deleted through System (THE-703)"
+      }
     },
     {
       "file": "clients-390.png",
-      "sha256": "02d7647aa199c05fba79b6dc3b26e17ece092a66049638241a6f5dc9d4293299",
-      "bytes": 119175,
+      "sha256": "5a3551329a6590eefc6e15ae0b0663aad7e99ba78447ccbb198f6f6380f8aba3",
+      "bytes": 94105,
       "width": 390,
-      "height": 1696,
+      "height": 1343,
       "fullPage": true,
       "environment": "https://ce-dev-revrook.theriark.dev",
       "page": "/clients",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 390,
-      "capturedAt": "2026-10-21T13:08:25+01:00",
-      "capturedAtUtc": "2026-10-21T12:08:25Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T01:30:02+01:00",
+      "capturedAtUtc": "2026-10-22T00:30:02Z",
+      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "02d7647aa199c05fba79b6dc3b26e17ece092a66049638241a6f5dc9d4293299",
+        "capturedAt": "2026-10-21T13:08:25+01:00",
+        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504'; captured again after that client was deleted through System (THE-703)"
+      }
     },
     {
       "file": "home-390.png",
-      "sha256": "6179fc7d29ba345cb8ba9ab80f0bc18a09d7d8eaad80929c096a2bc4f7e98001",
-      "bytes": 290539,
+      "sha256": "00098d1b2ab6e4108eb625712602387f9a8bade72bde36fb583a7a12051b4731",
+      "bytes": 271947,
       "width": 390,
-      "height": 3808,
+      "height": 3579,
       "fullPage": true,
       "environment": "https://ce-dev-revrook.theriark.dev",
       "page": "/",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 390,
-      "capturedAt": "2026-10-21T13:08:48+01:00",
-      "capturedAtUtc": "2026-10-21T12:08:48Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T01:30:15+01:00",
+      "capturedAtUtc": "2026-10-22T00:30:15Z",
+      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
+      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
       "usedBy": [
         "docs/guides/02-clients-and-home.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "6179fc7d29ba345cb8ba9ab80f0bc18a09d7d8eaad80929c096a2bc4f7e98001",
+        "capturedAt": "2026-10-21T13:08:48+01:00",
+        "reason": "the first capture showed the synthetic test client 'QA Retest Client THE-504' in Posture by client and in the chart legend; captured again after that client was deleted through System (THE-703). Recent changes still lists audit residue of deleted test clients, now by number only"
+      }
     },
     {
       "file": "checklist-390.png",
@@ -548,8 +592,22 @@
         "home-1440.png",
         "home-390.png"
       ],
-      "what": "Recent changes lists audit entries of clients that earlier automated tests added and deleted (named 'a deleted client (client 9)' and so on), and the client 'QA Retest Client THE-504' is a synthetic test client that is still present",
-      "why kept": "audit entries are kept by design after a client is deleted and cannot be removed without deleting the database, which is not a supported action on the shared Development installation; on 2026-10-21 at 20:10 Europe/Lisbon the live Home listed further deleted clients (11 and 12) from later tests, so a new capture would show more residue, not less. The pictures of the first capture are kept; nothing in them was edited"
+      "what": "Recent changes lists audit entries of clients that earlier automated tests and reviews added and deleted (named 'a deleted client (client 4)', 'client 13', 'client 14' and so on); the entry 'Client deleted for a deleted client (client 4)' is the deletion of the test client made for this capture",
+      "why kept": "audit entries are kept by design after a client is deleted and cannot be removed without deleting the database, which is not a supported action on the shared Development installation; the entries name deleted clients by number only, so the pictures were captured again on 2026-10-22 once the test client with a ticket number in its name was gone. Nothing in the pictures was edited"
+    },
+    {
+      "file": [
+        "exceptions-1440.png"
+      ],
+      "what": "the closed exception of the sample client carries the owner 'QA test owner THE-520' and a reason that names a ticket, labels left by an earlier test",
+      "why kept": "the product offers no route to edit or delete an exception (an exception can only be added or closed; app/ui/clients.py), and deleting the sample client would remove the evidence, reports and exports every other guide shows. The picture of the first capture is kept and the labels are synthetic"
+    },
+    {
+      "file": [
+        "profile-editor-preview-1440.png"
+      ],
+      "what": "the Saved profile list shows 'THE-505 leavers check (profile 4)', a profile name with an internal ticket number left by an earlier test",
+      "why kept": "a saved profile belongs to its client and the product offers no route to rename or delete it short of deleting the client (the profile editor only reads, maps, saves and imports; app/ui/profiles.py); the picture of the first capture is kept and the label is synthetic. A second capture with a newly saved neutral profile selected was planned in THE-703 but not made: the browser session was lost after the sixth capture and did not come back within the task, so this is an exact gap of that round"
     }
   ],
   "recaptured": [
@@ -561,6 +619,19 @@
       "what": "the first capture showed the business name 'FE Retest MSP THE-497', a label left by an earlier test, on the Settings page and on the cover sheet of the preview page",
       "how": "the name was set to 'Sample MSP' in Settings with the registered test account (the reminder address to reminders@example.test, synthetic; no mail relay is set), the only state change made, and both pages were captured again on 2026-10-21 at 20:31 and 20:32 Europe/Lisbon; the old label is absent from the text of both pages. No image was edited",
       "task": "THE-645"
+    },
+    {
+      "file": [
+        "clients-1440.png",
+        "clients-768.png",
+        "clients-390.png",
+        "home-1440.png",
+        "home-390.png",
+        "system-1440.png"
+      ],
+      "what": "the first capture showed the synthetic test client 'QA Retest Client THE-504', a name with an internal ticket number, on the clients list (three viewports), on Home (Posture by client and the chart legend) and on the System page (its delete button)",
+      "how": "that test client was deleted on 2026-10-22 at 01:29 Europe/Lisbon with the registered test account through System, Delete a client, typing its name as the page requires (the only supported route; the product keeps the audit entry and the hash chain of a deleted client), the only state change made for these captures, and the pages were captured again between 01:29 and 01:31 Europe/Lisbon while the deployment receipt named the candidate image. No image was edited",
+      "task": "THE-703"
     }
   ],
   "unchanged": [
@@ -588,6 +659,12 @@
       "date": "2026-10-21",
       "task": "THE-645",
       "change": "settings-1440.png and report-preview-1440.png captured again with the business name Sample MSP; report-preview-file-1440.png and report-preview-file-full-1440.png added (the rendered quarterly security review that Preview opens); 25 pictures, the four new ones at commit f143e3db / digest sha256:b5d6faed read from the deployment receipt"
+    },
+    {
+      "date": "2026-10-22",
+      "task": "THE-703",
+      "change": "schema 3: six pictures captured again with neutral synthetic names after the test client 'QA Retest Client THE-504' was deleted through System (clients at 1440, 768 and 390 px, Home at 1440 and 390 px, System); their commit and digest are the deployed Development candidate 6247addf / sha256:13d25242 as the deployment receipt returned it before and after; the known residue of the exceptions and profile-editor pictures recorded"
     }
-  ]
+  ],
+  "schemaNote": "schema 3: same layout as schema 2 with a third capture identity (recaptureTime2, the pictures captured again on 2026-10-22 with neutral synthetic names) and the deployed Development candidate updated to the receipt read in that task"
 }

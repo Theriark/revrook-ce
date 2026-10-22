@@ -19,12 +19,15 @@ needed a cleaner state. A picture that replaced an earlier one keeps the hash, t
 and the reason of the one it replaced under `replaces`.
 
 The commit and digest in the manifest are capture-time facts: what the Development
-site ran when each picture was taken. They are not the deployed Development
-candidate (its commit and digest are read from the deployment receipt and recorded in
-[release-candidate.md](../release-candidate.md)), and no match between a capture-time
-image and the deployed image is claimed. The application pages are the same between
-the capture-time commits and the documentation head, because the commits in between
-changed documentation only.
+site ran when each picture was taken. For the pictures of 2026-10-21 they are not the
+deployed Development candidate (its commit and digest are read from the deployment
+receipt and recorded in [release-candidate.md](../release-candidate.md)), and no match
+between a capture-time image and the deployed image is claimed. The application pages
+are the same between the capture-time commits and the documentation head, because the
+commits in between changed documentation only. For the pictures of 2026-10-22 the
+manifest carries the commit and digest the deployment receipt returned before and
+after the capture, which named the deployed candidate; the pages themselves were not
+asked.
 
 Four pictures were captured again on 2026-10-21 between 20:31 and 20:33
 (Europe/Lisbon), while the deployed Development candidate of that day was running:
@@ -39,6 +42,18 @@ deployed candidate, read from the deployment receipt: the pages themselves could
 tell the two commits of that day apart, because no static file changed between them
 and the stylesheet version query stayed the same.
 
+Six pictures were captured again on 2026-10-22 between 01:29 and 01:31
+(Europe/Lisbon): the clients list at 1440, 768 and 390 px, Home at 1440 and 390 px and
+the System page. Their first capture showed a second synthetic test client whose name
+carried an internal ticket number; that client was deleted through **System**,
+**Delete a client** (typing its name, the only route the product offers), the only
+state change made for the capture, and the pages were captured again. The manifest
+records what each picture replaced. Two pictures keep a test label from an earlier
+test because the product offers no route to change it without deleting the sample
+client: the closed exception in `exceptions-1440.png` (its owner and reason) and the
+saved profile name in the **Saved profile** list of `profile-editor-preview-1440.png`.
+Both labels are synthetic and the manifest lists them under `knownResidue`.
+
 Viewports: 1440 px for every page; 390 px for the four pages whose layout changes most
 on a phone (the clients list, Home, the checklist and the sign-in page); 768 px for the
 clients list only, where the rows become two cards to a row. A picture named `-1440` is
@@ -48,12 +63,12 @@ rendered report, whose whole file has its own picture).
 
 What the pictures show is the shared Development test installation: every client,
 report and audit entry in them is synthetic. The **Recent changes** list on Home names
-clients that were added and deleted by earlier automated tests ("a deleted client
-(client 9)" and so on). Those lines are audit entries, which the product keeps on
-purpose after a client is deleted ([7. Settings](../guides/07-settings-system-and-glossary.md#system)),
-so they cannot be removed without deleting the database; every later capture of Home
-shows more of them, not fewer, and the Home pictures were therefore kept from the first
-capture.
+clients that were added and deleted by earlier automated tests and reviews ("a deleted
+client (client 4)", "client 14" and so on). Those lines are audit entries, which the
+product keeps on purpose after a client is deleted
+([7. Settings](../guides/07-settings-system-and-glossary.md#system)), so they cannot be
+removed without deleting the database; they name a deleted client by its number only,
+and the Home pictures of 2026-10-22 show them as they were at that moment.
 
 On the phone picture of the checklist (`checklist-390.png`) the tab bar of the client
 ends with "Evidence and impo": the strip is cut at the right edge of the viewport by
