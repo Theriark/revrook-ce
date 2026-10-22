@@ -350,7 +350,9 @@ def test_the_notes_form_shows_that_it_is_saving_while_htmx_posts() -> None:
     assert hidden is not None and "display: none;" in hidden.group(1)
     shown = re.search(r"\n#note-form\.htmx-request \.rv-notes-saving \{([^}]*)\}", CSS)
     assert shown is not None and "display: inline-flex;" in shown.group(1)
-    control = (ROOT / "app/ui/templates/control.html").read_text(encoding="utf-8")
+    # The notes form lives in the body the control page and the drawer share.
+    body = ROOT / "app/ui/templates/_control_body.html"
+    control = body.read_text(encoding="utf-8")
     assert '<span class="rv-notes-saving" aria-hidden="true">' in control
     assert '<span class="rv-busy"></span>' in control
 

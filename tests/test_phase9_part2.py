@@ -352,7 +352,8 @@ def test_line_breaks_are_counted_as_the_browser_counts_them() -> None:
     assert len(saved) == MAX_TEXT and "\r" not in saved
     with pytest.raises(DraftError, match="longer than 2000"):
         check_text("What we did", LONG_NOTE + "x", MAX_TEXT)
-    control = (TEMPLATE_DIR / "control.html").read_text(encoding="utf-8")
+    # The four note fields live in the body the control page and the drawer share.
+    control = (TEMPLATE_DIR / "_control_body.html").read_text(encoding="utf-8")
     assert control.count(f'maxlength="{MAX_TEXT}"') == 4
 
 
@@ -435,7 +436,7 @@ def test_the_autosave_forms_swap_a_refusal_into_their_status_line() -> None:
     assert htmx_rule(config, 204)["swap"] is False
     assert htmx_rule(config, 401)["swap"] is False
     for name, target in (
-        ("control.html", "note-status"),
+        ("_control_body.html", "note-status"),
         ("reports.html", "details-status"),
     ):
         source = (TEMPLATE_DIR / name).read_text(encoding="utf-8")
