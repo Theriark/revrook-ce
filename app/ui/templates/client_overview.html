@@ -78,7 +78,7 @@
 {% endif %}
 {% else %}
 <div class="rv-empty" id="attention-empty">
-{{ i.icon("check", 36) }}
+{{ i.icon("check", "xl") }}
 <p class="rv-empty-title">Nothing needs attention</p>
 <p class="rv-empty-text">{% if posture.evidence %}Every checked control is protected. Controls that were not checked are counted by domain below.{% else %}Import the first export: the controls it shows as not protected appear here, most urgent first.{% endif %}</p>
 <a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/evidence">{% if posture.evidence %}See the evidence{% else %}Import evidence{% endif %}</a>

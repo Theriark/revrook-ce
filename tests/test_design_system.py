@@ -69,6 +69,8 @@ NAV_LINKS = (
 # The sun, the moon and the monitor of the theme switch (_theme.html), drawn in
 # the rail and in the signed-out header (THE-808).
 THEME_ICONS = 3
+# The rook mark of the brand lockup (_brand.html), drawn on nothing (THE-824).
+MARK_TAG = '<img class="rv-mark-img" src="/static/brand/logo-mark-512x512.png"'
 COMPONENTS = (
     ".rv-page-header",
     ".rv-button-quiet",
@@ -555,7 +557,7 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         assert structure_problems(html) == [], path
         assert '<body class="rv-app">' in html
         assert '<nav class="rv-nav" aria-label="Main">' in html
-        assert 'src="/static/brand/logo-horizontal-dark-1200x400.png"' in html
+        assert MARK_TAG in html
         assert 'class="rv-edition">Community Edition' in html
         links = NAV_LINK.findall(html)
         assert [href for href, _ in links] == [href for href, _ in NAV_LINKS]
@@ -566,7 +568,7 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         # empty state does).
         rail = html.split("</header>", 1)[0]
         icons = len(NAV_LINKS) + 1 + THEME_ICONS
-        assert rail.count('<svg class="rv-icon"') == icons
+        assert rail.count('<svg class="rv-icon ') == icons
         assert '<span class="rv-user-name">admin</span>' in html
         assert 'action="/logout"' in html and ">Sign out</span>" in html
         assert 'class="rv-footer"' in html
@@ -579,20 +581,17 @@ def test_the_sign_in_and_first_run_pages_show_the_rook_panel() -> None:
         assert structure_problems(html) == [], name
         assert '<body class="rv-signed-out">' in html
         assert '<aside class="rv-auth-panel" aria-label="About revrook">' in html
-        assert 'src="/static/brand/logo-stacked-dark-1000x1000.png"' in html
+        # The lockup twice: stacked on the panel, in a row in the header (THE-824).
+        assert html.count(MARK_TAG) == 2
+        assert '<span class="rv-lockup rv-lockup-stack">' in html
+        assert '<span class="rv-lockup rv-lockup-row">' in html
         # The three points of the panel and the three icons of the theme switch.
-        assert html.count('<svg class="rv-icon"') == 3 + THEME_ICONS
-        assert 'class="rv-logo"' in html and 'height="36"' in html
+        assert html.count('<svg class="rv-icon ') == 3 + THEME_ICONS
         assert 'class="rv-auth-lead"' in html
         assert 'class="rv-button-block"' in html
         assert 'class="rv-nav"' not in html
-        # The signed-out header carries the light logo and, for the dark theme,
-        # the dark one; the stylesheet shows one at a time (THE-808).
-        assert 'src="/static/brand/logo-horizontal-1200x400.png"' in html
-        assert (
-            '<img class="rv-logo rv-logo-on-dark" '
-            'src="/static/brand/logo-horizontal-dark-1200x400.png"'
-        ) in html
+        # The composed logo files carry their own surround and are not drawn.
+        assert "logo-horizontal" not in html and "logo-stacked" not in html
         bare = render(name, frozenset())
         assert structure_problems(bare) == [], name
         assert "/static/brand/" not in bare
