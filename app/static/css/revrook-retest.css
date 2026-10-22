@@ -20,11 +20,11 @@
       right of what is in view, and the fade goes (at 768px every client tab was
       in view under a fade). Without the script the stylesheet keeps the fade. */
 .rv-nav-strip::after {
-  background-image: linear-gradient(to right, transparent, var(--rv-charcoal) 40%);
+  background-image: linear-gradient(to right, transparent, var(--rv-rail) 40%);
 }
 
 .rv-tabs-strip::after {
-  background-image: linear-gradient(to right, transparent, var(--rv-white) 40%);
+  background-image: linear-gradient(to right, transparent, var(--rv-surface) 40%);
 }
 
 .rv-nav::after,
@@ -99,7 +99,7 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--rv-text-secondary);
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   main .rv-exports td:empty {
@@ -108,7 +108,7 @@
 
   main .rv-exports tbody tr:hover > td,
   main .rv-exports tbody tr:hover > th {
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   .rv-exports .rv-row-actions {
@@ -179,7 +179,7 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--rv-text-secondary);
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   main .rv-schedules td:empty {
@@ -188,7 +188,7 @@
 
   main .rv-schedules tbody tr:hover > td,
   main .rv-schedules tbody tr:hover > th {
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   .rv-schedules tbody {
@@ -212,8 +212,8 @@ details.rv-confirm[open] > summary,
 details.rv-confirm[open] > summary:focus,
 details.rv-confirm[open] > summary:not([role]):not(:focus) {
   color: var(--rv-white);
-  background-color: var(--rv-charcoal);
-  border-color: var(--rv-charcoal);
+  background-color: var(--rv-ink);
+  border-color: var(--rv-ink);
 }
 
 /* A link that keyboard focus scrolls into view stops 48px short of the right edge
@@ -324,7 +324,7 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
     font-size: 12px;
     font-weight: 600;
     color: var(--rv-text-secondary);
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 
   main .rv-exceptions td:empty {
@@ -333,7 +333,7 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
 
   main .rv-exceptions tbody tr:hover > td,
   main .rv-exceptions tbody tr:hover > th {
-    background-color: var(--rv-white);
+    background-color: var(--rv-surface);
   }
 }
 
@@ -361,8 +361,7 @@ main .rv-exceptions-scroll td {
    for the boundary of a control. The secondary text colour is 5.8:1 on the
    canvas and 6.5:1 on white; the active border (the accent) and the focus ring
    are unchanged. Buttons keep their borders: their words mark them */
-:root:not([data-theme="dark"]),
-[data-theme="light"] {
+:root {
   --pico-form-element-border-color: var(--rv-text-secondary);
 }
 
@@ -413,8 +412,8 @@ dialog.rv-drawer {
   border-left: 1px solid var(--rv-line);
   border-radius: 0;
   box-shadow: var(--rv-shadow-2);
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
 }
 
 dialog.rv-drawer[open] {
@@ -435,7 +434,7 @@ dialog.rv-drawer[open] {
 }
 
 dialog.rv-drawer::backdrop {
-  background-color: rgba(45, 47, 58, 0.55);
+  background-color: var(--rv-veil);
 }
 
 .rv-drawer-panel {
@@ -452,7 +451,7 @@ dialog.rv-drawer::backdrop {
   gap: 12px;
   padding: 10px 24px;
   border-bottom: 1px solid var(--rv-line);
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -460,7 +459,7 @@ dialog.rv-drawer::backdrop {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--rv-charcoal);
+  color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
 
@@ -510,7 +509,7 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
   margin-right: 12px;
   font-weight: 500;
   color: var(--rv-text-secondary);
-  background-color: var(--rv-white);
+  background-color: var(--rv-surface);
 }
 
 .rv-drawer .rv-control-title {

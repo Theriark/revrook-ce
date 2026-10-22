@@ -1,9 +1,12 @@
-"""WCAG 2 contrast of every foreground and background pair in revrook.css.
+"""WCAG 2 contrast of every foreground and background pair in revrook.css, in
+both themes.
 
 revrook.css declares a background-color in every rule that sets a text colour,
-so each pair is read from the file itself. Body and status text need 4.5 to 1;
-text of 24px or larger needs 3 to 1. The Pico CSS variable overrides are checked
-as the pairs Pico draws them in.
+so each pair is read from the file itself and checked twice: with the light
+values of the :root block, and with the dark values of :root[data-theme="dark"]
+laid over them (the block for the system theme must hold the same values). Body
+and status text need 4.5 to 1; text of 24px or larger needs 3 to 1. The Pico CSS
+variable overrides are checked as the pairs Pico draws them in.
 """
 
 import re
@@ -18,6 +21,8 @@ LARGE_TEXT_PX = 24.0
 ROOT_FONT_PX = 16.0
 HEX = re.compile(r"#[0-9a-fA-F]{6}")
 VAR = re.compile(r"var\((--[a-z0-9-]+)\)")
+DARK_SELECTOR = ':root[data-theme="dark"]'
+SYSTEM_SELECTOR = ':root[data-theme="system"]'
 
 # Pico CSS variable pairs: (text variable, background variable).
 PICO_PAIRS = (
@@ -39,6 +44,14 @@ PICO_PAIRS = (
 # Pico variables that never colour text.
 NON_TEXT_PICO_PARTS = ("background", "border", "focus", "underline")
 
+# The approved palette: the same in both themes.
+PALETTE = {
+    "--rv-charcoal": "#2d2f3a",
+    "--rv-accent": "#4c5bd4",
+    "--rv-stone": "#d9d6cf",
+    "--rv-gray": "#8a8f98",
+    "--rv-white": "#ffffff",
+}
 # Reference ratios from the approved brand guide (two decimals).
 BRAND_GUIDE_RATIOS = (
     ("--rv-charcoal", "--rv-white", 13.30),
@@ -56,8 +69,13 @@ STATUS_TOKENS = (
     "--rv-status-not-protected",
     "--rv-status-not-checked",
 )
-# Tokens that may only be text on white.
-WHITE_ONLY_TOKENS = (*STATUS_TOKENS, "--rv-text-secondary")
+# Tokens that may only be text on the surface (white in the light theme).
+SURFACE_ONLY_TOKENS = (*STATUS_TOKENS, "--rv-text-secondary")
+# Palette colours no rule draws text or a surface with: a role stands for them,
+# so the dark theme changes the role alone. The accent face of a button
+# (background and border) is the one exception, kept in both themes.
+PALETTE_TEXT = ("var(--rv-charcoal)", "var(--rv-accent)")
+PALETTE_SURFACES = ("var(--rv-white)", "var(--rv-charcoal)")
 
 
 def strip_comments(css: str) -> str:
@@ -65,7 +83,8 @@ def strip_comments(css: str) -> str:
 
 
 def parse_rules(css: str) -> list[tuple[str, dict[str, str]]]:
-    """(selector, declarations) for every rule; the file has no nested blocks."""
+    """(selector, declarations) for every rule; a rule inside @media is read as
+    any other, with the selector it has there."""
     rules = []
     for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", strip_comments(css)):
         declarations: dict[str, str] = {}
@@ -77,13 +96,29 @@ def parse_rules(css: str) -> list[tuple[str, dict[str, str]]]:
     return rules
 
 
-def custom_properties(rules: list[tuple[str, dict[str, str]]]) -> dict[str, str]:
-    found: dict[str, str] = {}
-    for _, declarations in rules:
-        for name, value in declarations.items():
-            if name.startswith("--"):
-                found[name] = value
-    return found
+def theme_variables(
+    rules: list[tuple[str, dict[str, str]]],
+) -> dict[str, dict[str, str]]:
+    """The custom properties of each theme.
+
+    Light is every token outside the two theme blocks; dark is the dark block
+    laid over light. The system block must repeat the dark block exactly: it is
+    what a page gets when the person leaves the choice to the system.
+    """
+    light: dict[str, str] = {}
+    dark: dict[str, str] = {}
+    system: dict[str, str] = {}
+    for selector, declarations in rules:
+        custom = {n: v for n, v in declarations.items() if n.startswith("--")}
+        if selector == DARK_SELECTOR:
+            dark.update(custom)
+        elif selector == SYSTEM_SELECTOR:
+            system.update(custom)
+        else:
+            light.update(custom)
+    assert dark, "revrook.css has no dark block"
+    assert dark == system, "the dark block and the system block differ"
+    return {"light": light, "dark": {**light, **dark}}
 
 
 def resolve(value: str, variables: dict[str, str]) -> str | None:
@@ -123,7 +158,10 @@ def font_size_px(value: str | None) -> float:
 
 
 RULES = parse_rules(CSS_FILE.read_text(encoding="utf-8"))
-VARIABLES = custom_properties(RULES)
+THEMES = theme_variables(RULES)
+THEME_NAMES = tuple(THEMES)
+# The light theme, for the tests of the follow-ups that read one value.
+VARIABLES = THEMES["light"]
 
 
 def token_of(value: str) -> str | None:
@@ -170,18 +208,23 @@ def test_the_stylesheet_has_text_rules_and_tokens() -> None:
         assert resolve(f"var({token})", VARIABLES) is not None
 
 
-@pytest.mark.parametrize(
-    ("token", "expected"),
-    [
-        ("--rv-charcoal", "#2d2f3a"),
-        ("--rv-accent", "#4c5bd4"),
-        ("--rv-stone", "#d9d6cf"),
-        ("--rv-gray", "#8a8f98"),
-        ("--rv-white", "#ffffff"),
-    ],
-)
-def test_the_approved_palette_is_unchanged(token: str, expected: str) -> None:
-    assert resolve(f"var({token})", VARIABLES) == expected
+@pytest.mark.parametrize("theme", THEME_NAMES)
+@pytest.mark.parametrize(("token", "expected"), sorted(PALETTE.items()))
+def test_the_approved_palette_is_unchanged_in_both_themes(
+    theme: str, token: str, expected: str
+) -> None:
+    assert resolve(f"var({token})", THEMES[theme]) == expected
+
+
+def test_the_dark_block_redefines_roles_only() -> None:
+    dark = {n: v for s, d in RULES if s == DARK_SELECTOR for n, v in d.items()}
+    assert dark.get("color-scheme") == "dark"
+    for name in dark:
+        if not name.startswith("--"):
+            continue
+        assert name in VARIABLES, f"{name} is not a token of the light theme"
+        assert name not in PALETTE, f"{name} is a palette colour"
+        assert not name.startswith("--pico-"), f"{name} follows a role already"
 
 
 @pytest.mark.parametrize(("foreground", "background", "expected"), BRAND_GUIDE_RATIOS)
@@ -199,35 +242,39 @@ def test_every_rule_with_a_text_colour_declares_its_background() -> None:
     assert missing == [], f"rules without background-color: {missing}"
 
 
+@pytest.mark.parametrize("theme", THEME_NAMES)
 @pytest.mark.parametrize("pair", declared_pairs(), ids=pair_id)
 def test_every_declared_pair_meets_the_wcag_minimum(
-    pair: tuple[str, str, str, float],
+    theme: str, pair: tuple[str, str, str, float]
 ) -> None:
     where, foreground, background, minimum = pair
-    first = resolve(foreground, VARIABLES)
-    second = resolve(background, VARIABLES)
+    variables = THEMES[theme]
+    first = resolve(foreground, variables)
+    second = resolve(background, variables)
     assert first is not None, f"{where}: {foreground} is not a declared colour"
     assert second is not None, f"{where}: {background} is not a declared colour"
     ratio = contrast_ratio(first, second)
-    assert ratio >= minimum, f"{where}: {ratio:.2f} is below {minimum}"
+    assert ratio >= minimum, f"{where} ({theme}): {ratio:.2f} is below {minimum}"
 
 
-def test_every_pico_text_variable_is_checked() -> None:
+@pytest.mark.parametrize("theme", THEME_NAMES)
+def test_every_pico_text_variable_is_checked(theme: str) -> None:
     checked = {text for text, _ in PICO_PAIRS} | {bg for _, bg in PICO_PAIRS}
-    for name, value in VARIABLES.items():
-        if not name.startswith("--pico-") or resolve(value, VARIABLES) is None:
+    variables = THEMES[theme]
+    for name, value in variables.items():
+        if not name.startswith("--pico-") or resolve(value, variables) is None:
             continue
         if any(part in name for part in NON_TEXT_PICO_PARTS):
             continue
         assert name in checked, f"{name} colours text but has no contrast pair"
     for text, background in PICO_PAIRS:
-        assert text in VARIABLES, f"{text} is not overridden in revrook.css"
-        assert background in VARIABLES, f"{background} is not overridden"
+        assert text in variables, f"{text} is not overridden in revrook.css"
+        assert background in variables, f"{background} is not overridden"
 
 
 def test_every_status_colour_and_secondary_text_is_used_and_checked() -> None:
     used = {token_of(decl["color"]) for _, decl in text_rules()}
-    for token in WHITE_ONLY_TOKENS:
+    for token in SURFACE_ONLY_TOKENS:
         assert token in VARIABLES
         assert token in used, f"{token} has no declared text pair"
 
@@ -237,13 +284,23 @@ def test_forbidden_pairs_never_appear() -> None:
         foreground = token_of(declarations["color"])
         background = token_of(declarations["background-color"])
         if foreground == "--rv-gray":
-            assert background not in ("--rv-white", "--rv-stone"), selector
-        if foreground == "--rv-accent":
-            assert background != "--rv-charcoal", selector
-        if foreground == "--rv-accent" and background == "--rv-stone":
-            assert font_size_px(declarations.get("font-size")) >= LARGE_TEXT_PX
-        if foreground in WHITE_ONLY_TOKENS:
-            assert background == "--rv-white", selector
+            assert background not in ("--rv-surface", "--rv-canvas"), selector
+        if foreground == "--rv-link":
+            assert background not in ("--rv-rail", "--rv-ink"), selector
+        if foreground in SURFACE_ONLY_TOKENS:
+            assert background == "--rv-surface", selector
+
+
+def test_no_rule_draws_text_or_a_surface_with_a_palette_colour() -> None:
+    faces = 0
+    for selector, declarations in RULES:
+        assert declarations.get("color") not in PALETTE_TEXT, selector
+        background = declarations.get("background-color")
+        if background == "var(--rv-accent)":
+            faces += 1
+            continue
+        assert background not in PALETTE_SURFACES, selector
+    assert faces == 1, "only the face of a button keeps the brand accent"
 
 
 def test_the_stylesheet_loads_nothing_external() -> None:
