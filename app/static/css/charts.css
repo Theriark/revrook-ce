@@ -313,9 +313,11 @@ main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key line 
   list-style: none;
 }
 
-.rv-band {
+/* Pico styles every li with a square marker, so the item itself takes none */
+.rv-bands > li.rv-band {
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 main a.rv-band-link {

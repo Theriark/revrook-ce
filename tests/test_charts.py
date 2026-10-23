@@ -198,9 +198,10 @@ def test_the_age_bars_share_one_scale_and_mark_the_stale_date() -> None:
     bars = age_bars(rows, NOW)
     assert [bar.code for bar in bars] == [row.code for row in rows]
     backup, devices, network, training = bars
-    # The scale is the oldest export (100 days): its bar fills the track.
+    # The scale is twice the longest window (180 days), where an export counts for
+    # nothing: every stale mark sits at most halfway, never on the rounded end.
     assert (backup.age_days, backup.stale_days) == (100, 90)
-    assert (backup.width, backup.mark) == ("100.00", "90.00")
+    assert (backup.width, backup.mark) == ("55.56", "50.00")
     assert backup.words == "100 days old, stale after 90 days"
     assert backup.tip.split("\n") == [
         "Backup export",
@@ -208,12 +209,24 @@ def test_the_age_bars_share_one_scale_and_mark_the_stale_date() -> None:
         "Newest export 2026-07-09, 100 days old",
         "Stale after 90 days: 2026-10-07",
     ]
-    assert (devices.width, devices.mark) == ("2.00", "90.00")
-    assert (training.width, training.mark) == ("95.00", "60.00")
+    assert (devices.width, devices.mark) == ("1.11", "50.00")
+    assert (training.width, training.mark) == ("52.78", "33.33")
     assert training.state is STALE and devices.imported
     assert not network.imported and network.words == NEVER_IMPORTED
     assert (network.width, network.mark) == ("0", "")
     assert network.tip.endswith("No export has been imported.")
+
+
+def test_the_stale_mark_stays_inside_the_track() -> None:
+    # One current source alone: its window is the longest, and its mark must not
+    # land on the end of the track, where the rounded bar would clip it.
+    (alone,) = age_bars([source("leavers-csv", CURRENT, 1, 35)], NOW)
+    assert (alone.width, alone.mark) == ("1.43", "50.00")
+    # An export older than twice every window sets the scale and fills its track.
+    rows = [source("a", EXPIRED, 300), source("b", CURRENT, 3, 30)]
+    old, fresh = age_bars(rows, NOW)
+    assert (old.width, old.mark) == ("100.00", "30.00")
+    assert (fresh.width, fresh.mark) == ("1.00", "10.00")
 
 
 def test_an_export_captured_today_and_one_without_a_window() -> None:
@@ -387,6 +400,10 @@ def test_the_chart_rules_use_role_tokens_and_short_motion() -> None:
         "main a.rv-chip-narrowed {",
     ):
         assert selector in CSS, selector
+    # Seen on Development: Pico's square marker on every li showed beside each
+    # band of the clients list, so the band item itself takes none.
+    band = re.search(r"\n\.rv-bands > li\.rv-band \{([^}]*)\}", CSS)
+    assert band is not None and "list-style: none;" in band.group(1)
     plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
     for duration in re.findall(r"(\d+)ms", plain):
         assert int(duration) <= 200, duration
