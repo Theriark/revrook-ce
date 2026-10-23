@@ -51,13 +51,18 @@ same dark surface as the rail; the colours on it are the dark-theme status value
   under the same content security policy as every page (`default-src 'self'`, no
   inline script, no `unsafe-eval`). It checks for WebGL 2 first and only then
   imports the library, so a browser without WebGL 2 never downloads it.
-- three.js r186 (npm `three@0.186.1`, MIT) is vendored unmodified in
-  `app/static/vendor/three`: `three.module.js` and `three.core.js` as published,
-  with the licence file. `PINNED.json` records the npm tarball integrity and the
-  SHA-256 of each file; `tests/test_evidence_explorer.py` checks the files against
-  it. The two files are 2.1 MB (about 420 KB compressed); a smaller tree-shaken
-  build needs a bundler the repository does not have and is a decision for later.
-  No CDN, no automatic update.
+- three.js r186 (npm `three@0.186.1`, MIT) is served unmodified from
+  `app/static/vendor/three`: `three.module.js` and `three.core.js` as published.
+  The licence file and `PINNED.json` are committed; the two build files are not.
+  `PINNED.json` records the npm tarball integrity and the SHA-256 of each file, and
+  `tools/fetch_three.py` downloads that tarball, checks it and writes the two files
+  only when every check passes. CI runs it before the tests and the image build runs
+  it in the builder stage. To run the tests on your machine, run
+  `python tools/fetch_three.py` once first; `tests/test_evidence_explorer.py` checks
+  the files against `PINNED.json`. The two files are 2.1 MB (about 420 KB
+  compressed); a smaller tree-shaken build needs a bundler the repository does not
+  have and is a decision for later. No CDN, no download by the browser or at run
+  time, no automatic update.
 - Without script, or without WebGL 2, the stage keeps a note rendered by the server
   and the tables are the page. A request that fails (a session that ended, a client
   that is gone) leaves a note that says what to do. A lost graphics context stops
