@@ -13,7 +13,8 @@ __pycache__
 coverage.xml
 htmlcov
 tests
-tools
+tools/*
+!tools/fetch_three.py
 scripts
 docs
 requirements-dev.in
