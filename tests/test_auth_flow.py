@@ -337,7 +337,7 @@ async def test_pages_are_not_cached_and_keep_the_security_headers(
 ) -> None:
     await create_admin(db_engine)
     response = await client.get("/login")
-    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["cache-control"] == "no-store, no-transform"
     assert "default-src 'self'" in response.headers["content-security-policy"]
 
 

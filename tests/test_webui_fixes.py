@@ -132,7 +132,7 @@ async def test_an_unknown_address_is_the_problem_page_signed_out_and_in(
     signed = await ui_browser.get("/no-such-page")
     assert signed.status_code == 404 and 'class="rv-nav"' in signed.text
     assert structure_problems(signed.text) == []
-    assert signed.headers["cache-control"] == "no-store"
+    assert signed.headers["cache-control"] == "no-store, no-transform"
     # A method a page does not take is the same page, with the Allow header kept.
     wrong = await ui_browser.post("/glossary", data={"csrf_token": "x"})
     assert wrong.status_code == 405

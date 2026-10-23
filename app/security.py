@@ -115,8 +115,31 @@ CONTENT_SECURITY_POLICY = (
 HSTS_VALUE = "max-age=31536000; includeSubDomains"
 
 
+NO_TRANSFORM = "no-transform"
+
+
+def with_no_transform(cache_control: str | None) -> str:
+    """A Cache-Control value that also carries `no-transform`, once.
+
+    `no-transform` tells a proxy or CDN in front of revrook not to change the body.
+    A report is shown and hashed as it was written; an edge that rewrites its
+    e-mail addresses (Cloudflare Email Address Obfuscation) changes both the text and
+    the bytes behind the recorded SHA-256.
+    """
+    if not cache_control:
+        return NO_TRANSFORM
+    tokens = [token.strip().lower() for token in cache_control.split(",")]
+    if NO_TRANSFORM in tokens:
+        return cache_control
+    return f"{cache_control}, {NO_TRANSFORM}"
+
+
 class SecurityHeadersMiddleware:
-    """Adds the fixed security headers to every HTTP response."""
+    """Adds the fixed security headers to every HTTP response.
+
+    An HTML response also gets `no-transform` in its Cache-Control (see
+    `with_no_transform`), so an edge does not rewrite the page.
+    """
 
     def __init__(self, app: ASGIApp, hsts: bool = False) -> None:
         self.app = app
@@ -144,6 +167,10 @@ class SecurityHeadersMiddleware:
                         # needs inline styles and forbids everything else).
                         continue
                     headers[name] = value
+                if headers.get("content-type", "").lower().startswith("text/html"):
+                    headers["Cache-Control"] = with_no_transform(
+                        headers.get("cache-control")
+                    )
             await send(message)
 
         await self.app(scope, receive, send_with_headers)

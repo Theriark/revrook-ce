@@ -601,3 +601,10 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
   --pico-icon-valid: none;
   --pico-icon-invalid: none;
 }
+
+/* The facts above the report preview (THE-975): each column is wide enough for
+   an e-mail address in "Prepared by"; in a narrower one Pico's break-word split
+   the address in the middle of a word. */
+.rv-verdict-facts {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
