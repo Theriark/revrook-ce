@@ -336,6 +336,23 @@ def test_the_scene_script_has_every_fallback_and_nothing_from_outside() -> None:
     assert SCRIPT.index("supportsWebGL2()") < SCRIPT.index("await import(THREE_URL)")
 
 
+def test_the_scene_reaches_the_tables_and_follows_the_motion_setting() -> None:
+    # The tables sit below the card, so their rows and buttons are found on the page.
+    assert 'page.querySelectorAll(".rv-explorer-pick")' in SCRIPT
+    assert 'page.querySelectorAll("tr[data-node]")' in SCRIPT
+    assert "root.querySelectorAll" not in SCRIPT
+    # A focusable stage that answers keys is an application, not a still image.
+    assert 'setAttribute("role", "application")' in SCRIPT
+    assert '"role", "img"' not in SCRIPT
+    # A change of the reduced-motion setting reaches a wall already drawn.
+    assert 'motionQuery.addEventListener("change"' in SCRIPT
+    assert "wall.applyMotion()" in SCRIPT
+    # A refusal shows only its plain sentence, a title no doubled full stop.
+    assert 'typeof body.detail === "string"' in SCRIPT
+    assert r'control.title.replace(/\.$/, "")' in SCRIPT
+    assert ".rv-explorer-hover:empty" in CSS
+
+
 def test_the_stylesheet_draws_with_tokens_only_and_respects_reduced_motion() -> None:
     assert HEX_LITERAL.search(CSS) is None
     assert "prefers-reduced-motion: reduce" in CSS

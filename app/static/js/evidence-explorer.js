@@ -124,7 +124,12 @@ async function loadData(url) {
   }
   const body = await response.json();
   if (!response.ok) {
-    throw new Error(body.detail || "The data could not be read (status " + response.status + ").");
+    // Only the plain sentence of a refusal is shown; any other shape gets the status.
+    const said =
+      typeof body.detail === "string" && body.detail
+        ? body.detail
+        : "The data could not be read (status " + response.status + ").";
+    throw new Error(said + " Choose another client or reload the page; the tables below show the same facts.");
   }
   return body;
 }
@@ -207,12 +212,14 @@ function describe(entry, data) {
     : " Manual evidence, no export.";
   const when = control.evidence_at ? " (" + dateWords(control.evidence_at) + ")" : "";
   return (
-    control.control_id + " " + control.title + ", " + control.domain + ": " + control.label_text + ". Evidence " + control.evidence_state.toLowerCase() + when + "." + reads
+    control.control_id + " " + control.title.replace(/\.$/, "") + ", " + control.domain + ": " + control.label_text + ". Evidence " + control.evidence_state.toLowerCase() + when + "." + reads
   );
 }
 
 // The wall itself: built from the data once, drawn on demand, disposed whole.
 function buildWall(THREE, root, data, options) {
+  // The tables are on the page below the card, not inside it.
+  const page = root.ownerDocument;
   const stage = root.querySelector("#explorer-stage");
   const detail = root.querySelector("#explorer-detail");
   const hover = root.querySelector("#explorer-hover");
@@ -226,8 +233,10 @@ function buildWall(THREE, root, data, options) {
   plan.controls.forEach((entry) => entries.set(entry.id, entry));
 
   const canvas = document.createElement("canvas");
+  // A focusable stage that answers keys is an application, not a still image.
   canvas.tabIndex = 0;
-  canvas.setAttribute("role", "img");
+  canvas.setAttribute("role", "application");
+  canvas.setAttribute("aria-roledescription", "scene");
   canvas.setAttribute(
     "aria-label",
     "The rookery wall of " + data.client_name + ": " + data.sources.length + " evidence sources and " + data.controls.length + " controls. Left and Right turn it, plus and minus move closer and away, Home resets the view. The tables below carry the same facts."
@@ -492,10 +501,10 @@ function buildWall(THREE, root, data, options) {
   }
 
   function markRows() {
-    root.querySelectorAll("tr[data-node]").forEach((row) => {
+    page.querySelectorAll("tr[data-node]").forEach((row) => {
       row.setAttribute("data-selected", row.getAttribute("data-node") === selected ? "true" : "false");
     });
-    root.querySelectorAll(".rv-explorer-pick").forEach((button) => {
+    page.querySelectorAll(".rv-explorer-pick").forEach((button) => {
       button.setAttribute("aria-pressed", button.getAttribute("data-node") === selected ? "true" : "false");
     });
   }
@@ -666,22 +675,31 @@ function buildWall(THREE, root, data, options) {
     }
   });
   if (motionButton) {
-    if (options.reducedMotion) {
-      motionButton.hidden = true;
-    } else {
-      motionButton.hidden = false;
-      motionButton.addEventListener(
-        "click",
-        () => {
-          autoTurn = !autoTurn;
-          syncMotionButton();
-          schedule();
-        },
-        { signal }
-      );
-    }
+    motionButton.addEventListener(
+      "click",
+      () => {
+        autoTurn = !options.reducedMotion && !autoTurn;
+        syncMotionButton();
+        schedule();
+      },
+      { signal }
+    );
   }
-  root.querySelectorAll(".rv-explorer-pick").forEach((button) => {
+
+  // The reduced-motion preference can change while the page is open: the wall then
+  // stops (or may turn again) and the button follows.
+  function applyMotion() {
+    if (options.reducedMotion) {
+      autoTurn = false;
+      tween = null;
+    }
+    if (motionButton) {
+      motionButton.hidden = options.reducedMotion;
+    }
+    syncMotionButton();
+    invalidate();
+  }
+  page.querySelectorAll(".rv-explorer-pick").forEach((button) => {
     button.hidden = false;
     button.addEventListener(
       "click",
@@ -752,11 +770,11 @@ function buildWall(THREE, root, data, options) {
     renderer.dispose();
     renderer.forceContextLoss();
     canvas.remove();
-    root.querySelectorAll(".rv-explorer-pick").forEach((button) => {
+    page.querySelectorAll(".rv-explorer-pick").forEach((button) => {
       button.hidden = true;
       button.setAttribute("aria-pressed", "false");
     });
-    root.querySelectorAll("tr[data-node]").forEach((row) => row.removeAttribute("data-selected"));
+    page.querySelectorAll("tr[data-node]").forEach((row) => row.removeAttribute("data-selected"));
     if (tools) {
       tools.hidden = true;
     }
@@ -777,10 +795,10 @@ function buildWall(THREE, root, data, options) {
   if (tools) {
     tools.hidden = false;
   }
-  syncMotionButton();
+  applyMotion();
   resize();
   paint();
-  return { dispose, info, select, reset };
+  return { dispose, info, select, reset, applyMotion };
 }
 
 async function main() {
@@ -791,7 +809,7 @@ async function main() {
   const state = root.querySelector("#explorer-state");
   const stateText = state ? state.querySelector(".rv-explorer-state-text") : null;
   const url = root.getAttribute("data-explorer-url");
-  const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 
   function setState(kind, message) {
     if (!state) {
@@ -842,7 +860,15 @@ async function main() {
   }
 
   let wall = null;
-  const options = { reducedMotion, setState, hideState };
+  const options = { reducedMotion: Boolean(motionQuery && motionQuery.matches), setState, hideState };
+  if (motionQuery) {
+    motionQuery.addEventListener("change", (event) => {
+      options.reducedMotion = event.matches;
+      if (wall) {
+        wall.applyMotion();
+      }
+    });
+  }
 
   function mount() {
     if (wall) {
@@ -876,7 +902,9 @@ async function main() {
     dispose,
     info: () => (wall ? wall.info() : null),
     select: (id) => (wall ? wall.select(id, true) : undefined),
-    reducedMotion,
+    get reducedMotion() {
+      return options.reducedMotion;
+    },
   };
   // Leaving the page frees the graphics context; a page the browser keeps in its
   // back-forward cache draws the wall again when it is shown.
