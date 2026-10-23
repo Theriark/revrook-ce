@@ -1,10 +1,10 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "product": "revrook-ce",
   "repository": "Theriark/revrook-ce",
-  "documentationRevision": "feat/revrook-ce-the-703 (THE-703, 2026-10-22: pictures captured again with neutral synthetic names); feat/revrook-ce-the-578-docs2 (THE-645, 2026-10-21); first capture on feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
+  "documentationRevision": "feat/revrook-ce-the-780 (THE-780, 2026-10-22: the three pictures that still showed test labels with internal ticket numbers captured again with neutral synthetic names); feat/revrook-ce-the-703 (THE-703, 2026-10-22: pictures captured again with neutral synthetic names); feat/revrook-ce-the-578-docs2 (THE-645, 2026-10-21); first capture on feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
   "identities": {
-    "note": "Three capture identities and the deployed Development candidate, kept distinct. The capture-time facts say what the Development site ran when a picture was taken (each picture also carries its own). The first capture (2026-10-21, 13:00 to 13:11) and the four pictures captured again later that day carry earlier commits and digests; no match between those images and the deployed image is claimed, and the commits in between changed documentation only, so the pictures show the same application pages. The pictures captured again on 2026-10-22 (recaptureTime2) carry the commit and digest the deployment receipt returned before and after the capture, which is the deployed Development candidate below; the pages themselves were not asked.",
+    "note": "Four capture identities and the deployed Development candidate, kept distinct. The capture-time facts say what the Development site ran when a picture was taken (each picture also carries its own). The first capture (2026-10-21, 13:00 to 13:11) and the four pictures captured again later that day carry earlier commits and digests; no match between those images and the deployed image is claimed, and the commits in between changed documentation only, so the pictures show the same application pages. The pictures captured again on 2026-10-22 (recaptureTime2 at 01:29 to 01:31, recaptureTime3 at 08:35 to 08:38) carry the commit and digest the deployment receipt returned before and after each capture round; recaptureTime3 carries the deployed Development candidate below, and the pages themselves were not asked.",
     "captureTime": {
       "sourceCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
       "sourceCommitEvidence": "head of origin/development at the time of the first capture (2026-10-21 13:00 to 13:11 Europe/Lisbon); the live pages linked revrook.css?v=2977dd4c6d13, which equals asset_version() computed from the static files of this commit; CI run 39565730325 (push to development) was green",
@@ -23,12 +23,6 @@
       "evidence": "these four pictures were taken on 2026-10-21 between 20:31 and 20:33 Europe/Lisbon; the deployment receipt of the Development environment, re-read from task THE-645 before and after the capture, recorded the deployed candidate below (CI run 39601882209, deployed 2026-10-21T12:55:26Z) and no later deployment, so the commit and digest of these pictures are taken from the receipt. The live pages still linked revrook.css?v=2977dd4c6d13, the same version query as at the first capture, because no static file changed between c41125fd and f143e3db; the pages themselves cannot tell the two commits apart",
       "readFromThePage": false
     },
-    "deployedDevelopmentCandidate": {
-      "commit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "imageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "evidence": "deployment receipt of the Development environment (VM-09): CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, image ghcr.io/theriark/revrook-ce@sha256:13d25242... with its revision label verified against the commit (dockerImageProof verified true); read on 2026-10-22 from task THE-703 before the captures and again after the package upload, identical",
-      "digestMatchClaimed": "only as the receipt reports it: the pictures of 2026-10-22 carry the commit and digest the receipt returned before and after; the pictures of 2026-10-21 keep their earlier identities, for which no match is claimed"
-    },
     "recaptureTime2": {
       "sourceCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
       "imageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
@@ -40,8 +34,25 @@
         "home-390.png",
         "system-1440.png"
       ],
-      "evidence": "these six pictures were taken on 2026-10-22 between 01:29 and 01:31 Europe/Lisbon with the Theriark browser tools; the deployment receipt of the Development environment (development_receipt), read from task THE-703 before the captures and again after the package upload, both times named commit 6247addf, digest sha256:13d25242..., CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, dockerImageProof verified true, and no later deployment; the commit and digest of these pictures are taken from that receipt, not read from the page",
+      "evidence": "these six pictures were taken on 2026-10-22 between 01:29 and 01:31 Europe/Lisbon with the Theriark browser tools; the deployment receipt of the Development environment (development_receipt), read from task THE-703 (then the deployed candidate; a later deployment, 3d9c598e, followed on 2026-10-22 at 05:57 UTC) before the captures and again after the package upload, both times named commit 6247addf, digest sha256:13d25242..., CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, dockerImageProof verified true, and no later deployment; the commit and digest of these pictures are taken from that receipt, not read from the page",
       "readFromThePage": false
+    },
+    "recaptureTime3": {
+      "sourceCommit": "3d9c598e225c8db632282008552c682abeacb026",
+      "imageDigest": "sha256:a71efb9ca1b4a06d4521076a8cdf0fed79feb363c9b6bb38fc9fbb55460bf0fa",
+      "pictures": [
+        "evidence-integrity-1440.png",
+        "exceptions-1440.png",
+        "profile-editor-preview-1440.png"
+      ],
+      "evidence": "these three pictures were taken on 2026-10-22 between 08:35 and 08:38 Europe/Lisbon with the Theriark browser tools; the deployment receipt of the Development environment (development_receipt), read from task THE-780 before the captures and again after the throwaway client was deleted, both times named commit 3d9c598e, digest sha256:a71efb9c..., CI run 39729644714, Dokploy deployment -UtA4-v9m5_IRO99bj5vK, deployed 2026-10-22T05:57:10.989Z, dockerImageProof verified true, and no later deployment; the commit and digest of these pictures are taken from that receipt, not read from the page",
+      "readFromThePage": false
+    },
+    "deployedDevelopmentCandidate": {
+      "commit": "3d9c598e225c8db632282008552c682abeacb026",
+      "imageDigest": "sha256:a71efb9ca1b4a06d4521076a8cdf0fed79feb363c9b6bb38fc9fbb55460bf0fa",
+      "evidence": "deployment receipt of the Development environment (VM-09): CI run 39729644714, Dokploy deployment -UtA4-v9m5_IRO99bj5vK, deployed 2026-10-22T05:57:10.989Z, image ghcr.io/theriark/revrook-ce@sha256:a71efb9c... with its revision label verified against the commit (dockerImageProof verified true); read on 2026-10-22 from task THE-780 before the captures (07:33 UTC) and again after the throwaway client was deleted (07:39 UTC), identical",
+      "digestMatchClaimed": "only as the receipt reports it: the pictures of recaptureTime3 carry the commit and digest the receipt returned before and after; the pictures of recaptureTime2 keep the candidate 6247addf / sha256:13d25242 that the receipt named at their time, and the pictures of 2026-10-21 keep their earlier identities, for which no match is claimed"
     }
   },
   "applicationVersionShown": "0.0.0.dev0 (the System page and revrook_build_info)",
@@ -177,22 +188,27 @@
     },
     {
       "file": "exceptions-1440.png",
-      "sha256": "ea915d142ef779846c8a7d201d6660c015155934ac45ccaf51deab58f9802c77",
-      "bytes": 168207,
+      "sha256": "2ee56a470e027da0e659f36c718d30a6720835dddabf735da8ca3dc13dbdc28d",
+      "bytes": 180585,
       "width": 1440,
-      "height": 1379,
+      "height": 1421,
       "fullPage": true,
       "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/exceptions",
+      "page": "/clients/19/exceptions (a throwaway client 'Orchard Street Accountants Sample', client 19, created for this capture and deleted afterwards through System; one open exception added with a neutral owner and reason)",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:03:20+01:00",
-      "capturedAtUtc": "2026-10-21T12:03:20Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T08:36:43+01:00",
+      "capturedAtUtc": "2026-10-22T07:36:43Z",
+      "capturedAtCommit": "3d9c598e225c8db632282008552c682abeacb026",
+      "capturedAtImageDigest": "sha256:a71efb9ca1b4a06d4521076a8cdf0fed79feb363c9b6bb38fc9fbb55460bf0fa",
       "usedBy": [
         "docs/guides/05-exceptions.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "ea915d142ef779846c8a7d201d6660c015155934ac45ccaf51deab58f9802c77",
+        "capturedAt": "2026-10-21T13:03:20+01:00",
+        "reason": "the first capture showed the closed exception of the sample client with the owner 'QA test owner THE-520' and a reason that named a ticket, labels left by an earlier test that the product offers no route to edit; captured again on a throwaway client with a neutral owner, reason and compensating control (THE-780)"
+      }
     },
     {
       "file": "report-builder-1440.png",
@@ -345,22 +361,27 @@
     },
     {
       "file": "evidence-integrity-1440.png",
-      "sha256": "d4049804e3df65a8af582fe758ea1813d2ce2fe04228aea16c1d5f3a4990da59",
-      "bytes": 175077,
+      "sha256": "c0565a69583307d804d0969c0e438fabd157b04be9c1bd45ef667735ad1de01a",
+      "bytes": 228490,
       "width": 1440,
-      "height": 1084,
+      "height": 1440,
       "fullPage": true,
       "environment": "https://ce-dev-revrook.theriark.dev",
       "page": "/evidence/integrity (after Check all chains)",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:05:43+01:00",
-      "capturedAtUtc": "2026-10-21T12:05:43Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T08:35:28+01:00",
+      "capturedAtUtc": "2026-10-22T07:35:28Z",
+      "capturedAtCommit": "3d9c598e225c8db632282008552c682abeacb026",
+      "capturedAtImageDigest": "sha256:a71efb9ca1b4a06d4521076a8cdf0fed79feb363c9b6bb38fc9fbb55460bf0fa",
       "usedBy": [
         "docs/guides/03-import-evidence.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "d4049804e3df65a8af582fe758ea1813d2ce2fe04228aea16c1d5f3a4990da59",
+        "capturedAt": "2026-10-21T13:05:43+01:00",
+        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504' among the chains; captured again after that client was deleted (THE-703), when every deleted client's chain is named by its number only (THE-780)"
+      }
     },
     {
       "file": "profile-editor-1440.png",
@@ -383,22 +404,27 @@
     },
     {
       "file": "profile-editor-preview-1440.png",
-      "sha256": "ae251e8f30fc7e07d2ddce437f48d26a741b3b234049a9331b16147fc9dab7a0",
-      "bytes": 232844,
+      "sha256": "3d5fec929311c3aadca21d79468c1a085f90192d3f43bfc5073d69506237acc7",
+      "bytes": 235897,
       "width": 1440,
       "height": 1905,
       "fullPage": true,
       "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/imports/profile-editor?client_id=1 (after Read the file with a two-row synthetic leavers CSV, source leavers-csv)",
+      "page": "/imports/profile-editor?client_id=19 (after Read the file with a two-row synthetic leavers CSV, source leavers-csv, for the throwaway client 'Orchard Street Accountants Sample', client 19, whose one saved profile 'HR system leavers list, Orchard Street' is listed in step 5; the client was deleted afterwards through System)",
       "role": "administrator (the one Community Edition account; Development test account)",
       "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:06:43+01:00",
-      "capturedAtUtc": "2026-10-21T12:06:43Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
+      "capturedAt": "2026-10-22T08:38:41+01:00",
+      "capturedAtUtc": "2026-10-22T07:38:41Z",
+      "capturedAtCommit": "3d9c598e225c8db632282008552c682abeacb026",
+      "capturedAtImageDigest": "sha256:a71efb9ca1b4a06d4521076a8cdf0fed79feb363c9b6bb38fc9fbb55460bf0fa",
       "usedBy": [
         "docs/guides/03-import-evidence.md"
-      ]
+      ],
+      "replaces": {
+        "sha256": "ae251e8f30fc7e07d2ddce437f48d26a741b3b234049a9331b16147fc9dab7a0",
+        "capturedAt": "2026-10-21T13:06:43+01:00",
+        "reason": "the first capture showed the saved profile 'THE-505 leavers check (profile 4)', a profile name with an internal ticket number left by an earlier test that the product offers no route to rename; captured again on a throwaway client with a newly saved profile of neutral name (THE-780)"
+      }
     },
     {
       "file": "glossary-1440.png",
@@ -593,21 +619,7 @@
         "home-390.png"
       ],
       "what": "Recent changes lists audit entries of clients that earlier automated tests and reviews added and deleted (named 'a deleted client (client 4)', 'client 13', 'client 14' and so on); the entry 'Client deleted for a deleted client (client 4)' is the deletion of the test client made for this capture",
-      "why kept": "audit entries are kept by design after a client is deleted and cannot be removed without deleting the database, which is not a supported action on the shared Development installation; the entries name deleted clients by number only, so the pictures were captured again on 2026-10-22 once the test client with a ticket number in its name was gone. Nothing in the pictures was edited"
-    },
-    {
-      "file": [
-        "exceptions-1440.png"
-      ],
-      "what": "the closed exception of the sample client carries the owner 'QA test owner THE-520' and a reason that names a ticket, labels left by an earlier test",
-      "why kept": "the product offers no route to edit or delete an exception (an exception can only be added or closed; app/ui/clients.py), and deleting the sample client would remove the evidence, reports and exports every other guide shows. The picture of the first capture is kept and the labels are synthetic"
-    },
-    {
-      "file": [
-        "profile-editor-preview-1440.png"
-      ],
-      "what": "the Saved profile list shows 'THE-505 leavers check (profile 4)', a profile name with an internal ticket number left by an earlier test",
-      "why kept": "a saved profile belongs to its client and the product offers no route to rename or delete it short of deleting the client (the profile editor only reads, maps, saves and imports; app/ui/profiles.py); the picture of the first capture is kept and the label is synthetic. A second capture with a newly saved neutral profile selected was planned in THE-703 but not made: the browser session was lost after the sixth capture and did not come back within the task, so this is an exact gap of that round"
+      "why kept": "audit entries are kept by design after a client is deleted and cannot be removed without deleting the database, which is not a supported action on the shared Development installation; the entries name deleted clients by number only, so the pictures were captured again on 2026-10-22 (01:29 to 01:31 Europe/Lisbon) once the test client with a ticket number in its name was gone. Nothing in the pictures was edited"
     }
   ],
   "recaptured": [
@@ -632,6 +644,16 @@
       "what": "the first capture showed the synthetic test client 'QA Retest Client THE-504', a name with an internal ticket number, on the clients list (three viewports), on Home (Posture by client and the chart legend) and on the System page (its delete button)",
       "how": "that test client was deleted on 2026-10-22 at 01:29 Europe/Lisbon with the registered test account through System, Delete a client, typing its name as the page requires (the only supported route; the product keeps the audit entry and the hash chain of a deleted client), the only state change made for these captures, and the pages were captured again between 01:29 and 01:31 Europe/Lisbon while the deployment receipt named the candidate image. No image was edited",
       "task": "THE-703"
+    },
+    {
+      "file": [
+        "evidence-integrity-1440.png",
+        "exceptions-1440.png",
+        "profile-editor-preview-1440.png"
+      ],
+      "what": "the first captures showed labels with internal ticket numbers: the chain of the test client 'QA Retest Client THE-504' on Evidence integrity, the owner 'QA test owner THE-520' and a reason naming a ticket on the closed exception of the sample client, and the saved profile 'THE-505 leavers check (profile 4)' in the profile editor",
+      "how": "on 2026-10-22 between 08:35 and 08:38 Europe/Lisbon with the registered test account: Evidence integrity was captured on the shared data after Check all chains (every deleted client is named by its number only). A throwaway client 'Orchard Street Accountants Sample' (client 19) was added through Clients, one open exception with a neutral owner, reason and compensating control was added to it and its register captured, a two-row synthetic leavers CSV (two invented example.test addresses) was read in the profile editor and the mapping saved as 'HR system leavers list, Orchard Street', and that page captured; then the throwaway client was deleted through System, Delete a client, typing its name (the only supported route; the product keeps its audit entry and hash chain). The sample client was not changed. No image was edited",
+      "task": "THE-780"
     }
   ],
   "unchanged": [
@@ -664,7 +686,12 @@
       "date": "2026-10-22",
       "task": "THE-703",
       "change": "schema 3: six pictures captured again with neutral synthetic names after the test client 'QA Retest Client THE-504' was deleted through System (clients at 1440, 768 and 390 px, Home at 1440 and 390 px, System); their commit and digest are the deployed Development candidate 6247addf / sha256:13d25242 as the deployment receipt returned it before and after; the known residue of the exceptions and profile-editor pictures recorded"
+    },
+    {
+      "date": "2026-10-22",
+      "task": "THE-780",
+      "change": "schema 4: the three pictures that still showed labels with internal ticket numbers (Evidence integrity, the exceptions register, the profile editor preview) captured again with neutral synthetic names on a throwaway client that was deleted afterwards; their commit and digest are the deployed Development candidate 3d9c598e / sha256:a71efb9c as the deployment receipt returned it before and after; the known residue of the exceptions and profile-editor pictures is gone, only the audit entries on Home remain"
     }
   ],
-  "schemaNote": "schema 3: same layout as schema 2 with a third capture identity (recaptureTime2, the pictures captured again on 2026-10-22 with neutral synthetic names) and the deployed Development candidate updated to the receipt read in that task"
+  "schemaNote": "schema 4: same layout as schema 3 with a fourth capture identity (recaptureTime3, the three pictures captured again on 2026-10-22 on a throwaway client with neutral synthetic names) and the deployed Development candidate updated to the receipt read in that task"
 }
