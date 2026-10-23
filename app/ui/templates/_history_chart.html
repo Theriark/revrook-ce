@@ -8,7 +8,7 @@
 {% import "_chart.html" as c %}
 {{ c.range_form("clients/" ~ client_id ~ "/reports", "/clients/" ~ client_id ~ "/charts/history", "history-body", "span", spans, span, "Span of the chart") }}
 {% if reports_capped %}
-<p class="rv-card-subtitle" id="history-capped">Only the newest {{ reports_cap }} reports of this client are drawn; older reports are left out of the chart.</p>
+<p class="rv-card-subtitle" id="history-capped">{% if reports_cap == 1 %}Only the newest report of this client is drawn; older reports are{% else %}Only the newest {{ reports_cap }} reports of this client are drawn; older ones are{% endif %} left out of the chart.</p>
 {% endif %}
 {% if history.lines %}
 {% for chart in (history, history_narrow) %}
