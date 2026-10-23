@@ -197,11 +197,19 @@ class BandCount:
         return f"{self.name}\n{self.count} {clients} at the last report"
 
 
-def band_counts(cards: Sequence[ClientCard]) -> list[BandCount]:
+class BandCounts(list[BandCount]):
+    """The bars of the clients list, in order, and `unclassified`: how many clients
+    sit in a band the model does not know, so no bar holds them."""
+
+    unclassified: int = 0
+
+
+def band_counts(cards: Sequence[ClientCard]) -> BandCounts:
     """Every band of the model in its order, then the clients without a report.
 
     A stored band the model does not know (a report of another ruleset) has no bar
-    and no filter to open, so it is left out here; the client stays in the list.
+    and no filter to open, so it is left out of the bars and counted in
+    `unclassified` for the note under them; the client stays in the list.
     """
     found = dict.fromkeys((*BAND_KEYS, NO_REPORT_KEY), 0)
     for card in cards:
@@ -211,7 +219,23 @@ def band_counts(cards: Sequence[ClientCard]) -> list[BandCount]:
     fullest = max(found.values(), default=0)
     names = dict(zip(BAND_KEYS, BAND_NAMES, strict=True))
     names[NO_REPORT_KEY] = NO_REPORT_NAME
-    return [
+    bars = BandCounts(
         BandCount(key, names[key], count, _percent(count, fullest))
         for key, count in found.items()
-    ]
+    )
+    bars.unclassified = unclassified_count(cards)
+    return bars
+
+
+def unclassified_count(cards: Sequence[ClientCard]) -> int:
+    """The clients whose last report is in a band the model does not know.
+
+    No bar counts them, so without this the bars add up to fewer clients than the
+    list holds and nothing says why.
+    """
+    known = {*BAND_KEYS, NO_REPORT_KEY}
+    return sum(
+        1
+        for card in cards
+        if card.report is not None and band_key(card.report.band) not in known
+    )
