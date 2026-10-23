@@ -44,6 +44,7 @@ from app.ui.clientlist import (
 from app.ui.common import FormError
 from app.ui.dashboard import (
     HISTORY_DAYS,
+    NARROW_CHART,
     ReportPoint,
     WeekPoint,
     report_points,
@@ -130,6 +131,19 @@ def test_the_history_span_is_a_quarter_a_year_or_every_report() -> None:
     # "All" reaches back to the oldest report; without one it is a quarter.
     assert history_days("all", [], now) == HISTORY_DAYS
     assert history_days("all", [point(1, 50, 400), point(1, 60)], now) == 402
+    # A day of reports still spans a week, so no date of the axis repeats.
+    assert history_days("all", [point(1, 60)], now) == 7
+
+
+def test_the_dates_of_the_time_axis_divide_the_span_evenly() -> None:
+    # Seen on Development at 390px: over three days the middle date of the narrow
+    # drawing sat at a third of the axis and ran into the first one.
+    now = AS_OF + timedelta(days=1)
+    narrow = trend_chart([point(1, 60)], {1: "Alder"}, now, days=3, size=NARROW_CHART)
+    assert [x for x, _, _ in narrow.x_ticks] == ["36.0", "170.0", "304.0"]
+    wide = trend_chart([point(1, 60)], {1: "Alder"}, now, days=7)
+    labels = [label for _, label, _ in wide.x_ticks]
+    assert len(set(labels)) == len(labels) == 4
 
 
 # --- the marks on the score charts ----------------------------------------------------
@@ -404,6 +418,9 @@ def test_the_chart_rules_use_role_tokens_and_short_motion() -> None:
     # band of the clients list, so the band item itself takes none.
     band = re.search(r"\n\.rv-bands > li\.rv-band \{([^}]*)\}", CSS)
     assert band is not None and "list-style: none;" in band.group(1)
+    # And the history card, as wide as the page, drew its axis text at 20px.
+    history = re.search(r"\n\.rv-history \.rv-chart-wide \{([^}]*)\}", CSS)
+    assert history is not None and "max-width: 640px;" in history.group(1)
     plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
     for duration in re.findall(r"(\d+)ms", plain):
         assert int(duration) <= 200, duration
