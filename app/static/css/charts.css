@@ -12,9 +12,11 @@
  * prefers-reduced-motion rule of revrook.css turns it off.
  */
 /* The tooltip: one element the script moves beside the mark under the pointer
-   or the keyboard; rail-dark in both themes, white words, the first line bold */
+   or the keyboard; rail-dark in both themes, white words, the first line bold.
+   Fixed to the view, so a hidden tooltip near the right edge never widens the
+   page (an absolute one did, at 768 px) */
 .rv-tip {
-  position: absolute;
+  position: fixed;
   z-index: 30;
   max-width: 18rem;
   padding: 6px 10px;

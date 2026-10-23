@@ -6,8 +6,8 @@
  * its report, a segment is a link to its list, a range is a GET form, the title
  * of a mark is its native tooltip. The script adds:
  * - the tooltip (.rv-tip): one element, filled from data-tip of the mark under
- *   the pointer or the keyboard and moved beside it; hidden on leave, blur,
- *   Escape, scroll and resize;
+ *   the pointer or the keyboard and moved beside it; hidden on leave, blur and
+ *   Escape; it keeps its place beside the mark through a scroll or a resize;
  * - roving focus (data-roving): the marks of one chart are one tab stop; the
  *   arrow keys move between them, Home and End to the first and the last;
  * - the series toggles: each client of the legend becomes a pressed button;
@@ -75,9 +75,11 @@
     }
   }
 
-  // Above the mark, centred on it; below it when the top of the page is near;
-  // never past an edge of the view. The position is set through the CSSOM,
-  // which the content security policy permits (an inline style would not be).
+  // Above the mark, centred on it; below it when the top of the view is near;
+  // never past an edge of the view. The tooltip is fixed to the view, so its
+  // place is the mark's place in the view and it never widens the page. The
+  // position is set through the CSSOM, which the content security policy
+  // permits (an inline style would not be).
   function placeTip(target) {
     var box = tipElement();
     var at = target.getBoundingClientRect();
@@ -94,8 +96,8 @@
     if (left < EDGE) {
       left = EDGE;
     }
-    box.style.left = Math.round(left + window.scrollX) + "px";
-    box.style.top = Math.round(top + window.scrollY) + "px";
+    box.style.left = Math.round(left) + "px";
+    box.style.top = Math.round(top) + "px";
   }
 
   function showTip(target) {
@@ -113,6 +115,14 @@
     tipFor = null;
     if (tip) {
       tip.classList.remove(SHOWN);
+    }
+  }
+
+  // A scroll or a resize moves the mark in the view, so the tooltip follows it
+  // (a wheel that brings a mark under a still pointer must not lose the tip).
+  function moveTip() {
+    if (tipFor) {
+      placeTip(tipFor);
     }
   }
 
@@ -307,9 +317,10 @@
     var page = form.getAttribute("action") + "?" + query;
     hideTip();
     target.setAttribute("aria-busy", "true");
+    // The query is the address alone: a source element would make htmx add the
+    // values of the form (the pressed button) to it a second time.
     var pending = window.htmx.ajax("GET", fragment + "?" + query, {
-      target: "#" + targetId,
-      source: form
+      target: "#" + targetId
     });
     function arrived() {
       target.removeAttribute("aria-busy");
@@ -478,8 +489,8 @@
     document.addEventListener("submit", rangeSubmit);
     document.addEventListener("animationend", animationDone);
     document.addEventListener("htmx:afterSwap", swapped);
-    window.addEventListener("scroll", hideTip, { passive: true });
-    window.addEventListener("resize", hideTip);
+    window.addEventListener("scroll", moveTip, { passive: true });
+    window.addEventListener("resize", moveTip);
     prepare(document);
   }
 

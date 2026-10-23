@@ -13,7 +13,13 @@ import httpx
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
-from test_brand_contrast import DARK_SELECTOR, RULES, SYSTEM_SELECTOR, VARIABLES
+from test_brand_contrast import (
+    DARK_SELECTOR,
+    RULES,
+    SYSTEM_SELECTOR,
+    VARIABLES,
+    parse_rules,
+)
 
 from app.models import AppUser
 from app.theme import (
@@ -132,6 +138,30 @@ def test_the_system_theme_follows_the_system_without_script() -> None:
     assert block(".rv-mark")["background-color"] == "var(--rv-mark-tile)"
     assert VARIABLES["--rv-mark-tile"] == "#fffef5"
     assert "--rv-mark-tile" not in block(DARK_SELECTOR)
+
+
+def test_the_pico_mapping_is_repeated_at_the_rank_of_picos_light_block() -> None:
+    # Pico writes its light values for :root:not([data-theme="dark"]), a rule of
+    # higher rank than :root, so with the system theme on a system that prefers
+    # dark its light text, surfaces and fields showed on the dark roles (the
+    # rendered check of THE-850). The follow-up repeats the mapping for
+    # :root[data-theme], Pico's rank and later, with the values of revrook.css.
+    assert "\n:root[data-theme] {\n" in FOLLOW_UP
+    found = [decl for sel, decl in parse_rules(FOLLOW_UP) if sel == ":root[data-theme]"]
+    assert len(found) == 1
+    mapping, root = found[0], block(":root")
+    assert mapping and set(mapping) <= set(root)
+    for name, value in mapping.items():
+        assert name.startswith("--pico-") and root[name] == value, name
+    for name in (
+        "--pico-color",
+        "--pico-background-color",
+        "--pico-muted-color",
+        "--pico-form-element-color",
+        "--pico-form-element-background-color",
+        "--pico-icon-checkbox",
+    ):
+        assert name in mapping, name
 
 
 def test_the_veil_and_the_danger_face_are_roles() -> None:
