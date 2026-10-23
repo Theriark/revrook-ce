@@ -27,6 +27,17 @@ def test_dockerfile_is_a_two_stage_non_root_hashed_build() -> None:
     assert "ROLE=all" in DOCKERFILE
 
 
+def test_three_is_fetched_in_the_builder_and_only_the_files_reach_the_image() -> None:
+    builder, final = DOCKERFILE.split("FROM python:3.12-slim\n")
+    assert "source=tools/fetch_three.py" in builder
+    assert "python /mnt/fetch_three.py --dest /build/three" in builder
+    assert "/mnt/fetch_three.py --dest /build/three --check" in builder
+    code = [line for line in final.splitlines() if not line.startswith("#")]
+    assert not any("tools" in line or "fetch_three" in line for line in code)
+    assert "COPY --from=builder /build/three/three.module.js" in final
+    assert "/build/three/three.core.js" in final
+
+
 def test_dockerfile_never_touches_the_development_lock() -> None:
     assert "requirements-dev" not in DOCKERFILE
     assert "pytest" not in DOCKERFILE

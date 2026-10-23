@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% import "_icons.html" as i %}
+{% import "_status.html" as s %}
+{#- The Evidence Explorer preview (docs/evidence-explorer-preview.md). The tables are
+    the page: the scene above them is drawn by evidence-explorer.js from the same view
+    model, served as JSON at data_url, only when the browser offers WebGL 2. Without
+    script the stage keeps the note rendered here. No inline style or script. -#}
+{% block head %}<link rel="stylesheet" href="/static/css/evidence-explorer.css?v={{ explorer_version }}">{% endblock %}
+{% block content %}
+<div class="rv-page-header">
+<div><h1>Evidence Explorer</h1><p class="rv-page-purpose">Which exports feed which controls for one client, and where the evidence behind a status is stale or missing. A preview on this Development installation: the scene can be turned, the tables below carry the same facts, and nothing is stored.</p></div>
+{% if clients %}
+<form class="rv-explorer-choose rv-inline-form" method="get" action="/experiments/evidence-explorer">
+<label for="client_id">Client</label>
+<select id="client_id" name="client_id">
+{% for client_id, name in clients %}
+<option value="{{ client_id }}"{% if view and client_id == view.client_id %} selected{% endif %}>{{ name }}</option>
+{% endfor %}
+</select>
+<button type="submit" class="rv-button-quiet">Show</button>
+</form>
+{% endif %}
+</div>
+{% if not clients %}
+<div class="rv-empty" id="explorer-no-clients">
+{{ i.icon("inbox", "xl") }}
+<p class="rv-empty-title">No clients yet</p>
+<p class="rv-empty-text">The explorer draws the evidence of one client. Add a client and import an export, then come back.</p>
+<a role="button" href="/clients">Add a client</a>
+</div>
+{% else %}
+<section class="rv-verdict" id="explorer-status" aria-labelledby="explorer-status-title">
+<h2 id="explorer-status-title" class="rv-sr-only">Where {{ view.client_name }} stands</h2>
+<div class="rv-verdict-status">{{ s.status(view.verdict) }} <span class="rv-explorer-verdict-text">{{ verdict }}</span></div>
+<dl class="rv-facts rv-verdict-facts">
+<div><dt>Sources</dt><dd>{{ view.counts.sources }}</dd></div>
+<div><dt>Current exports</dt><dd>{{ view.counts.current }}</dd></div>
+<div><dt>To refresh</dt><dd>{{ view.counts.to_refresh }}</dd></div>
+<div><dt>Links</dt><dd>{{ view.counts.links }}</dd></div>
+</dl>
+</section>
+<section class="rv-card rv-explorer" id="explorer" aria-labelledby="explorer-title" data-explorer-url="{{ data_url }}" data-client="{{ view.client_name }}">
+<h2 id="explorer-title" class="rv-card-title">The rookery wall of {{ view.client_name }}</h2>
+<p class="rv-card-subtitle">Each pillar is an evidence export, as tall as the number of controls it feeds; each tile is a control, grouped by domain around the wall; a beam joins an export to every control that reads it. Drag to turn the wall, or use the buttons. A pillar that is stale is low, an export never imported is only a footprint, and a tile that is not protected is cut through.</p>
+<div class="rv-explorer-stage" id="explorer-stage">
+<div class="rv-explorer-state" id="explorer-state" role="status">
+<p class="rv-explorer-state-text">The scene needs script and WebGL 2 in the browser. The tables below show the same facts.</p>
+</div>
+</div>
+<div class="rv-explorer-tools" id="explorer-tools" hidden>
+<button type="button" class="rv-button-quiet rv-button-small" id="explorer-turn-left">Turn left</button>
+<button type="button" class="rv-button-quiet rv-button-small" id="explorer-turn-right">Turn right</button>
+<button type="button" class="rv-button-quiet rv-button-small" id="explorer-reset">Reset view</button>
+<button type="button" class="rv-button-quiet rv-button-small" id="explorer-motion" aria-pressed="false" hidden>Turn by itself</button>
+<p class="rv-explorer-hover" id="explorer-hover" aria-hidden="true"></p>
+</div>
+<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">Point at a pillar or a tile, or press Show in scene on a row below, to read it here.</p>
+<ul class="rv-legend rv-explorer-legend" aria-label="What the shapes mean">
+<li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Protected</span> <span class="rv-text-secondary">flat tile</span></li>
+<li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Needs attention</span> <span class="rv-text-secondary">tile with a ring</span></li>
+<li><span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">&#10007;</span> Not protected</span> <span class="rv-text-secondary">tile cut through</span></li>
+<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not checked</span> <span class="rv-text-secondary">outlined tile</span></li>
+<li><span class="rv-status-not-applicable"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Not applicable</span> <span class="rv-text-secondary">small disc</span></li>
+<li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Current export</span> <span class="rv-text-secondary">full pillar</span></li>
+<li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Stale or expired export</span> <span class="rv-text-secondary">low pillar</span></li>
+<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not imported</span> <span class="rv-text-secondary">footprint only</span></li>
+</ul>
+</section>
+<h2 id="explorer-sources-title">Evidence sources</h2>
+<p class="rv-text-secondary">One row per source a control reads: the state of its newest export and the controls it feeds. The newest export of every source is what the checks run on.</p>
+<table id="explorer-sources" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-sources-title">
+<caption>Every evidence source of {{ view.client_name }}, the state of its newest export and the controls it feeds</caption>
+<thead>
+<tr>
+<th scope="col">Source</th>
+<th scope="col">State</th>
+<th scope="col">Newest export</th>
+<th scope="col" class="rv-numeric">Exports</th>
+<th scope="col">Feeds</th>
+<th scope="col"><span class="rv-sr-only">Scene</span></th>
+</tr>
+</thead>
+<tbody>
+{% for source in view.sources %}
+<tr data-node="source:{{ source.code }}">
+<th scope="row">{{ source.name }}</th>
+<td data-label="State"><span class="rv-status-{{ source.state }}"><span class="rv-status-icon" aria-hidden="true">{% if source.state_icon == "check" %}&#10003;{% elif source.state_icon == "alert" %}&#9650;{% elif source.state_icon == "cross" %}&#10007;{% elif source.state_icon == "question" %}?{% else %}&#8211;{% endif %}</span> {{ source.state_text }}</span></td>
+<td data-label="Newest export" class="rv-date">{% if source.captured_at %}<time datetime="{{ source.captured_at }}">{{ source.captured_at[:10] }}</time>{% else %}<span class="rv-text-secondary">Never imported</span>{% endif %}</td>
+<td data-label="Exports" class="rv-numeric">{{ source.exports }}</td>
+<td data-label="Feeds">{% if source.controls %}{{ source.controls|length }} control{% if source.controls|length != 1 %}s{% endif %}: {{ source.controls|join(", ") }}{% else %}<span class="rv-text-secondary">No control reads it</span>{% endif %}</td>
+<td data-label="Scene"><button type="button" class="rv-button-quiet rv-button-small rv-explorer-pick" data-node="source:{{ source.code }}" aria-pressed="false" hidden>Show in scene</button></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<h2 id="explorer-controls-title">Controls and the exports they read</h2>
+<p class="rv-text-secondary">Every control of {{ view.ruleset }} with the status the report would give it today, the state of its evidence and the exports its rule reads. A manual-only control reads no export.</p>
+<table id="explorer-controls" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-controls-title">
+<caption>Every control of {{ view.client_name }}, its status today, its evidence and the sources it reads</caption>
+<thead>
+<tr>
+<th scope="col">Control</th>
+<th scope="col">Domain</th>
+<th scope="col">Status</th>
+<th scope="col">Evidence</th>
+<th scope="col">Reads</th>
+<th scope="col"><span class="rv-sr-only">Scene</span></th>
+</tr>
+</thead>
+<tbody>
+{% for control in view.controls %}
+<tr data-node="control:{{ control.control_id }}" data-domain="{{ control.domain }}">
+<th scope="row"><span class="rv-explorer-id">{{ control.control_id }}</span> {{ control.title }}{% if control.gate %} <span class="rv-chip rv-chip-off rv-explorer-gate">Gate</span>{% endif %}</th>
+<td data-label="Domain">{{ control.domain }}</td>
+<td data-label="Status"><span class="rv-status-{{ control.label }}"><span class="rv-status-icon" aria-hidden="true">{% if control.label_icon == "check" %}&#10003;{% elif control.label_icon == "alert" %}&#9650;{% elif control.label_icon == "cross" %}&#10007;{% elif control.label_icon == "question" %}?{% else %}&#8211;{% endif %}</span> {{ control.label_text }}</span></td>
+<td data-label="Evidence">{{ control.evidence_state }}{% if control.evidence_at %} <span class="rv-cell-note">(<time datetime="{{ control.evidence_at }}">{{ control.evidence_at[:10] }}</time>)</span>{% endif %}</td>
+<td data-label="Reads">{% if control.sources %}{% for code in control.sources %}{{ names.get(code, code) }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<span class="rv-text-secondary">Manual evidence (no export)</span>{% endif %}</td>
+<td data-label="Scene"><button type="button" class="rv-button-quiet rv-button-small rv-explorer-pick" data-node="control:{{ control.control_id }}" aria-pressed="false" hidden>Show in scene</button></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<div class="rv-alert" id="explorer-note">
+<p class="rv-alert-title">What this preview is</p>
+<p>A Development-only experiment to judge a scene drawn in the browser. It reads the same checks as the checklist of {{ view.client_name }} at {{ view.as_of[:16].replace("T", " ") }} UTC, stores nothing, loads nothing from outside this installation, and is not part of any report. The tables are the record; the scene is a way of looking at them.</p>
+</div>
+<script type="module" src="/static/js/evidence-explorer.js?v={{ explorer_version }}"></script>
+{% endif %}
+{% endblock %}

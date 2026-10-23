@@ -95,7 +95,7 @@ def test_an_empty_state_opens_with_the_large_mark() -> None:
 def test_the_rail_draws_navigation_beside_text_and_controls_small() -> None:
     nav = (TEMPLATES / "_nav.html").read_text(encoding="utf-8")
     links = re.findall(r'class="rv-nav-link"[^>]*>\{\{ i\.icon\("[a-z-]+"\) \}\}', nav)
-    assert len(links) == 7
+    assert len(links) == 8
     assert 'i.icon("signout", "sm")' in nav
     switch = (TEMPLATES / "_theme.html").read_text(encoding="utf-8")
     assert 'i.icon(glyph, "sm")' in switch

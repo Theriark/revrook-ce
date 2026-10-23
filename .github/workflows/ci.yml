@@ -211,6 +211,11 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install --require-hashes -r requirements-dev.txt
+          # The pinned three.js build is not committed. Fetch it from the npm registry
+          # and verify the tarball and every file against PINNED.json BEFORE any test
+          # runs; a mismatch fails the job. Then check the files on disk once more.
+          python tools/fetch_three.py
+          python tools/fetch_three.py --check
           FERNET_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
           echo "::add-mask::${FERNET_KEY}"
           export FERNET_KEY
@@ -384,6 +389,21 @@ jobs:
           set -euo pipefail
           user="$(docker image inspect revrook-ce:ci --format '{{.Config.User}}')"
           [[ -n "${user}" && "${user}" != "root" && "${user}" != "0" ]] || { echo "::error::image runs as root"; exit 1; }
+      - name: Image must contain the verified three.js files
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Hash the files INSIDE the final image against the PINNED.json in that image.
+          docker run --rm --entrypoint python revrook-ce:ci -c '
+          import hashlib, json, pathlib
+          root = pathlib.Path("/srv/revrook/app/static/vendor/three")
+          pins = json.loads((root / "PINNED.json").read_text(encoding="utf-8"))
+          for name, record in pins["files"].items():
+              data = (root / name).read_bytes()
+              assert len(data) == record["bytes"], name
+              assert hashlib.sha256(data).hexdigest() == record["sha256"], name
+              print("image ok:", name, len(data))
+          '
 
   compose-smoke:
     name: 9 - compose smoke test

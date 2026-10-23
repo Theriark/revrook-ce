@@ -10,6 +10,17 @@ RUN python -m venv /opt/venv
 # the image, and --require-hashes refuses anything not in the lock.
 COPY requirements.txt ./
 RUN /opt/venv/bin/pip install --require-hashes --no-deps -r requirements.txt
+# The pinned three.js build (PINNED.json): downloaded from the npm registry and
+# verified (tarball sha512 and shasum, sha256 and size of each file) in this stage.
+# The build fails on any mismatch. Nothing is loaded from a CDN at run time. The
+# helper is only mounted for this step (it is in no layer); the final image receives
+# just the two verified files.
+RUN --mount=type=bind,source=tools/fetch_three.py,target=/mnt/fetch_three.py \
+    --mount=type=bind,source=app/static/vendor/three,target=/mnt/pins \
+    mkdir /build/three \
+    && cp /mnt/pins/PINNED.json /mnt/pins/LICENSE /build/three/ \
+    && python /mnt/fetch_three.py --dest /build/three \
+    && python /mnt/fetch_three.py --dest /build/three --check
 
 FROM python:3.12-slim
 ENV PATH=/opt/venv/bin:$PATH \
@@ -27,6 +38,8 @@ WORKDIR /srv/revrook
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY app ./app
+# The two verified three.js files (not committed; see tools/fetch_three.py).
+COPY --from=builder /build/three/three.module.js /build/three/three.core.js ./app/static/vendor/three/
 # The control library and the NIST reference names (read by app.checks).
 COPY data ./data
 USER 10001:10001

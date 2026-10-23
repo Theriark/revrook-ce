@@ -28,3 +28,8 @@ dist/
 
 # Local tooling output
 release-record.json
+
+# three.js build files fetched and verified by tools/fetch_three.py (PINNED.json)
+app/static/vendor/three/three.module.js
+app/static/vendor/three/three.core.js
+app/static/vendor/three/.*.partial
