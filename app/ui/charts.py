@@ -198,11 +198,16 @@ class BandCount:
 
 
 def band_counts(cards: Sequence[ClientCard]) -> list[BandCount]:
-    """Every band of the model in its order, then the clients without a report."""
+    """Every band of the model in its order, then the clients without a report.
+
+    A stored band the model does not know (a report of another ruleset) has no bar
+    and no filter to open, so it is left out here; the client stays in the list.
+    """
     found = dict.fromkeys((*BAND_KEYS, NO_REPORT_KEY), 0)
     for card in cards:
         key = NO_REPORT_KEY if card.report is None else band_key(card.report.band)
-        found[key] = found.get(key, 0) + 1
+        if key in found:
+            found[key] += 1
     fullest = max(found.values(), default=0)
     names = dict(zip(BAND_KEYS, BAND_NAMES, strict=True))
     names[NO_REPORT_KEY] = NO_REPORT_NAME
