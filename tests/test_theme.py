@@ -147,9 +147,7 @@ def test_the_pico_mapping_is_repeated_at_the_rank_of_picos_light_block() -> None
     # rendered check of THE-850). The follow-up repeats the mapping for
     # :root[data-theme], Pico's rank and later, with the values of revrook.css.
     assert "\n:root[data-theme] {\n" in FOLLOW_UP
-    found = [
-        decl for sel, decl in parse_rules(FOLLOW_UP) if sel == ":root[data-theme]"
-    ]
+    found = [decl for sel, decl in parse_rules(FOLLOW_UP) if sel == ":root[data-theme]"]
     assert len(found) == 1
     mapping, root = found[0], block(":root")
     assert mapping and set(mapping) <= set(root)
