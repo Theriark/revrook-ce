@@ -192,7 +192,7 @@ async def test_the_drawer_gets_the_control_without_its_shell_and_the_page_keeps_
     drawer = await ui_browser.get(path, headers=DRAWER_HEADERS)
     html = drawer.text
     assert drawer.status_code == 200
-    assert drawer.headers["cache-control"] == "no-store"
+    assert drawer.headers["cache-control"] == "no-store, no-transform"
     assert "<html" not in html and "<main" not in html and "<h1" not in html
     assert TITLE_TAG in html
     assert f'href="{path}" class="rv-drawer-page-link">Open as a page</a>' in html
