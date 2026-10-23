@@ -318,10 +318,15 @@ def test_the_chart_script_is_linked_plain_and_first_party() -> None:
     assert "box.style.left" in SCRIPT and 'setAttribute("style"' not in SCRIPT
     assert 'closest(node, "[data-tip]")' in SCRIPT
     assert 'if (event.key === "Escape")' in SCRIPT
-    assert '["ArrowRight", "ArrowDown"]' in SCRIPT and '"Home"' in SCRIPT
+    # Left and Right only walk the marks: Up and Down keep scrolling the page
+    # while a mark or a sparkline has the focus (THE-867, low 3).
+    assert 'var NEXT_KEYS = ["ArrowRight"];' in SCRIPT and '"Home"' in SCRIPT
+    assert 'var PREVIOUS_KEYS = ["ArrowLeft"];' in SCRIPT
+    assert "ArrowUp" not in SCRIPT and "ArrowDown" not in SCRIPT
     assert 'button.setAttribute("aria-pressed", "true");' in SCRIPT
     assert "window.history.replaceState(" in SCRIPT
-    assert 'window.htmx.ajax("GET", fragment + "?" + query' in SCRIPT
+    ajax = 'window.htmx.ajax("GET", rangePending.path, { target: "#" + targetId });'
+    assert ajax in SCRIPT
     assert 'document.addEventListener("htmx:afterSwap", swapped);' in SCRIPT
     # A scroll or a resize moves the tooltip with its mark instead of hiding it:
     # a wheel that brings a mark under a still pointer showed the tip and the
@@ -332,7 +337,28 @@ def test_the_chart_script_is_linked_plain_and_first_party() -> None:
     # The query of a range is sent once: htmx with a source element would add
     # the values of the form (the pressed button) to the address a second time.
     assert "source: form" not in SCRIPT
-    assert "window.location.assign(page);" in SCRIPT
+    # The answer of a range is read from the request itself, not from the
+    # promise: the page's response handling (base.html, htmx-config) swaps a
+    # 422 or a 500 body in as an answer, which put the refusal where the chart
+    # was on Development (THE-867, low 4). Only a success is swapped in; any
+    # other status, or no answer, leaves for the page with that range and the
+    # address is written only after a success.
+    assert "pending.then" not in SCRIPT and ".then(" not in SCRIPT
+    assert 'document.addEventListener("htmx:beforeSwap", rangeBeforeSwap);' in SCRIPT
+    assert 'document.addEventListener("htmx:afterRequest", rangeAnswered);' in SCRIPT
+    assert 'document.addEventListener("htmx:sendError", rangeAnswered);' in SCRIPT
+    assert "var status = detail.xhr ? detail.xhr.status : 0;" in SCRIPT
+    assert "detail.shouldSwap = false;" in SCRIPT
+    refused = 'event.type !== "htmx:afterRequest" || status < 200 || status >= 300'
+    assert refused in SCRIPT
+    assert "window.location.assign(pending.page);" in SCRIPT
+    assert "info.requestPath === rangePending.path" in SCRIPT
+    remembered = SCRIPT.index("rememberRange(pending.name, pending.value);")
+    assert remembered > SCRIPT.index("window.location.assign(pending.page);")
+    # A series switched off stays off through a range swap (THE-867, low 5).
+    assert "off: seriesOff(target)" in SCRIPT
+    assert "restoreSeriesOff(target, pending.off);" in SCRIPT
+    assert 'button.rv-series[aria-pressed="false"]' in SCRIPT
 
 
 def test_the_score_chart_is_a_group_of_report_links_with_a_table() -> None:
@@ -418,6 +444,14 @@ def test_the_chart_rules_use_role_tokens_and_short_motion() -> None:
     # band of the clients list, so the band item itself takes none.
     band = re.search(r"\n\.rv-bands > li\.rv-band \{([^}]*)\}", CSS)
     assert band is not None and "list-style: none;" in band.group(1)
+    # On a phone the count sits beside the name on the first row and the bar
+    # takes the second, each placed by name: left to the auto placement, the
+    # count (after the bar in the markup) sat on a row of its own under the bar
+    # at 390 px on Development.
+    narrow = CSS[CSS.index("@media (max-width: 599px) {") :]
+    assert "  .rv-band-count {\n    grid-row: 1;\n    grid-column: 2;\n  }" in narrow
+    bar = "  .rv-bands .rv-band-bar {\n    grid-row: 2;\n    grid-column: 1 / -1;\n  }"
+    assert bar in narrow
     # And the history card, as wide as the page, drew its axis text at 20px.
     history = re.search(r"\n\.rv-history \.rv-chart-wide \{([^}]*)\}", CSS)
     assert history is not None and "max-width: 640px;" in history.group(1)

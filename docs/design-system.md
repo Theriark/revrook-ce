@@ -365,9 +365,11 @@ How a chart answers:
   wheel that brings a mark under a still pointer keeps its tip). The same words
   are the `<title>` of the mark, so a screen reader hears them and the tooltip
   itself is hidden from it.
-- Keyboard: the marks of one chart are one tab stop (`data-roving`); the arrow keys
-  move between them, Home and End to the first and the last, Enter follows the link.
-  A sparkline is one tab stop too (`data-spark`): the arrow keys walk its weeks. A
+- Keyboard: the marks of one chart are one tab stop (`data-roving`); Left and Right
+  move between them, Home and End to the first and the last, Enter follows the link,
+  and Up and Down are left to the page, so it still scrolls while a mark has the
+  focus. A sparkline is one tab stop too (`data-spark`): Left and Right walk its
+  weeks. A
   focused mark grows and takes the focus ring as a stroke that keeps its width
   whatever the stretch of a bar (`vector-effect: non-scaling-stroke`).
 - Range: the row of buttons above a score chart (`form.rv-range`, the `range_form`
@@ -377,12 +379,18 @@ How a chart answers:
   the card through htmx and swaps it into `data-target` in place, then writes the
   range into the address (`replaceState`) so a reload keeps it; the card says
   `aria-busy` while it waits and the drawing that arrives rises into place once
-  (`.rv-chart-enter`, 180 ms, off under `prefers-reduced-motion`). A fragment asked
-  for as a page redirects to the page that holds the chart with that range; signed
-  out it answers as every page does; a range that is not known is a 422.
+  (`.rv-chart-enter`, 180 ms, off under `prefers-reduced-motion`). The script reads
+  the answer from the request events of htmx, not from its promise: only a success
+  is swapped in and remembered in the address; any other status (the page's
+  response handling would otherwise swap a 422 or a 500 body in as an answer, as
+  the control drawer wants), or no answer at all, leaves for the page with that
+  range, as the form would. A fragment asked for as a page redirects to the page
+  that holds the chart with that range; signed out it answers as every page does; a
+  range that is not known is a 422.
 - Series: the legend of the Home trend becomes a row of pressed buttons
   (`button.rv-series`); not pressed, the line, its marks and its rows are hidden in
-  both drawings (the `hidden` attribute, since an SVG group has no such property).
+  both drawings (the `hidden` attribute, since an SVG group has no such property),
+  and a series switched off stays off when another range is swapped in.
 - Drill-down: every link is a real address. A link into a folded table opens the
   fold and focuses the row; a segment of the overview opens the checklist with a
   third chip that names the narrowing (`a.rv-chip-narrowed`) and takes it away.

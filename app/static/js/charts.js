@@ -8,14 +8,18 @@
  * - the tooltip (.rv-tip): one element, filled from data-tip of the mark under
  *   the pointer or the keyboard and moved beside it; hidden on leave, blur and
  *   Escape; it keeps its place beside the mark through a scroll or a resize;
- * - roving focus (data-roving): the marks of one chart are one tab stop; the
- *   arrow keys move between them, Home and End to the first and the last;
+ * - roving focus (data-roving): the marks of one chart are one tab stop; Left
+ *   and Right move between them, Home and End to the first and the last (Up and
+ *   Down are left to the page, so it still scrolls while a mark has the focus);
  * - the series toggles: each client of the legend becomes a pressed button;
- *   not pressed, its line, its marks and its rows are hidden in both drawings;
+ *   not pressed, its line, its marks and its rows are hidden in both drawings,
+ *   and it stays off when another range is swapped in;
  * - the range (form.rv-range): the pressed button asks data-fragment for the
  *   body of the card and swaps it into data-target in place, then the address
- *   remembers the range (replaceState) so a reload shows it; a request that
- *   fails leaves for the page with that range, as the form would;
+ *   remembers the range (replaceState) so a reload shows it; an answer that is
+ *   not a success (the page's response handling would swap a 422 or a 500 body
+ *   in as if it were) is not swapped in and leaves for the page with that
+ *   range, as the form would, and so does a request that gets no answer;
  * - the sparklines (data-spark): one tab stop each; the marks on them show
  *   their week and value under the pointer and under the arrow keys;
  * - a link to a row of a folded table (#domain-row-..., #source-...) opens the
@@ -31,10 +35,14 @@
   var READY = "ready";
   var GAP = 10;
   var EDGE = 4;
-  var NEXT_KEYS = ["ArrowRight", "ArrowDown"];
-  var PREVIOUS_KEYS = ["ArrowLeft", "ArrowUp"];
+  // Left and Right only: Up and Down keep scrolling the page while a mark or a
+  // sparkline has the focus (a review found them swallowed, THE-867).
+  var NEXT_KEYS = ["ArrowRight"];
+  var PREVIOUS_KEYS = ["ArrowLeft"];
   var tip = null;
   var tipFor = null;
+  // The range asked for and not yet answered (one at a time): see rangeSubmit.
+  var rangePending = null;
 
   function closest(node, selector) {
     while (node && node !== document) {
@@ -298,6 +306,41 @@
     }
   }
 
+  // The series switched off in a card: the ids of the legend items whose button
+  // is not pressed. A swapped body arrives with every series on, so the ones
+  // that were off are switched off again (toggleSeries hides their parts and
+  // sets the tab stops of the charts again).
+  function seriesOff(card) {
+    var buttons = card.querySelectorAll('button.rv-series[aria-pressed="false"]');
+    var off = [];
+    for (var k = 0; k < buttons.length; k += 1) {
+      off.push(buttons[k].parentNode.getAttribute("data-series"));
+    }
+    return off;
+  }
+
+  function restoreSeriesOff(card, off) {
+    for (var k = 0; k < off.length; k += 1) {
+      var item = card.querySelector('.rv-chart-legend li[data-series="' + off[k] + '"]');
+      var button = item ? item.querySelector('button.rv-series[aria-pressed="true"]') : null;
+      if (button) {
+        toggleSeries(button);
+      }
+    }
+  }
+
+  // Is this request event about the range asked for? htmx raises its request
+  // events on the body for a request of htmx.ajax without a source, so the
+  // path tells it from the request of a control drawer or a theme switch.
+  function isRangeRequest(event) {
+    if (!rangePending) {
+      return false;
+    }
+    var detail = event.detail || {};
+    var info = detail.pathInfo || {};
+    return !info.requestPath || info.requestPath === rangePending.path;
+  }
+
   function rangeSubmit(event) {
     var form = event.target;
     if (!form || !form.classList || !form.classList.contains("rv-range")) {
@@ -311,35 +354,70 @@
       return;
     }
     event.preventDefault();
+    if (rangePending) {
+      return;
+    }
     var name = button.name;
     var value = button.value;
     var query = encodeURIComponent(name) + "=" + encodeURIComponent(value);
-    var page = form.getAttribute("action") + "?" + query;
     hideTip();
     target.setAttribute("aria-busy", "true");
+    rangePending = {
+      path: fragment + "?" + query,
+      page: form.getAttribute("action") + "?" + query,
+      target: target,
+      name: name,
+      value: value,
+      off: seriesOff(target)
+    };
     // The query is the address alone: a source element would make htmx add the
-    // values of the form (the pressed button) to it a second time.
-    var pending = window.htmx.ajax("GET", fragment + "?" + query, {
-      target: "#" + targetId
-    });
-    function arrived() {
-      target.removeAttribute("aria-busy");
-      rememberRange(name, value);
-      prepare(target);
-      animate(target);
-      var pressed = target.querySelector('.rv-range button[aria-pressed="true"]');
-      if (pressed) {
-        pressed.focus({ preventScroll: true });
-      }
+    // values of the form (the pressed button) to it a second time. The answer
+    // is read from the request events (rangeBeforeSwap, rangeAnswered), not
+    // from the promise, which says nothing about the status.
+    window.htmx.ajax("GET", rangePending.path, { target: "#" + targetId });
+  }
+
+  // The page's response handling swaps a 403, 404, 409, 413, 422 or 500 body in
+  // as an answer (the control drawer shows the refusal in its panel), which here
+  // would put the refusal where the chart was: only a success is swapped in.
+  function rangeBeforeSwap(event) {
+    if (!isRangeRequest(event)) {
+      return;
     }
-    function failed() {
-      target.removeAttribute("aria-busy");
-      window.location.assign(page);
+    var detail = event.detail || {};
+    var status = detail.xhr ? detail.xhr.status : 0;
+    if (status < 200 || status >= 300) {
+      detail.shouldSwap = false;
     }
-    if (pending && typeof pending.then === "function") {
-      pending.then(arrived, failed);
-    } else {
-      failed();
+  }
+
+  // The request of a range came back. A success is swapped in already (the swap
+  // precedes afterRequest): the address remembers the range, the series that
+  // were off are off again, the drawing rises into place and the pressed button
+  // keeps the focus. Any other status, or no answer at all (sendError), leaves
+  // for the page with that range, as the form would, and the address is not
+  // written.
+  function rangeAnswered(event) {
+    if (!isRangeRequest(event)) {
+      return;
+    }
+    var pending = rangePending;
+    rangePending = null;
+    var target = pending.target;
+    target.removeAttribute("aria-busy");
+    var detail = event.detail || {};
+    var status = detail.xhr ? detail.xhr.status : 0;
+    if (event.type !== "htmx:afterRequest" || status < 200 || status >= 300) {
+      window.location.assign(pending.page);
+      return;
+    }
+    rememberRange(pending.name, pending.value);
+    prepare(target);
+    restoreSeriesOff(target, pending.off);
+    animate(target);
+    var pressed = target.querySelector('.rv-range button[aria-pressed="true"]');
+    if (pressed) {
+      pressed.focus({ preventScroll: true });
     }
   }
 
@@ -488,6 +566,9 @@
     document.addEventListener("click", clicked);
     document.addEventListener("submit", rangeSubmit);
     document.addEventListener("animationend", animationDone);
+    document.addEventListener("htmx:beforeSwap", rangeBeforeSwap);
+    document.addEventListener("htmx:afterRequest", rangeAnswered);
+    document.addEventListener("htmx:sendError", rangeAnswered);
     document.addEventListener("htmx:afterSwap", swapped);
     window.addEventListener("scroll", moveTip, { passive: true });
     window.addEventListener("resize", moveTip);

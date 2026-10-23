@@ -379,12 +379,27 @@ main a.rv-band-link[aria-current="true"] .rv-band-name {
   font-size: 13px;
 }
 
+/* On a phone the name and the count share the first row and the bar takes the
+   second. Each part is placed by name: left to the auto placement, the count
+   (third in the markup, after the bar) landed on a row of its own under the
+   bar, because the cursor of the placement never goes back to the first row. */
 @media (max-width: 599px) {
   main a.rv-band-link {
     grid-template-columns: minmax(0, 1fr) 3ch;
   }
 
+  .rv-band-name {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .rv-band-count {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
   .rv-bands .rv-band-bar {
+    grid-row: 2;
     grid-column: 1 / -1;
   }
 }
