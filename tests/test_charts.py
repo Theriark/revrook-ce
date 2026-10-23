@@ -296,7 +296,15 @@ def test_the_chart_script_is_linked_plain_and_first_party() -> None:
     assert "window.history.replaceState(" in SCRIPT
     assert 'window.htmx.ajax("GET", fragment + "?" + query' in SCRIPT
     assert 'document.addEventListener("htmx:afterSwap", swapped);' in SCRIPT
-    assert 'window.addEventListener("scroll", hideTip, { passive: true });' in SCRIPT
+    # A scroll or a resize moves the tooltip with its mark instead of hiding it:
+    # a wheel that brings a mark under a still pointer showed the tip and the
+    # scroll event hid it at once on Development (THE-850).
+    assert 'window.addEventListener("scroll", moveTip, { passive: true });' in SCRIPT
+    assert 'window.addEventListener("resize", moveTip);' in SCRIPT
+    assert "placeTip(tipFor);" in SCRIPT and "window.scrollX" not in SCRIPT
+    # The query of a range is sent once: htmx with a source element would add
+    # the values of the form (the pressed button) to the address a second time.
+    assert "source: form" not in SCRIPT
     assert "window.location.assign(page);" in SCRIPT
 
 
