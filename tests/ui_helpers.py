@@ -21,6 +21,7 @@ from app.evidence.service import EvidenceContext, NewEvidence
 from app.main import create_app
 from app.settings import load_settings
 from app.ui import clients as ui_clients
+from app.ui import explorer as ui_explorer
 from app.ui import home as ui_home
 from app.ui import reports as ui_reports
 from app.ui import site as ui_site
@@ -34,6 +35,7 @@ UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
 PAGE_ROUTERS = (
     ui_home.router,
     ui_clients.router,
+    ui_explorer.router,
     ui_reports.router,
     ui_site.router,
     ui_system.router,

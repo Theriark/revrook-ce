@@ -20,3 +20,12 @@ htmx 2.0.4
   Source: https://github.com/bigskysoftware/htmx (tag v2.0.4, dist/htmx.min.js)
   Licence: 0BSD (Zero-Clause BSD)
   Licence file: app/static/vendor/htmx/LICENSE
+
+three.js 0.186.1 (r186)
+  Files: app/static/vendor/three/three.module.js, app/static/vendor/three/three.core.js
+  Source: https://github.com/mrdoob/three.js (npm package three@0.186.1,
+          build/three.module.js and build/three.core.js, unmodified; the tarball
+          integrity and the SHA-256 of each file are in
+          app/static/vendor/three/PINNED.json)
+  Licence: MIT, Copyright 2010-2026 Three.js Authors
+  Licence file: app/static/vendor/three/LICENSE

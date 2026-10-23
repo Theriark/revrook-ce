@@ -57,6 +57,7 @@ choose another resolution.
 | --- | --- | --- | --- | --- |
 | htmx | 0BSD | bigskysoftware/htmx `LICENSE` | 2026-10-17 | The file is titled "Zero-Clause BSD". |
 | Pico CSS | MIT | picocss/pico `LICENSE.md` | 2026-10-17 | |
+| three.js 0.186.1 | MIT | mrdoob/three.js `LICENSE` (the copy in the npm tarball three-0.186.1.tgz) | 2026-10-23 | Loaded only by the Evidence Explorer preview page, from `app/static/vendor/three`, after the browser is found to offer WebGL 2. Two unmodified files of the published build; `app/static/vendor/three/PINNED.json` records the tarball integrity (sha512) and the SHA-256 of each file, checked by `tests/test_evidence_explorer.py`. No CDN. |
 
 ## Planned dependencies not yet in `requirements.in`
 
