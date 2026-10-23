@@ -7,6 +7,9 @@
 {% import "_icons.html" as i %}
 {% import "_chart.html" as c %}
 {{ c.range_form("clients/" ~ client_id ~ "/reports", "/clients/" ~ client_id ~ "/charts/history", "history-body", "span", spans, span, "Span of the chart") }}
+{% if reports_capped %}
+<p class="rv-card-subtitle" id="history-capped">Only the newest {{ reports_cap }} reports of this client are drawn; older reports are left out of the chart.</p>
+{% endif %}
 {% if history.lines %}
 {% for chart in (history, history_narrow) %}
 {{ c.score_chart(chart, "history-title", "history", "The score of this client at every report, from 0 to 100 by report date.") }}
