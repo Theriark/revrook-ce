@@ -26,6 +26,8 @@ three.js 0.186.1 (r186)
   Source: https://github.com/mrdoob/three.js (npm package three@0.186.1,
           build/three.module.js and build/three.core.js, unmodified; the tarball
           integrity and the SHA-256 of each file are in
-          app/static/vendor/three/PINNED.json)
+          app/static/vendor/three/PINNED.json; the two files are fetched and
+          verified by tools/fetch_three.py during CI and the image build, and
+          are present in the image)
   Licence: MIT, Copyright 2010-2026 Three.js Authors
   Licence file: app/static/vendor/three/LICENSE
