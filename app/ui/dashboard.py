@@ -726,8 +726,11 @@ def trend_chart(
         )
         for item in drawn
     )
+    # The dates divide the span evenly: a whole number of days per step put the
+    # middle date of a three-day span at a third of the axis, into the first one.
     steps = max(size.dates - 1, 1)
-    ticks = [now - timedelta(days=days - days * k // steps) for k in range(size.dates)]
+    span = now - start
+    ticks = [start + span * k / steps for k in range(size.dates)]
     x_ticks = tuple(
         (
             f"{_chart_x(moment, start, now, size):.1f}",

@@ -64,13 +64,14 @@ def read_range(text: str) -> str:
 
 def history_days(key: str, points: Sequence[ReportPoint], now: datetime) -> int:
     """How many days the history chart spans: the number of the range, or for
-    "all" from the oldest report to now (a quarter when there is no report)."""
+    "all" from the oldest report to now (a quarter when there is no report), and
+    at least a week, so the dates of the time axis never repeat one day."""
     if key != "all":
         return int(key)
     if not points:
         return HISTORY_DAYS
     oldest = min(point.as_of for point in points)
-    return max((now - oldest).days + 1, 1)
+    return max((now - oldest).days + 1, RANGE_DAYS[0])
 
 
 def _percent(part: int | Fraction, whole: int | Fraction) -> str:
@@ -117,8 +118,10 @@ def age_words(age_days: int) -> str:
 def age_bars(rows: Sequence[SourceRow], now: datetime) -> list[AgeBar]:
     """One bar per source row, in the order of the rows (by name).
 
-    The scale is the longest of every age and every stale window, so the oldest
-    export reaches the end of its track and every stale mark sits inside it.
+    The scale is twice the longest stale window, where an export counts for
+    nothing (`freshness` in app/scoring/engine.py), or the oldest age when that is
+    longer; so every stale mark sits at most halfway along its track, never on its
+    rounded end, and a bar that fills the track is evidence worth nothing.
     """
     ages: dict[str, int] = {}
     windows: dict[str, int] = {}
@@ -128,7 +131,7 @@ def age_bars(rows: Sequence[SourceRow], now: datetime) -> list[AgeBar]:
         ages[row.code] = max((now - row.captured_at).days, 0)
         if row.expires_at is not None:
             windows[row.code] = max((row.expires_at - row.captured_at).days, 0)
-    scale = max([*ages.values(), *windows.values(), 1])
+    scale = max([*ages.values(), *(2 * window for window in windows.values()), 1])
     bars: list[AgeBar] = []
     for row in rows:
         age = ages.get(row.code)

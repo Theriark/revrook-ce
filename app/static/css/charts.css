@@ -313,9 +313,11 @@ main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key line 
   list-style: none;
 }
 
-.rv-band {
+/* Pico styles every li with a square marker, so the item itself takes none */
+.rv-bands > li.rv-band {
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 main a.rv-band-link {
@@ -406,4 +408,10 @@ main a.rv-chip-narrowed {
 
 .rv-history .rv-empty-small {
   padding: 24px 16px;
+}
+
+/* The card is as wide as the page, and a drawing stretched past its 640 units
+   grows its 12px axis text with it (20px at 1440): it stops at its own width */
+.rv-history .rv-chart-wide {
+  max-width: 640px;
 }
