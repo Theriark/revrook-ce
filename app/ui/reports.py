@@ -69,18 +69,26 @@ DETAILS_SAVED = "The details were saved."
 KIND_LIST = [(QBR, REPORT_NAMES[QBR]), (INSURANCE, REPORT_NAMES[INSURANCE])]
 
 
-async def client_points(session: AsyncSession, client_id: int) -> list[ReportPoint]:
-    """Every stored report of the client as a point, oldest first (the newest
-    MAX_SNAPSHOTS of them), each with the id of its row so a mark can open it."""
+async def client_points(
+    session: AsyncSession, client_id: int
+) -> tuple[list[ReportPoint], bool]:
+    """The stored reports of the client as points, oldest first (the newest
+    MAX_SNAPSHOTS of them), each with the id of its row so a mark can open it, and
+    whether older reports were left out."""
     found = await session.execute(
         select(Snapshot.client_id, Snapshot.inputs, Snapshot.id)
         .where(Snapshot.client_id == client_id)
         .order_by(Snapshot.as_of.desc(), Snapshot.id.desc())
-        .limit(MAX_SNAPSHOTS)
+        .limit(MAX_SNAPSHOTS + 1)
     )
-    return report_points(
-        [(owner, document, snapshot_id) for owner, document, snapshot_id in found.all()]
+    rows = found.all()
+    points = report_points(
+        [
+            (owner, document, snapshot_id)
+            for owner, document, snapshot_id in rows[:MAX_SNAPSHOTS]
+        ]
     )
+    return points, len(rows) > MAX_SNAPSHOTS
 
 
 async def history_of(
@@ -89,7 +97,7 @@ async def history_of(
     """The score history chart of one client over `span` (a key of HISTORY_RANGES):
     one line through every stored report of the range, drawn wide and narrow like
     the Home trend, with a mark per report that opens it."""
-    points = await client_points(session, client_id)
+    points, capped = await client_points(session, client_id)
     days = history_days(span, points, now)
     names = {client_id: name}
     return {
@@ -100,6 +108,8 @@ async def history_of(
         "span": span,
         "spans": HISTORY_RANGES,
         "reports_total": len(points),
+        "reports_capped": capped,
+        "reports_cap": MAX_SNAPSHOTS,
     }
 
 
