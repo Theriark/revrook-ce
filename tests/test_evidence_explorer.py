@@ -393,7 +393,7 @@ async def test_the_page_and_its_data_show_the_same_client(
     assert f'data-explorer-url="{DATA_PATH}?client_id={client_id}"' in html
     assert html.count('<tr data-node="control:') == 51
     assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
-    assert page.headers["cache-control"] == "no-store"
+    assert page.headers["cache-control"] == "no-store, no-transform"
 
     data = await ui_browser.get(f"{DATA_PATH}?client_id={client_id}")
     assert data.status_code == 200
