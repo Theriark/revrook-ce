@@ -29,7 +29,9 @@ TIDY = "tidy"
 GAPS = "gaps"
 PROFILES = (TIDY, GAPS)
 DOMAIN = "seed.example.invalid"
-GRAPH = "https://graph.microsoft.com/v1.0/$metadata#"
+# The @odata.context of a Graph file, without the service host: no importer reads it
+# and the CE image must hold no name that belongs to a later edition.
+GRAPH = "$metadata#"
 HOST_PREFIX = "SEED-HOST-"
 USER_COUNT = 12
 NAMESPACE = uuid.UUID("5eed0000-0000-4000-8000-000000000953")
