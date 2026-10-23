@@ -39,6 +39,7 @@ from app.checks.mappings import (
 )
 from app.checks.reference import load_reference_names, reference_problems
 from app.db import make_engine
+from app.devseed import run_dev_seed
 from app.evidence.chain import ChainResult, verify_all
 from app.migrate import upgrade_to_head
 from app.settings import Settings, SettingsError, load_settings
@@ -225,6 +226,8 @@ def _serve_web(settings: Settings, port: int) -> int:  # pragma: no cover
     # The first-run page needs the tables, so the web role brings the schema up
     # to date before it listens (a locked, one-at-a-time step; see app.migrate).
     upgrade_to_head()
+    # Development only: creates the DEV_SEED_ACCOUNTS when DEV_SEED=1 (app.devseed).
+    run_dev_seed(settings)
     uvicorn.run(
         "app.main:create_app",
         factory=True,
