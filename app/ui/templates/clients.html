@@ -45,6 +45,7 @@
 </li>
 {% endfor %}
 </ul>
+{% if bands.unclassified %}<p class="rv-bands-note" id="bands-unclassified">{{ bands.unclassified }} client{% if bands.unclassified != 1 %}s have{% else %} has{% endif %} a last report in a band this version does not know (a report made under another ruleset), so no bar counts {% if bands.unclassified != 1 %}them{% else %}it{% endif %}. With no band chosen, the list below shows {% if bands.unclassified != 1 %}them{% else %}it{% endif %}.</p>{% endif %}
 {% if query.band %}<p class="rv-bands-note"><a href="/clients{{ query.params(band='', page=1) }}">Show every band</a></p>{% endif %}
 </section>
 {% if rows %}
