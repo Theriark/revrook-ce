@@ -6,6 +6,12 @@
     {"name": "FERNET_KEY", "kind": "fernet"},
     {"name": "DATABASE_URL", "kind": "postgres_url", "scheme": "postgresql+asyncpg"},
     {"name": "BASE_URL", "kind": "base_url"},
-    {"name": "ROLE", "kind": "literal", "value": "all"}
+    {"name": "ROLE", "kind": "literal", "value": "all"},
+    {"name": "DEV_SEED", "kind": "literal", "value": "1"},
+    {"name": "DEV_SEED_ACCOUNTS", "kind": "literal", "value": "itmanager@theriark.com"},
+    {"name": "DEV_SEED_PASSWORD_ITMANAGER", "kind": "token24"}
+  ],
+  "browserAccounts": [
+    {"email": "itmanager@theriark.com", "label": "itmanager", "passwordEnv": "DEV_SEED_PASSWORD_ITMANAGER"}
   ]
 }
