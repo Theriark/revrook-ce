@@ -409,3 +409,9 @@ main a.rv-chip-narrowed {
 .rv-history .rv-empty-small {
   padding: 24px 16px;
 }
+
+/* The card is as wide as the page, and a drawing stretched past its 640 units
+   grows its 12px axis text with it (20px at 1440): it stops at its own width */
+.rv-history .rv-chart-wide {
+  max-width: 640px;
+}

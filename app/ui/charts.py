@@ -64,13 +64,14 @@ def read_range(text: str) -> str:
 
 def history_days(key: str, points: Sequence[ReportPoint], now: datetime) -> int:
     """How many days the history chart spans: the number of the range, or for
-    "all" from the oldest report to now (a quarter when there is no report)."""
+    "all" from the oldest report to now (a quarter when there is no report), and
+    at least a week, so the dates of the time axis never repeat one day."""
     if key != "all":
         return int(key)
     if not points:
         return HISTORY_DAYS
     oldest = min(point.as_of for point in points)
-    return max((now - oldest).days + 1, 1)
+    return max((now - oldest).days + 1, RANGE_DAYS[0])
 
 
 def _percent(part: int | Fraction, whole: int | Fraction) -> str:
