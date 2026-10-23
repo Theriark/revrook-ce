@@ -65,6 +65,7 @@ NAV_LINKS = (
     ("/settings", "Settings"),
     ("/system", "System"),
     ("/glossary", "Glossary"),
+    ("/experiments/evidence-explorer", "Evidence Explorer"),
 )
 # The sun, the moon and the monitor of the theme switch (_theme.html), drawn in
 # the rail and in the signed-out header (THE-808).
