@@ -29,6 +29,7 @@ from app.reports.render import INSURANCE, KINDS, QBR, REPORT_NAMES, render_repor
 from app.reports.topics import TOPIC_KEYS, TOPICS, Topic
 from app.reports.view import ReportContext, ReportError, ReportView
 from app.scoring.snapshot import SnapshotError, parse_snapshot
+from app.security import with_no_transform
 from app.snapshots import (
     earlier_bytes,
     list_snapshots,
@@ -418,12 +419,15 @@ async def download(request: Request, client_id: RowId, export_id: RowId) -> Resp
             record, data = await read_export(
                 session, files_of(request), client_id, export_id
             )
+        # The file is what was hashed, byte for byte. It goes out as an opaque
+        # download (not text/html) and with no-transform, so an edge that rewrites
+        # HTML (e-mail address obfuscation) leaves it alone.
         return Response(
             content=data,
-            media_type="text/html",
+            media_type="application/octet-stream",
             headers={
                 "Content-Disposition": f'attachment; filename="{record.filename}"',
-                "Cache-Control": "no-store",
+                "Cache-Control": with_no_transform("no-store"),
             },
         )
 

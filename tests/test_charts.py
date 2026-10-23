@@ -524,7 +524,7 @@ async def test_a_fragment_needs_a_session_and_is_a_fragment_only_for_htmx(
         "/charts/trend", params={"days": "30"}, headers={"HX-Request": "true"}
     )
     assert fragment.status_code == 200
-    assert fragment.headers["cache-control"] == "no-store"
+    assert fragment.headers["cache-control"] == "no-store, no-transform"
     assert "default-src 'self'" in fragment.headers["content-security-policy"]
     assert "<html" not in fragment.text and 'class="rv-range"' in fragment.text
     assert PRESSED.findall(fragment.text) == [("days", "30")]
