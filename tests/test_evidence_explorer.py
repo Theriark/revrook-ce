@@ -375,7 +375,8 @@ def test_the_page_renders_with_every_status_as_an_icon_and_its_words() -> None:
     assert structure_problems(empty) == []
     assert 'id="explorer-no-clients"' in empty
     assert 'href="/clients">Add a client' in empty
-    assert 'id="explorer"' not in empty and "<script" not in empty
+    # The shell's own scripts are on every page; the scene module is not loaded here.
+    assert 'id="explorer"' not in empty and "evidence-explorer.js" not in empty
 
 
 # --- the routes (PostgreSQL) ----------------------------------------------------------
