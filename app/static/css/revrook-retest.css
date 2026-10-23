@@ -556,9 +556,10 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
 }
 
 /* The Pico variables for every theme (THE-850). revrook.css maps them to the
-   roles in :root, but Pico writes its own light values for
-   :root:not([data-theme="dark"]) (and [data-theme="light"]), a rule of higher
-   rank than :root. With the theme left to the system, the default, on a system
+   roles in :root, but Pico writes its own light values for the root of every
+   theme but the dark one (a :not() rule on data-theme, and the light theme), a
+   rule of higher rank than :root. With the theme left to the system, the
+   default, on a system
    that prefers dark, Pico's light text, surfaces and fields showed on the dark
    roles: the names of the domain bars, the "Show the numbers" folds, the
    recent changes and the score card were 1.3 to 1 on Development. This rule
