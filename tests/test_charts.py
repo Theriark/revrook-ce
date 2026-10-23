@@ -325,9 +325,8 @@ def test_the_chart_script_is_linked_plain_and_first_party() -> None:
     assert "ArrowUp" not in SCRIPT and "ArrowDown" not in SCRIPT
     assert 'button.setAttribute("aria-pressed", "true");' in SCRIPT
     assert "window.history.replaceState(" in SCRIPT
-    assert 'window.htmx.ajax("GET", rangePending.path, { target: "#" + targetId });' in (
-        SCRIPT
-    )
+    ajax = 'window.htmx.ajax("GET", rangePending.path, { target: "#" + targetId });'
+    assert ajax in SCRIPT
     assert 'document.addEventListener("htmx:afterSwap", swapped);' in SCRIPT
     # A scroll or a resize moves the tooltip with its mark instead of hiding it:
     # a wheel that brings a mark under a still pointer showed the tip and the
@@ -350,14 +349,12 @@ def test_the_chart_script_is_linked_plain_and_first_party() -> None:
     assert 'document.addEventListener("htmx:sendError", rangeAnswered);' in SCRIPT
     assert "var status = detail.xhr ? detail.xhr.status : 0;" in SCRIPT
     assert "detail.shouldSwap = false;" in SCRIPT
-    assert 'event.type !== "htmx:afterRequest" || status < 200 || status >= 300' in (
-        SCRIPT
-    )
+    refused = 'event.type !== "htmx:afterRequest" || status < 200 || status >= 300'
+    assert refused in SCRIPT
     assert "window.location.assign(pending.page);" in SCRIPT
     assert "info.requestPath === rangePending.path" in SCRIPT
-    assert SCRIPT.index("rememberRange(pending.name, pending.value);") > SCRIPT.index(
-        "window.location.assign(pending.page);"
-    )
+    remembered = SCRIPT.index("rememberRange(pending.name, pending.value);")
+    assert remembered > SCRIPT.index("window.location.assign(pending.page);")
     # A series switched off stays off through a range swap (THE-867, low 5).
     assert "off: seriesOff(target)" in SCRIPT
     assert "restoreSeriesOff(target, pending.off);" in SCRIPT
@@ -453,9 +450,8 @@ def test_the_chart_rules_use_role_tokens_and_short_motion() -> None:
     # at 390 px on Development.
     narrow = CSS[CSS.index("@media (max-width: 599px) {") :]
     assert "  .rv-band-count {\n    grid-row: 1;\n    grid-column: 2;\n  }" in narrow
-    assert "  .rv-bands .rv-band-bar {\n    grid-row: 2;\n    grid-column: 1 / -1;\n  }" in (
-        narrow
-    )
+    bar = "  .rv-bands .rv-band-bar {\n    grid-row: 2;\n    grid-column: 1 / -1;\n  }"
+    assert bar in narrow
     # And the history card, as wide as the page, drew its axis text at 20px.
     history = re.search(r"\n\.rv-history \.rv-chart-wide \{([^}]*)\}", CSS)
     assert history is not None and "max-width: 640px;" in history.group(1)
