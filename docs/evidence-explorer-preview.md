@@ -39,8 +39,9 @@ inside the scene: the detail line, the legend and the tables carry every word.
 Pointing at a pillar or a tile names it; a press selects it and brings its beams
 forward while the rest steps back; the same happens from the **Show in scene**
 button of a table row, which also turns the wall to face it. A drag turns and tilts
-the wall; the buttons under it turn it by a step or reset the view; with the canvas
-focused, Left and Right turn, plus and minus move closer and away, Home resets,
+the wall; the buttons under it turn it by a step or reset the view. The canvas is
+announced as an application (a scene), so a screen reader passes its keys on; with
+it focused, Left and Right turn, plus and minus move closer and away, Home resets,
 Escape clears the selection. The ground is the brand charcoal in both themes, the
 same dark surface as the rail; the colours on it are the dark-theme status values of
 `revrook.css`, which reach 4.5 to 1 on it.
@@ -68,9 +69,10 @@ same dark surface as the rail; the colours on it are the dark-theme status value
   that is gone) leaves a note that says what to do. A lost graphics context stops
   the drawing with a note and resumes when the browser restores it.
 - `prefers-reduced-motion` stops the wall turning by itself and makes every move
-  immediate; otherwise it turns slowly until the person touches it. Frames are
-  drawn only when something changed or the wall is turning, never while the page is
-  hidden or the stage is out of view.
+  immediate, also when the setting changes while the page is open; otherwise it
+  turns slowly until the person touches it. Frames are drawn only when something
+  changed or the wall is turning, never while the page is hidden or the stage is
+  out of view.
 - Leaving the page disposes every geometry, material and the renderer.
   `document.getElementById("explorer").revrookExplorer` offers `dispose()`,
   `mount()` and `info()` so a test can cycle the scene ten times and read the

@@ -138,6 +138,11 @@
   background-color: var(--rv-surface);
 }
 
+/* Empty, it takes no line of its own under wrapped buttons on a narrow screen */
+.rv-explorer-hover:empty {
+  display: none;
+}
+
 /* What is selected, read out to assistive technology as it changes */
 .rv-explorer-detail {
   min-height: 3em;
