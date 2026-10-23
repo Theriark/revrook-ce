@@ -86,6 +86,14 @@ the shadows deepen and the veil darkens; the accent face of a button keeps the b
 accent, while links, marks, rings and sparklines take a lighter accent that reaches
 4.5 to 1 on the dark surface. Every status keeps its icon and words in both themes.
 
+The Pico variables are mapped to the roles in `:root`, and once more in
+`revrook-retest.css` for `:root[data-theme]`: Pico writes its own light values for
+`:root:not([data-theme="dark"])`, a rule of higher rank than `:root`, so with the
+system theme on a system that prefers dark the text, surfaces and fields Pico draws
+kept their light values on the dark roles (found in the rendered check of the charts
+on Development). The second mapping has Pico's rank and comes later, so the roles win
+whatever the theme; `base.html` always names one.
+
 The switch (`_theme.html`) is a form of three real buttons, Light, Dark and System,
 with the sun, moon and monitor icons; the pressed one carries `aria-pressed="true"`.
 It sits in the rail above the sign-out button (its words alone from 1024 px: three
@@ -351,9 +359,12 @@ How a chart answers:
   the exact values in words written on the server (`Mark.tip`, `AgeBar.tip`,
   `BandCount.tip`, `SparkMark.tip`); the script shows them in one element
   (`.rv-tip`, rail-dark with white words in both themes, the first line bold) beside
-  the mark under the pointer or the keyboard, and hides it on leave, blur, Escape,
-  scroll and resize. The same words are the `<title>` of the mark, so a screen
-  reader hears them and the tooltip itself is hidden from it.
+  the mark under the pointer or the keyboard, and hides it on leave, blur and
+  Escape. The element is fixed to the view, so a hidden tooltip near the right
+  edge never widens the page, and a scroll or a resize moves it with its mark (a
+  wheel that brings a mark under a still pointer keeps its tip). The same words
+  are the `<title>` of the mark, so a screen reader hears them and the tooltip
+  itself is hidden from it.
 - Keyboard: the marks of one chart are one tab stop (`data-roving`); the arrow keys
   move between them, Home and End to the first and the last, Enter follows the link.
   A sparkline is one tab stop too (`data-spark`): the arrow keys walk its weeks. A
