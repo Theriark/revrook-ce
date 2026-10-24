@@ -62,14 +62,16 @@ NAV_LINKS = (
     ("/clients", "Clients"),
     ("/imports/profile-editor", "Profile editor"),
     ("/evidence/integrity", "Evidence integrity"),
+    ("/experiments/evidence-explorer", "Evidence Explorer"),
     ("/settings", "Settings"),
     ("/system", "System"),
     ("/glossary", "Glossary"),
-    ("/experiments/evidence-explorer", "Evidence Explorer"),
 )
 # The sun, the moon and the monitor of the theme switch (_theme.html), drawn in
 # the rail and in the signed-out header (THE-808).
 THEME_ICONS = 3
+# The chevron of the rail fold (_rail.html), drawn in the rail alone (THE-1053).
+RAIL_ICONS = 1
 # The rook mark of the brand lockup (_brand.html), drawn on nothing (THE-824).
 MARK_TAG = '<img class="rv-mark-img" src="/static/brand/logo-mark-512x512.png"'
 COMPONENTS = (
@@ -556,7 +558,7 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         assert page.status_code == 200, path
         html = page.text
         assert structure_problems(html) == [], path
-        assert '<body class="rv-app">' in html
+        assert '<body class="rv-app" data-rail="expanded">' in html
         assert '<nav class="rv-nav" aria-label="Main">' in html
         assert MARK_TAG in html
         assert 'class="rv-edition">Community Edition' in html
@@ -564,11 +566,11 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         assert [href for href, _ in links] == [href for href, _ in NAV_LINKS]
         assert [href for href, flag in links if flag] == [current]
         assert html.count('aria-current="page"') == 1
-        # The rail draws one icon per link, one on the sign-out button and the
-        # three of the theme switch; the page below it may draw its own (the Home
-        # empty state does).
+        # The rail draws one icon per link, one on the sign-out button, the
+        # three of the theme switch and the chevron of the fold; the page below
+        # it may draw its own (the Home empty state does).
         rail = html.split("</header>", 1)[0]
-        icons = len(NAV_LINKS) + 1 + THEME_ICONS
+        icons = len(NAV_LINKS) + 1 + THEME_ICONS + RAIL_ICONS
         assert rail.count('<svg class="rv-icon ') == icons
         assert '<span class="rv-user-name">admin</span>' in html
         assert 'action="/logout"' in html and ">Sign out</span>" in html
