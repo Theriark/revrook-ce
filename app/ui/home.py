@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Request, Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import count_users
@@ -106,12 +106,50 @@ async def recent_snapshots(
     ]
 
 
+async def snapshots_before(
+    session: AsyncSession, before: datetime
+) -> list[tuple[int, dict[str, Any], int]]:
+    """The newest stored report of each active client strictly before `before`:
+    the report a trend line enters the range from (see `trend_chart`)."""
+    ranked = (
+        select(
+            Snapshot.client_id.label("client_id"),
+            Snapshot.inputs.label("inputs"),
+            Snapshot.id.label("snapshot_id"),
+            func.row_number()
+            .over(
+                partition_by=Snapshot.client_id,
+                order_by=(Snapshot.as_of.desc(), Snapshot.id.desc()),
+            )
+            .label("place"),
+        )
+        .join(Client, Client.id == Snapshot.client_id)
+        .where(Client.archived_at.is_(None), Snapshot.as_of < before)
+        .subquery()
+    )
+    found = await session.execute(
+        select(ranked.c.client_id, ranked.c.inputs, ranked.c.snapshot_id).where(
+            ranked.c.place == 1
+        )
+    )
+    return [
+        (client_id, document, snapshot_id)
+        for client_id, document, snapshot_id in found.all()
+    ]
+
+
 async def trend_context(request: Request, now: datetime, days: int) -> dict[str, Any]:
     """The trend chart alone, for the range swapped in by the chart script: the
-    stored reports of the last `days` and the names of the clients."""
+    stored reports of the last `days`, the report before them each line enters
+    from, and the names of the clients."""
     since = now - timedelta(days=days)
     async with session_factory(request)() as session:
-        points = report_points(await recent_snapshots(session, since))
+        points = report_points(
+            [
+                *await recent_snapshots(session, since),
+                *await snapshots_before(session, since),
+            ]
+        )
         names = await client_names(session)
     return {
         "trend": trend_chart(points, names, now, days=days),
@@ -173,6 +211,11 @@ async def load_board(
             sources.extend(source_rows(evidence, wanted))
         since = now - timedelta(days=HISTORY_DAYS)
         points = report_points(await recent_snapshots(session, since))
+        # The trend keeps the range chosen: its reports and, per client, the one
+        # before them that the line enters from. The sparklines keep `points`.
+        window = now - timedelta(days=days)
+        trend_points = [point for point in points if point.as_of >= window]
+        trend_points += report_points(await snapshots_before(session, window))
         names = await client_names(session)
         events = await recent_events(session)
         users = await usernames(session)
@@ -184,8 +227,10 @@ async def load_board(
         "stats": stat_cards(postures, weekly, evidence_summary(sources)),
         "attention": prioritised(attention)[:MAX_ATTENTION],
         "attention_total": len(attention),
-        "trend": trend_chart(points, names, now, days=days),
-        "trend_narrow": trend_chart(points, names, now, days=days, size=NARROW_CHART),
+        "trend": trend_chart(trend_points, names, now, days=days),
+        "trend_narrow": trend_chart(
+            trend_points, names, now, days=days, size=NARROW_CHART
+        ),
         "domains": domain_bars(domain_rows),
         "changes": change_lines(events, names, users, now),
         "days": days,
