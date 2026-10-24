@@ -13,13 +13,16 @@
  *   Down are left to the page, so it still scrolls while a mark has the focus);
  * - the series toggles: each client of the legend becomes a pressed button;
  *   not pressed, its line, its marks and its rows are hidden in both drawings,
- *   and it stays off when another range is swapped in;
+ *   and it stays off when another range is swapped in; with every client off
+ *   the card says so (data-all-off) instead of showing an empty plot;
  * - the range (form.rv-range): the pressed button asks data-fragment for the
  *   body of the card and swaps it into data-target in place, then the address
  *   remembers the range (replaceState) so a reload shows it; an answer that is
  *   not a success (the page's response handling would swap a 422 or a 500 body
  *   in as if it were) is not swapped in and leaves for the page with that
- *   range, as the form would, and so does a request that gets no answer;
+ *   range, as the form would, and so does a request that gets no answer; the
+ *   summary of the range that arrived (data-chart-summary) is read out through
+ *   one polite live region, since focus stays on the pressed button;
  * - the sparklines (data-spark): one tab stop each; the marks on them show
  *   their week and value under the pointer and under the arrow keys;
  * - a link to a row of a folded table (#domain-row-..., #source-...) opens the
@@ -41,6 +44,7 @@
   var PREVIOUS_KEYS = ["ArrowLeft"];
   var tip = null;
   var tipFor = null;
+  var live = null;
   // The range asked for and not yet answered (one at a time): see rangeSubmit.
   var rangePending = null;
 
@@ -279,7 +283,24 @@
     for (var n = 0; n < groups.length; n += 1) {
       prepareRoving(groups[n]);
     }
+    showAllOff(card);
     hideTip();
+  }
+
+  // With every client of a legend switched off, the plot is empty: the note of
+  // the card (data-all-off, hidden by the template) says why and what brings a
+  // line back.
+  function showAllOff(card) {
+    var note = card.querySelector("[data-all-off]");
+    if (!note) {
+      return;
+    }
+    var on = card.querySelectorAll('button.rv-series[aria-pressed="true"]');
+    if (on.length === 0) {
+      note.removeAttribute("hidden");
+    } else {
+      note.setAttribute("hidden", "");
+    }
   }
 
   // --- the range of a chart -----------------------------------------------------
@@ -291,6 +312,24 @@
     var address = new URL(window.location.href);
     address.searchParams.set(name, value);
     window.history.replaceState(window.history.state, "", address.href);
+  }
+
+  // One polite live region for the page, made on first use: the summary of a
+  // range that was swapped in is written into it, so a screen reader hears what
+  // the new range holds while focus stays on the pressed button.
+  function announce(target) {
+    var summary = target.querySelector("[data-chart-summary]");
+    if (!summary) {
+      return;
+    }
+    if (!live) {
+      live = document.createElement("div");
+      live.className = "rv-sr-only";
+      live.setAttribute("aria-live", "polite");
+      live.setAttribute("role", "status");
+      document.body.appendChild(live);
+    }
+    live.textContent = summary.textContent;
   }
 
   function animate(target) {
@@ -415,6 +454,7 @@
     prepare(target);
     restoreSeriesOff(target, pending.off);
     animate(target);
+    announce(target);
     var pressed = target.querySelector('.rv-range button[aria-pressed="true"]');
     if (pressed) {
       pressed.focus({ preventScroll: true });
