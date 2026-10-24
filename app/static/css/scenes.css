@@ -19,10 +19,20 @@
    "Preparing the scene" on the charcoal), so the cards and the bars under it never
    move once the page is drawn; the module puts a stage away when the browser has
    no WebGL 2 or the list has nothing to draw. A browser that does not know this
-   query keeps the stage hidden until the module reveals it, as before */
+   query keeps the stage hidden until the module reveals it, as before. The rule
+   is important because Pico hides every [hidden] element with an important rule,
+   which would otherwise win and leave the stage out of the first paint. The hide
+   button and the turn buttons keep their room too, invisible (so they can be
+   neither seen nor reached) until the module has wired and revealed them */
 @media (scripting: enabled) {
   .rv-scene[hidden]:not([data-scene-state="unavailable"]) {
-    display: block;
+    display: block !important;
+  }
+
+  .rv-scene:not([data-scene-state="unavailable"]) .rv-scene-toggle[hidden],
+  .rv-scene:not([data-scene-state="unavailable"]):not(.is-closed) .rv-scene-tools[hidden] {
+    display: flex !important;
+    visibility: hidden;
   }
 }
 

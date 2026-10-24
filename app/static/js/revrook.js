@@ -391,13 +391,28 @@
     document.body.setAttribute("data-rail", rail);
     var buttons = document.querySelectorAll('.rv-rail-form button[name="rail"]');
     for (var k = 0; k < buttons.length; k += 1) {
-      var other = rail === "compact" ? "expanded" : "compact";
-      buttons[k].value = other;
       buttons[k].setAttribute("aria-expanded", rail === "compact" ? "false" : "true");
       buttons[k].setAttribute("aria-label", RAIL_WORDS[rail]);
       buttons[k].setAttribute("title", RAIL_WORDS[rail]);
     }
     setRailTitles(rail);
+  }
+
+  // The value a button posts is the state it asks for next. It changes only once
+  // htmx holds the parameters of the request: changed on the click, the form
+  // would post the state the rail already has and the fold would not be kept.
+  function setRailValues(rail) {
+    var buttons = document.querySelectorAll('.rv-rail-form button[name="rail"]');
+    for (var k = 0; k < buttons.length; k += 1) {
+      buttons[k].value = rail === "compact" ? "expanded" : "compact";
+    }
+  }
+
+  function railSending(event) {
+    var form = event.target;
+    if (form && form.classList && form.classList.contains("rv-rail-form")) {
+      setRailValues(document.body.getAttribute("data-rail") || "expanded");
+    }
   }
 
   function railButtonOf(event) {
@@ -435,6 +450,7 @@
     }
     if (railKept !== null && RAILS[railKept]) {
       setRail(railKept);
+      setRailValues(railKept);
     }
   }
 
@@ -443,6 +459,7 @@
     document.addEventListener("click", applyTheme);
     document.addEventListener("click", applyRail);
     document.addEventListener("htmx:afterRequest", themePosted);
+    document.addEventListener("htmx:configRequest", railSending);
     document.addEventListener("htmx:afterRequest", railPosted);
     document.addEventListener("htmx:sendError", themePosted);
     document.addEventListener("htmx:sendError", railPosted);
