@@ -1,670 +1,208 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
+  "schemaNote": "Schema 4 (THE-1108): one capture set, taken on one deployed candidate; fields common to every picture are given once at the top. Schema 3 and earlier, with several capture identities, are history (see history).",
   "product": "revrook-ce",
   "repository": "Theriark/revrook-ce",
-  "documentationRevision": "feat/revrook-ce-the-703 (THE-703, 2026-10-22: pictures captured again with neutral synthetic names); feat/revrook-ce-the-578-docs2 (THE-645, 2026-10-21); first capture on feat/revrook-ce-the-578-docs (THE-580, 2026-10-21)",
-  "identities": {
-    "note": "Three capture identities and the deployed Development candidate, kept distinct. The capture-time facts say what the Development site ran when a picture was taken (each picture also carries its own). The first capture (2026-10-21, 13:00 to 13:11) and the four pictures captured again later that day carry earlier commits and digests; no match between those images and the deployed image is claimed, and the commits in between changed documentation only, so the pictures show the same application pages. The pictures captured again on 2026-10-22 (recaptureTime2) carry the commit and digest the deployment receipt returned before and after the capture, which is the deployed Development candidate below; the pages themselves were not asked.",
-    "captureTime": {
-      "sourceCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "sourceCommitEvidence": "head of origin/development at the time of the first capture (2026-10-21 13:00 to 13:11 Europe/Lisbon); the live pages linked revrook.css?v=2977dd4c6d13, which equals asset_version() computed from the static files of this commit; CI run 39565730325 (push to development) was green",
-      "imageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "imageDigestEvidence": "manifest digest returned by ghcr.io for ghcr.io/theriark/revrook-ce:sha-c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac on 2026-10-21 (the deploy-development job deploys IMAGE@<build digest> of that tag); the Dokploy deployment record itself was not readable from that task"
-    },
-    "recaptureTime": {
-      "sourceCommit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
-      "imageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
-      "pictures": [
-        "settings-1440.png",
-        "report-preview-1440.png",
-        "report-preview-file-1440.png",
-        "report-preview-file-full-1440.png"
-      ],
-      "evidence": "these four pictures were taken on 2026-10-21 between 20:31 and 20:33 Europe/Lisbon; the deployment receipt of the Development environment, re-read from task THE-645 before and after the capture, recorded the deployed candidate below (CI run 39601882209, deployed 2026-10-21T12:55:26Z) and no later deployment, so the commit and digest of these pictures are taken from the receipt. The live pages still linked revrook.css?v=2977dd4c6d13, the same version query as at the first capture, because no static file changed between c41125fd and f143e3db; the pages themselves cannot tell the two commits apart",
-      "readFromThePage": false
-    },
-    "deployedDevelopmentCandidate": {
-      "commit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "imageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "evidence": "deployment receipt of the Development environment (VM-09): CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, image ghcr.io/theriark/revrook-ce@sha256:13d25242... with its revision label verified against the commit (dockerImageProof verified true); read on 2026-10-22 from task THE-703 before the captures and again after the package upload, identical",
-      "digestMatchClaimed": "only as the receipt reports it: the pictures of 2026-10-22 carry the commit and digest the receipt returned before and after; the pictures of 2026-10-21 keep their earlier identities, for which no match is claimed"
-    },
-    "recaptureTime2": {
-      "sourceCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "imageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "pictures": [
-        "clients-1440.png",
-        "clients-390.png",
-        "clients-768.png",
-        "home-1440.png",
-        "home-390.png",
-        "system-1440.png"
-      ],
-      "evidence": "these six pictures were taken on 2026-10-22 between 01:29 and 01:31 Europe/Lisbon with the Theriark browser tools; the deployment receipt of the Development environment (development_receipt), read from task THE-703 before the captures and again after the package upload, both times named commit 6247addf, digest sha256:13d25242..., CI run 39676889948, Dokploy deployment 4gGS7qzaKEc59fDW7jNf3, deployed 2026-10-21T21:45:26Z, dockerImageProof verified true, and no later deployment; the commit and digest of these pictures are taken from that receipt, not read from the page",
-      "readFromThePage": false
-    }
+  "documentationRevision": "feat/revrook-ce-the-1108 (Paperclip task THE-1108, Jira REV-270), branched from development at 314d239c38965e5ea503ba6526c62d0d2ea7b523",
+  "candidate": {
+    "commit": "314d239c38965e5ea503ba6526c62d0d2ea7b523",
+    "imageDigest": "sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6",
+    "image": "ghcr.io/theriark/revrook-ce@sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6",
+    "ciRun": 40079874064,
+    "dokployDeployment": "MygUWlGK_ouH3Bd-moY7T",
+    "deployedAt": "2026-10-24T09:11:03.097Z",
+    "target": "VM-09 Development, https://ce-dev-revrook.theriark.dev",
+    "evidence": "task client development_receipt read from THE-1108 at about 09:37Z (before the first capture) and again at about 10:12Z (after the last); both gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit, and no later deployment",
+    "browserAcceptance": "passed on this commit and image before the captures (THE-1053)",
+    "allPicturesOnThisCandidate": true
   },
-  "applicationVersionShown": "0.0.0.dev0 (the System page and revrook_build_info)",
-  "releaseCandidate": "no tag exists in the repository (checked on 2026-10-21); the planned tag form is v27.<minor>.<patch>-rc.<n>, minted by the prepare-rc job; the labels v27.0.0-rc.<n> used so far name the review folders of the documentation package in Nextcloud, not tags",
+  "releaseCandidate": "not set by this documentation: the prepare-rc job mints the next v27.<minor>.<patch>-rc.<n> tag after independent review; v27.0.0-rc.1 (3d9c598e) and v27.0.0-rc.2 (742c2663) name earlier candidates",
+  "applicationVersionShown": "0.0.0.dev0 (the System page)",
   "environment": "https://ce-dev-revrook.theriark.dev",
-  "timezone": "Europe/Lisbon (UTC+01:00 on the capture day)",
-  "browser": "Theriark browser tools (Playwright, Chrome), CSS-pixel scale",
-  "data": "synthetic test data of the Development site only; no credentials, personal data or other environments in any frame",
-  "screenshots": [
-    {
-      "file": "home-1440.png",
-      "sha256": "a6c8b568934af91055cae77679338eaa1b0e70e996f8baf475f35c3a42b73b79",
-      "bytes": 291949,
-      "width": 1440,
-      "height": 2225,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-22T01:30:27+01:00",
-      "capturedAtUtc": "2026-10-22T00:30:27Z",
-      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "usedBy": [
-        "docs/guides/02-clients-and-home.md"
-      ],
-      "replaces": {
-        "sha256": "e4fcfccccc94c0bb06e357e02cfaa79b48d6385939d7a5a766afd6f8e12ec31d",
-        "capturedAt": "2026-10-21T13:00:18+01:00",
-        "reason": "the first capture showed the synthetic test client 'QA Retest Client THE-504' in Posture by client and in the chart legend; captured again after that client was deleted through System (THE-703). Recent changes still lists audit residue of deleted test clients, now by number only"
-      }
-    },
-    {
-      "file": "clients-1440.png",
-      "sha256": "658cf8f29e1ba10f69853f6939e541c933f41d1dad9c15191860ace81a408f02",
-      "bytes": 112737,
-      "width": 1440,
-      "height": 900,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-22T01:29:32+01:00",
-      "capturedAtUtc": "2026-10-22T00:29:32Z",
-      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "usedBy": [
-        "docs/guides/02-clients-and-home.md"
-      ],
-      "replaces": {
-        "sha256": "9293afd1e5d3d9e02a07e4913c5bff65b2c85e45f55e8296b43d610e4f21aa7b",
-        "capturedAt": "2026-10-21T13:01:08+01:00",
-        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504', a name with an internal ticket number; that client was deleted on 2026-10-22 through System, Delete a client (typed-name confirmation; the only supported route) and the page was captured again (THE-703)"
-      }
-    },
-    {
-      "file": "client-overview-1440.png",
-      "sha256": "05bd4122adb3f2f0910ce0fbd53aee17ba82bd9d600de26663b648cbabbdae8f",
-      "bytes": 414303,
-      "width": 1440,
-      "height": 2544,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:01:32+01:00",
-      "capturedAtUtc": "2026-10-21T12:01:32Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/02-clients-and-home.md"
-      ]
-    },
-    {
-      "file": "checklist-1440.png",
-      "sha256": "49aa85461caba33a573d8681ac48cd801fcb6fd8ecbfcff5bb1ae9e7f6d3e85b",
-      "bytes": 161850,
-      "width": 1440,
-      "height": 900,
-      "fullPage": false,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/checklist",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:02:01+01:00",
-      "capturedAtUtc": "2026-10-21T12:02:01Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/04-checklist-and-control-notes.md"
-      ]
-    },
-    {
-      "file": "control-1440.png",
-      "sha256": "074184fd37cd8f052c5c538bcd8e38cf7d3cd60abac08c449e5aa516e52933dc",
-      "bytes": 195153,
-      "width": 1440,
-      "height": 1336,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/controls/PC-GOV-04",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:02:35+01:00",
-      "capturedAtUtc": "2026-10-21T12:02:35Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/04-checklist-and-control-notes.md"
-      ]
-    },
-    {
-      "file": "evidence-1440.png",
-      "sha256": "3017d386bd2b682d61e38905b6068abb6983bb626c75967067c61b51148929cb",
-      "bytes": 350603,
-      "width": 1440,
-      "height": 2273,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/evidence",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:02:51+01:00",
-      "capturedAtUtc": "2026-10-21T12:02:51Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/03-import-evidence.md"
-      ]
-    },
-    {
-      "file": "exceptions-1440.png",
-      "sha256": "ea915d142ef779846c8a7d201d6660c015155934ac45ccaf51deab58f9802c77",
-      "bytes": 168207,
-      "width": 1440,
-      "height": 1379,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/exceptions",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:03:20+01:00",
-      "capturedAtUtc": "2026-10-21T12:03:20Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/05-exceptions.md"
-      ]
-    },
-    {
-      "file": "report-builder-1440.png",
-      "sha256": "54f02798592e9ff2dcb0149bf25783251a635c3ae4e422d54af5a906e8b859ee",
-      "bytes": 254242,
-      "width": 1440,
-      "height": 2418,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/reports",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:03:40+01:00",
-      "capturedAtUtc": "2026-10-21T12:03:40Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/06-reports-and-exports.md"
-      ]
-    },
-    {
-      "file": "report-preview-1440.png",
-      "sha256": "f0819f366abc5ff99ed1d1526057c62432176e553f3fd906848730ec330a37f6",
-      "bytes": 239310,
-      "width": 1440,
-      "height": 1328,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/reports/1",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T20:32:16+01:00",
-      "capturedAtUtc": "2026-10-21T19:32:16Z",
-      "capturedAtCommit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
-      "capturedAtImageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
-      "replaces": {
-        "sha256": "6393be11198655924e831beb05a3259db8799ed83bd35b79bc4c81452ffada12",
-        "capturedAt": "2026-10-21T13:04:08+01:00",
-        "reason": "the first capture printed the business name 'FE Retest MSP THE-497', a label left by an earlier test; the page prints the name from Settings at render time, so it was captured again after Settings was corrected (THE-645)"
+  "role": "administrator: the Development test account registered as REVROOK_DEV_ADMIN (names only; its user name revrook-admin shows in the rail and as Prepared by, as in every earlier set; no password in any frame)",
+  "browser": "Theriark browser tools (Playwright, Chrome, SwiftShader software WebGL 2), CSS-pixel scale",
+  "timezone": "Europe/Lisbon, UTC+01:00 on 2026-10-24",
+  "captureWindow": "2026-10-24 11:01:14 to 11:09:35 Europe/Lisbon (10:01:14Z to 10:09:35Z)",
+  "data": "synthetic test data of the Development site only: the seed clients Seed Empty, Seed Gaps, Seed Stale and Seed Tidy Ltd (synthetic), the Design Review Sample Client, the business name Sample MSP, the reminder address reminders@example.test and a synthetic leavers file with example.test addresses (shown only as pseudonyms)",
+  "privacy": {
+    "checked": "before every capture the text of the page was searched for an e-mail address, the seeded account and ticket-style identifiers (THE-, REV-, TOPS-); after every capture the picture was opened and judged",
+    "excluded": [
+      {
+        "what": "Recent changes on Home and on a client overview",
+        "why": "the audit entries name the user who made each change, and on the shared Development installation that includes a seeded sign-in account whose login is a real-domain mailbox; Home and the overview are pictured with a window that ends above the section"
       },
-      "usedBy": [
-        "docs/guides/06-reports-and-exports.md"
-      ]
-    },
-    {
-      "file": "report-preview-file-1440.png",
-      "sha256": "31f1340c9b54979a0edf9c62644608346f895cc61401df4e33d58d5b5530df51",
-      "bytes": 72495,
-      "width": 1440,
-      "height": 900,
-      "fullPage": false,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/reports/1/preview/qbr (the rendered quarterly security review that Preview opens; the cover at the viewport size)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T20:32:51+01:00",
-      "capturedAtUtc": "2026-10-21T19:32:51Z",
-      "capturedAtCommit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
-      "capturedAtImageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
-      "usedBy": [
-        "docs/guides/06-reports-and-exports.md"
-      ]
-    },
-    {
-      "file": "report-preview-file-full-1440.png",
-      "sha256": "4f28f088e7b72c3dfd3f6a8a8cc2eb009193e17645aad951ed2b7e31f0529f22",
-      "bytes": 1497194,
-      "width": 1440,
-      "height": 15615,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/reports/1/preview/qbr (the rendered quarterly security review that Preview opens; the whole file)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T20:32:41+01:00",
-      "capturedAtUtc": "2026-10-21T19:32:41Z",
-      "capturedAtCommit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
-      "capturedAtImageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
-      "usedBy": [
-        "docs/guides/06-reports-and-exports.md"
-      ]
-    },
-    {
-      "file": "export-history-1440.png",
-      "sha256": "169e7624d04c4205e8e1ec508211289e958daebc41183796e2a8d82ef7a95ed3",
-      "bytes": 107174,
-      "width": 1440,
-      "height": 900,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/exports",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:04:28+01:00",
-      "capturedAtUtc": "2026-10-21T12:04:28Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/06-reports-and-exports.md"
-      ]
-    },
-    {
-      "file": "settings-1440.png",
-      "sha256": "40965cb1001546f811fe2e2f4e589ea8c517242038a31bd68c77f516e447ce8a",
-      "bytes": 230302,
-      "width": 1440,
-      "height": 1592,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/settings",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T20:31:35+01:00",
-      "capturedAtUtc": "2026-10-21T19:31:35Z",
-      "capturedAtCommit": "f143e3db58fced1d8c993fe891174a8bb6f12873",
-      "capturedAtImageDigest": "sha256:b5d6faed26e29c9137851f6fcbc45aa892a96788baec97ceebb7527dd923e2a0",
-      "replaces": {
-        "sha256": "a3c97fc7c112c07b7808c811120763383aeca8404a9ff699f925b5203a02bcd2",
-        "capturedAt": "2026-10-21T13:04:47+01:00",
-        "reason": "the first capture showed the business name 'FE Retest MSP THE-497', a label left by an earlier test; the name was set to 'Sample MSP' and the reminder address to reminders@example.test (synthetic; no mail relay is set) with the registered test account, the only state change made for the capture, and the page was captured again (THE-645)"
+      {
+        "what": "Users and mappings in Settings",
+        "why": "lists the same seeded sign-in account; Settings is pictured with a window that ends above it"
       },
-      "usedBy": [
-        "docs/guides/01-first-start.md",
-        "docs/guides/07-settings-system-and-glossary.md"
-      ]
-    },
-    {
-      "file": "system-1440.png",
-      "sha256": "15e20f04abb18dcbacd47102019160492ef2e7cc4e6c5266e26b76da5c957b38",
-      "bytes": 210158,
-      "width": 1440,
-      "height": 1306,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/system",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-22T01:30:43+01:00",
-      "capturedAtUtc": "2026-10-22T00:30:43Z",
-      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "usedBy": [
-        "docs/guides/07-settings-system-and-glossary.md"
-      ],
-      "replaces": {
-        "sha256": "4a5254177ead731a77403db2470a249855da649e36ac92facd1019dd5850a3d2",
-        "capturedAt": "2026-10-21T13:05:06+01:00",
-        "reason": "the first capture showed the delete button 'Delete QA Retest Client THE-504'; captured again after that client was deleted through this page (THE-703)"
+      {
+        "what": "the export history of Seed Gaps Ltd (synthetic) and the exceptions of Seed Gaps Ltd (synthetic) and the Design Review Sample Client",
+        "why": "they name the seeded account or carry a ticket-style label left by earlier tests; the export history and the register are pictured on Seed Tidy Ltd (synthetic) instead"
       }
-    },
-    {
-      "file": "evidence-integrity-1440.png",
-      "sha256": "d4049804e3df65a8af582fe758ea1813d2ce2fe04228aea16c1d5f3a4990da59",
-      "bytes": 175077,
-      "width": 1440,
-      "height": 1084,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/evidence/integrity (after Check all chains)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:05:43+01:00",
-      "capturedAtUtc": "2026-10-21T12:05:43Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/03-import-evidence.md"
-      ]
-    },
-    {
-      "file": "profile-editor-1440.png",
-      "sha256": "21e154f4d708d4be990192c487ed767e973745218a797f461e1f58decc90f6cb",
-      "bytes": 114402,
-      "width": 1440,
-      "height": 900,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/imports/profile-editor?client_id=1",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:06:04+01:00",
-      "capturedAtUtc": "2026-10-21T12:06:04Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/03-import-evidence.md"
-      ]
-    },
-    {
-      "file": "profile-editor-preview-1440.png",
-      "sha256": "ae251e8f30fc7e07d2ddce437f48d26a741b3b234049a9331b16147fc9dab7a0",
-      "bytes": 232844,
-      "width": 1440,
-      "height": 1905,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/imports/profile-editor?client_id=1 (after Read the file with a two-row synthetic leavers CSV, source leavers-csv)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:06:43+01:00",
-      "capturedAtUtc": "2026-10-21T12:06:43Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/03-import-evidence.md"
-      ]
-    },
-    {
-      "file": "glossary-1440.png",
-      "sha256": "656fae9605c9a03be23274dcb3b3ad27237a9de1cfc6eaa44f1c963a6c7f62c6",
-      "bytes": 212736,
-      "width": 1440,
-      "height": 1258,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/glossary",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:07:03+01:00",
-      "capturedAtUtc": "2026-10-21T12:07:03Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/07-settings-system-and-glossary.md"
-      ]
-    },
-    {
-      "file": "not-found-1440.png",
-      "sha256": "d4c3aeefc93afa758d8b814917f0e5529519186dd6de3eb0cd3083f7378b7f9e",
-      "bytes": 62778,
-      "width": 1440,
-      "height": 900,
-      "fullPage": false,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/999 (404 problem page)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:07:18+01:00",
-      "capturedAtUtc": "2026-10-21T12:07:18Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/07-settings-system-and-glossary.md"
-      ]
-    },
-    {
-      "file": "clients-768.png",
-      "sha256": "e525c8810181de8f4dbd4aea72e8367b08d517ef9134b4d5a7dbb4de49817fd5",
-      "bytes": 105329,
-      "width": 768,
-      "height": 1192,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 768,
-      "capturedAt": "2026-10-22T01:29:48+01:00",
-      "capturedAtUtc": "2026-10-22T00:29:48Z",
-      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "usedBy": [
-        "docs/guides/02-clients-and-home.md"
-      ],
-      "replaces": {
-        "sha256": "9d1a410b161de8906eab626f6fb4cebb9cf6d82f5a194e1f258381ec3b96bfbf",
-        "capturedAt": "2026-10-21T13:08:08+01:00",
-        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504'; captured again after that client was deleted through System (THE-703)"
-      }
-    },
-    {
-      "file": "clients-390.png",
-      "sha256": "5a3551329a6590eefc6e15ae0b0663aad7e99ba78447ccbb198f6f6380f8aba3",
-      "bytes": 94105,
-      "width": 390,
-      "height": 1343,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 390,
-      "capturedAt": "2026-10-22T01:30:02+01:00",
-      "capturedAtUtc": "2026-10-22T00:30:02Z",
-      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "usedBy": [
-        "docs/guides/02-clients-and-home.md"
-      ],
-      "replaces": {
-        "sha256": "02d7647aa199c05fba79b6dc3b26e17ece092a66049638241a6f5dc9d4293299",
-        "capturedAt": "2026-10-21T13:08:25+01:00",
-        "reason": "the first capture listed the synthetic test client 'QA Retest Client THE-504'; captured again after that client was deleted through System (THE-703)"
-      }
-    },
-    {
-      "file": "home-390.png",
-      "sha256": "00098d1b2ab6e4108eb625712602387f9a8bade72bde36fb583a7a12051b4731",
-      "bytes": 271947,
-      "width": 390,
-      "height": 3579,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 390,
-      "capturedAt": "2026-10-22T01:30:15+01:00",
-      "capturedAtUtc": "2026-10-22T00:30:15Z",
-      "capturedAtCommit": "6247addfbccbea48c3e489a562fcf4d082c4089b",
-      "capturedAtImageDigest": "sha256:13d2524292a12216d5c6e7c7780e1d3e5c08a0f44ef66863783e8409833103f0",
-      "usedBy": [
-        "docs/guides/02-clients-and-home.md"
-      ],
-      "replaces": {
-        "sha256": "6179fc7d29ba345cb8ba9ab80f0bc18a09d7d8eaad80929c096a2bc4f7e98001",
-        "capturedAt": "2026-10-21T13:08:48+01:00",
-        "reason": "the first capture showed the synthetic test client 'QA Retest Client THE-504' in Posture by client and in the chart legend; captured again after that client was deleted through System (THE-703). Recent changes still lists audit residue of deleted test clients, now by number only"
-      }
-    },
-    {
-      "file": "checklist-390.png",
-      "sha256": "57098218d8ecaa2d3c8efa8b8e0879507c6043b7d2863bc1e7a19e9a8f43dbc2",
-      "bytes": 63726,
-      "width": 390,
-      "height": 844,
-      "fullPage": false,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/clients/1/checklist",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 390,
-      "capturedAt": "2026-10-21T13:09:13+01:00",
-      "capturedAtUtc": "2026-10-21T12:09:13Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/04-checklist-and-control-notes.md"
-      ]
-    },
-    {
-      "file": "sign-in-390.png",
-      "sha256": "87c2d2dcc027bd5ea51db65a2f26f60fc92ef60e52d48737d734cac161c8a5e4",
-      "bytes": 45783,
-      "width": 390,
-      "height": 844,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/login (signed out)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 390,
-      "capturedAt": "2026-10-21T13:09:53+01:00",
-      "capturedAtUtc": "2026-10-21T12:09:53Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/01-first-start.md"
-      ]
-    },
-    {
-      "file": "sign-in-1440.png",
-      "sha256": "c3711354ece093ef7f66c0ba957a58f95c95a76523e04bfd133dc5d574e7bf0b",
-      "bytes": 85326,
-      "width": 1440,
-      "height": 900,
-      "fullPage": true,
-      "environment": "https://ce-dev-revrook.theriark.dev",
-      "page": "/login (signed out)",
-      "role": "administrator (the one Community Edition account; Development test account)",
-      "viewportWidth": 1440,
-      "capturedAt": "2026-10-21T13:10:54+01:00",
-      "capturedAtUtc": "2026-10-21T12:10:54Z",
-      "capturedAtCommit": "c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac",
-      "capturedAtImageDigest": "sha256:d7be83099de1fd230c5997461b28e785348d69b57fe24dce710df268c9a13333",
-      "usedBy": [
-        "docs/guides/01-first-start.md"
-      ]
-    }
+    ],
+    "result": "no credential, no real person, no real customer, no ticket-style identifier and no other environment in any picture"
+  },
+  "stateChanges": [
+    "one exception added to Seed Tidy Ltd (synthetic) through the Add an exception form: PC-BCK-01, owner Office manager, review date 2027-01-31, a synthetic reason and compensating control; left open so that the register and the reports show it",
+    "one export of the quarterly security review of Seed Tidy Ltd (synthetic), report of 2026-10-23 (export 14), by the administrator",
+    "browser preferences only: the theme (Light, Dark; the account ended on Light, as it began), the rail (folded and opened again), the scenes (hidden and shown again)",
+    "a synthetic leavers file was read in the profile editor; nothing was saved or imported",
+    "Check all chains on the integrity page (reads only)"
   ],
   "notCaptured": [
     {
       "flow": "First-run page /setup",
-      "reason": "The Development installation already has its administrator; /setup redirects to /login once an account exists (app/ui/auth.py), so the page cannot be shown without re-installing"
+      "reason": "the Development installation already has its administrator; /setup sends to the sign-in page once an account exists"
     },
     {
-      "flow": "Rendered cyber insurance evidence pack (/clients/1/reports/1/preview/insurance)",
-      "reason": "Only the quarterly security review is pictured (report-preview-file-1440.png and report-preview-file-full-1440.png); the pack opens the same way from its own Preview and is described in docs/reports.md"
+      "flow": "Recent changes and Users and mappings",
+      "reason": "privacy, see privacy.excluded; both are described in words in guides 2 and 7"
+    },
+    {
+      "flow": "Rendered cyber insurance evidence pack",
+      "reason": "it opens the same way from its own Preview; described in docs/reports.md"
     },
     {
       "flow": "Public DNS check",
-      "reason": "Not applicable: API and worker schedule only, no page (docs/dns-check.md)"
+      "reason": "not applicable: API and worker schedule only, no page"
     },
     {
-      "flow": "Delete-client confirmation, add-client result, add-exception result, export confirmation",
-      "reason": "State-changing actions on the shared Development data were not performed for this capture; the pages that hold the forms are captured"
-    }
-  ],
-  "knownResidue": [
-    {
-      "file": [
-        "home-1440.png",
-        "home-390.png"
-      ],
-      "what": "Recent changes lists audit entries of clients that earlier automated tests and reviews added and deleted (named 'a deleted client (client 4)', 'client 13', 'client 14' and so on); the entry 'Client deleted for a deleted client (client 4)' is the deletion of the test client made for this capture",
-      "why kept": "audit entries are kept by design after a client is deleted and cannot be removed without deleting the database, which is not a supported action on the shared Development installation; the entries name deleted clients by number only, so the pictures were captured again on 2026-10-22 once the test client with a ticket number in its name was gone. Nothing in the pictures was edited"
+      "flow": "A browser without WebGL 2 or without script",
+      "reason": "the scenes are then not drawn and the page is the cards, the bars and the tables; not pictured, the pictured pages show the same cards and bars under the scenes"
     },
     {
-      "file": [
-        "exceptions-1440.png"
-      ],
-      "what": "the closed exception of the sample client carries the owner 'QA test owner THE-520' and a reason that names a ticket, labels left by an earlier test",
-      "why kept": "the product offers no route to edit or delete an exception (an exception can only be added or closed; app/ui/clients.py), and deleting the sample client would remove the evidence, reports and exports every other guide shows. The picture of the first capture is kept and the labels are synthetic"
+      "flow": "Hide the scene on the client overview and on the Evidence Explorer",
+      "reason": "the same button and behaviour as on Home, which is pictured"
     },
     {
-      "file": [
-        "profile-editor-preview-1440.png"
-      ],
-      "what": "the Saved profile list shows 'THE-505 leavers check (profile 4)', a profile name with an internal ticket number left by an earlier test",
-      "why kept": "a saved profile belongs to its client and the product offers no route to rename or delete it short of deleting the client (the profile editor only reads, maps, saves and imports; app/ui/profiles.py); the picture of the first capture is kept and the label is synthetic. A second capture with a newly saved neutral profile selected was planned in THE-703 but not made: the browser session was lost after the sixth capture and did not come back within the task, so this is an exact gap of that round"
-    }
-  ],
-  "recaptured": [
-    {
-      "file": [
-        "settings-1440.png",
-        "report-preview-1440.png"
-      ],
-      "what": "the first capture showed the business name 'FE Retest MSP THE-497', a label left by an earlier test, on the Settings page and on the cover sheet of the preview page",
-      "how": "the name was set to 'Sample MSP' in Settings with the registered test account (the reminder address to reminders@example.test, synthetic; no mail relay is set), the only state change made, and both pages were captured again on 2026-10-21 at 20:31 and 20:32 Europe/Lisbon; the old label is absent from the text of both pages. No image was edited",
-      "task": "THE-645"
-    },
-    {
-      "file": [
-        "clients-1440.png",
-        "clients-768.png",
-        "clients-390.png",
-        "home-1440.png",
-        "home-390.png",
-        "system-1440.png"
-      ],
-      "what": "the first capture showed the synthetic test client 'QA Retest Client THE-504', a name with an internal ticket number, on the clients list (three viewports), on Home (Posture by client and the chart legend) and on the System page (its delete button)",
-      "how": "that test client was deleted on 2026-10-22 at 01:29 Europe/Lisbon with the registered test account through System, Delete a client, typing its name as the page requires (the only supported route; the product keeps the audit entry and the hash chain of a deleted client), the only state change made for these captures, and the pages were captured again between 01:29 and 01:31 Europe/Lisbon while the deployment receipt named the candidate image. No image was edited",
-      "task": "THE-703"
+      "flow": "Dark theme for the pages whose flow did not change (clients, checklist, evidence, reports, settings, system, glossary)",
+      "reason": "not applicable to this change: those pages are pictured in the light theme; the dark theme is pictured on the changed flows"
     }
   ],
   "unchanged": [
     {
       "area": "Brand assets (app/static/brand)",
-      "reason": "Copies of the approved assets; not changed by any phase"
+      "reason": "copies of the approved assets; not changed"
     },
     {
-      "area": "Report HTML files",
-      "reason": "Rendered byte for byte from a snapshot; described in docs/reports.md, golden files in tests/golden/reports"
+      "area": "Report HTML",
+      "reason": "rendered by the same templates; the rendered review is pictured again because its data changed (seed clients)"
     }
   ],
-  "history": [
-    {
-      "date": "2026-10-21",
-      "task": "THE-580",
-      "change": "first capture of 23 pictures at commit c41125fd / digest sha256:d7be8309"
-    },
-    {
-      "date": "2026-10-21",
-      "task": "THE-645",
-      "change": "schema 2: capture-time facts and the deployed Development candidate stated as distinct identities, each picture carries the commit and digest it was taken at, release candidate wording corrected, known residue of the Home pictures recorded"
-    },
-    {
-      "date": "2026-10-21",
-      "task": "THE-645",
-      "change": "settings-1440.png and report-preview-1440.png captured again with the business name Sample MSP; report-preview-file-1440.png and report-preview-file-full-1440.png added (the rendered quarterly security review that Preview opens); 25 pictures, the four new ones at commit f143e3db / digest sha256:b5d6faed read from the deployment receipt"
-    },
-    {
-      "date": "2026-10-22",
-      "task": "THE-703",
-      "change": "schema 3: six pictures captured again with neutral synthetic names after the test client 'QA Retest Client THE-504' was deleted through System (clients at 1440, 768 and 390 px, Home at 1440 and 390 px, System); their commit and digest are the deployed Development candidate 6247addf / sha256:13d25242 as the deployment receipt returned it before and after; the known residue of the exceptions and profile-editor pictures recorded"
-    }
+  "knownLimits": [
+    "the scenes were captured with a software renderer (SwiftShader); no hardware GPU, phone or touch screen",
+    "client-overview-768-keep-dark.png shows the front right block of the keep meeting the bottom of the stage at 768 px (a known limit of the candidate, recorded in THE-1053); the light picture at the same width, taken at another moment, fits",
+    "the Evidence Explorer wall turns by itself, so the angle of each of its pictures is the one of that moment",
+    "report-preview-file-full-1440.png is 16429 px tall; it was judged by its structure and by the text of the page, not at full legibility in one view"
   ],
-  "schemaNote": "schema 3: same layout as schema 2 with a third capture identity (recaptureTime2, the pictures captured again on 2026-10-22 with neutral synthetic names) and the deployed Development candidate updated to the receipt read in that task"
+  "history": {
+    "note": "Earlier capture sets are history and are not shown as the current interface. The pictures replaced here are kept, byte for byte, in git at the base commit (git show 314d239c38965e5ea503ba6526c62d0d2ea7b523:docs/images/<file>) and in the earlier Nextcloud review packages /Theriark/Revrook/Documentation/v27.0.0-rc.1 to v27.0.0-rc.10, which are left untouched; each replaced picture keeps its earlier sha256 under replaces.",
+    "previousManifest": "docs/images/MANIFEST.json schema 3 at 314d239c38965e5ea503ba6526c62d0d2ea7b523 (capture identities c41125fd, f143e3db and 6247addf of 2026-10-21 and 2026-10-22)"
+  },
+  "replacedOrRemovedAtBase": {
+    "replaced": [
+      "checklist-1440.png",
+      "checklist-390.png",
+      "client-overview-1440.png",
+      "clients-1440.png",
+      "clients-390.png",
+      "clients-768.png",
+      "control-1440.png",
+      "evidence-1440.png",
+      "evidence-integrity-1440.png",
+      "exceptions-1440.png",
+      "export-history-1440.png",
+      "glossary-1440.png",
+      "home-1440.png",
+      "home-390.png",
+      "not-found-1440.png",
+      "profile-editor-1440.png",
+      "profile-editor-preview-1440.png",
+      "report-builder-1440.png",
+      "report-preview-1440.png",
+      "report-preview-file-1440.png",
+      "report-preview-file-full-1440.png",
+      "settings-1440.png",
+      "sign-in-1440.png",
+      "sign-in-390.png",
+      "system-1440.png"
+    ],
+    "removed": [],
+    "added": [
+      "client-overview-1440-keep-chosen-dark.png",
+      "client-overview-1440-rail-folded-dark.png",
+      "client-overview-390-keep-dark.png",
+      "client-overview-390-keep.png",
+      "client-overview-768-keep-dark.png",
+      "client-overview-768-keep.png",
+      "control-drawer-1440.png",
+      "evidence-explorer-1440-dark.png",
+      "evidence-explorer-1440.png",
+      "evidence-explorer-390.png",
+      "evidence-explorer-768.png",
+      "home-1440-dark.png",
+      "home-1440-rail-folded-dark.png",
+      "home-1440-rook-chosen-dark.png",
+      "home-1440-scenes-hidden-dark.png",
+      "home-390-rookery-dark.png",
+      "home-390-rookery.png",
+      "home-768-dark.png",
+      "home-768.png"
+    ]
+  },
+  "frameCodes": {
+    "W": "browser window from the top of the page, at the size in window",
+    "P": "whole page: a window as tall as the page",
+    "C": "window from the top that ends above a section kept out (privacy)",
+    "S": "window scrolled so that the section shown starts at its top",
+    "F": "full-page capture of the browser"
+  },
+  "perPictureDetail": "what each frame shows, the frame in words and the name of the browser capture are in the manifest.json of the Nextcloud review package of this set",
+  "replacesNote": "replaces is the sha256 of the picture of the same name at 314d239c38965e5ea503ba6526c62d0d2ea7b523",
+  "screenshots": [
+    {"file": "sign-in-1440.png", "sha256": "73b6c969caa87b881c78b85b15efe3d8a685f40486dbafd7a697125f06c8509c", "bytes": 89124, "px": "1440x900", "page": "/login", "window": "1440x900", "theme": "system (light)", "rail": "-", "frame": "F", "capturedAt": "2026-10-24T11:01:14+01:00", "usedBy": ["docs/guides/01-first-start.md"], "replaces": "c3711354ece093ef7f66c0ba957a58f95c95a76523e04bfd133dc5d574e7bf0b"},
+    {"file": "sign-in-390.png", "sha256": "b95683961a33c0e50f5d381122bd1caef0bc5e85a14e0b76f5d8cf7ab48fe634", "bytes": 48876, "px": "390x868", "page": "/login", "window": "390x844", "theme": "system (light)", "rail": "-", "frame": "F", "capturedAt": "2026-10-24T11:01:35+01:00", "usedBy": ["docs/guides/01-first-start.md"], "replaces": "87c2d2dcc027bd5ea51db65a2f26f60fc92ef60e52d48737d734cac161c8a5e4"},
+    {"file": "home-1440.png", "sha256": "08052f8ced53b186d74a838b6cb464c98cfb2fb195ec5dfcea01105aa516b16d", "bytes": 464288, "px": "1440x2920", "page": "/", "window": "1440x2920", "theme": "light", "rail": "open", "frame": "C", "capturedAt": "2026-10-24T11:02:00+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"], "replaces": "a6c8b568934af91055cae77679338eaa1b0e70e996f8baf475f35c3a42b73b79"},
+    {"file": "home-1440-dark.png", "sha256": "381e333754861700abed50f773660b52c2a25be650ebbccca97f030de9103d68", "bytes": 206460, "px": "1440x1300", "page": "/", "window": "1440x1300", "theme": "dark", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:02:30+01:00", "usedBy": ["README.md", "docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "home-1440-rook-chosen-dark.png", "sha256": "e24c82b900ea2786da694ffa940cc8fdb389bb52e7a9e539c0e807430fb08b84", "bytes": 201334, "px": "1440x1300", "page": "/", "window": "1440x1300", "theme": "dark", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:02:54+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "home-1440-scenes-hidden-dark.png", "sha256": "763a3d99c62d0ce1ba156a5eb4d8188e1642c6ee0f1da63b59311814eac6e926", "bytes": 168474, "px": "1440x900", "page": "/", "window": "1440x900", "theme": "dark", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:03:07+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "home-1440-rail-folded-dark.png", "sha256": "5d604687b22aede28db9d3de0b71eb3075419c480a87282933f772fef48566f7", "bytes": 121570, "px": "1440x900", "page": "/", "window": "1440x900", "theme": "dark", "rail": "folded", "frame": "W", "capturedAt": "2026-10-24T11:03:18+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "client-overview-1440-rail-folded-dark.png", "sha256": "5c4982d2e64bffdb2f9e13e59e579a083e648ddd3fe018900cb87fe588fd70ee", "bytes": 525105, "px": "1440x2815", "page": "/clients/21", "window": "1440x2815", "theme": "dark", "rail": "folded", "frame": "C", "capturedAt": "2026-10-24T11:03:39+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "client-overview-1440.png", "sha256": "43ad9dd311e12246ab0accee90629cec67bed3e91c25d9f2f57c7e5a269cad18", "bytes": 529295, "px": "1440x2815", "page": "/clients/21", "window": "1440x2815", "theme": "light", "rail": "open", "frame": "C", "capturedAt": "2026-10-24T11:04:08+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"], "replaces": "05bd4122adb3f2f0910ce0fbd53aee17ba82bd9d600de26663b648cbabbdae8f"},
+    {"file": "client-overview-768-keep.png", "sha256": "06f392b1b065b978a320d8627acc16ddc4318eff25fb5ff73a6a9edab40a2091", "bytes": 150460, "px": "768x1480", "page": "/clients/21", "window": "768x1480", "theme": "light", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:04:29+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "client-overview-390-keep.png", "sha256": "de5ce50e6fb2cbdeaef7ea534d09e7ccf0817b0647665c6b722ed9f590df1b65", "bytes": 120119, "px": "390x1620", "page": "/clients/21", "window": "390x1620", "theme": "light", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:04:42+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "home-390.png", "sha256": "434d79738b30fb5f8d8d0c7297d0ce0eae084124d5f0dfb5a3dc3c46a6254ec5", "bytes": 55143, "px": "390x844", "page": "/", "window": "390x844", "theme": "light", "rail": "bar", "frame": "W", "capturedAt": "2026-10-24T11:04:58+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"], "replaces": "00098d1b2ab6e4108eb625712602387f9a8bade72bde36fb583a7a12051b4731"},
+    {"file": "home-390-rookery.png", "sha256": "c12df8e5f74aba83a4d388858f00b6a12439e44d7a51e52d1075ad44e2dcbb18", "bytes": 119910, "px": "390x1440", "page": "/", "window": "390x1440", "theme": "light", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:05:06+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"]},
+    {"file": "home-768.png", "sha256": "d6c5f2a438bc0bea6ace7f1280b9ee74019f798c829b9df6049d4178ba4d0758", "bytes": 176290, "px": "768x1500", "page": "/", "window": "768x1500", "theme": "light", "rail": "bar", "frame": "W", "capturedAt": "2026-10-24T11:05:23+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"]},
+    {"file": "home-768-dark.png", "sha256": "b8e708eed9b49aa6fcbefba9e3c97f0543c726bd46ec7b4ef1eea0715308e983", "bytes": 177805, "px": "768x1500", "page": "/", "window": "768x1500", "theme": "dark", "rail": "bar", "frame": "W", "capturedAt": "2026-10-24T11:05:36+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "home-390-rookery-dark.png", "sha256": "058f8f930a4a200f97afc2898cd6210bff77c26a101efdf222015aaa6ddc24d8", "bytes": 122508, "px": "390x1440", "page": "/", "window": "390x1440", "theme": "dark", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:05:57+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "client-overview-390-keep-dark.png", "sha256": "75a19fceeb6d334f315cded0a32f3d2e1e6813975d4765b933c7b5ab88a0bb21", "bytes": 126729, "px": "390x1620", "page": "/clients/21", "window": "390x1620", "theme": "dark", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:06:08+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "client-overview-768-keep-dark.png", "sha256": "4c713e8963bd9e926718f0a8104a55cd4e614114acd0c066181ce202c01267f6", "bytes": 158772, "px": "768x1480", "page": "/clients/21", "window": "768x1480", "theme": "dark", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:06:20+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "client-overview-1440-keep-chosen-dark.png", "sha256": "aca181f8cf4b010518bbf23275c93e06a450ca1cf5c96f5d85d30067b26703ee", "bytes": 229697, "px": "1440x900", "page": "/clients/21", "window": "1440x900", "theme": "dark", "rail": "open", "frame": "S", "capturedAt": "2026-10-24T11:06:29+01:00", "usedBy": ["README.md", "docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "evidence-explorer-1440-dark.png", "sha256": "30f7f3084af5845551cb157a361982800fa2a40640bf9b5a6b6517fc18da58ea", "bytes": 343874, "px": "1440x1440", "page": "/experiments/evidence-explorer?client_id=21", "window": "1440x1440", "theme": "dark", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:06:53+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md", "docs/evidence-explorer-preview.md"]},
+    {"file": "evidence-explorer-1440.png", "sha256": "74ea444fbe6188f592a4d5b6c7ba5421bfe001f829672e6d49e09f3ed66d0240", "bytes": 338761, "px": "1440x1440", "page": "/experiments/evidence-explorer?client_id=21", "window": "1440x1440", "theme": "light", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:07:05+01:00", "usedBy": ["README.md", "docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "evidence-explorer-768.png", "sha256": "4f1de1a53a3d539d70cd4f47e5270a238ca967aa6312c4ddb21c454095d8c362", "bytes": 241956, "px": "768x1500", "page": "/experiments/evidence-explorer?client_id=21", "window": "768x1500", "theme": "light", "rail": "bar", "frame": "W", "capturedAt": "2026-10-24T11:07:19+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "evidence-explorer-390.png", "sha256": "4f7bfa198561a82efa5e69fdf28021a739b19a90b8655b11412e7ddd92dfd3ee", "bytes": 114177, "px": "390x1000", "page": "/experiments/evidence-explorer?client_id=21", "window": "390x1000", "theme": "light", "rail": "bar", "frame": "S", "capturedAt": "2026-10-24T11:07:29+01:00", "usedBy": ["docs/guides/08-scenes-rail-and-explorer.md"]},
+    {"file": "clients-1440.png", "sha256": "566140b8bd5d4741ac7e693ab724eb655e9b219d96c3ca945cfbfadbc4d7a43b", "bytes": 230593, "px": "1440x1385", "page": "/clients", "window": "1440x1385", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:08:04+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"], "replaces": "658cf8f29e1ba10f69853f6939e541c933f41d1dad9c15191860ace81a408f02"},
+    {"file": "clients-768.png", "sha256": "93b181f798e711a49de0ced11bc8f7fe4bfb980e298a6e8f6d45c45e84cb3993", "bytes": 237009, "px": "768x2365", "page": "/clients", "window": "768x1024", "theme": "light", "rail": "bar", "frame": "F", "capturedAt": "2026-10-24T11:08:06+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"], "replaces": "e525c8810181de8f4dbd4aea72e8367b08d517ef9134b4d5a7dbb4de49817fd5"},
+    {"file": "clients-390.png", "sha256": "67e3615f3cb7fccc960e29e947c58b77121f247dcfddddb8e878030ba66e16b4", "bytes": 230342, "px": "390x3292", "page": "/clients", "window": "390x844", "theme": "light", "rail": "bar", "frame": "F", "capturedAt": "2026-10-24T11:08:07+01:00", "usedBy": ["docs/guides/02-clients-and-home.md"], "replaces": "5a3551329a6590eefc6e15ae0b0663aad7e99ba78447ccbb198f6f6380f8aba3"},
+    {"file": "checklist-1440.png", "sha256": "4ff7ecc3a28688bc6ef760d19439d710ae960c29b2207de0cb3f73b649b93f01", "bytes": 179892, "px": "1440x900", "page": "/clients/21/checklist", "window": "1440x900", "theme": "light", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:08:14+01:00", "usedBy": ["docs/guides/04-checklist-and-control-notes.md"], "replaces": "49aa85461caba33a573d8681ac48cd801fcb6fd8ecbfcff5bb1ae9e7f6d3e85b"},
+    {"file": "control-drawer-1440.png", "sha256": "129b206d2d7186bf6d00f6484047d3d2e290a74d54211f58f799de9e51d3b1b8", "bytes": 223358, "px": "1440x900", "page": "/clients/21/checklist", "window": "1440x900", "theme": "light", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:08:20+01:00", "usedBy": ["docs/guides/04-checklist-and-control-notes.md"]},
+    {"file": "control-1440.png", "sha256": "14b912cb69447f39000e6086746790117bcd0982489e168c5595d91407796529", "bytes": 217724, "px": "1440x1440", "page": "/clients/21/controls/PC-ACC-01", "window": "1440x1440", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:08:24+01:00", "usedBy": ["docs/guides/04-checklist-and-control-notes.md"], "replaces": "074184fd37cd8f052c5c538bcd8e38cf7d3cd60abac08c449e5aa516e52933dc"},
+    {"file": "checklist-390.png", "sha256": "fc87e2e46d68d44c4325f9ee93cfd379df2e25b0056c7049b818efbbcddb1a6f", "bytes": 66673, "px": "390x844", "page": "/clients/21/checklist", "window": "390x844", "theme": "light", "rail": "bar", "frame": "W", "capturedAt": "2026-10-24T11:08:26+01:00", "usedBy": ["docs/guides/04-checklist-and-control-notes.md"], "replaces": "57098218d8ecaa2d3c8efa8b8e0879507c6043b7d2863bc1e7a19e9a8f43dbc2"},
+    {"file": "evidence-1440.png", "sha256": "c1cbc05e5b6391bcfc4675f7a650ea52ec270897563230c4a6fb99e060c1132f", "bytes": 468423, "px": "1440x3300", "page": "/clients/21/evidence", "window": "1440x3300", "theme": "light", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:08:31+01:00", "usedBy": ["docs/guides/03-import-evidence.md"], "replaces": "3017d386bd2b682d61e38905b6068abb6983bb626c75967067c61b51148929cb"},
+    {"file": "evidence-integrity-1440.png", "sha256": "716b66d7c9078a8e825791e87f0fbcc216a58357e14b465e4e25eaf5f648799f", "bytes": 270879, "px": "1440x1669", "page": "/evidence/integrity", "window": "1440x1669", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:08:37+01:00", "usedBy": ["docs/guides/03-import-evidence.md"], "replaces": "d4049804e3df65a8af582fe758ea1813d2ce2fe04228aea16c1d5f3a4990da59"},
+    {"file": "exceptions-1440.png", "sha256": "e1b768202a1f8fae78f76e954cae517c5e687c064c8a93f57b7f2eebcb9ea9b2", "bytes": 189629, "px": "1440x1474", "page": "/clients/20/exceptions", "window": "1440x1474", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:08:47+01:00", "usedBy": ["docs/guides/05-exceptions.md"], "replaces": "ea915d142ef779846c8a7d201d6660c015155934ac45ccaf51deab58f9802c77"},
+    {"file": "report-builder-1440.png", "sha256": "a016e9b22f67a869f6ddc74f5220016ec45b2ff39a7c33369f48cf39f2f6aece", "bytes": 310769, "px": "1440x2955", "page": "/clients/20/reports", "window": "1440x2955", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:08:50+01:00", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "54f02798592e9ff2dcb0149bf25783251a635c3ae4e422d54af5a906e8b859ee"},
+    {"file": "report-preview-1440.png", "sha256": "b990b719105b94e176e23f1ef7b6d911c8926aeacca289d6c93cc2dfffe7a103", "bytes": 296065, "px": "1440x1551", "page": "/clients/20/reports/11", "window": "1440x1551", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:08:57+01:00", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "f0819f366abc5ff99ed1d1526057c62432176e553f3fd906848730ec330a37f6"},
+    {"file": "report-preview-file-1440.png", "sha256": "ba0d3b16d1d1e2eef9e562085400dd0974c74ec4fe42b9dd23bb3fa5d707dd3d", "bytes": 110788, "px": "1440x900", "page": "/clients/20/reports/11/preview/qbr", "window": "1440x900", "theme": "light", "rail": "-", "frame": "W", "capturedAt": "2026-10-24T11:09:00+01:00", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "31f1340c9b54979a0edf9c62644608346f895cc61401df4e33d58d5b5530df51"},
+    {"file": "report-preview-file-full-1440.png", "sha256": "bb1e98466fec3bdb402c867659605173dc5588b8dfa9a3e60e6b985dbb8a6bd7", "bytes": 1863459, "px": "1440x16429", "page": "/clients/20/reports/11/preview/qbr", "window": "1440x900", "theme": "light", "rail": "-", "frame": "F", "capturedAt": "2026-10-24T11:09:02+01:00", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "4f28f088e7b72c3dfd3f6a8a8cc2eb009193e17645aad951ed2b7e31f0529f22"},
+    {"file": "export-history-1440.png", "sha256": "d0cdeb815e15b17d5799ec96a01db28514532fe836ce5d7284aaec28329025d2", "bytes": 125338, "px": "1440x900", "page": "/clients/20/exports?exported=14", "window": "1440x900", "theme": "light", "rail": "open", "frame": "W", "capturedAt": "2026-10-24T11:09:05+01:00", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "169e7624d04c4205e8e1ec508211289e958daebc41183796e2a8d82ef7a95ed3"},
+    {"file": "profile-editor-1440.png", "sha256": "6a893ecc120a89d1fa6ae8f66ac5a09517af3a32608112edaee07cb96befcb09", "bytes": 126506, "px": "1440x900", "page": "/imports/profile-editor", "window": "1440x900", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:09:14+01:00", "usedBy": ["docs/guides/03-import-evidence.md"], "replaces": "21e154f4d708d4be990192c487ed767e973745218a797f461e1f58decc90f6cb"},
+    {"file": "profile-editor-preview-1440.png", "sha256": "ed226b3fef35f74f411194c81860f30e25d074d0ce7106f589d606a3c6211cc6", "bytes": 256176, "px": "1440x1978", "page": "/imports/profile-editor", "window": "1440x1978", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:09:23+01:00", "usedBy": ["docs/guides/03-import-evidence.md"], "replaces": "ae251e8f30fc7e07d2ddce437f48d26a741b3b234049a9331b16147fc9dab7a0"},
+    {"file": "settings-1440.png", "sha256": "b7db0a46251ad03b1d5e7a453f7f2d516f503d59b9786a04964d6cdf824c9a35", "bytes": 162390, "px": "1440x860", "page": "/settings", "window": "1440x860", "theme": "light", "rail": "open", "frame": "C", "capturedAt": "2026-10-24T11:09:28+01:00", "usedBy": ["docs/guides/01-first-start.md", "docs/guides/07-settings-system-and-glossary.md"], "replaces": "40965cb1001546f811fe2e2f4e589ea8c517242038a31bd68c77f516e447ce8a"},
+    {"file": "system-1440.png", "sha256": "81ce6a562875f3fe76f2197ee50aa8e6f88c213eb99a6e35805d03f4ae150ea6", "bytes": 240162, "px": "1440x1540", "page": "/system", "window": "1440x1540", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:09:30+01:00", "usedBy": ["docs/guides/07-settings-system-and-glossary.md"], "replaces": "15e20f04abb18dcbacd47102019160492ef2e7cc4e6c5266e26b76da5c957b38"},
+    {"file": "glossary-1440.png", "sha256": "dd06ed8293aab50f0b4ffa5a97f4e3fa672dcf449f186cc2731438288f1e8e45", "bytes": 223071, "px": "1440x1258", "page": "/glossary", "window": "1440x1258", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:09:33+01:00", "usedBy": ["docs/guides/07-settings-system-and-glossary.md"], "replaces": "656fae9605c9a03be23274dcb3b3ad27237a9de1cfc6eaa44f1c963a6c7f62c6"},
+    {"file": "not-found-1440.png", "sha256": "2f66bb8e80b874e60609eef392fbd84a168c543d970a16e35b383202976c97af", "bytes": 73561, "px": "1440x900", "page": "/clients/999999", "window": "1440x900", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-10-24T11:09:35+01:00", "usedBy": ["docs/guides/07-settings-system-and-glossary.md"], "replaces": "d4c3aeefc93afa758d8b814917f0e5529519186dd6de3eb0cd3083f7378b7f9e"}
+  ]
 }
