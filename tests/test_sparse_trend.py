@@ -57,9 +57,7 @@ def point(client_id: int, days_ago: int, score: int = 50) -> ReportPoint:
 def render_trend(points: list[ReportPoint], days: int) -> str:
     context = {
         "trend": trend_chart(points, NAMES, AS_OF, days=days),
-        "trend_narrow": trend_chart(
-            points, NAMES, AS_OF, days=days, size=NARROW_CHART
-        ),
+        "trend_narrow": trend_chart(points, NAMES, AS_OF, days=days, size=NARROW_CHART),
         "days": days,
         "ranges": RANGES,
     }
