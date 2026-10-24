@@ -5,15 +5,17 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
-## Update of 2026-10-24 (deployed candidate `314d239c`)
+## Update of 2026-10-24 (application build documented and captured, `314d239c`)
 
 Read on 2026-10-24 from the deployment receipt of the Development environment, before
 and after the screenshots of the [guides](guides/README.md) were captured again; both
-reads gave the same facts.
+reads gave the same facts. Later documentation-only commits are deployed on top with the
+same application code; the deployed head is read from the deployment receipt and the
+package manifest.
 
 | Fact | Value |
 | --- | --- |
-| Deployed Development candidate | commit `314d239c38965e5ea503ba6526c62d0d2ea7b523` (merge of pull request #62), image `ghcr.io/theriark/revrook-ce@sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6`, CI run 40079874064, Dokploy deployment `MygUWlGK_ouH3Bd-moY7T`, deployed 2026-10-24T09:11:03Z on VM-09, the revision label of the image checked against the commit |
+| Application build documented and captured | commit `314d239c38965e5ea503ba6526c62d0d2ea7b523` (merge of pull request #62), image `ghcr.io/theriark/revrook-ce@sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6`, CI run 40079874064, Dokploy deployment `MygUWlGK_ouH3Bd-moY7T`, deployed 2026-10-24T09:11:03Z on VM-09, the revision label of the image checked against the commit |
 | Screenshot capture source | the same commit and image: all 44 pictures were taken on 2026-10-24 between 11:01 and 11:10 Europe/Lisbon (10:01 to 10:10 UTC), after that deployment and before any later one ([capture manifest](images/README.md)) |
 | Browser acceptance of that build | passed on the same commit and image before the captures (Paperclip task THE-1053) |
 | Release candidate tags | `v27.0.0-rc.1` (commit `3d9c598e`) and `v27.0.0-rc.2` (commit `742c2663`) exist as annotated tags made by the `prepare-rc` job; neither names this candidate. The tag of this candidate is minted by that job after the independent review of this documentation, not by this page |
