@@ -56,10 +56,12 @@ def test_no_chip_without_a_search_a_filter_or_a_band() -> None:
 
 def test_each_chip_names_its_filter_and_links_to_the_list_without_it() -> None:
     query = ListQuery(q="Alder", show="needs-work", sort="score", page=2, band="none")
+    without_q = "?show=needs-work&sort=score&band=none"
+    without_band = "?q=Alder&show=needs-work&sort=score"
     assert query.active_filters == (
-        ActiveFilter("q", 'Name contains "Alder"', "?show=needs-work&sort=score&band=none"),
+        ActiveFilter("q", 'Name contains "Alder"', without_q),
         ActiveFilter("show", "Needs work", "?q=Alder&sort=score&band=none"),
-        ActiveFilter("band", "Band: No report yet", "?q=Alder&show=needs-work&sort=score"),
+        ActiveFilter("band", "Band: No report yet", without_band),
     )
     # Every band the list accepts has its words.
     assert set(BAND_CHOICES) <= set(BAND_WORDS)
