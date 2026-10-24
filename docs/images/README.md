@@ -9,7 +9,10 @@ none holds a credential, a real person, a real customer or another environment.
 ## The current set
 
 All 44 pictures were captured on 2026-10-24 between 11:01 and 11:10 Europe/Lisbon
-(10:01 to 10:10 UTC) while the Development site ran the deployed candidate:
+(10:01 to 10:10 UTC) while the Development site ran the application build documented and
+captured below. Later documentation-only commits are deployed on top with the same
+application code; the deployed head is read from the deployment receipt and the package
+manifest.
 
 | Fact | Value |
 | --- | --- |

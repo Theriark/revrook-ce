@@ -30,9 +30,12 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on 2026-10-24 while it ran commit
-`314d239c38965e5ea503ba6526c62d0d2ea7b523`, with synthetic test data only
-([capture manifest](docs/images/README.md)).
+Live captures of the Development site, taken on 2026-10-24 from the application build
+documented and captured (commit `314d239c38965e5ea503ba6526c62d0d2ea7b523`, image
+`sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6`), with synthetic
+test data only ([capture manifest](docs/images/README.md)). Later documentation-only
+commits are deployed on top with the same application code; the deployed head is read
+from the deployment receipt and the package manifest.
 
 **Home**: four stat cards, then the rookery skyline, one rook per client as tall as its
 score, above the card of each client ([guide 2](docs/guides/02-clients-and-home.md),

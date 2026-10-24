@@ -2,12 +2,15 @@
 
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
 in the order a new installation meets them. Every picture is a live capture of the
-Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-10-24 while it
-ran commit `314d239c38965e5ea503ba6526c62d0d2ea7b523`, with the synthetic test data of
-that site. The pictures are in [docs/images](../images/README.md) with a capture
-manifest (file, SHA-256, page, viewport, theme, capture time and the guide that uses
-each). What the output is, and is not, is in the [README](../../README.md): a
-configuration evidence summary, not a certification.
+Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-10-24 from the
+application build documented and captured (commit
+`314d239c38965e5ea503ba6526c62d0d2ea7b523`), with the synthetic test data of that site.
+Later documentation-only commits are deployed on top with the same application code; the
+deployed head is read from the deployment receipt and the package manifest. The pictures
+are in [docs/images](../images/README.md) with a capture manifest (file, SHA-256, page,
+viewport, theme, capture time and the guide that uses each). What the output is, and is
+not, is in the [README](../../README.md): a configuration evidence summary, not a
+certification.
 
 | Guide | What you do |
 | --- | --- |
