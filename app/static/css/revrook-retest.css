@@ -608,3 +608,149 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
 .rv-verdict-facts {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
 }
+
+/* ---------- The rail fold (_rail.html) ---------- */
+
+/* From 1024px the rail is a sidebar and one button at its top folds it to its
+   icons (data-rail="compact" on the body, kept in the rv_rail cookie), so a wide
+   page, a chart or a scene gets the room; the words of every link, the user and
+   the sign-out button stay in the page for assistive technology (the sr-only
+   treatment), the pressed button and the current page keep their marks, and the
+   theme switch shows its three icons stacked, each named. Below 1024px the rail
+   is a bar and the fold has no meaning, so the form is not drawn */
+.rv-rail-form {
+  display: none;
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .rv-app .rv-rail-form {
+    display: block;
+    position: absolute;
+    top: 22px;
+    right: 12px;
+  }
+
+  .rv-rail-toggle,
+  .rv-rail-toggle:not(:hover) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--rv-charcoal-soft);
+    border-radius: 8px;
+    color: var(--rv-stone);
+    background-color: var(--rv-rail);
+  }
+
+  .rv-rail-toggle:hover {
+    border-color: var(--rv-charcoal-soft);
+    color: var(--rv-white);
+    background-color: var(--rv-charcoal-soft);
+  }
+
+  /* Open, the chevron points at the fold; folded, at the page */
+  .rv-rail-toggle .rv-icon {
+    transform: rotate(180deg);
+    transition: transform var(--rv-motion);
+  }
+
+  body.rv-app[data-rail="compact"] {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  body[data-rail="compact"] .rv-app .rv-header,
+  body[data-rail="compact"] .rv-header {
+    gap: 12px;
+    padding: 16px 10px 16px;
+  }
+
+  body[data-rail="compact"] .rv-rail-form {
+    position: static;
+    align-self: center;
+    margin: 0;
+  }
+
+  body[data-rail="compact"] .rv-rail-toggle .rv-icon {
+    transform: none;
+  }
+
+  body[data-rail="compact"] .rv-brand {
+    align-items: center;
+    padding: 0;
+  }
+
+  body[data-rail="compact"] .rv-header .rv-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  body[data-rail="compact"] .rv-header .rv-wordmark,
+  body[data-rail="compact"] .rv-header .rv-edition,
+  body[data-rail="compact"] .rv-nav-group-label,
+  body[data-rail="compact"] .rv-nav-text,
+  body[data-rail="compact"] .rv-user-text,
+  body[data-rail="compact"] .rv-header .rv-button-quiet span,
+  body[data-rail="compact"] .rv-theme-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  body[data-rail="compact"] .rv-header .rv-nav-link {
+    justify-content: center;
+    gap: 0;
+    padding: 9px 0;
+  }
+
+  body[data-rail="compact"] .rv-header nav ul,
+  body[data-rail="compact"] .rv-nav-list {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rv-charcoal-soft);
+  }
+
+  body[data-rail="compact"] .rv-header nav ul:last-of-type {
+    border-bottom: 0;
+  }
+
+  body[data-rail="compact"] .rv-user {
+    justify-content: center;
+    padding: 12px 0 0;
+  }
+
+  body[data-rail="compact"] .rv-user .rv-inline-form {
+    flex-basis: auto;
+  }
+
+  body[data-rail="compact"] .rv-user .rv-button-quiet {
+    width: auto;
+    padding: 7px;
+  }
+
+  body[data-rail="compact"] .rv-theme {
+    flex-direction: column;
+    flex-basis: auto;
+    gap: 4px;
+    border-radius: 12px;
+  }
+
+  body[data-rail="compact"] .rv-theme button,
+  body[data-rail="compact"] .rv-theme button:not(:hover) {
+    flex: none;
+    padding: 5px 7px;
+  }
+
+  body[data-rail="compact"] .rv-theme .rv-icon {
+    display: block;
+  }
+}
