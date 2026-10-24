@@ -60,7 +60,7 @@ REQUIRED_IN_SCRIPT = (
     'setAttribute("role", "application")',
     # The address a node opens is a path of this site or nothing (THE-1053 review).
     "function pathOf(element)",
-    r'/^\/(?![/\\])[\x21-\x7e]*$/.test(value)',
+    r"/^\/(?![/\\])[\x21-\x7e]*$/.test(value)",
     "href: pathOf(element)",
     # A stage with nothing to draw, or a browser without WebGL 2, is put away.
     'setAttribute("data-scene-state", "unavailable")',
