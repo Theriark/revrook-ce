@@ -1,6 +1,8 @@
 {#- The navigation of the app shell and the signed-in user. The page sets `nav` to mark
-    where it is: home, clients, profile-editor, integrity, settings, system, glossary, explorer. -#}
+    where it is: home, clients, profile-editor, integrity, explorer, settings, system,
+    glossary. The rail form (_rail.html) folds the rail to its icons from 1024px. -#}
 {% import "_icons.html" as i %}
+{% include "_rail.html" %}
 <div class="rv-nav-strip">
 <nav class="rv-nav" aria-label="Main">
 <p class="rv-nav-group-label">Work</p>
@@ -12,16 +14,13 @@
 <ul class="rv-nav-list">
 <li><a class="rv-nav-link" href="/imports/profile-editor"{% if nav == "profile-editor" %} aria-current="page"{% endif %}>{{ i.icon("mapping") }}<span class="rv-nav-text">Profile editor</span></a></li>
 <li><a class="rv-nav-link" href="/evidence/integrity"{% if nav == "integrity" %} aria-current="page"{% endif %}>{{ i.icon("chain") }}<span class="rv-nav-text">Evidence integrity</span></a></li>
+<li><a class="rv-nav-link" href="/experiments/evidence-explorer"{% if nav == "explorer" %} aria-current="page"{% endif %}>{{ i.icon("cube") }}<span class="rv-nav-text">Evidence Explorer</span></a></li>
 </ul>
 <p class="rv-nav-group-label">Administration</p>
 <ul class="rv-nav-list">
 <li><a class="rv-nav-link" href="/settings"{% if nav == "settings" %} aria-current="page"{% endif %}>{{ i.icon("settings") }}<span class="rv-nav-text">Settings</span></a></li>
 <li><a class="rv-nav-link" href="/system"{% if nav == "system" %} aria-current="page"{% endif %}>{{ i.icon("system") }}<span class="rv-nav-text">System</span></a></li>
 <li><a class="rv-nav-link" href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}>{{ i.icon("glossary") }}<span class="rv-nav-text">Glossary</span></a></li>
-</ul>
-<p class="rv-nav-group-label">Experiments</p>
-<ul class="rv-nav-list">
-<li><a class="rv-nav-link" href="/experiments/evidence-explorer"{% if nav == "explorer" %} aria-current="page"{% endif %}>{{ i.icon("cube") }}<span class="rv-nav-text">Evidence Explorer</span></a></li>
 </ul>
 </nav>
 </div>

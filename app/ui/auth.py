@@ -22,7 +22,7 @@ from app.models import AppUser
 from app.ratelimit import ConcurrencyGate
 from app.security import SessionData, new_csrf_token
 from app.sources import source_icon
-from app.theme import COLOR_SCHEMES, theme_of
+from app.theme import COLOR_SCHEMES, rail_of, theme_of
 from app.ui.brand import asset_version, available_brand_files
 from app.web import clock_of, current_session, session_factory, set_session_cookie
 
@@ -71,7 +71,7 @@ def render(
 
     The theme is the user's when the context has one, else the one the cookie
     remembers; `theme_next` is where the switch comes back to without script
-    (theme_next_of).
+    (theme_next_of); `rail` is open or compact, as the rv_rail cookie says.
     """
     user = context.get("user")
     theme = theme_of(request, user if isinstance(user, AppUser) else None)
@@ -84,6 +84,7 @@ def render(
             "theme": theme,
             "color_scheme": COLOR_SCHEMES[theme],
             "theme_next": theme_next_of(request),
+            "rail": rail_of(request),
         },
         status_code=status_code,
     )

@@ -50,7 +50,7 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 | [docs/licences.md](docs/licences.md) | Licences of the dependencies |
 | [docs/development.md](docs/development.md) | Development guide |
 | [docs/design-system.md](docs/design-system.md) | Tokens, shell and components of the web interface |
-| [docs/evidence-explorer-preview.md](docs/evidence-explorer-preview.md) | The Evidence Explorer, a Development-only scene of one client's evidence and controls |
+| [docs/evidence-explorer-preview.md](docs/evidence-explorer-preview.md) | The Evidence Explorer, the scene of one client's evidence sources and the controls they feed |
 | [docs/testing.md](docs/testing.md) | Testing notes |
 | [docs/ci-cd.md](docs/ci-cd.md) | CI/CD flow and known gaps |
 | [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |

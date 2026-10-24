@@ -1,11 +1,14 @@
-# Evidence Explorer (Development preview)
+# Evidence Explorer
 
-A page at `/experiments/evidence-explorer` that shows, for one client, which evidence
-exports feed which controls, and where the evidence behind a status is stale or
-missing. It is an experiment on the Development installation to judge a scene drawn
-in the browser; it is not part of any report, it stores nothing, and it loads nothing
-from outside the installation. The founder decides after seeing it whether the web
-interface takes this direction anywhere else.
+A page at `/experiments/evidence-explorer`, in the Evidence group of the navigation,
+that shows, for one client, which evidence exports feed which controls, and where the
+evidence behind a status is stale or missing. It began as an experiment on the
+Development installation to judge a scene drawn in the browser; after the founder
+saw it, the same direction was taken to Home and the client overview
+([design-system.md](design-system.md), Scenes), and the page is now an optional view
+of the interface. It is not part of any report, it stores nothing, and it loads
+nothing from outside the installation. The address keeps its first form so that no
+link or bookmark breaks.
 
 ## What it shows
 
@@ -78,10 +81,11 @@ same dark surface as the rail; the colours on it are the dark-theme status value
   `mount()` and `info()` so a test can cycle the scene ten times and read the
   renderer's geometry and program counts.
 
-## Limits of the preview
+## Limits
 
-It is Development only: no Stage, no release, no change to any other page beyond
-the **Experiments** entry of the navigation. The only browser it can be checked in
-is a headless one with a software renderer (SwiftShader), on the Development site;
-no hardware GPU, WebGPU, phone or touch screen has been measured. The 51 controls and up to 13
-sources of a client are a small scene; a larger one has not been tried.
+The scene has been checked in a headless browser with a software renderer
+(SwiftShader) on the Development site; no hardware GPU, WebGPU, phone or touch
+screen has been measured. The 51 controls and up to 13 sources of a client are a
+small scene; a larger one has not been tried. The page keeps its own script
+(`evidence-explorer.js`) while the rookery skyline and the domain keep share
+`scenes.js`; folding the explorer onto the shared module is a later change.

@@ -34,6 +34,10 @@
  *   fails, the theme goes back to the one in use, since nothing was remembered;
  *   without the script the form posts and the page comes back in the chosen
  *   theme.
+ * - the rail fold (templates/_rail.html): from 1024px the rail folds to its
+ *   icons the moment the button is pressed and htmx posts the form; a refused
+ *   or failed post puts the rail back, since nothing was remembered; without
+ *   the script the form posts and the page comes back with the rail as chosen.
  */
 (function () {
   "use strict";
@@ -360,11 +364,70 @@
     }
   }
 
+  // The rail fold (_rail.html): the body carries data-rail, the button says
+  // which state it asks for in its value and names the other one once pressed.
+  var RAILS = { expanded: "expanded", compact: "compact" };
+  var RAIL_WORDS = { expanded: "Fold the rail", compact: "Open the rail" };
+  var railKept = null;
+
+  function setRail(rail) {
+    document.body.setAttribute("data-rail", rail);
+    var buttons = document.querySelectorAll('.rv-rail-form button[name="rail"]');
+    for (var k = 0; k < buttons.length; k += 1) {
+      var other = rail === "compact" ? "expanded" : "compact";
+      buttons[k].value = other;
+      buttons[k].setAttribute("aria-expanded", rail === "compact" ? "false" : "true");
+      buttons[k].setAttribute("aria-label", RAIL_WORDS[rail]);
+      buttons[k].setAttribute("title", RAIL_WORDS[rail]);
+    }
+  }
+
+  function railButtonOf(event) {
+    var node = event.target;
+    while (node && node !== document) {
+      if (node.tagName === "BUTTON" && node.name === "rail") {
+        return node.form && node.form.classList.contains("rv-rail-form") ? node : null;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function applyRail(event) {
+    var button = railButtonOf(event);
+    if (!button || !RAILS[button.value]) {
+      return;
+    }
+    if (railKept === null) {
+      railKept = document.body.getAttribute("data-rail") || "expanded";
+    }
+    setRail(button.value);
+  }
+
+  function railPosted(event) {
+    var form = event.target;
+    if (!form || !form.classList || !form.classList.contains("rv-rail-form")) {
+      return;
+    }
+    var detail = event.detail || {};
+    var status = detail.xhr ? detail.xhr.status : 0;
+    if (event.type === "htmx:afterRequest" && status >= 200 && status < 300) {
+      railKept = document.body.getAttribute("data-rail") || "expanded";
+      return;
+    }
+    if (railKept !== null && RAILS[railKept]) {
+      setRail(railKept);
+    }
+  }
+
   function ready() {
     watchDrawer();
     document.addEventListener("click", applyTheme);
+    document.addEventListener("click", applyRail);
     document.addEventListener("htmx:afterRequest", themePosted);
+    document.addEventListener("htmx:afterRequest", railPosted);
     document.addEventListener("htmx:sendError", themePosted);
+    document.addEventListener("htmx:sendError", railPosted);
     document.addEventListener("htmx:afterSwap", announceSwapped);
     document.addEventListener("htmx:afterSwap", updateRegions);
     window.addEventListener("resize", updateRegions);

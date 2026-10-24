@@ -15,7 +15,7 @@ from app.preferences import (
 )
 from app.reports.disclaimer import DISCLAIMER
 from app.settings import Settings
-from app.theme import THEMES, safe_next
+from app.theme import RAILS, THEMES, safe_next
 from app.ui.auth import redirect
 from app.ui.common import (
     guarded,
@@ -25,7 +25,7 @@ from app.ui.common import (
     sentence,
     signed_in_user,
 )
-from app.web import clock_of, session_factory, set_theme_cookie
+from app.web import clock_of, session_factory, set_rail_cookie, set_theme_cookie
 from app.worker.mail import mail_configured
 
 router = APIRouter()
@@ -146,4 +146,30 @@ async def theme_save(
     else:
         response = redirect(safe_next(next_path) if user is not None else "/login")
     set_theme_cookie(response, request, theme)
+    return response
+
+
+@router.post("/rail")
+async def rail_save(
+    request: Request,
+    rail: Annotated[str, Form()] = "",
+    next_path: Annotated[str, Form(alias="next")] = "/",
+) -> Response:
+    """Remember whether the rail is open or folded (_rail.html, app/theme.py).
+
+    A browser preference: the cookie alone keeps it, signed in or not, since the
+    rail is drawn only for a signed-in person and the choice is about this screen.
+    htmx gets 204, the script has folded the rail already; without script the
+    page comes back with the rail as chosen.
+    """
+    if rail not in RAILS:
+        raise HTTPException(
+            status_code=422, detail="The rail must be expanded or compact."
+        )
+    user = await signed_in_user(request)
+    if is_htmx(request):
+        response: Response = Response(status_code=204)
+    else:
+        response = redirect(safe_next(next_path) if user is not None else "/login")
+    set_rail_cookie(response, request, rail)
     return response

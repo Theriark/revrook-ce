@@ -59,6 +59,7 @@ POST_FIELDS: dict[str, dict[str, str]] = {
     "/clients/{client_id}/reports/{snapshot_id}/export": {"kind": "qbr"},
     "/settings": {"msp_name": "Posted MSP"},
     "/theme": {"theme": "dark"},
+    "/rail": {"rail": "compact"},
 }
 GET_PAGES = tuple(sample_path(path) for path in GET_ROUTES)
 POSTS = tuple((sample_path(path), POST_FIELDS.get(path, {})) for path in POST_ROUTES)
