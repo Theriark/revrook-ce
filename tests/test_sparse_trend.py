@@ -20,6 +20,7 @@ from fractions import Fraction
 from pathlib import Path
 
 import httpx
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app import devseed
@@ -188,6 +189,30 @@ def test_a_line_entering_from_the_report_before_the_range_is_named() -> None:
     assert mixed.count(HALO) == 2 and mixed.count("<polyline") == 2
     assert "Birch Ltd has one report in the last 30 days, so it is drawn" in mixed
     assert ["<line" in key for key in keys(mixed)] == [True, False]
+
+
+@pytest.mark.parametrize("days", RANGE_DAYS)
+def test_each_case_at_each_range_of_the_home_chart(days: int) -> None:
+    # Nothing in the range, only a report before it: the empty state, no note.
+    empty = render_trend([point(1, days + 5)], days)
+    assert 'id="trend-empty"' in empty and MARK.findall(empty) == []
+    assert "data-sparse" not in empty and "data-enters" not in empty
+    # One report in the range and one before it: a line enters and is named.
+    entering = render_trend([point(1, days + 5), point(1, 1)], days)
+    assert entering.count("<polyline") == 2 and HALO not in entering
+    assert 'data-enters="1"' in entering and "data-sparse" not in entering
+    entered = iso_date(AS_OF - timedelta(days=days + 5))
+    assert f"of {entered}, before the last {days} days, which has no mark" in entering
+    # One report and nothing before it: a ringed mark and no line, said in words.
+    alone = render_trend([point(1, 1)], days)
+    assert "<polyline" not in alone and alone.count(HALO) == 2
+    assert 'data-sparse="all"' in alone and "data-enters" not in alone
+    assert f"One report in the last {days} days, so there is no line yet" in alone
+    # Several reports in the range: a line, no ring and no note.
+    many = render_trend([point(1, days - 1), point(1, 1)], days)
+    assert many.count("<polyline") == 2 and HALO not in many
+    assert "data-sparse" not in many and "data-enters" not in many
+    assert len(MARK.findall(many)) == 4
 
 
 def test_every_line_has_its_own_mark_shape() -> None:
