@@ -754,3 +754,70 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
     display: block;
   }
 }
+
+/* The long labels of the founder's Development inspection (THE-1133, 24 October).
+   1. The clients list: the words beside the ring of the last report had a track
+      of minmax(0, 1fr), so the cell could shrink to nothing and "Insufficient
+      evidence" ran under the pills of the next column at 1440px, in both
+      densities. The words take their own width and the band breaks between its
+      words only (Pico's break-word broke it one letter a line at 768px), so its
+      longest word sets the narrowest the column can be; the date stays whole.
+      The words keep their min-content width as a grid item: revrook.css gives
+      them min-width 0, which let the auto track shrink to 68px under the 88px
+      of "Insufficient" (measured on Development, the first try of this fix).
+   2. The score fits inside the 40px ring: at 24 units "16.0" ran over the track.
+   3. The posture cards of Home cut a client name after about fourteen letters at
+      every width ("Design Review ..."): the name wraps, up to three lines; the
+      ring's title and the link carry all of it.
+   4. The score chart and the domain bars of Home keep their own heights:
+      stretched to the taller card beside it, the chart stood over an empty third
+      of its card at 1440px. */
+.rv-posture {
+  grid-template-columns: 40px auto;
+}
+
+.rv-table-compact .rv-posture {
+  grid-template-columns: 28px auto;
+}
+
+.rv-posture-text {
+  min-width: min-content;
+}
+
+.rv-posture-score {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.rv-posture-ring .rv-ring-value {
+  font-size: 20px;
+}
+
+.rv-rook-name {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.rv-two {
+  align-items: start;
+}
+
+/* The key of a line in the legend of a score chart holds its mark shape too
+   (_trend_chart.html, with the marker of _chart.html): 12 units high, the
+   shape drawn like the marks */
+.rv-chart-key {
+  height: 12px;
+}
+
+.rv-chart-key .rv-mark-shape {
+  fill: var(--rv-text);
+  stroke: var(--rv-surface);
+  stroke-width: 1;
+}

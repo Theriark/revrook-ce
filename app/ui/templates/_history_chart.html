@@ -10,7 +10,10 @@
 {% if reports_capped %}
 <p class="rv-card-subtitle" id="history-capped">{% if reports_cap == 1 %}Only the newest report of this client is drawn; older reports are{% else %}Only the newest {{ reports_cap }} reports of this client are drawn; older ones are{% endif %} left out of the chart.</p>
 {% endif %}
+<p class="rv-sr-only" data-chart-summary>Score over time of this client: {% if history.lines %}{{ history.reports }} report{% if history.reports != 1 %}s{% endif %} in this span.{% else %}no report in this span.{% endif %}</p>
 {% if history.lines %}
+{% set older = reports_total - history.reports %}
+{{ c.sparse_note(history, "in this span", "before this span", "" if older < 1 else (older ~ (" older report is" if older == 1 else " older reports are") ~ " outside this span: choose All reports to include " ~ ("it." if older == 1 else "them."))) }}
 {% for chart in (history, history_narrow) %}
 {{ c.score_chart(chart, "history-title", "history", "The score of this client at every report, from 0 to 100 by report date.") }}
 {% endfor %}

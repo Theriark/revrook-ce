@@ -113,29 +113,84 @@ main .rv-range button.rv-range-choice[aria-pressed="true"] {
   }
 }
 
-/* A mark on a score chart is a link: the circle grows under the pointer and
-   under keyboard focus, where it also takes the focus ring as a stroke, since
-   an outline does not follow an element inside an SVG */
+/* A mark on a score chart is a link: its shape (one per line, _chart.html,
+   marker) grows under the pointer and under keyboard focus, where it also takes
+   the focus ring as a stroke, since an outline does not follow an element inside
+   an SVG. The growth is a scale about the centre of the shape, so a square or a
+   triangle grows like a circle */
 .rv-chart a.rv-mark {
   cursor: pointer;
   outline: none;
 }
 
-.rv-chart a.rv-mark circle {
+.rv-chart a.rv-mark .rv-mark-shape {
   fill: var(--rv-text);
   stroke: var(--rv-surface);
   stroke-width: 1.5;
-  transition: r 120ms ease-out, stroke-width 120ms ease-out;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 120ms ease-out, stroke-width 120ms ease-out;
 }
 
-.rv-chart a.rv-mark:hover circle,
-.rv-chart a.rv-mark:focus circle {
-  r: 5.5;
+.rv-chart a.rv-mark:hover .rv-mark-shape,
+.rv-chart a.rv-mark:focus .rv-mark-shape {
+  transform: scale(1.5);
 }
 
-.rv-chart a.rv-mark:focus-visible circle {
+.rv-chart a.rv-mark:focus-visible .rv-mark-shape {
   stroke: var(--rv-focus);
   stroke-width: 3;
+}
+
+/* The ring of a single report takes the focus colour with its mark */
+.rv-chart a.rv-mark:focus-visible circle {
+  stroke: var(--rv-focus);
+}
+
+/* A client with one report in the range: its mark stands alone, larger, in a
+   ring, so it reads as a single report on purpose and not as a line that failed
+   to draw. The ring is also a larger target for a pointer or a finger */
+.rv-chart a.rv-mark .rv-mark-halo {
+  fill: var(--rv-surface);
+  fill-opacity: 0;
+  stroke: var(--rv-text-secondary);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2.5;
+}
+
+/* What a sparse range means (one report per client, or a client switched off
+   in the legend): a short note with the info icon, above or under the drawing */
+.rv-chart-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--rv-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-chart-note .rv-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-canvas);
+}
+
+.rv-chart-legend + .rv-chart-note {
+  margin: 8px 0 0;
+}
+
+/* The number of reports beside each client of the legend */
+.rv-chart-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
 }
 
 /* A line the person switched off in the legend stays off in both drawings and
@@ -186,6 +241,10 @@ main .rv-chart-legend button.rv-series[aria-pressed="false"] {
 
 main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key line {
   stroke: var(--rv-text-secondary);
+}
+
+main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key .rv-mark-shape {
+  fill: var(--rv-text-secondary);
 }
 
 /* A segment of a stacked bar is a link too: the segments beside the one under
