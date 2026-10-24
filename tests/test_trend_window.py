@@ -38,6 +38,7 @@ NAMES = {1: "Alder", 2: "Birch"}
 LEFT = f"{WIDE_CHART.left:.1f}"
 MARK = re.compile(r'<a class="rv-mark" href="(/clients/\d+/reports/\d+)" data-tip="')
 LINE = re.compile(r'<polyline points="([^"]+)"')
+TREND = 'id="trend-body"'
 
 
 def at(
@@ -64,6 +65,11 @@ def coordinates(line: TrendLine) -> list[tuple[str, str]]:
         x, y = pair.split(",")
         found.append((x, y))
     return found
+
+
+def trend_lines(text: str) -> list[str]:
+    """The polylines of the trend card; the page has sparklines before it."""
+    return LINE.findall(text.split(TREND, 1)[-1])
 
 
 def paths(line: TrendLine) -> list[str]:
@@ -133,10 +139,16 @@ def test_the_edges_of_the_range_are_inclusive_and_exact() -> None:
 def test_the_range_compares_instants_not_the_zone_they_are_written_in() -> None:
     start = NOW - timedelta(days=30)
     local = timezone(timedelta(hours=5))
-    same = at(start.astimezone(local), 30, 1)
+    # Written with another offset, the instant on the edge is in the range and the
+    # minute before it is not: it is what the line enters from, when there is one.
+    edge = at(start.astimezone(local), 30, 1)
     earlier = at((start - timedelta(minutes=1)).astimezone(local), 10, 2)
-    line = one_line([earlier, same], 30)
+    line = one_line([earlier, edge], 30)
     assert paths(line) == ["clients/1/reports/1"]
+    assert line.continues_from == ""
+    later = at((start + timedelta(minutes=1)).astimezone(local), 30, 3)
+    line = one_line([earlier, later], 30)
+    assert paths(line) == ["clients/1/reports/3"]
     assert line.continues_from == "2026-09-24"
 
 
@@ -205,7 +217,7 @@ async def test_home_ranges_over_the_stored_reports_of_a_client(
     ninety = await ui_browser.get("/", params={"days": "90"})
     assert ninety.status_code == 200
     assert len(MARK.findall(ninety.text)) == 6  # three reports, drawn wide and narrow
-    assert [len(points.split()) for points in LINE.findall(ninety.text)] == [3, 3]
+    assert [len(points.split()) for points in trend_lines(ninety.text)] == [3, 3]
 
     for window in ("30", "7"):
         page = await ui_browser.get("/", params={"days": window})
@@ -214,7 +226,7 @@ async def test_home_ranges_over_the_stored_reports_of_a_client(
         )
         for text in (page.text, fragment.text):
             assert len(MARK.findall(text)) == 2  # the one report of the range
-            lines = LINE.findall(text)
+            lines = trend_lines(text)
             assert [len(points.split()) for points in lines] == [2, 2]
             assert all(points.startswith("36.0,") for points in lines)
             assert 'id="trend-empty"' not in text
