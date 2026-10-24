@@ -328,7 +328,8 @@ Its parts, in order:
   numbers, a legend of status pills, and every count in a table folded under "Show
   the numbers" (`details.rv-chart-data`, the same fold as the chart; the table sits
   in `div.rv-table-scroll` so a narrow phone scrolls the table, never the page). The
-  two cards sit side by side from 1024 px and share one height.
+  two cards sit side by side from 1024 px, each at its own height (stretched to the
+  taller one, the chart stood over an empty third of its card).
 - Recent changes (`.rv-timeline`): the newest audit entries that changed a client,
   its evidence or its reports, with who did it and when (the exact time on hover).
 
@@ -336,8 +337,7 @@ States: a fresh installation shows one empty state with the three first steps an
 one action; a client without evidence shows a dashed ring and "No evidence imported
 yet"; a client whose evidence cannot be read today is listed in a warning strip above
 the dashboard instead of stopping it; the attention list, the chart and the timeline
-each have their own empty state that says what fills them, and an empty state in one
-of the two side-by-side cards is centred in the height of its neighbour. The page is
+each have their own empty state that says what fills them. The page is
 rendered whole on the server: there is no part that loads later, so there is no
 loading state to show.
 
@@ -390,7 +390,8 @@ How a chart answers:
   and Up and Down are left to the page, so it still scrolls while a mark has the
   focus. A sparkline is one tab stop too (`data-spark`): Left and Right walk its
   weeks. A
-  focused mark grows and takes the focus ring as a stroke that keeps its width
+  focused mark grows (a scale about its centre, whatever its shape) and takes the
+  focus ring as a stroke that keeps its width
   whatever the stretch of a bar (`vector-effect: non-scaling-stroke`).
 - Range: the row of buttons above a score chart (`form.rv-range`, the `range_form`
   macro) is a GET form whose pressed button (`aria-pressed`) is the range drawn.
@@ -410,7 +411,23 @@ How a chart answers:
 - Series: the legend of the Home trend becomes a row of pressed buttons
   (`button.rv-series`); not pressed, the line, its marks and its rows are hidden in
   both drawings (the `hidden` attribute, since an SVG group has no such property),
-  and a series switched off stays off when another range is swapped in.
+  and a series switched off stays off when another range is swapped in. With every
+  client switched off the card says so (`data-all-off`) and how to bring a line back.
+  Each client of the legend shows the key of its line (its dash with its mark shape)
+  and how many reports the range holds for it.
+- Few reports: a line joins two stored reports or more of the same client, and
+  nothing is drawn that is not stored. Each line has its own mark shape (circle,
+  square, diamond, triangle up, triangle down, cross; the `marker` macro of
+  `_chart.html`), so clients are told apart where no line is drawn. A client with
+  one report in the range is one larger mark in a dashed ring, keyed by its mark
+  alone in the legend, and a note above the drawing (`sparse_note`,
+  `.rv-chart-note`) says it in words: "One report per client in the last 30 days,
+  so there is no line yet", or names the clients with one report beside the lines.
+  On Home it invites the 90-day range; on the report builder it counts the older
+  reports outside the span. No report at all is the empty state of the card.
+- Announcement: after a range is swapped in, its summary (`data-chart-summary`: the
+  range, the reports and the clients drawn) is read out through one polite live
+  region, since focus stays on the pressed button.
 - Drill-down: every link is a real address. A link into a folded table opens the
   fold and focuses the row; a segment of the overview opens the checklist with a
   third chip that names the narrowing (`a.rv-chip-narrowed`) and takes it away.

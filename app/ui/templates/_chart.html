@@ -6,7 +6,10 @@
     and Enter opens one. The drawing carries role="group", not img, because it
     holds links. Used by _trend_chart.html (Home) and _history_chart.html (one
     client). `title_id` names the heading of the card; `prefix` the ids of the
-    descriptions. -#}
+    descriptions. Each line has its own mark shape as well as its own dash, so the
+    clients are told apart where no line is drawn: a client with one report in
+    the range has a mark alone, larger and ringed, never a made-up line. -#}
+{% import "_icons.html" as i %}
 {% macro score_chart(chart, title_id, prefix, words) -%}
 <svg class="rv-chart rv-chart-{{ chart.kind }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="group" aria-labelledby="{{ title_id }} {{ prefix }}-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}" data-roving>
 <desc id="{{ prefix }}-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}">{{ words }} Each point is a stored report: the arrow keys move between the points and Enter opens the report. The numbers are in the table that follows.</desc>
@@ -22,13 +25,60 @@
 {% endfor %}
 </g>
 {% for line in chart.lines %}
+{% set shape = loop.index0 %}
+{% set solo = line.marks|length == 1 %}
 <g class="rv-chart-line" data-series="{{ line.client_id }}">
 {% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
-{% for mark in line.marks %}<a class="rv-mark" href="/{{ mark.path }}" data-tip="{{ mark.tip }}"><title>{{ mark.tip }}</title><circle cx="{{ mark.x }}" cy="{{ mark.y }}" r="3.5"/></a>{% endfor %}
+{% for mark in line.marks %}<a class="rv-mark" href="/{{ mark.path }}" data-tip="{{ mark.tip }}"><title>{{ mark.tip }}</title>{% if solo %}<circle class="rv-mark-halo" cx="{{ mark.x }}" cy="{{ mark.y }}" r="8"/>{% endif %}{{ marker(shape, mark.x, mark.y, 5 if solo else 3.5) }}</a>{% endfor %}
 {% if chart.labelled %}<text x="{{ chart.right + 10 }}" y="{{ line.label_y }}" dominant-baseline="middle">{{ line.short_name }}</text>{% endif %}
 </g>
 {% endfor %}
 </svg>
+{%- endmacro %}
+
+{#- The mark of the line drawn `shape`-th: a circle, a square, a diamond, a
+    triangle up, a triangle down or a cross, centred on (x, y) with a radius of
+    about `r`. The legend of _trend_chart.html draws the same shape beside the
+    name, so a client is found by its shape as well as by its dash, and never by
+    colour alone. -#}
+{% macro marker(shape, x, y, r) -%}
+{%- set cx = x|float -%}{%- set cy = y|float -%}{%- set kind = shape % 6 -%}
+{%- if kind == 0 -%}
+<circle class="rv-mark-shape" cx="{{ "%.1f"|format(cx) }}" cy="{{ "%.1f"|format(cy) }}" r="{{ r }}"/>
+{%- else -%}
+{%- if kind == 1 -%}{%- set at = [(-0.9, -0.9), (0.9, -0.9), (0.9, 0.9), (-0.9, 0.9)] -%}
+{%- elif kind == 2 -%}{%- set at = [(0, -1.25), (1.25, 0), (0, 1.25), (-1.25, 0)] -%}
+{%- elif kind == 3 -%}{%- set at = [(0, -1.3), (1.2, 0.9), (-1.2, 0.9)] -%}
+{%- elif kind == 4 -%}{%- set at = [(0, 1.3), (1.2, -0.9), (-1.2, -0.9)] -%}
+{%- else -%}{%- set at = [(-0.4, -1.2), (0.4, -1.2), (0.4, -0.4), (1.2, -0.4), (1.2, 0.4), (0.4, 0.4), (0.4, 1.2), (-0.4, 1.2), (-0.4, 0.4), (-1.2, 0.4), (-1.2, -0.4), (-0.4, -0.4)] -%}
+{%- endif -%}
+<polygon class="rv-mark-shape" points="{% for dx, dy in at %}{{ "%.1f"|format(cx + dx * r) }},{{ "%.1f"|format(cy + dy * r) }}{% if not loop.last %} {% endif %}{% endfor %}"/>
+{%- endif -%}
+{%- endmacro %}
+
+{#- What a sparse range means, in words above the drawing. A line needs two
+    reports of the same client: a client with one report in the range is one mark
+    and no line, and the note says so instead of leaving the reader to wonder
+    where the lines went (Ruben, 24 October: the lines seen at 90 days were gone
+    at 30 and 7, where each client had only its report of 23 October). `scope`
+    names the range ("in the last 30 days"); `wider` invites a longer range, or
+    is empty. Nothing is drawn or said when every line has two reports or more. -#}
+{% macro sparse_note(chart, scope, wider) -%}
+{%- set ns = namespace(single=[], multi=0) -%}
+{%- for line in chart.lines -%}
+{%- if line.marks|length == 1 -%}{%- set ns.single = ns.single + [line.name] -%}{%- else -%}{%- set ns.multi = ns.multi + 1 -%}{%- endif -%}
+{%- endfor -%}
+{%- if ns.single -%}
+<p class="rv-chart-note" data-sparse="{{ "some" if ns.multi else "all" }}">{{ i.icon("info", "sm") }}<span>
+{%- if ns.multi -%}
+{{ ns.single|join(", ") }} {{ "has" if ns.single|length == 1 else "have" }} one report {{ scope }}, so {{ "it is drawn as a ringed mark" if ns.single|length == 1 else "they are drawn as ringed marks" }} without a line.
+{%- elif chart.lines|length == 1 -%}
+One report {{ scope }}, so there is no line yet: a line joins two reports or more. The ringed mark is that report.{% if wider %} {{ wider }}{% endif %}
+{%- else -%}
+One report per client {{ scope }}, so there is no line yet: a line joins two reports or more of the same client. Each ringed mark is one report.{% if wider %} {{ wider }}{% endif %}
+{%- endif -%}
+</span></p>
+{%- endif -%}
 {%- endmacro %}
 
 {#- The numbers behind a score chart: every report of every line, each a link. -#}
