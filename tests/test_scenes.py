@@ -58,6 +58,18 @@ REQUIRED_IN_SCRIPT = (
     "root.revrookScene",
     'querySelectorAll("[data-scene]")',
     'setAttribute("role", "application")',
+    # The address a node opens is a path of this site or nothing (THE-1053 review).
+    "function pathOf(element)",
+    r"/^\/(?![/\\])[\x21-\x7e]*$/.test(value)",
+    "href: pathOf(element)",
+    # A stage with nothing to draw, or a browser without WebGL 2, is put away.
+    'setAttribute("data-scene-state", "unavailable")',
+    "putAway(every.filter((root) => !hasNodes(root)))",
+    # The home view fits the row to the stage; a chosen node leans the yard, never
+    # turns it to face the node squarely.
+    "function fitDistance()",
+    "home.distance = fitDistance();",
+    "turnTo(home.yaw + clamp(lean, -TURN_STEP, TURN_STEP));",
 )
 FORBIDDEN_IN_SCRIPT = (
     "eval(",
@@ -93,7 +105,15 @@ def test_the_scene_module_has_every_fallback_and_nothing_from_outside() -> None:
     # is imported after that, never before; a page without a scene imports nothing.
     assert SCRIPT.index("supportsWebGL2()") < SCRIPT.index("await import(THREE_URL)")
     assert SCRIPT.index("root.hidden = false") < SCRIPT.index("await import(THREE_URL)")
-    assert "if (!roots.length || !supportsWebGL2())" in SCRIPT
+    assert "if (!supportsWebGL2()) {\n    putAway(every);\n    return;\n  }" in SCRIPT
+    # The hide button names the action it offers next and carries no pressed state.
+    assert "aria-pressed" not in SCRIPT
+    assert '"Hide the scene" : "Show the scene"' in SCRIPT
+    # Only footprints: the detail line says what to do, not the hover hint.
+    assert "entries.every((entry) => entry.footprint) ? WORDS.footprints" in SCRIPT
+    assert "Import an export and its rook rises here." in SCRIPT
+    # The yard never turns to face a node squarely, which lined the row up behind it.
+    assert "turnTo(Math.atan2(" not in SCRIPT
     # Nothing turns by itself: the only motion answers a person, and is immediate
     # under the reduced-motion setting, also when it changes while the page is open.
     assert "AUTO_TURN" not in SCRIPT
@@ -114,9 +134,27 @@ def test_the_scene_stylesheet_draws_with_tokens_only() -> None:
     assert "aspect-ratio: 21 / 9;" in CSS and "aspect-ratio: 16 / 10;" in CSS
     assert "touch-action: pan-y pinch-zoom;" in CSS
     assert ".rv-scene[hidden] {\n  display: none;\n}" in CSS
-    # The chosen card or bar carries the mark of the rail, never a colour alone.
+    # Where script runs the stage takes its room before the module does, so the
+    # page never moves under it; a stage put away stays out of the page.
+    reserved = (
+        "@media (scripting: enabled) {\n"
+        '  .rv-scene[hidden]:not([data-scene-state="unavailable"]) {\n'
+        "    display: block;\n"
+        "  }\n"
+        "}"
+    )
+    assert reserved in CSS
+    # The chosen card or bar carries the mark of the rail, never a colour alone,
+    # and the domain row does not move when it is chosen: the line is a
+    # pseudo-element in the margin, no padding changes.
     assert '.rv-rook[data-selected="true"]' in CSS
-    assert '.rv-domain[data-selected="true"]' in CSS
+    assert '.rv-domain[data-selected="true"]::before {' in CSS
+    chosen = CSS.split('.rv-domain[data-selected="true"]::before {', 1)[1]
+    chosen = chosen.split("}", 1)[0]
+    assert "position: absolute;" in chosen and "padding" not in chosen
+    assert "padding-left: 10px" not in CSS
+    assert ".rv-scene.is-closed .rv-scene-toggle {" in CSS
+    assert "aria-pressed" not in CSS
     # Every rule that colours text declares its background, as revrook.css does.
     body = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
     for selector, declarations in re.findall(r"([^{}]+)\{([^{}]*)\}", body):
@@ -131,6 +169,9 @@ def test_the_stage_macro_is_hidden_until_the_browser_can_draw() -> None:
     assert '<div class="rv-scene-state" role="status">' in STAGE
     assert 'class="rv-scene-detail" id="{{ id }}-detail" aria-live="polite"' in STAGE
     assert "<style" not in STAGE and " style=" not in STAGE
+    # The hide button is a plain button whose words say what it offers next.
+    assert 'class="rv-button-quiet rv-button-small rv-scene-toggle" hidden>' in STAGE
+    assert "aria-pressed" not in STAGE
     for button in ("rv-scene-turn-left", "rv-scene-turn-right", "rv-scene-reset"):
         assert f'class="rv-button-quiet rv-button-small {button}"' in STAGE, button
 
@@ -202,6 +243,7 @@ def test_the_rail_fold_is_a_real_form_in_the_rail() -> None:
         user=type("User", (), {"username": "admin"})(),
         csrf_token=PLACEHOLDER_TOKEN,
         brand_files=frozenset(BRAND_FILES),
+        nav="glossary",
         rail="compact",
         theme_next="/glossary",
     )
@@ -210,14 +252,32 @@ def test_the_rail_fold_is_a_real_form_in_the_rail() -> None:
     assert 'name="rail" value="expanded" aria-expanded="false"' in html
     assert 'aria-label="Open the rail"' in html
     assert '<input type="hidden" name="next" value="/glossary">' in html
+    # Folded, each icon carries its words as a tooltip; open, the words are beside
+    # the icon and no link carries a title.
+    for word in (
+        "Home",
+        "Clients",
+        "Profile editor",
+        "Evidence integrity",
+        "Evidence Explorer",
+        "Settings",
+        "System",
+        "Glossary",
+    ):
+        assert f' title="{word}">' in html, word
+    assert 'aria-current="page" title="Glossary">' in html
+    assert '<button type="submit" class="rv-button-quiet" title="Sign out">' in html
     open_rail = templates.get_template("glossary.html").render(
         title="Glossary",
         user=type("User", (), {"username": "admin"})(),
         csrf_token=PLACEHOLDER_TOKEN,
         brand_files=frozenset(BRAND_FILES),
+        nav="glossary",
     )
     assert '<body class="rv-app" data-rail="expanded">' in open_rail
     assert 'name="rail" value="compact" aria-expanded="true"' in open_rail
+    assert 'class="rv-nav-link" href="/glossary" aria-current="page">' in open_rail
+    assert ' title="Home">' not in open_rail and ' title="Sign out">' not in open_rail
 
 
 def test_the_rail_folds_to_its_icons_from_the_sidebar_width_only() -> None:
@@ -242,6 +302,12 @@ def test_the_shell_script_folds_the_rail_at_once_and_restores_it_when_refused() 
     assert 'document.addEventListener("htmx:afterRequest", railPosted);' in SHELL_SCRIPT
     assert 'document.addEventListener("htmx:sendError", railPosted);' in SHELL_SCRIPT
     assert '{ expanded: "Fold the rail", compact: "Open the rail" }' in SHELL_SCRIPT
+    # Folded with script, the links and the sign-out button get their tooltips at
+    # once, and lose them when the rail opens again.
+    assert "function setRailTitles(rail)" in SHELL_SCRIPT
+    assert "setRailTitles(rail);" in SHELL_SCRIPT
+    assert 'named[k].setAttribute("title", text.textContent.trim());' in SHELL_SCRIPT
+    assert 'named[k].removeAttribute("title");' in SHELL_SCRIPT
 
 
 # --- the routes (PostgreSQL) --------------------------------------------------------

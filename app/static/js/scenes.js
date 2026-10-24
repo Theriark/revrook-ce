@@ -68,6 +68,7 @@ const WORDS = {
   noModule: "The scene library could not be loaded. Reload the page; the cards and the bars show the same facts.",
   lost: "The browser paused its drawing (the graphics context was lost). It resumes by itself when it can; the page is unchanged.",
   closed: "The scene is closed.",
+  footprints: "Every client is a footprint: nothing is imported yet. Import an export and its rook rises here.",
 };
 
 function words(node, text) {
@@ -87,6 +88,17 @@ function easeOut(t) {
 function number(element, name) {
   const value = Number(element.getAttribute("data-" + name));
   return Number.isFinite(value) ? value : 0;
+}
+
+// The address a node opens is read from the page, so only a path of this site is
+// accepted: one leading slash, no scheme, no host, no control character. Anything
+// else leaves the node without an address; the card or the bar keeps its own link.
+function pathOf(element) {
+  const value = element.getAttribute("data-href") || "";
+  if (!/^\/(?![/\\])[\x21-\x7e]*$/.test(value)) {
+    return "";
+  }
+  return value;
 }
 
 function supportsWebGL2() {
@@ -179,7 +191,7 @@ function readRookery(list) {
       id: "client:" + element.getAttribute("data-client"),
       index,
       element,
-      href: element.getAttribute("data-href") || "",
+      href: pathOf(element),
       label: said,
       kind: "rook",
       height: evidence ? 0.35 + 2.6 * (score / 100) : 0,
@@ -208,7 +220,7 @@ function readKeep(list) {
       id: "domain:" + element.getAttribute("data-code"),
       index,
       element,
-      href: element.getAttribute("data-href") || "",
+      href: pathOf(element),
       label: said,
       kind: "block",
       side: 0.45 + 0.75 * Math.sqrt(number(element, "weight") / heaviest),
@@ -308,10 +320,15 @@ function buildBlock(THREE, entry, x, z) {
   return { group, materials, top: y + 0.2 };
 }
 
-// Where every node stands: a row along a shallow arc, two rows when there are many,
-// so the nearest rook never hides the one behind it.
-function place(count, spacing) {
-  const perRow = count > 8 ? Math.ceil(count / 2) : count;
+// Where every node stands: a row along a shallow arc, two rows when there are many
+// (more than six blocks, more than eight rooks), so a row never runs so wide that
+// every node is small, and the nearest never hides the one behind it.
+function rowOf(count, limit) {
+  return count > limit ? Math.ceil(count / 2) : count;
+}
+
+function place(count, spacing, limit) {
+  const perRow = rowOf(count, limit);
   const positions = [];
   for (let k = 0; k < count; k += 1) {
     const row = Math.floor(k / perRow);
@@ -334,6 +351,9 @@ function buildScene(THREE, root, options) {
   const kind = root.getAttribute("data-scene");
   const list = page.getElementById(root.getAttribute("data-scene-for") || "");
   const entries = list ? READERS[kind](list) : [];
+  // What the detail line says while nothing is chosen: the hint of the page, or,
+  // when every client is only a footprint, what to do so a rook stands here.
+  const idle = entries.length && entries.every((entry) => entry.footprint) ? WORDS.footprints : root.getAttribute("data-scene-hint") || "";
   const controller = new AbortController();
   const signal = controller.signal;
 
@@ -356,11 +376,29 @@ function buildScene(THREE, root, options) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 21 / 9, 0.1, 80);
   const spacing = kind === "keep" ? 1.7 : 1.25;
-  const spots = place(entries.length, spacing);
-  const span = Math.max(3, (Math.max(1, Math.min(entries.length, entries.length > 8 ? Math.ceil(entries.length / 2) : entries.length)) - 1) * spacing + 2);
+  const limit = kind === "keep" ? 6 : 8;
+  const spots = place(entries.length, spacing, limit);
+  const rows = entries.length > limit ? 2 : 1;
+  const span = Math.max(3, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 2);
+  const tallest = entries.reduce((top, entry) => {
+    const own = entry.kind === "rook" ? entry.height : entry.layers.reduce((sum, layer) => sum + layer.count * 0.16, 0);
+    return Math.max(top, own);
+  }, 0.5);
   const home = { yaw: 0.35, pitch: 0.55, distance: span * 1.15 + 3 };
-  const target = new THREE.Vector3(0, 0.6, entries.length > 8 ? -0.9 : 0);
+  const target = new THREE.Vector3(0, Math.min(0.6, 0.25 + tallest / 2), rows > 1 ? -0.9 : 0);
   const view = { yaw: home.yaw, pitch: home.pitch, distance: home.distance };
+
+  // The home distance fits the row to the stage: as near as the width of the stage
+  // allows for the span of the row (its sideways extent at the home yaw, plus the
+  // depth of a second row), and never so near that the tallest node is cut off.
+  function fitDistance() {
+    const half = (camera.fov / 2) * (Math.PI / 180);
+    const wide = Math.tan(half) * camera.aspect;
+    const across = (span / 2) * Math.cos(home.yaw) + (rows > 1 ? 1.4 : 0.6) * Math.sin(home.yaw) + 0.8;
+    const byWidth = across / wide;
+    const byHeight = (tallest + 1.6) / (2 * Math.tan(half));
+    return Math.max(byWidth, byHeight, 4.5);
+  }
 
   scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.5));
   const sun = new THREE.DirectionalLight(0xffffff, 1.7);
@@ -452,6 +490,13 @@ function buildScene(THREE, root, options) {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    // A stage of another shape fits the row again; a view a person moved closer
+    // or further away keeps its own distance.
+    const atHome = Math.abs(view.distance - home.distance) < 0.001;
+    home.distance = fitDistance();
+    if (atHome) {
+      view.distance = home.distance;
+    }
     invalidate();
   }
 
@@ -479,10 +524,13 @@ function buildScene(THREE, root, options) {
   function select(id, face) {
     selected = nodes.has(id) ? id : null;
     const node = selected ? nodes.get(selected) : null;
-    words(detail, node ? node.entry.label + (node.entry.href ? " Press Enter to open it." : "") : root.getAttribute("data-scene-hint") || "");
+    words(detail, node ? node.entry.label + (node.entry.href ? " Press Enter to open it." : "") : idle);
     markPage();
     if (node && face) {
-      turnTo(Math.atan2(node.group.position.x - target.x, node.group.position.z - target.z));
+      // The yard leans a little towards the chosen node and no further: a turn to
+      // face it squarely would line the row up behind it and hide the others.
+      const lean = Math.atan2(node.group.position.x - target.x, Math.max(home.distance, 1));
+      turnTo(home.yaw + clamp(lean, -TURN_STEP, TURN_STEP));
     }
     paint();
   }
@@ -765,9 +813,10 @@ async function prepare(root, THREE, motionQuery) {
     },
   };
 
+  // The button names the action it offers next, so it is not a pressed state as
+  // well: one signal, the words.
   function syncToggle() {
     if (toggle) {
-      toggle.setAttribute("aria-pressed", built ? "false" : "true");
       words(toggle.querySelector(".rv-scene-toggle-text") || toggle, built ? "Hide the scene" : "Show the scene");
     }
   }
@@ -846,9 +895,33 @@ async function prepare(root, THREE, motionQuery) {
   });
 }
 
+// A stage with nothing to draw (a page without a client, a list without a bar) or
+// a browser without WebGL 2 is marked unavailable: the stylesheet keeps it out of
+// the page, also where it reserved the room before the script ran.
+function putAway(roots) {
+  roots.forEach((root) => {
+    root.hidden = true;
+    root.setAttribute("data-scene-state", "unavailable");
+  });
+}
+
+function hasNodes(root) {
+  const list = document.getElementById(root.getAttribute("data-scene-for") || "");
+  return Boolean(list && list.querySelector("[data-client], [data-code]"));
+}
+
 async function main() {
-  const roots = Array.from(document.querySelectorAll("[data-scene]"));
-  if (!roots.length || !supportsWebGL2()) {
+  const every = Array.from(document.querySelectorAll("[data-scene]"));
+  if (!every.length) {
+    return;
+  }
+  if (!supportsWebGL2()) {
+    putAway(every);
+    return;
+  }
+  putAway(every.filter((root) => !hasNodes(root)));
+  const roots = every.filter(hasNodes);
+  if (!roots.length) {
     return;
   }
   // The stages are revealed before the library is asked for, so the page settles

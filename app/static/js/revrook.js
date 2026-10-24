@@ -370,6 +370,23 @@
   var RAIL_WORDS = { expanded: "Fold the rail", compact: "Open the rail" };
   var railKept = null;
 
+  // Folded, each link and the sign-out button carry their words as a tooltip
+  // (the server draws the same title when the rail comes back folded); open,
+  // the words are beside the icon and the tooltip would only repeat them.
+  function setRailTitles(rail) {
+    var named = document.querySelectorAll(
+      ".rv-header .rv-nav-link, .rv-header .rv-user .rv-inline-form button"
+    );
+    for (var k = 0; k < named.length; k += 1) {
+      var text = named[k].querySelector(".rv-nav-text, span:last-child");
+      if (rail === "compact" && text && text.textContent) {
+        named[k].setAttribute("title", text.textContent.trim());
+      } else {
+        named[k].removeAttribute("title");
+      }
+    }
+  }
+
   function setRail(rail) {
     document.body.setAttribute("data-rail", rail);
     var buttons = document.querySelectorAll('.rv-rail-form button[name="rail"]');
@@ -380,6 +397,7 @@
       buttons[k].setAttribute("aria-label", RAIL_WORDS[rail]);
       buttons[k].setAttribute("title", RAIL_WORDS[rail]);
     }
+    setRailTitles(rail);
   }
 
   function railButtonOf(event) {

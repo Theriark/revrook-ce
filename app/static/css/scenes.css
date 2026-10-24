@@ -15,6 +15,17 @@
   display: none;
 }
 
+/* Where script runs, the stage takes its room before the module does (the note
+   "Preparing the scene" on the charcoal), so the cards and the bars under it never
+   move once the page is drawn; the module puts a stage away when the browser has
+   no WebGL 2 or the list has nothing to draw. A browser that does not know this
+   query keeps the stage hidden until the module reveals it, as before */
+@media (scripting: enabled) {
+  .rv-scene[hidden]:not([data-scene-state="unavailable"]) {
+    display: block;
+  }
+}
+
 .rv-scene {
   margin: 0 0 16px;
 }
@@ -42,7 +53,9 @@
   display: none;
 }
 
-.rv-scene-toggle[aria-pressed="true"] {
+/* With the scene closed the button offers to show it, and reads as the one
+   control left of the scene */
+.rv-scene.is-closed .rv-scene-toggle {
   color: var(--rv-white);
   background-color: var(--rv-ink);
   border-color: var(--rv-ink);
@@ -168,9 +181,21 @@
   box-shadow: inset 3px 0 0 var(--rv-primary), var(--rv-shadow-1);
 }
 
-.rv-domain[data-selected="true"] {
-  box-shadow: inset 3px 0 0 var(--rv-primary);
-  padding-left: 10px;
+.rv-domain {
+  position: relative;
+}
+
+/* The mark stands in the margin of the card, so the row keeps its place and its
+   words do not move when it is chosen */
+.rv-domain[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 8px;
+  left: -12px;
+  width: 3px;
+  border-radius: 2px;
+  background-color: var(--rv-primary);
 }
 
 @media (max-width: 599px) {
