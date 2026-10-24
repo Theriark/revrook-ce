@@ -16,8 +16,14 @@ with a print stylesheet; see `docs/pdf-spike.md` for why there is no PDF.
 | Render | `app/reports/render.py` | Jinja2 with autoescape to one HTML file with its stylesheets inlined. |
 | History | `app/reports/export.py` | Keeps an immutable copy and the SHA-256 of every file made. |
 
-The same snapshot and the same details give the same bytes: nothing in a report reads the
-clock, a random value or an unordered dictionary. `tests/golden/reports` holds the six
+The same snapshot and the same context give the same bytes: the renderer reads no
+clock, no random value and no unordered dictionary. The context is put together when a
+file is previewed or exported (`app/ui/reports.py`): the details of the report builder,
+the open exceptions of the client as they are at that moment (`open_exceptions` of
+`app/posture.py`, not a copy kept in the snapshot) and the date of generation from the
+clock of the application. A later preview of an older report therefore prints an
+exception recorded after its snapshot; the export history keeps each exported file as
+it was sent. `tests/golden/reports` holds the six
 reports of the worked clients A, B and C (written by `tools/make_report_golden.py`, read
 by `tests/test_reports.py`).
 

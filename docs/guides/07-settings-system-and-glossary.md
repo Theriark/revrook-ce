@@ -18,6 +18,11 @@ Open **Settings** in the Administration group.
   only after a person has checked it against its source. None is shown until then
   ([mapping verification](../mapping-verification.md)).
 
+The picture stops above the weights of the domains and **Users and mappings**. On the
+shared Development installation that card also lists a second sign-in account created
+by the Development seed (`DEV_SEED_ACCOUNTS` in `deploy/dokploy.json`), and its address
+is kept out of every picture ([capture manifest](../images/README.md)).
+
 ## System
 
 Open **System** in the Administration group.

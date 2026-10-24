@@ -10,6 +10,11 @@ of the interface. It is not part of any report, it stores nothing, and it loads
 nothing from outside the installation. The address keeps its first form so that no
 link or bookmark breaks.
 
+![The Evidence Explorer at 1440 px, dark theme](images/evidence-explorer-1440-dark.png)
+
+A step-by-step tour, with pictures at 1440, 768 and 390 px in both themes, is in
+[guide 8](guides/08-scenes-rail-and-explorer.md#the-evidence-explorer).
+
 ## What it shows
 
 The page reads a client exactly as its checklist and its evidence page do: the

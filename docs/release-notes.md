@@ -1,15 +1,56 @@
 # Release notes
 
 The notes of the release candidate that the Development environment runs. revrook CE
-has no released version yet: there is no tag, no GitHub release and no released image
-(the only image is the one built for each `development` commit and deployed to the
-Development environment, named below by its digest), and the version the application
-reports is `0.0.0.dev0`
-([release-candidate.md](release-candidate.md)). This page is kept for the first
-candidate and grows with each one; the full list of changes is the
+has no released version yet: there is no stable tag, no stable GitHub release and no
+released image (the only image is the one built for each `development` commit and
+deployed to the Development environment, named below by its digest), and the version
+the application reports is `0.0.0.dev0`
+([release-candidate.md](release-candidate.md)). The newest candidate comes first; the
+earlier ones are kept below as history. The full list of changes is the
 [CHANGELOG](../CHANGELOG.md).
 
+## Candidate of 2026-10-24
+
+| Fact | Value |
+| --- | --- |
+| Deployed Development candidate | commit `314d239c38965e5ea503ba6526c62d0d2ea7b523`, image `ghcr.io/theriark/revrook-ce@sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6` (deployment receipt of the Development environment: CI run 40079874064, deployed 2026-10-24T09:11:03Z, read before and after the captures) |
+| Screenshot capture source | the same commit and image: every picture of the guides was captured again on 2026-10-24, 11:01 to 11:10 Europe/Lisbon ([capture manifest](images/README.md)) |
+| Release candidate label | set by the `prepare-rc` job after the independent review of this documentation; the tags `v27.0.0-rc.1` and `v27.0.0-rc.2` name earlier candidates |
+| Documentation | the [guides](guides/README.md), with the new [guide 8](guides/08-scenes-rail-and-explorer.md) for the scenes, the folded rail, the theme switch and the Evidence Explorer, and the README preview |
+
+### What changed since the candidate of 2026-10-21
+
+The scenes of the interface: the rookery skyline on Home, the domain keep on a client
+overview and the rookery wall of the Evidence Explorer, all drawn from facts the page
+already shows, with a button that hides them in a browser; the rail that folds to its
+icons from 1024 px; the Evidence Explorer as a page of the Evidence group; the dark
+theme and the theme switch; the control drawer; the interactive charts; and the
+synthetic seed data of the Development site. The CHANGELOG lists each of them.
+
+### Known limits of this candidate
+
+The limits 1 to 7 of the candidate of 2026-10-21 below still hold. In addition:
+
+8. **The scenes were measured with a software renderer only.** The rookery, the keep
+   and the wall were checked in a headless Chrome with SwiftShader on the Development
+   site; no hardware GPU, phone or touch screen has been measured.
+9. **At 768 px the keep can draw its front right block past the bottom of its stage**,
+   depending on the angle; the bars under it are not affected
+   ([guide 8](guides/08-scenes-rail-and-explorer.md#known-limits)).
+10. **A preview reads the open exceptions of today.** A file is made from the stored
+    snapshot together with the details, the open exceptions and the generation date at
+    the time it is made, so a later preview of an older report prints an exception
+    recorded after its snapshot ([reports.md](reports.md)); the export history keeps
+    each exported file as it was sent.
+11. **The Development site holds a second sign-in account**, created by its seed
+    (`DEV_SEED_ACCOUNTS`, `app/devseed.py`); Settings lists it under Users and mappings
+    and the audit trail names it. Limit 7 (one account by design) describes the
+    product; the pictures keep that account out.
+
 ## Candidate of 2026-10-21
+
+This section is history: the candidate of 2026-10-21 and the state of the tags on that
+day.
 
 | Fact | Value |
 | --- | --- |

@@ -28,6 +28,28 @@ Revrook produces a configuration evidence summary. It is not a certification, au
 
 The [quick start](docs/quick-start.md) takes you from nothing to an exported quarterly review in about ten minutes, with invented demo data: start the stack with `docker compose up --build --wait`, make the first account, then run `bash scripts/demo.sh YOUR-USER-NAME`.
 
+## What it looks like
+
+Live captures of the Development site, taken on 2026-10-24 while it ran commit
+`314d239c38965e5ea503ba6526c62d0d2ea7b523`, with synthetic test data only
+([capture manifest](docs/images/README.md)).
+
+**Home**: four stat cards, then the rookery skyline, one rook per client as tall as its
+score, above the card of each client ([guide 2](docs/guides/02-clients-and-home.md),
+[guide 8](docs/guides/08-scenes-rail-and-explorer.md)).
+
+![Home with the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
+
+**A client overview**: the domain keep in the coverage card, one block per domain built
+of its controls by status, with a domain chosen from the keyboard; the bars under it
+carry the same facts.
+
+![The domain keep of a client overview at 1440 px, dark theme](docs/images/client-overview-1440-keep-chosen-dark.png)
+
+**Evidence Explorer**: which evidence exports feed which controls of one client.
+
+![The Evidence Explorer at 1440 px, light theme](docs/images/evidence-explorer-1440.png)
+
 ## Documentation
 
 | Page | What it holds |
@@ -56,7 +78,7 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 | [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |
 | [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state and the release workflow check |
 | [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
-| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, with live screenshots ([docs/images](docs/images/README.md)) |
+| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the scenes, the folded rail and the Evidence Explorer, with live screenshots ([docs/images](docs/images/README.md)) |
 
 Changes are listed in the [CHANGELOG](CHANGELOG.md).
 

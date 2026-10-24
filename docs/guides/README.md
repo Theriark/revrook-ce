@@ -1,30 +1,30 @@
 # Guides
 
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
-in the order a new installation meets them. Each guide shows the live Development site
-(`https://ce-dev-revrook.theriark.dev`) as captured on 2026-10-21 with invented demo
-data (four pictures were captured again later that day, and the pictures that showed
-test names with internal ticket numbers were captured again on 2026-10-22 with neutral
-names, see the manifest); the pictures are in [docs/images](../images/README.md) with a
-capture manifest. What the output is, and is not, is in the [README](../../README.md):
-a configuration evidence summary, not a certification.
+in the order a new installation meets them. Every picture is a live capture of the
+Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-10-24 while it
+ran commit `314d239c38965e5ea503ba6526c62d0d2ea7b523`, with the synthetic test data of
+that site. The pictures are in [docs/images](../images/README.md) with a capture
+manifest (file, SHA-256, page, viewport, theme, capture time and the guide that uses
+each). What the output is, and is not, is in the [README](../../README.md): a
+configuration evidence summary, not a certification.
 
 | Guide | What you do |
 | --- | --- |
 | [1. First start and sign-in](01-first-start.md) | Create the one administrator, sign in, set the business name, sign out |
-| [2. Home and clients](02-clients-and-home.md) | Read the dashboard, add a client, open its overview |
+| [2. Home and clients](02-clients-and-home.md) | Read the dashboard and the rookery, add a client, open its overview |
 | [3. Import evidence](03-import-evidence.md) | Map a vendor export in the profile editor, import it, read the evidence page, check the hash chains |
-| [4. The checklist and the notes of a control](04-checklist-and-control-notes.md) | Read the 51 controls, filter them, write the four lines a report prints |
+| [4. The checklist and the notes of a control](04-checklist-and-control-notes.md) | Read the 51 controls, filter them, open a control in the drawer, write the four lines a report prints |
 | [5. Exceptions](05-exceptions.md) | Record that a client knowingly accepts a gap, and close it later |
 | [6. Reports and exports](06-reports-and-exports.md) | Choose the period, write the details, make the report, preview and export it, read the rendered review, find it in the export history |
 | [7. Settings, System and the glossary](07-settings-system-and-glossary.md) | The fixed facts of the installation, the worker, the data export, deleting a client, the glossary and the problem page |
+| [8. Scenes, the folded rail and the Evidence Explorer](08-scenes-rail-and-explorer.md) | Read and steer the rookery and the domain keep, hide or show the scenes, fold the rail, choose the theme, explore which exports feed which controls |
 
-Every guide uses the same test installation and its one administrator account. Names
-such as "Design Review Sample Client", "Sample MSP" (the business name of the test
-installation), the sample leavers profile and the exception owner in the exceptions
-picture are synthetic test data of the Development site; nothing in the pictures is a
-real customer, a real address or a credential. A second test client that earlier
-automated tests had left in the pictures was deleted and the pages captured again; two
-test labels (the owner of the closed exception and a saved profile name) remain
-because the product offers no route to change them (see the capture manifest for what
-each picture replaced and what is kept).
+Every guide uses the same test installation and its administrator account. The clients
+("Seed Gaps Ltd (synthetic)", "Seed Tidy Ltd (synthetic)" and the others), "Sample MSP"
+(the business name of the test installation), the leavers file and the exception in the
+pictures are synthetic test data; nothing in them is a real customer, a real address or
+a credential. Two parts of the live pages are kept out of every picture because they
+name a seeded sign-in account of the Development installation: **Recent changes** on
+Home and on a client overview, and **Users and mappings** in Settings (see the capture
+manifest).

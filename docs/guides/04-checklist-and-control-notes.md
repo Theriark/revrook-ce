@@ -22,9 +22,19 @@ report made today would show them, with the evidence behind each status.
 A status is never shown by colour alone. **Not checked** means nothing was verified:
 there is no dated evidence for the control ([controls](../controls.md)).
 
-## The page of a control
+## The drawer and the page of a control
 
-Press the name of a control (or **Open** in a Needs attention list).
+Press the name of a control on the checklist, or a control or **Open** in a Needs
+attention list on Home or on a client overview. With script, a drawer opens at the
+right edge over the page (608 px wide from 768 px) with the same verdict, evidence,
+exceptions and notes as the page of the control; focus moves to its title, and
+**Close** or Escape puts it away and gives focus back to the link you pressed. **Open
+as a page** at its top opens the full page of the control. Without script, or with a
+modifier key held, the same links open that page directly.
+
+![The drawer of a control over the checklist at 1440 px](../images/control-drawer-1440.png)
+
+The page of a control:
 
 ![The page of a control at 1440 px](../images/control-1440.png)
 

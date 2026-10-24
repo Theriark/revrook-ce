@@ -29,7 +29,8 @@ Open a client and its tab **Reports** (or **Prepare a report** on the overview).
    within 30 seconds opens the report the first press made instead of storing another.
 
 **Reports made before** lists every report of this client, the newest first, with its
-period and pack date; **Preview and export** opens each as it was made.
+period and pack date; **Preview and export** opens each from the snapshot it was made
+from.
 
 ## Preview and export
 
@@ -44,7 +45,13 @@ period and pack date; **Preview and export** opens each as it was made.
 - **The reports**: for each of the two, **Preview** opens the file as it would be sent,
   and **Export the quarterly security review** or **Export the cyber insurance
   evidence pack** keeps an unchangeable copy and its SHA-256 and opens the export
-  history. The same snapshot and the same details give the same bytes.
+  history.
+- A file is made from the stored snapshot together with what is current when it is
+  made: the details of step 2, the open exceptions of the client and the date it is
+  generated. A preview or an export made later of the same report therefore shows an
+  exception recorded after the snapshot, and the band counts it. The same snapshot,
+  details, exceptions and date give the same bytes, and the export history keeps every
+  exported file exactly as it was sent.
 
 ## The rendered report
 
@@ -56,7 +63,9 @@ from, followed by the disclaimer that every report prints.
 
 ![The cover of the rendered quarterly security review at 1440 px](../images/report-preview-file-1440.png)
 
-The whole file, from the cover to the plan for next quarter, is one tall picture in
+The whole file, from the cover through the summary, the findings, the plan for next
+quarter, the evidence, the exceptions register and the appendix of each domain to the
+important notice, is one tall picture in
 [report-preview-file-full-1440.png](../images/report-preview-file-full-1440.png); its
 sections are described in [reports](../reports.md). The cyber insurance evidence pack
 opens the same way from its own **Preview** and is not pictured here.
