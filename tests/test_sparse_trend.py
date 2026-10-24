@@ -6,10 +6,12 @@ reports each (24 August, 23 September, 23 October) and a line each; at 30 and 7
 days each had only its report of 23 October, one small dot and no line, and the
 card did not say why. A line needs two reports of the same client: the card now
 says when a client has one report in the range, rings that mark, keys it alone in
-the legend and counts the reports of every client. Nothing is invented: the marks
-are the stored reports of the range and nothing else. The renders of the
-templates need no database; the ranges of the seeded Development data need
-PostgreSQL (DATABASE_URL) and are skipped without it.
+the legend and counts the reports of every client. Since THE-1134 the line of a
+client with a report before the range enters the plot from it; that line is drawn,
+its mark is not ringed, and the note names the report it comes from and its date.
+Nothing is invented: the marks are the stored reports of the range and nothing
+else. The renders of the templates need no database; the ranges of the seeded
+Development data need PostgreSQL (DATABASE_URL) and are skipped without it.
 """
 
 import re
@@ -23,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from app import devseed
 from app.checks.library import load_library
 from app.evidence.service import EvidenceContext
+from app.reports.view import iso_date
 from app.ui.auth import templates
 from app.ui.charts import HISTORY_RANGES, RANGE_DAYS, RANGE_WORDS
 from app.ui.dashboard import NARROW_CHART, ReportPoint, trend_chart
@@ -148,16 +151,43 @@ def test_a_client_with_one_report_beside_lines_is_named() -> None:
 
 def test_the_ranges_of_the_founder_evidence_draw_what_is_stored() -> None:
     # Reports 61, 31 and 1 days old, as the seed of 23 October seen on the 24th:
-    # 90 days hold all three and a line; 30 and 7 days hold the newest only.
+    # 90 days hold all three and a line; 30 and 7 days hold the newest only, and
+    # the line of each client enters from its report 31 days old (THE-1134).
     points = [point(n, days, 30 + n) for n in (1, 2) for days in (61, 31, 1)]
     quarter = render_trend(points, 90)
     assert len(MARK.findall(quarter)) == 12 and "data-sparse" not in quarter
+    assert "data-enters" not in quarter
+    entered = iso_date(AS_OF - timedelta(days=31))
     for days in (30, 7):
         html = render_trend(points, days)
         assert len(MARK.findall(html)) == 4, days
-        assert "<polyline" not in html and 'data-sparse="all"' in html
-        assert f"One report per client in the last {days} days" in html
+        assert html.count("<polyline") == 4 and HALO not in html
+        assert "data-sparse" not in html and 'data-enters="2"' in html
+        note = f"come from each client's report before the last {days} days"
+        assert note in html and "which has no mark here" in html
+        assert f"Alder Ltd {entered}, Birch Ltd {entered}." in html
+        assert "Choose 90 days to include older reports." in html
+        assert all("<line" in key for key in keys(html))
         assert ">2026-10-16<" in html  # the newest report, in the table
+
+
+def test_a_line_entering_from_the_report_before_the_range_is_named() -> None:
+    # One report in the range and one before it: a drawn line, not a ringed mark.
+    html = render_trend([point(1, 45), point(1, 2)], 30)
+    assert html.count("<polyline") == 2 and HALO not in html
+    assert len(MARK.findall(html)) == 2  # the report of the range, wide and narrow
+    assert "data-sparse" not in html and 'data-enters="1"' in html
+    entered = iso_date(AS_OF - timedelta(days=45))
+    note = "The line of Alder Ltd starts at the left edge: it comes from the report"
+    assert f"{note} of {entered}, before the last 30 days, which has no mark" in html
+    assert '<span class="rv-chart-count">1 report</span>' in html
+    assert all("<line" in key for key in keys(html))
+    # Beside a client with one report and none before it, which stays ringed.
+    mixed = render_trend([point(1, 45), point(1, 2), point(2, 3)], 30)
+    assert 'data-sparse="some" data-enters="1"' in mixed
+    assert mixed.count(HALO) == 2 and mixed.count("<polyline") == 2
+    assert "Birch Ltd has one report in the last 30 days, so it is drawn" in mixed
+    assert ["<line" in key for key in keys(mixed)] == [True, False]
 
 
 def test_every_line_has_its_own_mark_shape() -> None:
@@ -174,7 +204,11 @@ def test_every_line_has_its_own_mark_shape() -> None:
 def test_the_history_of_one_client_says_when_older_reports_are_outside() -> None:
     points = [point(1, 200), point(1, 120), point(1, 1)]
     quarter = render_history(points, "90", 90)
-    assert "One report in this span, so there is no line yet" in quarter
+    # The line enters from the report 120 days old (THE-1134): drawn, not ringed.
+    assert quarter.count("<polyline") == 2 and HALO not in quarter
+    entered = iso_date(AS_OF - timedelta(days=120))
+    note = "The line of Alder Ltd starts at the left edge: it comes from the report"
+    assert f"{note} of {entered}, before this span, which has no mark" in quarter
     assert "2 older reports are outside this span: choose All reports" in quarter
     every = render_history(points, "all", 365)
     assert "data-sparse" not in every and every.count("<polyline") == 2
@@ -256,8 +290,13 @@ async def test_the_seeded_reports_a_day_later_are_drawn_as_stored(
         assert page.status_code == 200 and structure_problems(page.text) == []
         card = trend_part(page.text)
         assert 'value="' + days + '" aria-pressed="true"' in card
-        assert len(MARK.findall(card)) == 6 and "<polyline" not in card
-        assert f"One report per client in the last {days} days" in card
+        # Tidy and Gaps enter from their reports 31 days old (THE-1134), drawn and
+        # named; Stale has its one report and nothing before it, ringed.
+        assert len(MARK.findall(card)) == 6 and card.count("<polyline") == 4
+        assert card.count(HALO) == 2
+        assert 'data-sparse="some" data-enters="2"' in card
+        assert f"{stale} has one report in the last {days} days" in card
+        assert f"come from each client's report before the last {days} days" in card
         summary = f"Score over time, last {days} days: 3 reports of 3 clients drawn."
         assert summary in card
         # The range button of the card asks for the same body in place.
@@ -266,4 +305,5 @@ async def test_the_seeded_reports_a_day_later_are_drawn_as_stored(
         )
         assert fragment.status_code == 200 and "<html" not in fragment.text
         assert len(MARK.findall(fragment.text)) == 6
-        assert 'data-sparse="all"' in fragment.text and summary in fragment.text
+        assert 'data-sparse="some" data-enters="2"' in fragment.text
+        assert summary in fragment.text

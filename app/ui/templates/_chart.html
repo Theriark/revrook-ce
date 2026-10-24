@@ -8,7 +8,9 @@
     client). `title_id` names the heading of the card; `prefix` the ids of the
     descriptions. Each line has its own mark shape as well as its own dash, so the
     clients are told apart where no line is drawn: a client with one report in
-    the range has a mark alone, larger and ringed, never a made-up line. -#}
+    the range and none before it has a mark alone, larger and ringed, never a
+    made-up line. A line that enters from the report before the range
+    (`continues_from`, THE-1134) is a drawn line: its mark is not ringed. -#}
 {% import "_icons.html" as i %}
 {% macro score_chart(chart, title_id, prefix, words) -%}
 <svg class="rv-chart rv-chart-{{ chart.kind }}" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="group" aria-labelledby="{{ title_id }} {{ prefix }}-desc{% if chart.kind != "wide" %}-{{ chart.kind }}{% endif %}" data-roving>
@@ -26,7 +28,7 @@
 </g>
 {% for line in chart.lines %}
 {% set shape = loop.index0 %}
-{% set solo = line.marks|length == 1 %}
+{% set solo = not line.points %}
 <g class="rv-chart-line" data-series="{{ line.client_id }}">
 {% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
 {% for mark in line.marks %}<a class="rv-mark" href="/{{ mark.path }}" data-tip="{{ mark.tip }}"><title>{{ mark.tip }}</title>{% if solo %}<circle class="rv-mark-halo" cx="{{ mark.x }}" cy="{{ mark.y }}" r="8"/>{% endif %}{{ marker(shape, mark.x, mark.y, 5 if solo else 3.5) }}</a>{% endfor %}
@@ -60,23 +62,35 @@
     reports of the same client: a client with one report in the range is one mark
     and no line, and the note says so instead of leaving the reader to wonder
     where the lines went (Ruben, 24 October: the lines seen at 90 days were gone
-    at 30 and 7, where each client had only its report of 23 October). `scope`
-    names the range ("in the last 30 days"); `wider` invites a longer range, or
-    is empty. Nothing is drawn or said when every line has two reports or more. -#}
-{% macro sparse_note(chart, scope, wider) -%}
-{%- set ns = namespace(single=[], multi=0) -%}
+    at 30 and 7, where each client had only its report of 23 October). A line
+    that enters from the report before the range (`continues_from`, THE-1134)
+    starts at the left edge without a mark there, and the note names that report
+    and its date. `scope` names the range ("in the last 30 days"), `before` the
+    time before it ("before the last 30 days"); `wider` invites a longer range, or
+    is empty. Nothing is said when every line joins reports of the range. -#}
+{% macro sparse_note(chart, scope, before, wider) -%}
+{%- set ns = namespace(single=[], drawn=0, enters=[]) -%}
 {%- for line in chart.lines -%}
-{%- if line.marks|length == 1 -%}{%- set ns.single = ns.single + [line.name] -%}{%- else -%}{%- set ns.multi = ns.multi + 1 -%}{%- endif -%}
+{%- if line.points -%}{%- set ns.drawn = ns.drawn + 1 -%}{%- else -%}{%- set ns.single = ns.single + [line.name] -%}{%- endif -%}
+{%- if line.continues_from -%}{%- set ns.enters = ns.enters + [line] -%}{%- endif -%}
 {%- endfor -%}
-{%- if ns.single -%}
-<p class="rv-chart-note" data-sparse="{{ "some" if ns.multi else "all" }}">{{ i.icon("info", "sm") }}<span>
-{%- if ns.multi -%}
+{%- if ns.single or ns.enters -%}
+<p class="rv-chart-note"{% if ns.single %} data-sparse="{{ "some" if ns.drawn else "all" }}"{% endif %}{% if ns.enters %} data-enters="{{ ns.enters|length }}"{% endif %}>{{ i.icon("info", "sm") }}<span>
+{%- if ns.single and ns.drawn -%}
 {{ ns.single|join(", ") }} {{ "has" if ns.single|length == 1 else "have" }} one report {{ scope }}, so {{ "it is drawn as a ringed mark" if ns.single|length == 1 else "they are drawn as ringed marks" }} without a line.
-{%- elif chart.lines|length == 1 -%}
-One report {{ scope }}, so there is no line yet: a line joins two reports or more. The ringed mark is that report.{% if wider %} {{ wider }}{% endif %}
-{%- else -%}
-One report per client {{ scope }}, so there is no line yet: a line joins two reports or more of the same client. Each ringed mark is one report.{% if wider %} {{ wider }}{% endif %}
+{%- elif ns.single and chart.lines|length == 1 -%}
+One report {{ scope }}, so there is no line yet: a line joins two reports or more. The ringed mark is that report.
+{%- elif ns.single -%}
+One report per client {{ scope }}, so there is no line yet: a line joins two reports or more of the same client. Each ringed mark is one report.
 {%- endif -%}
+{%- if ns.enters -%}{% if ns.single %} {% endif -%}
+{%- if ns.enters|length == 1 -%}
+The line of {{ ns.enters[0].name }} starts at the left edge: it comes from the report of {{ ns.enters[0].continues_from }}, {{ before }}, which has no mark here.
+{%- else -%}
+Lines that start at the left edge come from each client's report {{ before }}, which has no mark here: {% for line in ns.enters %}{{ line.name }} {{ line.continues_from }}{% if not loop.last %}, {% endif %}{% endfor %}.
+{%- endif -%}
+{%- endif -%}
+{%- if wider and (ns.enters or not ns.drawn) %} {{ wider }}{% endif -%}
 </span></p>
 {%- endif -%}
 {%- endmacro %}

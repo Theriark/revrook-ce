@@ -13,7 +13,7 @@
     and what it holds, so a change made from the keyboard is heard. -#}
 <p class="rv-sr-only" data-chart-summary>Score over time, last {{ days }} days: {% if trend.lines %}{{ trend.reports }} report{% if trend.reports != 1 %}s{% endif %} of {{ trend.lines|length }} client{% if trend.lines|length != 1 %}s{% endif %} drawn.{% else %}no reports.{% endif %}</p>
 {% if trend.lines %}
-{{ c.sparse_note(trend, "in the last " ~ days ~ " days", "" if days == 90 else "Choose 90 days to include older reports.") }}
+{{ c.sparse_note(trend, "in the last " ~ days ~ " days", "before the last " ~ days ~ " days", "" if days == 90 else "Choose 90 days to include older reports.") }}
 {#- The chart twice, wide and narrow (app/ui/dashboard.py, ChartSize); the stylesheet
     shows the one that suits the width. The narrow drawing has no labels at the ends
     of its lines: the legend under it names the clients. -#}
@@ -21,12 +21,12 @@
 {{ c.score_chart(chart, "trend-title", "trend", "Score from 0 to 100 by report date, one line per client.") }}
 {% endfor %}
 {#- Each client with the key of its line, its dash with its mark shape in the
-    middle, or the mark alone when the range holds one report of that client
-    (nothing joins it to another report, so no line is shown for it), and how
-    many reports the range holds. -#}
+    middle, or the mark alone when no line is drawn for it (one report in the
+    range and none before it to enter from), and how many reports the range
+    holds. -#}
 <ul class="rv-chart-legend" aria-label="The clients drawn">
 {% for line in trend.lines %}
-<li data-series="{{ line.client_id }}"><svg class="rv-chart-key" viewBox="0 0 28 12" width="28" height="12" aria-hidden="true" focusable="false">{% if line.marks|length > 1 %}<line x1="1" y1="6" x2="27" y2="6"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}{{ c.marker(loop.index0, 14, 6, 3.5) }}</svg><span>{{ line.name }}</span> <span class="rv-chart-count">{{ line.marks|length }} report{% if line.marks|length != 1 %}s{% endif %}</span></li>
+<li data-series="{{ line.client_id }}"><svg class="rv-chart-key" viewBox="0 0 28 12" width="28" height="12" aria-hidden="true" focusable="false">{% if line.points %}<line x1="1" y1="6" x2="27" y2="6"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}{{ c.marker(loop.index0, 14, 6, 3.5) }}</svg><span>{{ line.name }}</span> <span class="rv-chart-count">{{ line.marks|length }} report{% if line.marks|length != 1 %}s{% endif %}</span></li>
 {% endfor %}
 </ul>
 <p class="rv-chart-note" data-all-off hidden>{{ i.icon("info", "sm") }}<span>Every client is switched off. Press a name above to draw it again.</span></p>

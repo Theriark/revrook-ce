@@ -419,11 +419,14 @@ How a chart answers:
   nothing is drawn that is not stored. Each line has its own mark shape (circle,
   square, diamond, triangle up, triangle down, cross; the `marker` macro of
   `_chart.html`), so clients are told apart where no line is drawn. A client with
-  one report in the range is one larger mark in a dashed ring, keyed by its mark
-  alone in the legend, and a note above the drawing (`sparse_note`,
-  `.rv-chart-note`) says it in words: "One report per client in the last 30 days,
-  so there is no line yet", or names the clients with one report beside the lines.
-  On Home it invites the 90-day range; on the report builder it counts the older
+  one report in the range and none before it is one larger mark in a dashed ring,
+  keyed by its mark alone in the legend, and a note above the drawing
+  (`sparse_note`, `.rv-chart-note`) says it in words: "One report per client in
+  the last 30 days, so there is no line yet", or names the clients with one report
+  beside the lines. A line that enters from the report before the range
+  (`continues_from`) starts at the left edge with no mark there; it is keyed and
+  drawn as a line, and the note names the report it comes from and its date. On
+  Home the note invites the 90-day range; on the report builder it counts the older
   reports outside the span. No report at all is the empty state of the card.
 - Announcement: after a range is swapped in, its summary (`data-chart-summary`: the
   range, the reports and the clients drawn) is read out through one polite live
