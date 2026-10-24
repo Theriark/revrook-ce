@@ -216,6 +216,9 @@ def test_a_long_band_in_the_clients_list_keeps_its_own_width() -> None:
     assert "grid-template-columns: 40px auto;" in rule(".rv-posture")
     compact = rule(".rv-table-compact .rv-posture")
     assert "grid-template-columns: 28px auto;" in compact
+    # revrook.css gives the words min-width 0, which let the auto track shrink
+    # under the longest word anyway; the words keep their min-content width.
+    assert "min-width: min-content;" in rule(".rv-posture-text")
     band = rule(".rv-posture-score")
     assert "white-space: normal;" in band and "word-break: keep-all;" in band
     assert "font-size: 20px;" in rule(".rv-posture-ring .rv-ring-value")
