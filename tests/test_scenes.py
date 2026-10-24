@@ -29,6 +29,7 @@ TEMPLATES = ROOT / "app/ui/templates"
 SCRIPT = (STATIC_DIR / "js/scenes.js").read_text(encoding="utf-8")
 CSS = (STATIC_DIR / "css/scenes.css").read_text(encoding="utf-8")
 SHELL_CSS = (STATIC_DIR / "css/revrook-retest.css").read_text(encoding="utf-8")
+PICO = (STATIC_DIR / "vendor/pico/pico.min.css").read_text(encoding="utf-8")
 SHELL_SCRIPT = (STATIC_DIR / "js/revrook.js").read_text(encoding="utf-8")
 BASE = (TEMPLATES / "base.html").read_text(encoding="utf-8")
 NAV = (TEMPLATES / "_nav.html").read_text(encoding="utf-8")
@@ -135,15 +136,19 @@ def test_the_scene_stylesheet_draws_with_tokens_only() -> None:
     assert "touch-action: pan-y pinch-zoom;" in CSS
     assert ".rv-scene[hidden] {\n  display: none;\n}" in CSS
     # Where script runs the stage takes its room before the module does, so the
-    # page never moves under it; a stage put away stays out of the page.
-    reserved = (
-        "@media (scripting: enabled) {\n"
-        '  .rv-scene[hidden]:not([data-scene-state="unavailable"]) {\n'
-        "    display: block;\n"
-        "  }\n"
-        "}"
-    )
-    assert reserved in CSS
+    # page never moves under it; a stage put away stays out of the page. Pico hides
+    # every [hidden] element with an important rule, so the room is only kept if
+    # this rule is important too (the CLS measured on Development at 3a95954c).
+    assert "[hidden],template{display:none!important}" in PICO
+    media = CSS.split("@media (scripting: enabled) {\n", 1)[1].split("\n}\n", 1)[0]
+    stage = '  .rv-scene[hidden]:not([data-scene-state="unavailable"])'
+    assert stage + " {\n    display: block !important;\n  }" in media
+    # The hide and turn buttons keep their room, invisible and out of reach, until
+    # the module reveals them; a closed scene gives the turn buttons' room back.
+    kept = '  .rv-scene:not([data-scene-state="unavailable"])'
+    assert kept + " .rv-scene-toggle[hidden],\n" in media
+    assert kept + ":not(.is-closed) .rv-scene-tools[hidden] {" in media
+    assert "    display: flex !important;\n    visibility: hidden;\n" in media
     # The chosen card or bar carries the mark of the rail, never a colour alone,
     # and the domain row does not move when it is chosen: the line is a
     # pseudo-element in the margin, no padding changes.
@@ -302,6 +307,15 @@ def test_the_shell_script_folds_the_rail_at_once_and_restores_it_when_refused() 
     assert 'document.addEventListener("htmx:afterRequest", railPosted);' in SHELL_SCRIPT
     assert 'document.addEventListener("htmx:sendError", railPosted);' in SHELL_SCRIPT
     assert '{ expanded: "Fold the rail", compact: "Open the rail" }' in SHELL_SCRIPT
+    # The posted value changes only once htmx holds the request parameters: changed
+    # on the click, the form posted the state the rail already had and the fold was
+    # never kept (found in the browser at 3a95954c).
+    set_rail = SHELL_SCRIPT.split("function setRail(rail) {", 1)[1]
+    assert ".value =" not in set_rail.split("\n  }\n", 1)[0]
+    assert "function setRailValues(rail)" in SHELL_SCRIPT
+    sending = 'document.addEventListener("htmx:configRequest", railSending);'
+    assert sending in SHELL_SCRIPT
+    assert "setRail(railKept);\n      setRailValues(railKept);" in SHELL_SCRIPT
     # Folded with script, the links and the sign-out button get their tooltips at
     # once, and lose them when the rail opens again.
     assert "function setRailTitles(rail)" in SHELL_SCRIPT
