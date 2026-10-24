@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% import "_status.html" as s %}
 {% import "_icons.html" as i %}
+{#- The filters in use (THE-1061): their stylesheet and script are linked here, not
+    in the shell, with their own digest as the `v` query. Without the script every
+    chip is still a plain link to the list without that filter. -#}
+{% block head %}<link rel="stylesheet" href="/static/css/filter-chips.css?v={{ filter_chips_version }}">
+<script src="/static/js/filter-chips.js?v={{ filter_chips_version }}" defer></script>{% endblock %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
@@ -30,7 +35,23 @@
 <li><a class="rv-chip" href="/clients{{ query.params(density='comfortable') }}"{% if query.density == "comfortable" %} aria-current="true"{% endif %}>Comfortable</a></li>
 <li><a class="rv-chip" href="/clients{{ query.params(density='compact') }}"{% if query.density == "compact" %} aria-current="true"{% endif %}>Compact</a></li>
 </ul>
+{#- The search, the filter and the band in use, each a link to the list without it
+    (static/js/filter-chips.js adds Delete and Backspace, the focus move and the
+    words of the live region below the form). -#}
+{% set active = query.active_filters %}
+{% if active %}
+<div class="rv-filters-active" id="filters-active">
+<p class="rv-filters-active-label" id="filters-active-label">Filtered by</p>
+<ul class="rv-chips" aria-labelledby="filters-active-label">
+{% for item in active %}
+<li><a class="rv-chip rv-chip-remove" href="/clients{{ item.params }}" data-filter-chip data-filter-text="{{ item.text }}"><span class="rv-sr-only">Remove filter: </span>{{ item.text }}{{ i.icon("cross", "sm") }}</a></li>
+{% endfor %}
+</ul>
+{% if active|length > 1 %}<a class="rv-filters-clear" href="/clients{{ query.without_filters }}" data-filter-clear>Clear all filters</a>{% endif %}
+</div>
+{% endif %}
 </form>
+<p class="rv-sr-only" id="filter-status" role="status" aria-live="polite" data-shown="{% if rows %}{{ page.total }} client{% if page.total != 1 %}s{% endif %} shown.{% else %}No client matches.{% endif %}"></p>
 <section class="rv-card rv-bands-card" id="bands" aria-labelledby="bands-title">
 <h2 id="bands-title" class="rv-card-title">Clients by band</h2>
 <p class="rv-card-subtitle">Where every client stood at its last report, under the search and the filter above. A band shows only those clients.</p>

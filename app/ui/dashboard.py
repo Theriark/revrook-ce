@@ -533,6 +533,9 @@ class TrendLine:
     dash: str
     rows: tuple[tuple[str, str, str], ...]
     marks: tuple[Mark, ...] = ()
+    # The date of the report before the range that the line continues from (it
+    # enters the plot at the left edge); empty when the line starts in the range.
+    continues_from: str = ""
 
     @property
     def short_name(self) -> str:
@@ -606,6 +609,7 @@ class _Drawn:
     dash: str
     rows: tuple[tuple[str, str, str], ...]
     marks: tuple[Mark, ...]
+    continues_from: str
 
 
 def mark_of(point: ReportPoint, name: str, x: float, y: float) -> Mark:
@@ -638,6 +642,19 @@ def _chart_x(
 def _chart_y(score: Fraction, size: ChartSize = WIDE_CHART) -> float:
     plot = size.height - size.bottom - size.top
     return size.height - size.bottom - plot * float(score) / 100
+
+
+def _entering_y(
+    earlier: ReportPoint,
+    first: ReportPoint,
+    start: datetime,
+    size: ChartSize = WIDE_CHART,
+) -> float:
+    """Where the line between two reports crosses the left edge of the plot, the
+    instant `start` between `earlier` (before it) and `first` (after it)."""
+    share = (start - earlier.as_of) / (first.as_of - earlier.as_of)
+    low = _chart_y(earlier.score, size)
+    return low + (_chart_y(first.score, size) - low) * share
 
 
 def _label_places(drawn: Sequence[_Drawn], size: ChartSize) -> dict[int, float]:
@@ -677,14 +694,28 @@ def trend_chart(
 ) -> TrendChart:
     """The scores of the last `days` as one line per client, newest clients first.
 
+    The range is `start <= as_of <= now` with `start = now - days`, one point per
+    stored report (not per day), in the instants the reports are stored in; a client
+    appears when it has a report inside it. A report just before `start` is not
+    drawn as a point, but the line of a client that also has a report inside the
+    range enters the plot from it: the segment between the two reports is cut at the
+    left edge (`continues_from` names the earlier report), so a monthly report
+    cadence does not leave a 30 or 7 day chart with a lone dot. Marks, rows and the
+    report count stay the reports inside the range only.
+
     The labels at the ends of the lines are pushed apart so that two clients with
     the same score can both be read; the table under the chart has every number.
     """
     start = now - timedelta(days=days)
     by_client: dict[int, list[ReportPoint]] = {}
+    before: dict[int, ReportPoint] = {}
     for point in points:
         if start <= point.as_of <= now:
             by_client.setdefault(point.client_id, []).append(point)
+        elif point.as_of < start:
+            held = before.get(point.client_id)
+            if held is None or point.as_of >= held.as_of:
+                before[point.client_id] = point
     newest = sorted(
         by_client, key=lambda client_id: by_client[client_id][-1].as_of, reverse=True
     )
@@ -696,9 +727,16 @@ def trend_chart(
             (_chart_x(point.as_of, start, now, size), _chart_y(point.score, size))
             for point in series
         ]
+        line = pairs
+        continues_from = ""
+        earlier = before.get(client_id)
+        if earlier is not None and series[0].as_of > start:
+            entering = _entering_y(earlier, series[0], start, size)
+            line = [(float(size.left), entering), *pairs]
+            continues_from = iso_date(earlier.as_of)
         polyline = ""
-        if len(pairs) > 1:
-            polyline = " ".join(f"{x:.1f},{y:.1f}" for x, y in pairs)
+        if len(line) > 1:
+            polyline = " ".join(f"{x:.1f},{y:.1f}" for x, y in line)
         rows = tuple(
             (iso_date(point.as_of), format_fixed(point.score), point.band)
             for point in series
@@ -710,7 +748,11 @@ def trend_chart(
         )
         last_x, last_y = pairs[-1]
         dash = DASHES[number % len(DASHES)]
-        drawn.append(_Drawn(client_id, last_x, last_y, polyline, dash, rows, marks))
+        drawn.append(
+            _Drawn(
+                client_id, last_x, last_y, polyline, dash, rows, marks, continues_from
+            )
+        )
     labels = _label_places(drawn, size)
     lines = tuple(
         TrendLine(
@@ -723,6 +765,7 @@ def trend_chart(
             dash=item.dash,
             rows=item.rows,
             marks=item.marks,
+            continues_from=item.continues_from,
         )
         for item in drawn
     )
