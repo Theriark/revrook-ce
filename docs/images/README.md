@@ -1,81 +1,88 @@
 # Screenshots of the web interface
 
-The pictures the [guides](../guides/README.md) use. Every one is a live capture of the
-Development site of revrook CE (`https://ce-dev-revrook.theriark.dev`), signed in as
-the one administrator account of that test installation, with synthetic data only. No
-picture is a mock-up, and none holds a credential, a real person or another
-environment.
+The pictures the [guides](../guides/README.md) and the [README](../../README.md) use.
+Every one is a live capture of the Development site of revrook CE
+(`https://ce-dev-revrook.theriark.dev`), signed in as the administrator test account of
+that installation, with synthetic data only. No picture is a mock-up or was edited, and
+none holds a credential, a real person, a real customer or another environment.
 
-`MANIFEST.json` in this folder is the capture manifest: for every picture its file name,
-SHA-256, size in bytes and pixels, the environment, the page and the role, the viewport
-width, the capture time in Europe/Lisbon (and UTC), the commit and image digest the
-site ran at that moment, and the guides that use it; for the set, the capture-time
-commit and digest of the first capture and how each was read, the version the
-application showed, the state of the release candidate label, the flows that were not
-captured and why, and what is unchanged. A reviewer compares the hash of each file
-with the manifest; the manifest changes only when a picture is captured again, and a
-picture is captured again only when the page it shows changed or when its content
-needed a cleaner state. A picture that replaced an earlier one keeps the hash, the time
-and the reason of the one it replaced under `replaces`.
+## The current set
 
-The commit and digest in the manifest are capture-time facts: what the Development
-site ran when each picture was taken. For the pictures of 2026-10-21 they are not the
-deployed Development candidate (its commit and digest are read from the deployment
-receipt and recorded in [release-candidate.md](../release-candidate.md)), and no match
-between a capture-time image and the deployed image is claimed. The application pages
-are the same between the capture-time commits and the documentation head, because the
-commits in between changed documentation only. For the pictures of 2026-10-22 the
-manifest carries the commit and digest the deployment receipt returned before and
-after the capture, which named the deployed candidate; the pages themselves were not
-asked.
+All 44 pictures were captured on 2026-10-24 between 11:01 and 11:10 Europe/Lisbon
+(10:01 to 10:10 UTC) while the Development site ran the application build documented and
+captured below. Later documentation-only commits are deployed on top with the same
+application code; the deployed head is read from the deployment receipt and the package
+manifest.
 
-Four pictures were captured again on 2026-10-21 between 20:31 and 20:33
-(Europe/Lisbon), while the deployed Development candidate of that day was running:
-`settings-1440.png` and `report-preview-1440.png`, because the first capture showed
-the business name "FE Retest MSP THE-497" left by an earlier test (the name was set to
-"Sample MSP" in Settings, the only state change made for the capture, and the preview
-page prints that name at render time), and the two new pictures of the rendered
-quarterly security review that **Preview** opens, `report-preview-file-1440.png` (the
-cover at the viewport size) and `report-preview-file-full-1440.png` (the whole file,
-15,615 px tall). For these four the manifest carries the commit and digest of the
-deployed candidate, read from the deployment receipt: the pages themselves could not
-tell the two commits of that day apart, because no static file changed between them
-and the stylesheet version query stayed the same.
+| Fact | Value |
+| --- | --- |
+| Commit | `314d239c38965e5ea503ba6526c62d0d2ea7b523` |
+| Image | `ghcr.io/theriark/revrook-ce@sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6` |
+| Evidence | the deployment receipt of the Development environment (CI run 40079874064, deployed 2026-10-24T09:11:03Z), read before the first capture and after the last, with no deployment in between |
 
-Six pictures were captured again on 2026-10-22 between 01:29 and 01:31
-(Europe/Lisbon): the clients list at 1440, 768 and 390 px, Home at 1440 and 390 px and
-the System page. Their first capture showed a second synthetic test client whose name
-carried an internal ticket number; that client was deleted through **System**,
-**Delete a client** (typing its name, the only route the product offers), the only
-state change made for the capture, and the pages were captured again. The manifest
-records what each picture replaced. Two pictures keep a test label from an earlier
-test because the product offers no route to change it without deleting the sample
-client: the closed exception in `exceptions-1440.png` (its owner and reason) and the
-saved profile name in the **Saved profile** list of `profile-editor-preview-1440.png`.
-Both labels are synthetic and the manifest lists them under `knownResidue`.
+`MANIFEST.json` in this folder is the capture manifest (schema 4): for every picture its
+file name, SHA-256, size in bytes and pixels, the page, the window it was taken in
+(width and height), the theme, the state of the rail, a code for the frame, the capture
+time in Europe/Lisbon and the pages that use it; for the set, the candidate and how it
+was read, the privacy checks, every change made to the Development data for the
+captures, what was not captured and why, and the known limits. A picture that replaced
+one of the earlier set keeps the SHA-256 of the one it replaced under `replaces`. The
+`manifest.json` of the Nextcloud review package of this set adds, for every picture,
+what the frame shows, the frame in words, the capture time in UTC and the name of the
+browser capture.
 
-Viewports: 1440 px for every page; 390 px for the four pages whose layout changes most
-on a phone (the clients list, Home, the checklist and the sign-in page); 768 px for the
-clients list only, where the rows become two cards to a row. A picture named `-1440` is
-the whole page at 1440 px unless the manifest says `fullPage: false` (the checklist,
-whose 51 rows would make the picture very tall, the problem page, and the cover of the
-rendered report, whose whole file has its own picture).
+What is pictured:
 
-What the pictures show is the shared Development test installation: every client,
-report and audit entry in them is synthetic. The **Recent changes** list on Home names
-clients that were added and deleted by earlier automated tests and reviews ("a deleted
-client (client 4)", "client 14" and so on). Those lines are audit entries, which the
-product keeps on purpose after a client is deleted
-([7. Settings](../guides/07-settings-system-and-glossary.md#system)), so they cannot be
-removed without deleting the database; they name a deleted client by its number only,
-and the Home pictures of 2026-10-22 show them as they were at that moment.
+- **The changed flows** at 1440, 768 and 390 px, in the light and the dark theme: Home
+  with the rookery skyline, a client chosen from the keyboard, the scenes hidden, the
+  rail folded; a client overview with the domain keep, a domain chosen, the rail
+  folded; the Evidence Explorer; the control drawer.
+- **Every other page** at 1440 px in the light theme (the sign-in page, the clients
+  list and the checklist also at 768 or 390 px), captured again because the rail of
+  every page changed (the Evidence Explorer moved into the Evidence group and the fold
+  button was added) and because the Development site now holds the seed clients.
 
-On the phone picture of the checklist (`checklist-390.png`) the tab bar of the client
-ends with "Evidence and impo": the strip is cut at the right edge of the viewport by
-design. The tabs of a client are a strip that scrolls sideways when they are wider than
-the page (`main nav` has `overflow-x: auto` and `div.rv-tabs-strip` fades the last
-visible tab into the background at the right edge, so a person sees that it goes on;
-[design system](../design-system.md), tested in `tests/test_webui_fixes.py` and
-`tests/test_webui_followup.py`). It is intended horizontal scrolling, not a clipped
-control: a swipe or a Tab key press brings **Exceptions**, **Reports** and **Export
-history** into view.
+How a frame is made. Most pictures are the browser window at a given size: a window
+as tall as the page shows the whole page with the rail drawn to its foot; a window
+that ends above a section, or that is scrolled to a section, shows exactly that part.
+A full-page capture is used only where the rail does not need to reach the foot (the
+sign-in page, the narrow layouts, the rendered report). The manifest names the frame
+of each picture.
+
+## Kept out of the pictures
+
+Two parts of the live pages are never pictured, because on the shared Development
+installation they name a second sign-in account created by the Development seed, whose
+login is a real-domain mailbox: **Recent changes** on Home and on a client overview (the
+audit trail names who made each change) and **Users and mappings** in Settings. Home,
+the client overview and Settings are pictured in a window that ends above them. For the
+same reason, and because earlier tests left labels with internal ticket numbers on Seed
+Gaps Ltd and the Design Review Sample Client, the exceptions register and the export
+history are pictured on Seed Tidy Ltd (synthetic).
+
+Changes made for the captures, all on synthetic data: one exception added to Seed Tidy
+Ltd (synthetic) through its form (left open, so the register and the reports show it),
+one export of its quarterly review, a synthetic leavers file read in the profile editor
+(nothing saved), and the theme, the rail and the scenes switched and switched back.
+
+## Reading the pictures
+
+- On the phone picture of the checklist (`checklist-390.png`) the tab bar of the client
+  is cut at the right edge on purpose: the tabs are a strip that scrolls sideways
+  ([design system](../design-system.md)).
+- The Evidence Explorer turns by itself until a person touches it, so each of its
+  pictures shows the wall at the angle of that moment.
+- `client-overview-768-keep-dark.png` shows the block in the front right corner of the
+  keep meeting the bottom edge of its stage: a known limit of the candidate at 768 px
+  ([guide 8](../guides/08-scenes-rail-and-explorer.md#known-limits)).
+- `report-preview-file-full-1440.png` is the whole rendered review, 16,429 px tall.
+
+## History
+
+The earlier capture sets (2026-10-21 and 2026-10-22, taken on the commits `c41125fd`,
+`f143e3db` and `6247addf`) are history and are not used as the current preview. The
+pictures they held under the names reused here are kept byte for byte in git at the
+base commit of this set (`git show 314d239c38965e5ea503ba6526c62d0d2ea7b523:docs/images/<file>`),
+with their own schema 3 manifest, and in the earlier review packages in Nextcloud
+(`Documentation/v27.0.0-rc.1` to `v27.0.0-rc.10` of the product folder), which are left
+untouched. Each replaced picture keeps the hash of its predecessor in the manifest.

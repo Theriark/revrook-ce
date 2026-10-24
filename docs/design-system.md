@@ -160,8 +160,28 @@ the theme switch beside the panel (which still carries the whole lockup). Withou
 mark file the wordmark alone is the brand, as before.
 
 A page marks where it is with `nav` in its context: `home`, `clients`,
-`profile-editor`, `integrity`, `settings`, `system` or `glossary`. The link of that
-page carries `aria-current="page"` and the violet-blue mark.
+`profile-editor`, `integrity`, `explorer`, `settings`, `system` or `glossary`. The
+link of that page carries `aria-current="page"` and the violet-blue mark. The links
+are three groups: Work (Home, Clients), Evidence (the profile editor, the integrity
+check and the Evidence Explorer) and Administration (Settings, System, Glossary).
+
+The rail fold (`_rail.html`). From 1024 px one button at the top of the rail folds it
+to its icons: a 72 px rail with the mark, one icon per link, the stacked icons of the
+theme switch and the sign-out icon, so a wide table, a chart or a scene gets the
+room. The words of every link, the user and the sign-out button stay in the page for
+assistive technology (hidden the way the `rv-sr-only` heading is), each icon carries
+its words as a tooltip (`title`, drawn by the server when the rail comes back folded
+and set by `revrook.js` the moment it folds), the current page keeps its mark and the
+button says what it does (`aria-label`, `aria-expanded`). It
+is a real form that posts to `/rail` (`app/ui/site.py`): without script the page
+comes back with the rail as chosen; with script `revrook.js` folds the rail the
+moment the button is pressed and htmx posts the form with nothing swapped (the server
+answers 204; a refused or failed post opens the rail again, since nothing was
+remembered). The choice is a browser preference kept in the `rv_rail` cookie (a year,
+HttpOnly, SameSite=Lax, Secure under https; `app/theme.py`, `RAILS`), read by
+`render` into `rail` and drawn as `data-rail` on the body, so a page is never drawn
+open and folded afterwards. Below 1024 px the rail is a bar and the form is not
+drawn. Its rules are in `revrook-retest.css`, like the other follow-ups of the shell.
 
 Icons come from the macro in `app/ui/templates/_icons.html`:
 `{% import "_icons.html" as i %}` then `{{ i.icon("clients") }}`. Every icon is an
@@ -401,6 +421,84 @@ How a chart answers:
   as their fill with the state in words beside them, and the stale date as a mark in
   the secondary text colour, which reaches 3 to 1 in both themes
   (`tests/test_brand_contrast.py`).
+
+## Scenes
+
+Three pages carry a scene drawn in the browser: the rookery skyline of Home, the
+domain keep of a client overview and the rookery wall of the Evidence Explorer
+([evidence-explorer-preview.md](evidence-explorer-preview.md)). Depth means the same
+thing in every one of them: height is a measure, footprint is weight, status is shape
+and colour together, and every word stays in the DOM. A scene adds a way of looking
+at facts the page already shows and never replaces them: the rings, the bars and the
+tables are the record, and without script, without WebGL 2 or with the scenes hidden
+the page is exactly what the server drew.
+
+How they are built. One first-party ES module, `app/static/js/scenes.js`, and one
+stylesheet, `app/static/css/scenes.css`, linked by `base.html` with the asset version
+on every page; the module looks for `[data-scene]` stages, and a page without one
+imports nothing. With a stage, it checks for WebGL 2 first, keeps the stages that have
+something to draw and puts the others away (a Home without a client, a browser without
+WebGL 2: `data-scene-state="unavailable"`), and only then imports the pinned three.js
+r186 that the Evidence Explorer already vendors (`app/static/vendor/three`,
+`PINNED.json`, `tools/fetch_three.py`; nothing from a CDN). A scene reads its facts
+from the data attributes the template renders on the cards or the bars of the page
+(`data-client`, `data-score`, `data-band`, `data-insufficient`, `data-evidence`,
+`data-needs-work`; `data-code`, `data-weight`, `data-count-<status>`), from the same
+view model as the ring or the bar beside them, so the two can never disagree and no
+request is made; the address a node opens (`data-href`) is accepted only as a path of
+this site, one leading slash and nothing else, or the node opens nothing and the card
+or the bar keeps its own link. The stage macro (`_scene.html`, `sc.stage(...)`) draws
+the lead line and the hide button, the stage with its note, the turn and reset buttons
+and the detail line (`aria-live`). The block is hidden in the HTML; where script runs
+the stylesheet gives it its room at once (`@media (scripting: enabled)`, the note
+"Preparing the scene" on the charcoal), so the cards and the bars under it never move
+once the page is drawn, and without script, or when the module puts a stage away, no
+empty box appears.
+
+The rookery skyline (Home, `#rookery-scene`). One rook per client on a charcoal
+yard, as tall as its score, crenellated like the mark: stone for a strong or a good
+band, amber for fair, red for weak or critical; a wire rook where the evidence is
+too thin for a score (the dashed ring of its card), a footprint where nothing is
+imported yet, and a notch at its foot for every control that needs work. Pointing at
+a rook, or at its card, names it in the hover line; a press chooses it, marks its
+card with the violet rail and writes its facts in the detail line; Enter opens the
+client. While every client is only a footprint the detail line says so and what to
+do (import an export); with no client at all the stage is put away and Home keeps its
+own empty state.
+
+The domain keep (client overview, `#keep-scene`, in the Coverage by domain card). One
+block per domain of the control library, as wide as its weight in the score, built of
+its controls in layers from the foot up: protected, needs attention, not protected,
+and not checked as wire, in the status colours of the bars. A heavy domain with red
+layers stands out at once, which the flat bars tell only one at a time. A press
+chooses a block and marks its bar with a line in the margin of the card (the row
+itself does not move); Enter opens the checklist narrowed to that domain, the link
+the bar already carries. More than six domains stand in two rows, more than eight
+rooks likewise, so a row never runs so wide that every node is small.
+
+How a scene answers. The home view fits the row to the stage: as near as the width
+of the stage allows and never so near that the tallest node is cut off, measured
+again when the stage changes shape (a folded rail, a turned phone) unless a person
+has moved closer or away. A drag turns and tilts the yard; the buttons under it turn
+it by a step or reset the view; with the canvas focused (an application, a scene) Left
+and Right choose the next node and lean the yard a little towards it (never so far
+that the row lines up behind it), the brackets turn it, plus and minus move closer and
+away, Home resets, Enter opens the chosen node and Escape clears it. Nothing turns by
+itself in any scene; under
+`prefers-reduced-motion` every move is immediate, also when the setting changes
+while the page is open. Frames are drawn only when something changed, never while
+the page is hidden or the stage is out of view; leaving the page disposes every
+geometry, material and the renderer, and `revrookScene` on each stage offers
+`dispose()`, `mount()` and `info()` so a test can cycle a scene and read the
+renderer's counts. The button above a stage closes the scenes in this browser
+(`localStorage`, `rv-scenes`) and then offers to show them again: it names the action
+it offers next, so it carries no pressed state as well; the detail and the tools go
+with the scene, the cards and the bars stay. A lost graphics context stops the drawing with a note and resumes when
+the browser restores it; a library that cannot be loaded leaves a note on the stage.
+The ground is the brand charcoal in both themes, the same dark surface as the rail;
+the colours on it are the dark-theme status values of `revrook.css`, which reach 4.5
+to 1 on that ground. `tests/test_scenes.py` pins the module, the stylesheet, the
+macro, the attributes and the routes.
 
 ## Clients
 

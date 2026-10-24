@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% import "_icons.html" as i %}
 {% import "_status.html" as s %}
-{#- The Evidence Explorer preview (docs/evidence-explorer-preview.md). The tables are
+{#- The Evidence Explorer (docs/evidence-explorer-preview.md). The tables are
     the page: the scene above them is drawn by evidence-explorer.js from the same view
     model, served as JSON at data_url, only when the browser offers WebGL 2. Without
     script the stage keeps the note rendered here. No inline style or script. -#}
 {% block head %}<link rel="stylesheet" href="/static/css/evidence-explorer.css?v={{ explorer_version }}">{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>Evidence Explorer</h1><p class="rv-page-purpose">Which exports feed which controls for one client, and where the evidence behind a status is stale or missing. A preview on this Development installation: the scene can be turned, the tables below carry the same facts, and nothing is stored.</p></div>
+<div><h1>Evidence Explorer</h1><p class="rv-page-purpose">Which exports feed which controls for one client, and where the evidence behind a status is stale or missing. An optional way of looking at the evidence: the scene can be turned, the tables below carry the same facts, and nothing is stored.</p></div>
 {% if clients %}
 <form class="rv-explorer-choose rv-inline-form" method="get" action="/experiments/evidence-explorer">
 <label for="client_id">Client</label>
@@ -121,8 +121,8 @@
 </tbody>
 </table>
 <div class="rv-alert" id="explorer-note">
-<p class="rv-alert-title">What this preview is</p>
-<p>A Development-only experiment to judge a scene drawn in the browser. It reads the same checks as the checklist of {{ view.client_name }} at {{ view.as_of[:16].replace("T", " ") }} UTC, stores nothing, loads nothing from outside this installation, and is not part of any report. The tables are the record; the scene is a way of looking at them.</p>
+<p class="rv-alert-title">What this view is</p>
+<p>A scene drawn in the browser from the same checks as the checklist of {{ view.client_name }} at {{ view.as_of[:16].replace("T", " ") }} UTC. It stores nothing, loads nothing from outside this installation, and is not part of any report. The tables are the record; the scene is a way of looking at them, like the rookery skyline of Home and the domain keep of a client overview.</p>
 </div>
 <script type="module" src="/static/js/evidence-explorer.js?v={{ explorer_version }}"></script>
 {% endif %}

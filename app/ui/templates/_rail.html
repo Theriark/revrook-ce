@@ -1,0 +1,13 @@
+{#- The rail fold: one real button that posts to /rail, so it works without script
+    (the page comes back with the rail folded to its icons, or opened again); with
+    script revrook.js folds the rail the moment it is pressed and htmx posts the form
+    (hx-post, nothing swapped; the server answers 204). `rail` is the state in use
+    (expanded or compact), set by render in app/ui/auth.py and kept in the rv_rail
+    cookie; `theme_next` is the address to come back to. Shown from 1024px only, where
+    the rail is a sidebar. -#}
+{% import "_icons.html" as i %}
+<form class="rv-rail-form" method="post" action="/rail" hx-post="/rail" hx-swap="none">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="next" value="{{ theme_next|default('/') }}">
+<button type="submit" class="rv-rail-toggle" name="rail" value="{{ 'expanded' if rail|default('expanded') == 'compact' else 'compact' }}" aria-expanded="{{ 'false' if rail|default('expanded') == 'compact' else 'true' }}" aria-controls="rail" aria-label="{{ 'Open the rail' if rail|default('expanded') == 'compact' else 'Fold the rail' }}" title="{{ 'Open the rail' if rail|default('expanded') == 'compact' else 'Fold the rail' }}">{{ i.icon("chevron-right", "sm") }}</button>
+</form>

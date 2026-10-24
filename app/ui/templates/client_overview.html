@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_status.html" as s %}
 {% import "_icons.html" as i %}
+{% import "_scene.html" as sc %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 {% include "_client_nav.html" %}
@@ -90,9 +91,10 @@
 <section class="rv-card" id="domains" aria-labelledby="domains-title">
 <h2 id="domains-title" class="rv-card-title">Coverage by domain</h2>
 <p class="rv-card-subtitle">Each bar is one domain of the control library: its controls by status, with the weight of the domain and its score. A segment opens those controls on the checklist.</p>
-<ul class="rv-domains">
+{{ sc.stage("keep-scene", "keep", "domains-list", "The domain keep: one block per domain, as wide as its weight, its layers the controls by status. Left and Right choose a domain, Enter opens its controls on the checklist, the brackets turn the keep, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Point at a block, or at a bar below, to read it here. A press chooses it.", "The domain keep: one block per domain, as wide as its weight in the score, built of its controls in layers, protected at the foot, then needs attention, not protected, and not checked as wire. Drag to turn the keep.") }}
+<ul class="rv-domains" id="domains-list">
 {% for bar in domains %}
-<li class="rv-domain">
+<li class="rv-domain" data-code="{{ bar.code }}" data-name="{{ bar.name }}" data-weight="{{ bar.weight }}" data-score="{{ bar.score_text }}"{% for label, count in bar.counts %} data-count-{{ label.key }}="{{ count }}"{% endfor %} data-href="/clients/{{ client_id }}/checklist?domain={{ bar.code }}">
 <span class="rv-domain-name">{{ bar.name }}</span>
 <span class="rv-domain-sum">{{ bar.protected }} of {{ bar.total }} protected</span>
 <svg class="rv-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="group" aria-label="{{ bar.name }} by status; a segment opens the checklist narrowed to that domain and status" data-roving>{% for seg in bar.segments %}<a class="rv-seg-link" href="/clients/{{ client_id }}/checklist?domain={{ bar.code }}&amp;status={{ seg.label.key }}" data-tip="{{ bar.name }}&#10;{{ seg.count }} {{ seg.label.text|lower }} of {{ bar.total }}&#10;Open these on the checklist"><title>{{ bar.name }}: {{ seg.count }} {{ seg.label.text|lower }} of {{ bar.total }}. Open these on the checklist.</title><rect class="rv-seg-{{ seg.label.key }}" x="{{ seg.x }}" y="0" width="{{ seg.width }}" height="10"/></a>{% endfor %}</svg>

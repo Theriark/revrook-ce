@@ -5,7 +5,29 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
+## Update of 2026-10-24 (application build documented and captured, `314d239c`)
+
+Read on 2026-10-24 from the deployment receipt of the Development environment, before
+and after the screenshots of the [guides](guides/README.md) were captured again; both
+reads gave the same facts. Later documentation-only commits are deployed on top with the
+same application code; the deployed head is read from the deployment receipt and the
+package manifest.
+
+| Fact | Value |
+| --- | --- |
+| Application build documented and captured | commit `314d239c38965e5ea503ba6526c62d0d2ea7b523` (merge of pull request #62), image `ghcr.io/theriark/revrook-ce@sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6`, CI run 40079874064, Dokploy deployment `MygUWlGK_ouH3Bd-moY7T`, deployed 2026-10-24T09:11:03Z on VM-09, the revision label of the image checked against the commit |
+| Screenshot capture source | the same commit and image: all 44 pictures were taken on 2026-10-24 between 11:01 and 11:10 Europe/Lisbon (10:01 to 10:10 UTC), after that deployment and before any later one ([capture manifest](images/README.md)) |
+| Browser acceptance of that build | passed on the same commit and image before the captures (Paperclip task THE-1053) |
+| Release candidate tags | `v27.0.0-rc.1` (commit `3d9c598e`) and `v27.0.0-rc.2` (commit `742c2663`) exist as annotated tags made by the `prepare-rc` job; neither names this candidate. The tag of this candidate is minted by that job after the independent review of this documentation, not by this page |
+| Documentation package | the review copy in Nextcloud under the product folder, `Documentation/<label>/`, with its own `manifest.json`; its label is set by the release crew and recorded in that manifest, not on this page |
+
+Everything below this section is kept as it was written, as the history of earlier
+readings.
+
 ## Update of 2026-10-21 (read against commit `c41125fd`)
+
+This section is history: it describes the candidate of 2026-10-21 and the state of the
+tags on that day.
 
 Read again on 2026-10-21 against commit `c41125fd4d2676e7bbed7e1bc5aee14c39c8bdac`,
 the head of `development` at the time of that reading. Two sets of facts from that day
@@ -49,9 +71,10 @@ from this page. The findings below stand; what changed since the first reading:
 
 ## Status
 
-- No version is released: there is no tag, no GitHub release and no released image
-  (each image named in the update above is the build of one `development` commit,
-  deployed to the Development environment only).
+- No version is released: there is no stable tag, no stable GitHub release and no
+  released image (each image named in the updates above is the build of one
+  `development` commit, deployed to the Development environment only). The release
+  candidate tags of the update of 2026-10-24 mark Development candidates, not releases.
   `pyproject.toml` and `app/__init__.py` both say `0.0.0.dev0` and the
   [CHANGELOG](../CHANGELOG.md) has only an Unreleased section.
 - A release is a separate step with its own authorisation from the founders. The
@@ -69,7 +92,8 @@ from this page. The findings below stand; what changed since the first reading:
 | 4 | The same image digest is deployed to Development and promoted to Stage in a dry run | **Not done.** It needs an explicit Stage authorisation and a dispatch, which this task may not do (finding R6) | [ci-cd.md](ci-cd.md) |
 | 5 | The README states that scores are uncalibrated, that mappings are unverified unless marked and that nothing is a certification | Done; `tests/test_docs.py` fails if a statement is removed | [README](../README.md) |
 
-The plan also asks for an upgrade test from the previous tag. No tag exists, so
+The plan also asks for an upgrade test from the previous tag. No released tag exists
+(the release candidate tags are not releases), so
 `tests/test_upgrade.py` upgrades a database from each earlier schema revision instead
 ([upgrade.md](upgrade.md)); the test from a previous tag can be added with the first one
 (finding R7).

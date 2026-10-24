@@ -34,6 +34,10 @@
  *   fails, the theme goes back to the one in use, since nothing was remembered;
  *   without the script the form posts and the page comes back in the chosen
  *   theme.
+ * - the rail fold (templates/_rail.html): from 1024px the rail folds to its
+ *   icons the moment the button is pressed and htmx posts the form; a refused
+ *   or failed post puts the rail back, since nothing was remembered; without
+ *   the script the form posts and the page comes back with the rail as chosen.
  */
 (function () {
   "use strict";
@@ -360,11 +364,105 @@
     }
   }
 
+  // The rail fold (_rail.html): the body carries data-rail, the button says
+  // which state it asks for in its value and names the other one once pressed.
+  var RAILS = { expanded: "expanded", compact: "compact" };
+  var RAIL_WORDS = { expanded: "Fold the rail", compact: "Open the rail" };
+  var railKept = null;
+
+  // Folded, each link and the sign-out button carry their words as a tooltip
+  // (the server draws the same title when the rail comes back folded); open,
+  // the words are beside the icon and the tooltip would only repeat them.
+  function setRailTitles(rail) {
+    var named = document.querySelectorAll(
+      ".rv-header .rv-nav-link, .rv-header .rv-user .rv-inline-form button"
+    );
+    for (var k = 0; k < named.length; k += 1) {
+      var text = named[k].querySelector(".rv-nav-text, span:last-child");
+      if (rail === "compact" && text && text.textContent) {
+        named[k].setAttribute("title", text.textContent.trim());
+      } else {
+        named[k].removeAttribute("title");
+      }
+    }
+  }
+
+  function setRail(rail) {
+    document.body.setAttribute("data-rail", rail);
+    var buttons = document.querySelectorAll('.rv-rail-form button[name="rail"]');
+    for (var k = 0; k < buttons.length; k += 1) {
+      buttons[k].setAttribute("aria-expanded", rail === "compact" ? "false" : "true");
+      buttons[k].setAttribute("aria-label", RAIL_WORDS[rail]);
+      buttons[k].setAttribute("title", RAIL_WORDS[rail]);
+    }
+    setRailTitles(rail);
+  }
+
+  // The value a button posts is the state it asks for next. It changes only once
+  // htmx holds the parameters of the request: changed on the click, the form
+  // would post the state the rail already has and the fold would not be kept.
+  function setRailValues(rail) {
+    var buttons = document.querySelectorAll('.rv-rail-form button[name="rail"]');
+    for (var k = 0; k < buttons.length; k += 1) {
+      buttons[k].value = rail === "compact" ? "expanded" : "compact";
+    }
+  }
+
+  function railSending(event) {
+    var form = event.target;
+    if (form && form.classList && form.classList.contains("rv-rail-form")) {
+      setRailValues(document.body.getAttribute("data-rail") || "expanded");
+    }
+  }
+
+  function railButtonOf(event) {
+    var node = event.target;
+    while (node && node !== document) {
+      if (node.tagName === "BUTTON" && node.name === "rail") {
+        return node.form && node.form.classList.contains("rv-rail-form") ? node : null;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function applyRail(event) {
+    var button = railButtonOf(event);
+    if (!button || !RAILS[button.value]) {
+      return;
+    }
+    if (railKept === null) {
+      railKept = document.body.getAttribute("data-rail") || "expanded";
+    }
+    setRail(button.value);
+  }
+
+  function railPosted(event) {
+    var form = event.target;
+    if (!form || !form.classList || !form.classList.contains("rv-rail-form")) {
+      return;
+    }
+    var detail = event.detail || {};
+    var status = detail.xhr ? detail.xhr.status : 0;
+    if (event.type === "htmx:afterRequest" && status >= 200 && status < 300) {
+      railKept = document.body.getAttribute("data-rail") || "expanded";
+      return;
+    }
+    if (railKept !== null && RAILS[railKept]) {
+      setRail(railKept);
+      setRailValues(railKept);
+    }
+  }
+
   function ready() {
     watchDrawer();
     document.addEventListener("click", applyTheme);
+    document.addEventListener("click", applyRail);
     document.addEventListener("htmx:afterRequest", themePosted);
+    document.addEventListener("htmx:configRequest", railSending);
+    document.addEventListener("htmx:afterRequest", railPosted);
     document.addEventListener("htmx:sendError", themePosted);
+    document.addEventListener("htmx:sendError", railPosted);
     document.addEventListener("htmx:afterSwap", announceSwapped);
     document.addEventListener("htmx:afterSwap", updateRegions);
     window.addEventListener("resize", updateRegions);

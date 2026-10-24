@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="/static/css/revrook.css?v={{ asset_version }}">
 <link rel="stylesheet" href="/static/css/revrook-retest.css?v={{ asset_version }}">
 <link rel="stylesheet" href="/static/css/charts.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/css/scenes.css?v={{ asset_version }}">
 {% if "favicon-32x32.png" in brand_files %}
 <link rel="icon" type="image/png" sizes="32x32" href="/static/brand/favicon-32x32.png">
 {% endif %}
@@ -23,16 +24,18 @@
 <script src="/static/vendor/htmx/htmx.min.js?v={{ asset_version }}" defer></script>
 <script src="/static/js/revrook.js?v={{ asset_version }}" defer></script>
 <script src="/static/js/charts.js?v={{ asset_version }}" defer></script>
+<script type="module" src="/static/js/scenes.js?v={{ asset_version }}"></script>
 {% block head %}{% endblock %}
 </head>
-{#- Signed in: the charcoal rail (brand, navigation, user) and the page column.
+{#- Signed in: the charcoal rail (brand, navigation, user) and the page column; from
+    1024px the rail folds to its icons when `rail` is compact (_rail.html).
     Signed out: the rook panel on the left and the form on the right. The brand is
     the lockup of _brand.html in all three places: the rook mark in its tile and the
     wordmark, drawn for the surface it sits on in either theme. -#}
 {% if user is defined %}
-<body class="rv-app">
+<body class="rv-app" data-rail="{{ rail|default('expanded') }}">
 <a class="rv-skip-link" href="#main">Skip to content</a>
-<header class="rv-header">
+<header class="rv-header" id="rail">
 <a class="rv-brand" href="/" aria-label="revrook">
 {{ b.lockup(brand_files) }}
 <span class="rv-edition">Community Edition</span>

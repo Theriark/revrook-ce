@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_status.html" as s %}
 {% import "_icons.html" as i %}
+{% import "_scene.html" as sc %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
@@ -55,9 +56,10 @@
 <h2 id="rookery-title">Posture by client</h2>
 <p class="rv-section-note">The score of each client from its evidence as it is today. A dashed ring means the evidence is too thin for a score.</p>
 </div>
-<ul class="rv-rookery">
+{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The cards below carry the same facts.", "Point at a rook, or at a card below, to read it here. A press chooses it.", "The rookery skyline: one rook per client, as tall as its score, a wire rook where the evidence is too thin, a footprint where nothing is imported, and a notch at its foot for every control that needs work. Drag to turn the yard.") }}
+<ul class="rv-rookery" id="rookery-list">
 {% for client in clients %}
-<li class="rv-rook{% if client.insufficient %} rv-rook-insufficient{% endif %}">
+<li class="rv-rook{% if client.insufficient %} rv-rook-insufficient{% endif %}" data-client="{{ client.client_id }}" data-name="{{ client.name }}" data-score="{{ client.score_share }}" data-score-text="{{ client.score_text }}" data-band="{{ client.band }}" data-insufficient="{{ 'true' if client.insufficient else 'false' }}" data-evidence="{{ client.evidence }}" data-needs-work="{{ client.needs_work }}" data-href="/clients/{{ client.client_id }}">
 <a class="rv-rook-link" href="/clients/{{ client.client_id }}">
 <svg class="rv-ring" viewBox="0 0 72 72" width="72" height="72" role="img" aria-labelledby="ring-{{ client.client_id }}-title">
 <title id="ring-{{ client.client_id }}-title">{{ client.name }}: {% if client.insufficient %}insufficient evidence, lower bound {{ client.score_text }}{% else %}score {{ client.score_text }}, {{ client.band }}{% endif %}</title>

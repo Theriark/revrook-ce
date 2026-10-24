@@ -1,4 +1,5 @@
-"""The theme of the interface: light, dark, or the one the system prefers.
+"""The theme of the interface: light, dark, or the one the system prefers; and the
+rail, open or folded to its icons.
 
 A person chooses it with the switch in the rail (app/ui/templates/_theme.html),
 which posts to /theme (app/ui/site.py). The choice is kept on the user row, so it
@@ -20,6 +21,11 @@ THEME_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 # What the color-scheme meta says for each theme: form controls and scrollbars
 # follow it, and "light dark" lets the system decide.
 COLOR_SCHEMES = {"light": "light", "dark": "dark", "system": "light dark"}
+# The rail (app/ui/templates/_rail.html): open with its words, or folded to its
+# icons from 1024px. A browser preference, kept in a cookie alone.
+RAILS = ("expanded", "compact")
+DEFAULT_RAIL = "expanded"
+RAIL_COOKIE = "rv_rail"
 
 
 def normalise_theme(value: object) -> str:
@@ -32,6 +38,16 @@ def theme_of(request: Request, user: AppUser | None) -> str:
     if user is not None:
         return normalise_theme(user.theme)
     return normalise_theme(request.cookies.get(THEME_COOKIE))
+
+
+def normalise_rail(value: object) -> str:
+    """One of RAILS; anything else (missing, forged, stale) is the open rail."""
+    return value if isinstance(value, str) and value in RAILS else DEFAULT_RAIL
+
+
+def rail_of(request: Request) -> str:
+    """The rail a page is drawn with: the one the cookie remembers, else open."""
+    return normalise_rail(request.cookies.get(RAIL_COOKIE))
 
 
 def safe_next(value: str) -> str:
