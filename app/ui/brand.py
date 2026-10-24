@@ -44,10 +44,6 @@ ASSET_FILES = (
     "js/revrook.js",
     "js/charts.js",
 )
-# The stylesheet and the script of the filter chips of the clients list. They are
-# not in the shell: clients.html links them itself, with their own digest
-# (asset_version of these files) as the `v` query, for the same reason.
-FILTER_CHIP_FILES = ("css/filter-chips.css", "js/filter-chips.js")
 
 
 def available_brand_files(brand_dir: Path = BRAND_DIR) -> frozenset[str]:
@@ -55,11 +51,8 @@ def available_brand_files(brand_dir: Path = BRAND_DIR) -> frozenset[str]:
     return frozenset(name for name in BRAND_FILES if (brand_dir / name).is_file())
 
 
-def asset_version(
-    static_dir: Path = STATIC_DIR, files: tuple[str, ...] = ASSET_FILES
-) -> str:
-    """A 12-character digest of `files` (the shell's ASSET_FILES unless others are
-    named), the `v` query of their links.
+def asset_version(static_dir: Path = STATIC_DIR) -> str:
+    """A 12-character digest of ASSET_FILES, the `v` query of their links.
 
     A browser, and any cache in front of the installation, keeps a static file for
     hours. With the digest in the address a new version of a stylesheet or script
@@ -67,7 +60,7 @@ def asset_version(
     missing file counts as empty, so the layout still renders without it.
     """
     digest = hashlib.sha256()
-    for name in files:
+    for name in ASSET_FILES:
         path = static_dir / name
         digest.update(name.encode("utf-8"))
         digest.update(path.read_bytes() if path.is_file() else b"")
