@@ -23,13 +23,15 @@ from app.ratelimit import ConcurrencyGate
 from app.security import SessionData, new_csrf_token
 from app.sources import source_icon
 from app.theme import COLOR_SCHEMES, rail_of, theme_of
-from app.ui.brand import asset_version, available_brand_files
+from app.ui.brand import FILTER_CHIP_FILES, asset_version, available_brand_files
 from app.web import clock_of, current_session, session_factory, set_session_cookie
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["brand_files"] = available_brand_files()
 # Read once at start-up: the files of the image do not change while it runs.
 templates.env.globals["asset_version"] = asset_version()
+# The filter chips of the clients list link their own two files (clients.html).
+templates.env.globals["filter_chips_version"] = asset_version(files=FILTER_CHIP_FILES)
 # The mark of an evidence source (_icons.html, source_mark).
 templates.env.globals["source_icon"] = source_icon
 router = APIRouter()

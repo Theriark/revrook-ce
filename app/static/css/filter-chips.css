@@ -1,0 +1,56 @@
+/*
+ * The filters in use on the clients list (templates/clients.html, THE-1061): a
+ * row on the canvas band of the toolbar, under the choices, with one chip per
+ * search, filter or band in use. Each chip is a link to the list without it;
+ * static/js/filter-chips.js adds the keys, the focus move and the live region.
+ * Tokens of revrook.css only; no image and no import. The chip itself is the
+ * house pill (.rv-chip), outlined a step darker so a filter in use reads apart
+ * from a choice, with the cross that removes it. Its hover and focus are the
+ * pill's own (revrook.css).
+ */
+
+.rv-filters-active {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rv-line);
+}
+
+/* On the canvas band, as every text of the toolbar is */
+.rv-filters-active-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+/* A long search wraps inside its chip on a phone instead of leaving the band */
+main a.rv-chip-remove {
+  max-width: 100%;
+  border-color: var(--rv-line-strong);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+main a.rv-chip-remove .rv-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+main a.rv-filters-clear {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-link);
+  background-color: var(--rv-canvas);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main a.rv-chip-remove {
+    transition: none;
+  }
+}
