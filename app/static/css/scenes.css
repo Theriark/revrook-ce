@@ -1,0 +1,186 @@
+/*
+ * revrook scenes (docs/design-system.md, Scenes): the rookery skyline of Home and
+ * the domain keep of a client overview, drawn by app/static/js/scenes.js. Loaded
+ * on every page after revrook.css with the same tokens: no colour literal, no
+ * image, nothing external. A stage is the one surface with a colour of its own in
+ * both themes, the brand charcoal, the same dark ground as the rail and as the
+ * Evidence Explorer, because the scene draws its own light and status colours on
+ * it. Every word sits on the surface or the canvas with the roles of revrook.css;
+ * nothing is written inside a scene. A stage is hidden until the script has shown
+ * that the browser offers WebGL 2, so without script, or without it, no empty box
+ * appears and the rings and the bars are the page as before.
+ */
+
+.rv-scene[hidden] {
+  display: none;
+}
+
+.rv-scene {
+  margin: 0 0 16px;
+}
+
+/* The line above the stage: what the scene shows, and the button that hides it */
+.rv-scene-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0 0 8px;
+}
+
+.rv-scene-lead {
+  flex: 1 1 20rem;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-scene-toggle[hidden] {
+  display: none;
+}
+
+.rv-scene-toggle[aria-pressed="true"] {
+  color: var(--rv-white);
+  background-color: var(--rv-ink);
+  border-color: var(--rv-ink);
+}
+
+/* The stage: a wide box on a wide screen, squarer on a phone, never less than
+   200px high; the canvas fills it and the state note sits over it */
+.rv-scene-stage {
+  position: relative;
+  aspect-ratio: 21 / 9;
+  min-height: 200px;
+  margin: 0 0 12px;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--rv-charcoal);
+}
+
+.rv-scene.is-closed .rv-scene-stage {
+  display: none;
+}
+
+.rv-scene-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  /* A vertical swipe still scrolls the page; a sideways drag turns the yard */
+  touch-action: pan-y pinch-zoom;
+  cursor: grab;
+}
+
+.rv-scene-stage canvas:active {
+  cursor: grabbing;
+}
+
+.rv-scene-stage canvas:focus-visible {
+  outline: 3px solid var(--rv-white);
+  outline-offset: -3px;
+}
+
+/* The note over the stage: while loading it pulses; on an error or a lost
+   context it explains. Its words are a small card on the charcoal, so no text
+   ever sits on the stage colour */
+.rv-scene-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rv-scene-state[hidden] {
+  display: none;
+}
+
+.rv-scene-state-text {
+  max-width: 32rem;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  box-shadow: var(--rv-shadow-2);
+}
+
+.rv-scene-state.is-loading .rv-scene-state-text {
+  animation: rv-pulse 1.2s ease-in-out infinite;
+}
+
+/* The buttons under the stage and the hover line beside them */
+.rv-scene-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.rv-scene-tools[hidden] {
+  display: none;
+}
+
+.rv-scene-hover {
+  flex: 1 1 12rem;
+  min-height: 1.5em;
+  margin: 0;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* Empty, it takes no line of its own under wrapped buttons on a narrow screen */
+.rv-scene-hover:empty {
+  display: none;
+}
+
+/* What is selected, read out to assistive technology as it changes */
+.rv-scene-detail {
+  min-height: 3em;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--rv-primary);
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-scene.is-closed .rv-scene-detail {
+  display: none;
+}
+
+/* The card or the bar of the node that is chosen in the scene carries the mark
+   of the rail, so the choice is told by a line and the words of the detail,
+   never by colour alone */
+.rv-rook[data-selected="true"] {
+  box-shadow: inset 3px 0 0 var(--rv-primary), var(--rv-shadow-1);
+}
+
+.rv-domain[data-selected="true"] {
+  box-shadow: inset 3px 0 0 var(--rv-primary);
+  padding-left: 10px;
+}
+
+@media (max-width: 599px) {
+  .rv-scene-stage {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-scene-state.is-loading .rv-scene-state-text {
+    animation: none;
+  }
+}

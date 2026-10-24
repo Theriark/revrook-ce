@@ -1,0 +1,23 @@
+{#- A scene of the interface (docs/design-system.md, Scenes): the stage, the note over
+    it, the buttons under it and the detail line, drawn by app/static/js/scenes.js from
+    the data attributes of the list `for_id` on the same page. The whole block is
+    hidden until the script has shown that the browser offers WebGL 2: without it the
+    page is the rings and the bars as before. No inline style or script. -#}
+{% macro stage(id, kind, for_id, label, hint, lead) -%}
+<div class="rv-scene" id="{{ id }}" data-scene="{{ kind }}" data-scene-for="{{ for_id }}" data-scene-label="{{ label }}" data-scene-hint="{{ hint }}" hidden>
+<div class="rv-scene-bar">
+<p class="rv-scene-lead">{{ lead }}</p>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-toggle" aria-pressed="false" hidden><span class="rv-scene-toggle-text">Hide the scene</span></button>
+</div>
+<div class="rv-scene-stage">
+<div class="rv-scene-state" role="status"><p class="rv-scene-state-text">Preparing the scene.</p></div>
+</div>
+<div class="rv-scene-tools" hidden>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-turn-left">Turn left</button>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-turn-right">Turn right</button>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-reset">Reset view</button>
+<p class="rv-scene-hover" aria-hidden="true"></p>
+</div>
+<p class="rv-scene-detail" id="{{ id }}-detail" aria-live="polite">{{ hint }}</p>
+</div>
+{%- endmacro %}

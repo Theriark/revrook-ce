@@ -15,7 +15,7 @@ from app.security import (
     csrf_matches,
     new_csrf_token,
 )
-from app.theme import THEME_COOKIE, THEME_COOKIE_MAX_AGE
+from app.theme import RAIL_COOKIE, THEME_COOKIE, THEME_COOKIE_MAX_AGE
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 CSRF_HEADER = "x-csrf-token"
@@ -112,6 +112,23 @@ async def csrf_protect(request: Request) -> None:
         supplied = value if isinstance(value, str) else None
     if session is None or not supplied or not csrf_matches(session.csrf, supplied):
         raise HTTPException(status_code=403, detail="CSRF token missing or invalid")
+
+
+def set_rail_cookie(response: Response, request: Request, rail: str) -> None:
+    """Remember whether the rail is open or folded (app/theme.py, RAILS).
+
+    The same flags and life as the theme cookie; the value is one of two words
+    and nothing a page would act on without checking it again.
+    """
+    response.set_cookie(
+        RAIL_COOKIE,
+        rail,
+        max_age=THEME_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=_secure_cookies(request),
+        samesite="lax",
+        path="/",
+    )
 
 
 def set_theme_cookie(response: Response, request: Request, theme: str) -> None:
