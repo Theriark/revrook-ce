@@ -68,6 +68,12 @@ BAND_KEYS = tuple(name.split()[0].lower() for name in BAND_NAMES)
 NO_REPORT_KEY = "none"
 NO_REPORT_NAME = "No report yet"
 BAND_CHOICES = (*BAND_KEYS, NO_REPORT_KEY)
+# The words of a filter and of a band on a chip of the filters in use.
+FILTER_WORDS = dict(FILTERS)
+BAND_WORDS = {
+    **dict(zip(BAND_KEYS, BAND_NAMES, strict=True)),
+    NO_REPORT_KEY: NO_REPORT_NAME,
+}
 
 
 def band_key(band: str) -> str:
@@ -191,6 +197,19 @@ class ClientCard:
 
 
 @dataclass(frozen=True)
+class ActiveFilter:
+    """A search, filter or band in use on the list, as a chip that removes it.
+
+    `params` is the query part of the list without it, from its first page; the
+    sort, the order and the density stay as they were.
+    """
+
+    key: str
+    text: str
+    params: str
+
+
+@dataclass(frozen=True)
 class ListQuery:
     """What the person asked the list for; every value is one of the known ones."""
 
@@ -233,6 +252,31 @@ class ListQuery:
         elif self.sort == "evidence":
             direction = "oldest first" if self.order == "asc" else "newest first"
         return f"{SORT_WORDS[self.sort]}, {direction}"
+
+    @property
+    def active_filters(self) -> tuple[ActiveFilter, ...]:
+        """The search, the filter and the band in use, in the order of the toolbar.
+
+        The sort, the order, the density and the page arrange the list and narrow
+        nothing, so they have no chip.
+        """
+        found: list[ActiveFilter] = []
+        if self.q:
+            text = f'Name contains "{self.q}"'
+            found.append(ActiveFilter("q", text, self.params(q="", page=1)))
+        if self.show != "all":
+            text = FILTER_WORDS[self.show]
+            found.append(ActiveFilter("show", text, self.params(show="all", page=1)))
+        if self.band:
+            text = f"Band: {BAND_WORDS[self.band]}"
+            found.append(ActiveFilter("band", text, self.params(band="", page=1)))
+        return tuple(found)
+
+    @property
+    def without_filters(self) -> str:
+        """The query part of the list with no search, filter or band (Clear all
+        filters); the sort, the order and the density stay."""
+        return self.params(q="", show="all", band="", page=1)
 
 
 def read_query(
