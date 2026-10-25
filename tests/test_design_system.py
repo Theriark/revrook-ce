@@ -565,7 +565,7 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         links = NAV_LINK.findall(html)
         assert [href for href, _ in links] == [href for href, _ in NAV_LINKS]
         assert [href for href, flag in links if flag] == [current]
-        assert html.count('aria-current="page"') == 1
+        assert html.count('aria-current="page"') == 2  # the rail and the breadcrumb
         # The rail draws one icon per link, one on the sign-out button, the
         # three of the theme switch and the chevron of the fold; the page below
         # it may draw its own (the Home empty state does).

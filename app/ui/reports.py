@@ -27,7 +27,7 @@ from app.reports.completeness import completeness_problems
 from app.reports.export import ExportRecord, export_report, list_exports, read_export
 from app.reports.render import INSURANCE, KINDS, QBR, REPORT_NAMES, render_report
 from app.reports.topics import TOPIC_KEYS, TOPICS, Topic
-from app.reports.view import ReportContext, ReportError, ReportView
+from app.reports.view import ReportContext, ReportError, ReportView, iso_date
 from app.scoring.snapshot import SnapshotError, parse_snapshot
 from app.security import with_no_transform
 from app.snapshots import (
@@ -311,6 +311,7 @@ async def report_page(
             "client_name": view.context.client_name,
             "section": "reports",
             "snapshot_id": snapshot_id,
+            "crumb_leaf": f"Report of {iso_date(view.snapshot.as_of)}",
             "view": view,
             "problems": completeness_problems(view),
             "kinds": KIND_LIST,

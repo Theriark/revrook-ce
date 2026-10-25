@@ -139,6 +139,26 @@ The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded a
 `revrook.css` so that they win by order; they belong in `revrook.css` at its next
 rewrite.
 
+The top bar (`_topbar.html`, THE-1188) opens the page column of every signed-in page,
+above the stale-worker banner: the breadcrumb of the page on the left and the search of
+the clients on the right, on the surface with a hairline under it. The trail is made by
+`breadcrumb_trail` (`app/ui/breadcrumbs.py`, a template global) from what the page
+already has in its context: Home alone on Home; Home and the place of the rail (`nav`)
+elsewhere; on a page of one client Home, Clients, the client, its tab (`section`) and,
+deeper, the page itself (`crumb_leaf`: the control id on the control page, "Report of"
+and the pack date on a made report); a refusal is Home and its title. Every step but
+the last is a link; the last is the page, a `span` with `aria-current="page"`, and a
+chevron icon (hidden from assistive technology) stands between the steps. The nav is
+labelled Breadcrumb and the bar is not a `header`, so the rail stays the one banner of
+the page. The search is a plain GET form in a labelled `search` element (the landmark;
+Pico draws any `[role=search]` as one joined pill) to the clients list with its `q`, so it works without script and finds the same clients the list's
+own search does; no new endpoint. From anywhere outside a field, a menu or an open
+dialog, the / key moves focus to it (`revrook.js`, `aria-keyshortcuts="/"`), and from
+1024 px the key is shown inside the field. The bar scrolls with the page: a sticky bar
+would cover the focus of a field under it. Below 768 px the search takes its own row
+and a long client name wraps; nothing in the trail is cut with an ellipsis. Its rules
+are in `revrook-retest.css`.
+
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
 panel with the stacked lockup and three lines about the product on the left, the
 lockup in a row, the badge, the form and the footer on the right. Below 768 px the
@@ -496,10 +516,17 @@ itself does not move); Enter opens the checklist narrowed to that domain, the li
 the bar already carries. More than six domains stand in two rows, more than eight
 rooks likewise, so a row never runs so wide that every node is small.
 
-How a scene answers. The home view fits the row to the stage: as near as the width
-of the stage allows and never so near that the tallest node is cut off, measured
-again when the stage changes shape (a folded rail, a turned phone) unless a person
-has moved closer or away. A drag turns and tilts the yard; the buttons under it turn
+How a scene answers. The home view fits every node to the stage: `framingDistance`
+in `scenes.js` takes the eight corners of every node (its plinth, its layers, its
+wire top; `Box3` of the node) and finds the nearest distance at which each corner is
+inside the view, in its width and in its height, with six percent of air at each
+edge, measured again when the stage changes shape (a folded rail, a turned phone)
+unless a person has moved closer or away. It replaced an estimate from the width of
+the row and the tallest node, which left the depth of a second row out: a keep of
+seven domains in a 21 by 9 stage ran off the foot of the stage at 768 px (THE-1188).
+The stage is 21 by 9 for the rookery, 16 by 9 for the keep from 600 px (its two rows
+seen from above need the height, or the fit steps back until the blocks are a
+quarter smaller) and 16 by 10 on a phone. A drag turns and tilts the yard; the buttons under it turn
 it by a step or reset the view; with the canvas focused (an application, a scene) Left
 and Right choose the next node and lean the yard a little towards it (never so far
 that the row lines up behind it), the brackets turn it, plus and minus move closer and
@@ -600,10 +627,28 @@ report prints. Both read the same rows, labels and results as before; nothing is
 stored on either page except the notes, which were already saved as they are typed.
 
 The checklist. Under the client header, the section head names the page and its
-purpose, then a canvas band (`.rv-checklist-toolbar`) holds two chips with their
+purpose, then a canvas band (`form.rv-checklist-toolbar`, THE-1188) holds the tools
+of the list: a search over the name, the id, the domain and the owner of a control
+(`q`, labelled for assistive technology, the search icon in the field), a Status menu
+(any status or one of the five labels, `status`), an Order menu (`sort`: the library
+order, the order of the report and the default; status, worst first, with the gate
+controls and then the heaviest first among equals; evidence, oldest first, with the
+controls that have no dated evidence at the top; name, A to Z), the primary "Show
+controls" button and, once a search, a status or another order is in use, a quiet
+Reset that takes those three away. It is one GET form in a `search` element labelled
+Checklist, so it works without script and the address names what is shown; nothing
+submits on its own when a menu changes. Under the tools the two chips with their
 counts, all controls and the ones that changed or need a look (the one that applies
-carries `aria-current="true"`), and the count line (`#checklist-count`), which also
-says when no report exists yet to compare against. The table (`table.rv-checklist`)
+carries `aria-current="true"`), keep the search and the order; the chip of a
+narrowing from a chart segment takes the domain and the status away and keeps the
+rest (`ChecklistQuery.params` in `app/ui/viewmodels.py`). The count line
+(`#checklist-count`) says how many controls are shown, the words searched for, the
+order in use and when no report exists yet to compare against; the caption of the
+table names the order too, and the sorted column carries `aria-sort`. A search with
+no match is an empty state that repeats the words and the narrowing, with a way back
+to every control; an unknown order or status is refused with 422. The tools sit on
+one row from 768 px, bottom-aligned so the search box lines up with the menus under
+their labels; below 600 px each takes the whole width. The table (`table.rv-checklist`)
 has no scroll box, so its head stays sticky: the control is the row heading with its
 id and "gate control" under it, the status a pill, the coverage and the date in
 tabular figures, the owner, and the flags as a short dotted list (`ul.rv-flags`). A
