@@ -254,6 +254,19 @@ def test_the_dialog_is_a_card_not_the_whole_window() -> None:
     assert re.search(shown, plain)
 
 
+def test_the_list_of_names_leaves_room_for_the_focus_ring() -> None:
+    # The list scrolls, so it clips what is drawn outside its box, and a name field
+    # is as wide as the list: its focus ring (3px, offset 2px) showed only above and
+    # below (THE-1189 live recheck, D7). The list keeps 5px round its fields and
+    # gives them back with a negative margin, so the fields stay in line.
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+    names = re.search(r"\n\.rv-bulk-dialog-list \{([^}]*)\}", plain)
+    assert names is not None
+    assert "overflow-y: auto;" in names.group(1)
+    assert "padding: 5px;" in names.group(1)
+    assert "margin: 0 -5px;" in names.group(1)
+
+
 # --- the page and the answers the script relies on (PostgreSQL) -------------------
 
 

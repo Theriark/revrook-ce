@@ -69,7 +69,7 @@
 <thead><tr><th scope="col">Priority</th><th scope="col">Control</th><th scope="col">Action</th><th scope="col">By when</th></tr></thead>
 <tbody>
 {% for item in roadmap %}
-<tr><td>{{ item.priority }}</td><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ item.finding.recommend }}</td><td>{{ item.finding.by_when or not_entered }}</td></tr>
+<tr><td>{{ item.priority }}</td><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ item.finding.recommend }}</td><td{% if item.finding.by_when is iso_day %} class="date"{% endif %}>{{ item.finding.by_when or not_entered }}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -98,7 +98,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">State</th></tr></thead>
 <tbody>
 {% for row in expiring %}
-<tr><td>{{ row.title }}<p class="note">{{ row.control_id }}</p></td><td>{{ row.evidence_at|day }}</td><td>{{ row.expires_at|day }}</td><td>{{ row.evidence_state }}</td></tr>
+<tr><td>{{ row.title }}<p class="note">{{ row.control_id }}</p></td><td class="date">{{ row.evidence_at|day }}</td><td class="date">{{ row.expires_at|day }}</td><td>{{ row.evidence_state }}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -114,7 +114,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 {% for item in view.register %}
-<tr><td>{% if item.row %}{{ item.row.title }}{% endif %}<p class="note">{{ item.control_id }}</p></td><td>{{ item.owner }}</td><td>{{ item.reason }}</td><td>{{ item.compensating_control or "None" }}</td><td>{{ item.review_date.isoformat() }}{% if item.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
+<tr><td>{% if item.row %}{{ item.row.title }}{% endif %}<p class="note">{{ item.control_id }}</p></td><td>{{ item.owner }}</td><td>{{ item.reason }}</td><td>{{ item.compensating_control or "None" }}</td><td class="date">{{ item.review_date.isoformat() }}{% if item.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -130,7 +130,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 {% for row in rows %}
-<tr><td>{{ row.title }}<p class="note">{{ row.control_id }}{% if row.gate %} &middot; gate control{% endif %}</p>{% if row.na_note %}<p class="note">Not applicable: {{ row.na_note }}</p>{% endif %}</td><td class="num">{{ row.weight }}</td><td>{{ m.status(row.label) }}</td><td>{{ row.evidence_at|day }}</td><td>{{ row.expires_at|day }}</td><td>{{ row.assurance }}</td></tr>
+<tr><td>{{ row.title }}<p class="note">{{ row.control_id }}{% if row.gate %} &middot; gate control{% endif %}</p>{% if row.na_note %}<p class="note">Not applicable: {{ row.na_note }}</p>{% endif %}</td><td class="num">{{ row.weight }}</td><td>{{ m.status(row.label) }}</td><td class="date">{{ row.evidence_at|day }}</td><td class="date">{{ row.expires_at|day }}</td><td>{{ row.assurance }}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}

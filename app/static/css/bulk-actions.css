@@ -188,11 +188,14 @@ dialog.rv-bulk-dialog[open] {
   display: block;
 }
 
-/* The dialog: the names, or a field per name, scroll inside it */
+/* The dialog: the names, or a field per name, scroll inside it. A list that
+   scrolls clips what is drawn outside its box, and a name field is as wide as the
+   list, so the list keeps 5px round its fields for their focus ring (3px, offset
+   2px); the negative margin keeps the fields in line with the words above */
 .rv-bulk-dialog-list {
   max-height: 40vh;
-  margin: 0;
-  padding: 0;
+  margin: 0 -5px;
+  padding: 5px;
   overflow-y: auto;
   list-style: none;
 }

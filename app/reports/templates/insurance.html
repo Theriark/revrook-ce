@@ -9,7 +9,7 @@
 <thead><tr><th scope="col">Topic</th><th scope="col">Status</th><th scope="col" class="num">Coverage</th><th scope="col">Evidence dated</th><th scope="col">Owner</th><th scope="col">On the form</th></tr></thead>
 <tbody>
 {% for item in topics %}
-<tr><td>{{ item.topic.title }}</td><td>{{ m.status(item.label) }}</td><td class="num">{{ item.coverage_text }} percent</td><td>{{ item.oldest_evidence|day }}</td><td>{{ item.owner }}</td><td>{% if item.asked %}Yes{% else %}Not selected{% endif %}</td></tr>
+<tr><td>{{ item.topic.title }}</td><td>{{ m.status(item.label) }}</td><td class="num">{{ item.coverage_text }} percent</td><td class="date">{{ item.oldest_evidence|day }}</td><td>{{ item.owner }}</td><td>{% if item.asked %}Yes{% else %}Not selected{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -31,7 +31,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 {% for row in item.rows %}
-<tr><td>{{ row.title }}<p class="note">{{ row.control_id }}</p>{% if row.na_note %}<p class="note">Not applicable: {{ row.na_note }}</p>{% endif %}</td><td>{{ m.status(row.label) }}</td><td>{{ row.sources|join(", ") }}</td><td>{{ row.evidence_at|day }}</td><td>{{ row.assurance }}</td></tr>
+<tr><td>{{ row.title }}<p class="note">{{ row.control_id }}</p>{% if row.na_note %}<p class="note">Not applicable: {{ row.na_note }}</p>{% endif %}</td><td>{{ m.status(row.label) }}</td><td>{{ row.sources|join(", ") }}</td><td class="date">{{ row.evidence_at|day }}</td><td>{{ row.assurance }}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -41,7 +41,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 {% for entry in listed %}
-<tr><td>{{ entry.control_id }}</td><td>{{ entry.owner }}</td><td>{{ entry.reason }}</td><td>{{ entry.compensating_control or "None" }}</td><td>{{ entry.review_date.isoformat() }}{% if entry.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
+<tr><td>{{ entry.control_id }}</td><td>{{ entry.owner }}</td><td>{{ entry.reason }}</td><td>{{ entry.compensating_control or "None" }}</td><td class="date">{{ entry.review_date.isoformat() }}{% if entry.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -57,7 +57,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 {% for entry in view.register %}
-<tr><td>{% if entry.row %}{{ entry.row.title }}{% endif %}<p class="note">{{ entry.control_id }}</p></td><td>{{ entry.owner }}</td><td>{{ entry.reason }}</td><td>{{ entry.compensating_control or "None" }}</td><td>{{ entry.review_date.isoformat() }}{% if entry.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
+<tr><td>{% if entry.row %}{{ entry.row.title }}{% endif %}<p class="note">{{ entry.control_id }}</p></td><td>{{ entry.owner }}</td><td>{{ entry.reason }}</td><td>{{ entry.compensating_control or "None" }}</td><td class="date">{{ entry.review_date.isoformat() }}{% if entry.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
@@ -73,7 +73,7 @@
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">What we recommend</th><th scope="col">What we need</th><th scope="col">By when</th></tr></thead>
 <tbody>
 {% for item in view.actions %}
-<tr><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ m.status(item.row.label) }}</td><td>{{ item.finding.recommend or not_entered }}</td><td>{{ item.finding.need or not_entered }}</td><td>{{ item.finding.by_when or not_entered }}</td></tr>
+<tr><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ m.status(item.row.label) }}</td><td>{{ item.finding.recommend or not_entered }}</td><td>{{ item.finding.need or not_entered }}</td><td{% if item.finding.by_when is iso_day %} class="date"{% endif %}>{{ item.finding.by_when or not_entered }}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}
