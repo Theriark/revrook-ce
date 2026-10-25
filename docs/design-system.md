@@ -516,10 +516,17 @@ itself does not move); Enter opens the checklist narrowed to that domain, the li
 the bar already carries. More than six domains stand in two rows, more than eight
 rooks likewise, so a row never runs so wide that every node is small.
 
-How a scene answers. The home view fits the row to the stage: as near as the width
-of the stage allows and never so near that the tallest node is cut off, measured
-again when the stage changes shape (a folded rail, a turned phone) unless a person
-has moved closer or away. A drag turns and tilts the yard; the buttons under it turn
+How a scene answers. The home view fits every node to the stage: `framingDistance`
+in `scenes.js` takes the eight corners of every node (its plinth, its layers, its
+wire top; `Box3` of the node) and finds the nearest distance at which each corner is
+inside the view, in its width and in its height, with six percent of air at each
+edge, measured again when the stage changes shape (a folded rail, a turned phone)
+unless a person has moved closer or away. It replaced an estimate from the width of
+the row and the tallest node, which left the depth of a second row out: a keep of
+seven domains in a 21 by 9 stage ran off the foot of the stage at 768 px (THE-1188).
+The stage is 21 by 9 for the rookery, 16 by 9 for the keep from 600 px (its two rows
+seen from above need the height, or the fit steps back until the blocks are a
+quarter smaller) and 16 by 10 on a phone. A drag turns and tilts the yard; the buttons under it turn
 it by a step or reset the view; with the canvas focused (an application, a scene) Left
 and Right choose the next node and lean the yard a little towards it (never so far
 that the row lines up behind it), the brackets turn it, plus and minus move closer and
