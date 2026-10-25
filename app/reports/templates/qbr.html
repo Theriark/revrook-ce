@@ -16,22 +16,20 @@
 <dt>Band</dt><dd>{{ n.band }}</dd>
 </dl>
 {% if n.cap %}<p class="note">{{ n.cap }}</p>{% endif %}
-<table>
-<caption>Controls by status</caption>
+{% call m.table("Controls by status", "summary-status-caption") %}
 <thead><tr><th scope="col">Status</th><th scope="col" class="num">Controls</th></tr></thead>
 <tbody>
 {% for label, count in view.counts %}
 <tr><td>{{ m.status(label) }}</td><td class="num">{{ count }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 <p class="note">The score is a configuration evidence summary. It is not a certification. Evidence coverage is shown beside it so that better evidence is not read as better security.</p>
 {% endcall %}
 
 {% call m.page("coverage", "Control coverage by domain") %}
 {{ domain_chart }}
-<table>
-<caption>Data for the chart: score by domain, and the controls in each status</caption>
+{% call m.table("Data for the chart: score by domain, and the controls in each status", "coverage-caption") %}
 <thead>
 <tr><th scope="col">Domain</th><th scope="col" class="num">Weight</th><th scope="col" class="num">Score</th>
 {% for label, count in view.counts %}<th scope="col" class="num">{{ label.text }}</th>{% endfor %}</tr>
@@ -42,7 +40,7 @@
 {% for label, count in domain.counts %}<td class="num">{{ count }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% endcall %}
 
 {% call m.page("findings", "Top findings") %}
@@ -67,15 +65,14 @@
 {% call m.page("roadmap", "Remediation roadmap and next quarter") %}
 <h3>Roadmap</h3>
 {% if roadmap %}
-<table>
-<caption>Actions in order of urgency</caption>
+{% call m.table("Actions in order of urgency", "roadmap-caption") %}
 <thead><tr><th scope="col">Priority</th><th scope="col">Control</th><th scope="col">Action</th><th scope="col">By when</th></tr></thead>
 <tbody>
 {% for item in roadmap %}
 <tr><td>{{ item.priority }}</td><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ item.finding.recommend }}</td><td>{{ item.finding.by_when or not_entered }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% else %}
 <p>No action has been entered yet.</p>
 {% endif %}
@@ -88,25 +85,23 @@
 {% endcall %}
 
 {% call m.page("evidence", "Evidence status and expiry") %}
-<table>
-<caption>Controls by state of their evidence</caption>
+{% call m.table("Controls by state of their evidence", "evidence-states-caption") %}
 <thead><tr><th scope="col">State of the evidence</th><th scope="col" class="num">Controls</th></tr></thead>
 <tbody>
 {% for state, count in evidence_counts %}
 <tr><td>{{ state }}</td><td class="num">{{ count }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% if expiring %}
-<table>
-<caption>Evidence that has expired or expires within 30 days</caption>
+{% call m.table("Evidence that has expired or expires within 30 days", "evidence-expiring-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">State</th></tr></thead>
 <tbody>
 {% for row in expiring %}
 <tr><td>{{ row.title }}<p class="note">{{ row.control_id }}</p></td><td>{{ row.evidence_at|day }}</td><td>{{ row.expires_at|day }}</td><td>{{ row.evidence_state }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% if expiring_more %}<p class="note">{{ expiring_more }} more are listed in the appendix.</p>{% endif %}
 {% else %}
 <p>No evidence has expired or expires within 30 days.</p>
@@ -115,15 +110,14 @@
 
 {% call m.page("exceptions", "Exceptions register") %}
 {% if view.register %}
-<table>
-<caption>Open exceptions: a control that is knowingly not met, and why</caption>
+{% call m.table("Open exceptions: a control that is knowingly not met, and why", "exceptions-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 {% for item in view.register %}
 <tr><td>{% if item.row %}{{ item.row.title }}{% endif %}<p class="note">{{ item.control_id }}</p></td><td>{{ item.owner }}</td><td>{{ item.reason }}</td><td>{{ item.compensating_control or "None" }}</td><td>{{ item.review_date.isoformat() }}{% if item.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% else %}
 <p>There are no open exceptions.</p>
 {% endif %}
@@ -132,15 +126,14 @@
 
 {% for domain, rows in appendix %}
 {% call m.page("appendix-" ~ domain.code|lower, "Appendix: " ~ domain.name) %}
-<table>
-<caption>{{ domain.name }}: every control, its status and its evidence</caption>
+{% call m.table(domain.name ~ ": every control, its status and its evidence", "appendix-" ~ domain.code|lower ~ "-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 {% for row in rows %}
 <tr><td>{{ row.title }}<p class="note">{{ row.control_id }}{% if row.gate %} &middot; gate control{% endif %}</p>{% if row.na_note %}<p class="note">Not applicable: {{ row.na_note }}</p>{% endif %}</td><td class="num">{{ row.weight }}</td><td>{{ m.status(row.label) }}</td><td>{{ row.evidence_at|day }}</td><td>{{ row.expires_at|day }}</td><td>{{ row.assurance }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% endcall %}
 {% endfor %}
 

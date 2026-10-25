@@ -10,6 +10,19 @@
 <span class="status status-{{ label.key }}">{{ icon(label.icon) }}{{ label.text }}</span>
 {%- endmacro %}
 
+{#- A table and its caption, in a frame that scrolls on a narrow screen (report.css).
+    The frame is a named region the keyboard can reach, so a table wider than the
+    phone can be scrolled without a pointer; the caption stays outside the scroll
+    and wraps. `caption_id` is unique in the report. -#}
+{% macro table(caption, caption_id) -%}
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="{{ caption_id }}">
+<table>
+<caption id="{{ caption_id }}">{{ caption }}</caption>
+{{ caller()|trim }}
+</table>
+</div>
+{%- endmacro %}
+
 {% macro footer() -%}
 <footer class="page-footer">
 <p class="disclaimer">{{ disclaimer }}</p>
@@ -54,15 +67,14 @@
 <div class="signoff">
 <h3>Client sign-off</h3>
 <p>I have read this report and the notice above.</p>
-<table>
-<caption>Sign-off</caption>
+{% call table("Sign-off", "signoff-caption") %}
 <tbody>
 <tr><th scope="row">Name</th><td><div class="line"></div></td></tr>
 <tr><th scope="row">Role</th><td><div class="line"></div></td></tr>
 <tr><th scope="row">Signature</th><td><div class="line"></div></td></tr>
 <tr><th scope="row">Date</th><td><div class="line"></div></td></tr>
 </tbody>
-</table>
+{% endcall %}
 </div>
 {%- endif %}
 {{ footer() }}

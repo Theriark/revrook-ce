@@ -337,7 +337,9 @@ Its parts, in order:
   holds back. The sums are exact fractions, so earned and lost add up to a hundred.
   The summary card (`#drivers-summary`) gives the mean over the clients with
   evidence in one sentence ("the most points go to ..."), a 24 px bar and the legend,
-  each driver with what it means. Under it one card per client (`ul.rv-drivers`, the
+  each driver with what it means (each item of the legend is a grid with
+  `align-content: start`, so its name and words stay at the top of the row whatever
+  the length of its neighbour's words). Under it one card per client (`ul.rv-drivers`, the
   list the scene reads its rooks from, with the same data attributes): the name, the
   score and the band, a 12 px bar, the driver that costs the most in words, the gate
   control that holds the score with a link to it, and the three controls that cost
@@ -618,9 +620,11 @@ The list works without them: the select column, the box that selects the page an
 the bar are `hidden` until the script reveals them. With it every row has a select
 box labelled with the client name (in the top corner of the card below 1024 px),
 "Select every client on this page" above the table is checked, mixed or clear, and a
-chosen row is tinted as well as ticked. Once a client is chosen, a bar sticks to the
-foot of the window (`#bulk-bar`): the count in words, then Make reports, Download as
-CSV, Delete and Clear the selection. Every action is one the application already
+chosen row is tinted as well as ticked. Once a client is chosen, a bar appears in
+the dock that sticks to the foot of the window (`.rv-bulk-dock`, `#bulk-bar`): the
+count in words, then Make reports, Download as CSV, Delete and Clear the selection.
+The bar sets its own `display`, so it also hides itself (`.rv-bulk-bar[hidden]`)
+rather than relying on the base sheet. Every action is one the application already
 has, run one client after another with the CSRF token of the page, so a refusal of
 one never stops the others: Make reports posts the report builder's own form
 (`POST /clients/<id>/reports/snapshot`, the last full quarter) after a dialog that
@@ -630,11 +634,20 @@ client, as the System page does, at most ten at a time, and the server checks ea
 name again; a deletion counts only when the answer is the System page's
 `?deleted=1`, never the sign-in page of an ended session. The download is made in the
 browser from the rows on the page (a cell that starts like a formula is written as
-text). The result (`#bulk-result`, a polite live region) lists each client with what
-happened and, for a report, the link to it; after a deletion it says that the counts
-drawn above still include the deleted clients and links to the list again. The dialog (`dialog.rv-dialog`) is the
-native modal: the focus starts in its first field, Escape cancels it and the focus
-returns to the button that opened it. The form that adds a
+text). The result (`#bulk-result`, a polite live region) is a card in the dock above
+the bar, so what an action did is in view beside the buttons that did it, also after
+a deletion has emptied the selection and hidden the bar; a long result scrolls inside
+the card (at most 40% of the window) and stays until Dismiss or the next action. It
+lists each client with what happened and, for a report, the link to it; after a
+deletion it says that the counts drawn above still include the deleted clients and
+links to the list again. The dialog (`dialog.rv-dialog.rv-bulk-dialog`) is the native
+modal, drawn as a card of at most 32rem in the middle of the window over the veil:
+`bulk-actions.css` takes away the base sheet's minimum width and height (the whole
+window) and shows it as a block only while open. The focus starts in its first
+field, Escape and Cancel close it and the focus returns to the button that opened
+it. Cancel is a plain button and the confirm button the only submit button, so Enter
+in a name field confirms, and only once every name matches (until then the confirm
+button is disabled and Enter does nothing). The form that adds a
 client is a card at the end of the page, and the primary action of the page header
 leads to it.
 
@@ -876,10 +889,16 @@ A preview opens the file as it is sent, so the file itself fits a phone (THE-118
 at 390 px the A4 padding and a table of six or seven columns made the quarterly
 review 249 px wider than the screen. Below 40em on a screen, `app/reports/report.css`
 gives the page less padding, the facts one column and the cover title a smaller
-size, and a table that is still wider than the page scrolls inside itself, so the
-page never scrolls sideways and no date is broken to fit. Print (`print.css`, A4)
-is unchanged. The rule is in every exported file, so the golden reports changed by
-that block only.
+size, and a table that is still wider than the page scrolls inside its frame, so the
+page never scrolls sideways and no date is broken to fit. Every table of a report is
+written by the `table` macro of `_macros.html`: a `div.table-scroll` with
+`role="region"`, `tabindex="0"` and `aria-labelledby` its caption (an id unique in
+the report), so the keyboard reaches a table that scrolls and a screen reader names
+it. The table stays `display: table` (a table drawn as a block loses its rows and
+cells in some screen readers), and below 40em its caption is as wide as the frame and
+sticks to its left edge, so it wraps and is read whole while the columns scroll. The
+frame shows a focus outline. Print (`print.css`, A4) is unchanged. The golden
+reports changed by the CSS block and the frames around their tables only.
 
 The export history. The section head and the success strip after an export, then
 the table (`table.rv-exports`, with `rv-table-cards`): when, the report, the file

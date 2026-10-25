@@ -270,6 +270,11 @@ th.num {
   left: -10000px;
 }
 
+.table-scroll:focus-visible {
+  outline: 2px solid var(--rv-accent);
+  outline-offset: 2px;
+}
+
 @media screen and (max-width: 40em) {
   body {
     padding: 0.5rem;
@@ -295,10 +300,16 @@ th.num {
     overflow-wrap: anywhere;
   }
 
-  table {
-    display: block;
+  .table-scroll {
     max-width: 100%;
     overflow-x: auto;
+    container-type: inline-size;
+  }
+
+  .table-scroll caption {
+    position: sticky;
+    left: 0;
+    width: 100cqi;
   }
 }
 
@@ -392,8 +403,9 @@ tr,
 <dt>Band</dt><dd>Weak</dd>
 </dl>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="summary-status-caption">
 <table>
-<caption>Controls by status</caption>
+<caption id="summary-status-caption">Controls by status</caption>
 <thead><tr><th scope="col">Status</th><th scope="col" class="num">Controls</th></tr></thead>
 <tbody>
 
@@ -407,6 +419,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 <p class="note">The score is a configuration evidence summary. It is not a certification. Evidence coverage is shown beside it so that better evidence is not read as better security.</p>
 
 <footer class="page-footer">
@@ -420,8 +433,9 @@ tr,
 <h2 id="coverage-title">Control coverage by domain</h2>
 
 <svg class="chart" role="img" viewBox="0 0 640 256" width="640" height="256" xmlns="http://www.w3.org/2000/svg" aria-labelledby="domain-chart-title domain-chart-desc"><title id="domain-chart-title">Score by domain</title><desc id="domain-chart-desc">Bars from 0 to 100, one for each domain. Identity and MFA 52.9; Devices and patching 61.0; Endpoint protection 58.6; Email security 38.5; Backup and recovery 30.8; Network 75.0; Logging and monitoring 27.3; Governance and people 28.3.</desc><text class="chart-label" x="0" y="21">Identity and MFA</text><rect class="chart-track" x="230" y="8" width="300" height="16"/><rect class="chart-bar" x="230" y="8" width="158" height="16"/><text class="chart-value" x="540" y="21">52.9</text><text class="chart-label" x="0" y="51">Devices and patching</text><rect class="chart-track" x="230" y="38" width="300" height="16"/><rect class="chart-bar" x="230" y="38" width="182" height="16"/><text class="chart-value" x="540" y="51">61.0</text><text class="chart-label" x="0" y="81">Endpoint protection</text><rect class="chart-track" x="230" y="68" width="300" height="16"/><rect class="chart-bar" x="230" y="68" width="175" height="16"/><text class="chart-value" x="540" y="81">58.6</text><text class="chart-label" x="0" y="111">Email security</text><rect class="chart-track" x="230" y="98" width="300" height="16"/><rect class="chart-bar" x="230" y="98" width="115" height="16"/><text class="chart-value" x="540" y="111">38.5</text><text class="chart-label" x="0" y="141">Backup and recovery</text><rect class="chart-track" x="230" y="128" width="300" height="16"/><rect class="chart-bar" x="230" y="128" width="92" height="16"/><text class="chart-value" x="540" y="141">30.8</text><text class="chart-label" x="0" y="171">Network</text><rect class="chart-track" x="230" y="158" width="300" height="16"/><rect class="chart-bar" x="230" y="158" width="225" height="16"/><text class="chart-value" x="540" y="171">75.0</text><text class="chart-label" x="0" y="201">Logging and monitoring</text><rect class="chart-track" x="230" y="188" width="300" height="16"/><rect class="chart-bar" x="230" y="188" width="81" height="16"/><text class="chart-value" x="540" y="201">27.3</text><text class="chart-label" x="0" y="231">Governance and people</text><rect class="chart-track" x="230" y="218" width="300" height="16"/><rect class="chart-bar" x="230" y="218" width="85" height="16"/><text class="chart-value" x="540" y="231">28.3</text></svg>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="coverage-caption">
 <table>
-<caption>Data for the chart: score by domain, and the controls in each status</caption>
+<caption id="coverage-caption">Data for the chart: score by domain, and the controls in each status</caption>
 <thead>
 <tr><th scope="col">Domain</th><th scope="col" class="num">Weight</th><th scope="col" class="num">Score</th>
 <th scope="col" class="num">Protected</th><th scope="col" class="num">Needs attention</th><th scope="col" class="num">Not protected</th><th scope="col" class="num">Not checked</th></tr>
@@ -454,6 +468,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -536,8 +551,9 @@ tr,
 
 <h3>Roadmap</h3>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="roadmap-caption">
 <table>
-<caption>Actions in order of urgency</caption>
+<caption id="roadmap-caption">Actions in order of urgency</caption>
 <thead><tr><th scope="col">Priority</th><th scope="col">Control</th><th scope="col">Action</th><th scope="col">By when</th></tr></thead>
 <tbody>
 
@@ -549,6 +565,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <h3>Plan for next quarter</h3>
 
@@ -565,8 +582,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="evidence-title">Evidence status and expiry</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="evidence-states-caption">
 <table>
-<caption>Controls by state of their evidence</caption>
+<caption id="evidence-states-caption">Controls by state of their evidence</caption>
 <thead><tr><th scope="col">State of the evidence</th><th scope="col" class="num">Controls</th></tr></thead>
 <tbody>
 
@@ -580,9 +598,11 @@ tr,
 
 </tbody>
 </table>
+</div>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="evidence-expiring-caption">
 <table>
-<caption>Evidence that has expired or expires within 30 days</caption>
+<caption id="evidence-expiring-caption">Evidence that has expired or expires within 30 days</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">State</th></tr></thead>
 <tbody>
 
@@ -612,6 +632,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 <p class="note">1 more are listed in the appendix.</p>
 
 
@@ -626,8 +647,9 @@ tr,
 <h2 id="exceptions-title">Exceptions register</h2>
 
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="exceptions-caption">
 <table>
-<caption>Open exceptions: a control that is knowingly not met, and why</caption>
+<caption id="exceptions-caption">Open exceptions: a control that is knowingly not met, and why</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 
@@ -635,6 +657,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <p class="note">An exception never changes a status and never raises the score.</p>
 
@@ -649,8 +672,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-acc-title">Appendix: Identity and MFA</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-acc-caption">
 <table>
-<caption>Identity and MFA: every control, its status and its evidence</caption>
+<caption id="appendix-acc-caption">Identity and MFA: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -672,6 +696,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -683,8 +708,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-dev-title">Appendix: Devices and patching</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-dev-caption">
 <table>
-<caption>Devices and patching: every control, its status and its evidence</caption>
+<caption id="appendix-dev-caption">Devices and patching: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -704,6 +730,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -715,8 +742,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-end-title">Appendix: Endpoint protection</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-end-caption">
 <table>
-<caption>Endpoint protection: every control, its status and its evidence</caption>
+<caption id="appendix-end-caption">Endpoint protection: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -732,6 +760,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -743,8 +772,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-eml-title">Appendix: Email security</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-eml-caption">
 <table>
-<caption>Email security: every control, its status and its evidence</caption>
+<caption id="appendix-eml-caption">Email security: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -764,6 +794,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -775,8 +806,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-bck-title">Appendix: Backup and recovery</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-bck-caption">
 <table>
-<caption>Backup and recovery: every control, its status and its evidence</caption>
+<caption id="appendix-bck-caption">Backup and recovery: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -794,6 +826,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -805,8 +838,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-net-title">Appendix: Network</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-net-caption">
 <table>
-<caption>Network: every control, its status and its evidence</caption>
+<caption id="appendix-net-caption">Network: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -822,6 +856,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -833,8 +868,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-log-title">Appendix: Logging and monitoring</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-log-caption">
 <table>
-<caption>Logging and monitoring: every control, its status and its evidence</caption>
+<caption id="appendix-log-caption">Logging and monitoring: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -852,6 +888,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -863,8 +900,9 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="appendix-gov-title">Appendix: Governance and people</h2>
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-gov-caption">
 <table>
-<caption>Governance and people: every control, its status and its evidence</caption>
+<caption id="appendix-gov-caption">Governance and people: every control, its status and its evidence</caption>
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -884,6 +922,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>

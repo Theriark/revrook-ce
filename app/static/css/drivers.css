@@ -111,11 +111,15 @@
   list-style: none;
 }
 
+/* An item as tall as its row keeps its two lines at the top: without
+   align-content its rows share the spare height, and a one-line description sat
+   lower than a two-line one beside it */
 .rv-drv-legend li {
   display: grid;
   grid-template-columns: 12px minmax(0, 1fr);
   column-gap: 8px;
   align-items: start;
+  align-content: start;
   margin: 0;
   list-style: none;
 }

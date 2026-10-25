@@ -5,15 +5,14 @@
 
 {% call m.page("summary", "Control summary") %}
 <p>One line for each topic that cyber insurance forms commonly ask about. The topics are our own: tick the ones the client's form asks about, and answer the form from the pages that follow.</p>
-<table>
-<caption>Topics, their status and the evidence behind them</caption>
+{% call m.table("Topics, their status and the evidence behind them", "summary-topics-caption") %}
 <thead><tr><th scope="col">Topic</th><th scope="col">Status</th><th scope="col" class="num">Coverage</th><th scope="col">Evidence dated</th><th scope="col">Owner</th><th scope="col">On the form</th></tr></thead>
 <tbody>
 {% for item in topics %}
 <tr><td>{{ item.topic.title }}</td><td>{{ m.status(item.label) }}</td><td class="num">{{ item.coverage_text }} percent</td><td>{{ item.oldest_evidence|day }}</td><td>{{ item.owner }}</td><td>{% if item.asked %}Yes{% else %}Not selected{% endif %}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 <p class="note">Met means every control of the topic that applies is Protected, with dated evidence. Partly means some are not. Not met means none is Protected or in need of attention. Not checked means nothing could be verified. Coverage is the share of the topic's controls that were checked. The evidence date is the oldest date among them.</p>
 <h3>Evidence references</h3>
 <p class="note">Snapshot {{ view.snapshot_sha256[:16] }}, pack date {{ view.snapshot.as_of|day }}.
@@ -28,26 +27,24 @@
 <dt>Checked</dt><dd>{{ item.checked }} of {{ item.counted }} controls, oldest evidence dated {{ item.oldest_evidence|day }}</dd>
 <dt>Artefact reference</dt><dd>Snapshot {{ view.snapshot_sha256[:16] }}{% for ref in view.snapshot.evidence[:6] %}; {{ ref.evidence_id }}{% endfor %}</dd>
 </dl>
-<table>
-<caption>What was checked, how and when</caption>
+{% call m.table("What was checked, how and when", "topic-" ~ item.topic.key ~ "-checked-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 {% for row in item.rows %}
 <tr><td>{{ row.title }}<p class="note">{{ row.control_id }}</p>{% if row.na_note %}<p class="note">Not applicable: {{ row.na_note }}</p>{% endif %}</td><td>{{ m.status(row.label) }}</td><td>{{ row.sources|join(", ") }}</td><td>{{ row.evidence_at|day }}</td><td>{{ row.assurance }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% set listed = register_by_topic[item.topic.key] %}
 {% if listed %}
-<table>
-<caption>Exceptions for this topic</caption>
+{% call m.table("Exceptions for this topic", "topic-" ~ item.topic.key ~ "-exceptions-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 {% for entry in listed %}
 <tr><td>{{ entry.control_id }}</td><td>{{ entry.owner }}</td><td>{{ entry.reason }}</td><td>{{ entry.compensating_control or "None" }}</td><td>{{ entry.review_date.isoformat() }}{% if entry.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% else %}
 <p class="note">No exception is open for this topic.</p>
 {% endif %}
@@ -56,15 +53,14 @@
 
 {% call m.page("exceptions", "Exception register") %}
 {% if view.register %}
-<table>
-<caption>Open exceptions: a control that is knowingly not met, and why</caption>
+{% call m.table("Open exceptions: a control that is knowingly not met, and why", "exceptions-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 {% for entry in view.register %}
 <tr><td>{% if entry.row %}{{ entry.row.title }}{% endif %}<p class="note">{{ entry.control_id }}</p></td><td>{{ entry.owner }}</td><td>{{ entry.reason }}</td><td>{{ entry.compensating_control or "None" }}</td><td>{{ entry.review_date.isoformat() }}{% if entry.overdue %}<p class="note"><span class="status status-needs-attention">{{ m.icon("alert") }}Overdue</span></p>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% else %}
 <p>There are no open exceptions.</p>
 {% endif %}
@@ -73,15 +69,14 @@
 
 {% call m.page("actions", "Open actions") %}
 {% if view.actions %}
-<table>
-<caption>What is not yet Protected, in order of urgency</caption>
+{% call m.table("What is not yet Protected, in order of urgency", "actions-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">What we recommend</th><th scope="col">What we need</th><th scope="col">By when</th></tr></thead>
 <tbody>
 {% for item in view.actions %}
 <tr><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ m.status(item.row.label) }}</td><td>{{ item.finding.recommend or not_entered }}</td><td>{{ item.finding.need or not_entered }}</td><td>{{ item.finding.by_when or not_entered }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+{% endcall %}
 {% else %}
 <p>Every control that applies is Protected at the pack date.</p>
 {% endif %}

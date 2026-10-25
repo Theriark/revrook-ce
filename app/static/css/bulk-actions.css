@@ -1,9 +1,9 @@
 /*
  * revrook bulk actions of the clients list (THE-1189, docs/design-system.md,
  * Bulk actions), linked by clients.html after the shell's stylesheets. The select
- * box of each row, the box that selects the page, the bar under the table and the
- * result line. Role tokens of revrook.css only; every rule that sets a text
- * colour also sets its background (tests/test_bulk_actions.py checks each pair in
+ * box of each row, the box that selects the page, and the dock under the table
+ * with the result of an action above the bar, and the dialog. Role tokens of
+ * revrook.css only; every rule that sets a text colour also sets its background (tests/test_bulk_actions.py checks each pair in
  * both themes). A chosen row is told by its ticked box and the words of the bar,
  * never by its tint alone. The only motion is the busy mark of revrook.css, which
  * stops under prefers-reduced-motion.
@@ -46,23 +46,35 @@ main .rv-clients tr.is-chosen > th {
   background-color: var(--rv-accent-tint);
 }
 
-/* The bar stays in sight at the foot of the window while the list scrolls */
-.rv-bulk-bar {
+/* The dock holds the result and the bar, and stays in sight at the foot of the
+   window while the list scrolls: what an action did shows beside the buttons that
+   did it, not under the table out of view */
+.rv-bulk-dock {
   position: sticky;
   bottom: 16px;
   z-index: 5;
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.rv-bulk-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 12px 0;
   padding: 12px 16px;
   border: 1px solid var(--rv-line-strong);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-2);
   color: var(--rv-text);
   background-color: var(--rv-surface);
+}
+
+/* The bar sets its own display, so it hides itself too, not by the base sheet */
+.rv-bulk-bar[hidden] {
+  display: none;
 }
 
 .rv-bulk-count {
@@ -83,20 +95,47 @@ main .rv-clients tr.is-chosen > th {
   margin: 0;
 }
 
+/* The result: a card above the bar; a long list scrolls inside it */
 .rv-bulk-result {
-  margin: 0 0 16px;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line-strong);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-2);
   font-size: 14px;
   color: var(--rv-text);
-  background-color: var(--rv-canvas);
+  background-color: var(--rv-surface);
 }
 
 .rv-bulk-result:empty {
   display: none;
 }
 
+.rv-bulk-result > :last-child {
+  margin-bottom: 0;
+}
+
+.rv-bulk-result-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 4px;
+}
+
 .rv-bulk-result-title {
   margin: 0 0 4px;
   font-weight: 600;
+}
+
+.rv-bulk-result-head .rv-bulk-result-title {
+  margin: 0;
+}
+
+.rv-bulk-result-head button {
+  flex: none;
+  margin: 0;
 }
 
 .rv-bulk-result ul {
@@ -121,12 +160,32 @@ main .rv-clients tr.is-chosen > th {
 
 .rv-bulk-ok .rv-bulk-mark {
   color: var(--rv-status-protected);
-  background-color: var(--rv-canvas);
+  background-color: var(--rv-surface);
 }
 
 .rv-bulk-failed .rv-bulk-mark {
   color: var(--rv-status-not-protected);
-  background-color: var(--rv-canvas);
+  background-color: var(--rv-surface);
+}
+
+/* The dialog is a card in the middle of the window. The base sheet (Pico) draws a
+   dialog as the veil of the whole window, at least as wide and as tall as it, so
+   at 1440px the card filled the window: the minimums go and the card is as tall as
+   its content, centred. Shown as a block only while open, as the drawer of
+   revrook-retest.css does: a rule on the closed state would show it. */
+dialog.rv-bulk-dialog {
+  min-width: 0;
+  height: fit-content;
+  min-height: 0;
+  max-height: calc(100% - 32px);
+  margin: auto;
+  overflow-y: auto;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+dialog.rv-bulk-dialog[open] {
+  display: block;
 }
 
 /* The dialog: the names, or a field per name, scroll inside it */
@@ -185,7 +244,7 @@ main .rv-clients tr.is-chosen > th {
     padding-right: 56px;
   }
 
-  .rv-bulk-bar {
+  .rv-bulk-dock {
     bottom: 8px;
   }
 }

@@ -175,10 +175,83 @@ def test_the_bar_offers_the_actions_and_the_dialog_asks_first() -> None:
     dialog = dialog.split("</dialog>", 1)[0]
     assert 'aria-labelledby="bulk-dialog-title"' in dialog
     assert '<form method="dialog"' in dialog
-    assert 'value="cancel" data-bulk-cancel>Cancel</button>' in dialog
-    assert 'value="confirm" data-bulk-confirm>' in dialog
+    cancel = '<button type="button" class="rv-button-quiet" data-bulk-cancel>'
+    assert cancel + "Cancel</button>" in dialog
+    assert '<button type="submit" value="confirm" data-bulk-confirm>' in dialog
     for part in ("data-name=", "data-score=", "data-band=", "data-newest="):
         assert part in LIST, part
+
+
+def test_enter_in_a_name_field_confirms_only_when_the_names_match() -> None:
+    # Enter submits a form with its first submit button (THE-1189 acceptance D4).
+    # Cancel was that button, so Enter in a name field cancelled the dialog even
+    # once every name was typed. Now the confirm button is the only submit button:
+    # Enter submits it, and a browser does not submit while it is disabled, which it
+    # is until every name matches. Cancel closes the dialog from the script.
+    dialog = LIST.split('<dialog class="rv-dialog rv-bulk-dialog"', 1)[1]
+    dialog = dialog.split("</dialog>", 1)[0]
+    assert re.findall(r'<button type="submit"[^>]*>', dialog) == [
+        '<button type="submit" value="confirm" data-bulk-confirm>'
+    ]
+    assert dialog.index("data-bulk-cancel") < dialog.index("data-bulk-confirm")
+    cancel = 'dialog.querySelector("[data-bulk-cancel]")'
+    assert cancel + '.addEventListener("click"' in SCRIPT
+    assert 'dialog.close("cancel");' in SCRIPT
+    # The confirm button follows the names, and only "confirm" runs the action.
+    assert "confirm.disabled = !namesMatch();" in SCRIPT
+    assert 'dialog.returnValue === "confirm"' in SCRIPT
+
+
+def test_the_result_shows_in_the_dock_above_the_bar() -> None:
+    # The result was drawn under the table, out of view below the fold at 1440px
+    # and at 390px (THE-1189 acceptance D2). It now sits in the dock with the bar,
+    # which stays at the foot of the window, and it stays a polite live region.
+    dock = LIST.split('<div class="rv-bulk-dock">', 1)[1]
+    dock = dock.split("</div>\n</div>\n</div>", 1)[0]
+    result = dock.index('id="bulk-result" role="status" aria-live="polite"')
+    assert result < dock.index('id="bulk-bar"')
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+
+    def declarations(selector: str) -> str:
+        found = re.search(r"\n" + re.escape(selector) + r" \{([^}]*)\}", plain)
+        assert found is not None, selector
+        return found.group(1)
+
+    assert "position: sticky;" in declarations(".rv-bulk-dock")
+    assert "bottom: 16px;" in declarations(".rv-bulk-dock")
+    assert "position: sticky" not in declarations(".rv-bulk-bar")
+    assert "max-height: 40vh;" in declarations(".rv-bulk-result")
+    assert "overflow-y: auto;" in declarations(".rv-bulk-result")
+    # It stays until dismissed or replaced by the next action.
+    assert 'dismiss.textContent = "Dismiss";' in SCRIPT
+    assert 'closest("[data-bulk-dismiss]")' in SCRIPT
+
+
+def test_the_bar_hides_itself_without_the_base_sheet() -> None:
+    # The bar sets display: flex, which beats the user agent's [hidden] rule; it hid
+    # only because Pico forces [hidden] (THE-1189 acceptance D5).
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+    assert re.search(r"\n\.rv-bulk-bar\[hidden\] \{\s*display: none;\s*\}", plain)
+
+
+def test_the_dialog_is_a_card_not_the_whole_window() -> None:
+    # Pico draws a dialog at least as wide and tall as the window, so the card
+    # filled 1440 by 900 (THE-1189 acceptance D1). The minimums go, the card takes
+    # its content's height and is centred, and it is a block only while open.
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+    card = re.search(r"\ndialog\.rv-bulk-dialog \{([^}]*)\}", plain)
+    assert card is not None
+    for declaration in (
+        "min-width: 0;",
+        "min-height: 0;",
+        "height: fit-content;",
+        "margin: auto;",
+        "max-height: calc(100% - 32px);",
+    ):
+        assert declaration in card.group(1), declaration
+    assert "display" not in card.group(1)
+    shown = r"\ndialog\.rv-bulk-dialog\[open\] \{\s*display: block;\s*\}"
+    assert re.search(shown, plain)
 
 
 # --- the page and the answers the script relies on (PostgreSQL) -------------------

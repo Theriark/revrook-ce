@@ -270,6 +270,11 @@ th.num {
   left: -10000px;
 }
 
+.table-scroll:focus-visible {
+  outline: 2px solid var(--rv-accent);
+  outline-offset: 2px;
+}
+
 @media screen and (max-width: 40em) {
   body {
     padding: 0.5rem;
@@ -295,10 +300,16 @@ th.num {
     overflow-wrap: anywhere;
   }
 
-  table {
-    display: block;
+  .table-scroll {
     max-width: 100%;
     overflow-x: auto;
+    container-type: inline-size;
+  }
+
+  .table-scroll caption {
+    position: sticky;
+    left: 0;
+    width: 100cqi;
   }
 }
 
@@ -377,8 +388,9 @@ tr,
 <h2 id="summary-title">Control summary</h2>
 
 <p>One line for each topic that cyber insurance forms commonly ask about. The topics are our own: tick the ones the client's form asks about, and answer the form from the pages that follow.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="summary-topics-caption">
 <table>
-<caption>Topics, their status and the evidence behind them</caption>
+<caption id="summary-topics-caption">Topics, their status and the evidence behind them</caption>
 <thead><tr><th scope="col">Topic</th><th scope="col">Status</th><th scope="col" class="num">Coverage</th><th scope="col">Evidence dated</th><th scope="col">Owner</th><th scope="col">On the form</th></tr></thead>
 <tbody>
 
@@ -404,6 +416,7 @@ tr,
 
 </tbody>
 </table>
+</div>
 <p class="note">Met means every control of the topic that applies is Protected, with dated evidence. Partly means some are not. Not met means none is Protected or in need of attention. Not checked means nothing could be verified. Coverage is the share of the topic's controls that were checked. The evidence date is the oldest date among them.</p>
 <h3>Evidence references</h3>
 <p class="note">Snapshot f14164a059c7fa8e, pack date 2026-10-17.
@@ -426,8 +439,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>3 of 3 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-mfa-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-mfa-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -439,6 +453,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -460,8 +475,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>4 of 4 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-privileged-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-privileged-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -475,6 +491,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -496,8 +513,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>5 of 5 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-endpoint-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-endpoint-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -513,6 +531,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -534,8 +553,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>6 of 6 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-backup-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-backup-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -553,6 +573,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -574,8 +595,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>3 of 3 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-patching-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-patching-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -587,6 +609,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -608,8 +631,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>7 of 7 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-email-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-email-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -629,6 +653,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -650,8 +675,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>1 of 1 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-training-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-training-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -659,6 +685,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -680,8 +707,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>2 of 2 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-incident-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-incident-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -691,6 +719,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -712,8 +741,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>2 of 2 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-vendors-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-vendors-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -723,6 +753,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <p class="note">No exception is open for this topic.</p>
@@ -744,8 +775,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <dt>Checked</dt><dd>16 of 17 controls, oldest evidence dated 2026-10-17</dd>
 <dt>Artefact reference</dt><dd>Snapshot f14164a059c7fa8e; evidence-0001; evidence-0002; evidence-0003</dd>
 </dl>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-other-checked-caption">
 <table>
-<caption>What was checked, how and when</caption>
+<caption id="topic-other-checked-caption">What was checked, how and when</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">How</th><th scope="col">Evidence dated</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>
 
@@ -787,10 +819,12 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="topic-other-exceptions-caption">
 <table>
-<caption>Exceptions for this topic</caption>
+<caption id="topic-other-exceptions-caption">Exceptions for this topic</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 
@@ -798,6 +832,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <footer class="page-footer">
@@ -812,8 +847,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <h2 id="exceptions-title">Exception register</h2>
 
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="exceptions-caption">
 <table>
-<caption>Open exceptions: a control that is knowingly not met, and why</caption>
+<caption id="exceptions-caption">Open exceptions: a control that is knowingly not met, and why</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Owner</th><th scope="col">Reason</th><th scope="col">Compensating control</th><th scope="col">Review date</th></tr></thead>
 <tbody>
 
@@ -821,6 +857,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 <p class="note">An exception never changes a status and never raises the score.</p>
 
@@ -835,8 +872,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <h2 id="actions-title">Open actions</h2>
 
 
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="actions-caption">
 <table>
-<caption>What is not yet Protected, in order of urgency</caption>
+<caption id="actions-caption">What is not yet Protected, in order of urgency</caption>
 <thead><tr><th scope="col">Control</th><th scope="col">Status</th><th scope="col">What we recommend</th><th scope="col">What we need</th><th scope="col">By when</th></tr></thead>
 <tbody>
 
@@ -858,6 +896,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 
 </tbody>
 </table>
+</div>
 
 
 <footer class="page-footer">
@@ -874,8 +913,9 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <div class="signoff">
 <h3>Client sign-off</h3>
 <p>I have read this report and the notice above.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="signoff-caption">
 <table>
-<caption>Sign-off</caption>
+<caption id="signoff-caption">Sign-off</caption>
 <tbody>
 <tr><th scope="row">Name</th><td><div class="line"></div></td></tr>
 <tr><th scope="row">Role</th><td><div class="line"></div></td></tr>
@@ -883,6 +923,7 @@ Evidence items: evidence-0001 (0123456789ab), evidence-0002 (fedcba987654), evid
 <tr><th scope="row">Date</th><td><div class="line"></div></td></tr>
 </tbody>
 </table>
+</div>
 </div>
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>

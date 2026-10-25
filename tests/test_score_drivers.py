@@ -233,6 +233,17 @@ def test_the_bar_is_an_image_told_in_words_never_by_colour_alone() -> None:
     assert "<style" not in MACROS and " style=" not in MACROS
 
 
+def test_the_legend_keeps_each_name_and_its_words_together_at_the_top() -> None:
+    # An item of the legend is a grid as tall as its row. Without align-content its
+    # two rows shared the spare height, and a one-line description sat 9px lower
+    # than a two-line one beside it at 1440px (THE-1189 acceptance D6).
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+    item = re.search(r"\n\.rv-drv-legend li \{([^}]*)\}", plain)
+    assert item is not None
+    assert "display: grid;" in item.group(1)
+    assert "align-content: start;" in item.group(1)
+
+
 def test_the_stylesheet_has_its_own_version_and_uses_tokens_only() -> None:
     assert templates.env.globals["drivers_version"] == VERSION
     assert not set(DRIVER_FILES) & set(ASSET_FILES)

@@ -134,6 +134,10 @@
 {% endfor %}
 </tbody>
 </table>
+{#- The dock keeps the result of an action and the bar together at the foot of the
+    window, so what an action did is in view beside its buttons. -#}
+<div class="rv-bulk-dock">
+<div class="rv-bulk-result" id="bulk-result" role="status" aria-live="polite"></div>
 <div class="rv-bulk-bar" id="bulk-bar" role="region" aria-labelledby="bulk-count" hidden>
 <p class="rv-bulk-count" id="bulk-count">No client selected</p>
 <div class="rv-bulk-actions">
@@ -143,7 +147,9 @@
 <button type="button" class="rv-button-quiet rv-button-small" data-bulk-command="clear">Clear the selection</button>
 </div>
 </div>
-<div class="rv-bulk-result" id="bulk-result" role="status" aria-live="polite"></div>
+</div>
+{#- Cancel is a plain button, so Enter in a name field submits the confirm button,
+    which stays disabled until every name matches: Enter can confirm, never cancel. -#}
 <dialog class="rv-dialog rv-bulk-dialog" id="bulk-dialog" aria-labelledby="bulk-dialog-title" aria-describedby="bulk-dialog-text">
 <form method="dialog" class="rv-bulk-dialog-form">
 <h2 id="bulk-dialog-title"></h2>
@@ -151,7 +157,7 @@
 <ul class="rv-bulk-dialog-list" id="bulk-dialog-list"></ul>
 <p class="rv-bulk-dialog-note" id="bulk-dialog-note" hidden></p>
 <div class="rv-dialog-actions">
-<button type="submit" class="rv-button-quiet" value="cancel" data-bulk-cancel>Cancel</button>
+<button type="button" class="rv-button-quiet" data-bulk-cancel>Cancel</button>
 <button type="submit" value="confirm" data-bulk-confirm></button>
 </div>
 </form>
