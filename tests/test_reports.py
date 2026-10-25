@@ -168,7 +168,9 @@ def test_every_chart_is_followed_by_a_table_of_its_numbers(name: str) -> None:
     chart = text.index('<svg class="chart"')
     after = text[chart:]
     assert "<title" in after and "<desc" in after
-    assert "<caption>Data for the chart" in after[after.index("</svg>") :]
+    # The caption names the frame the table scrolls in (THE-1189 acceptance D3).
+    numbers = '<caption id="coverage-caption">Data for the chart'
+    assert numbers in after[after.index("</svg>") :]
 
 
 # --- built from a stored snapshot only ------------------------------------------------

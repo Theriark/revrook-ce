@@ -93,14 +93,25 @@
     }
   }
 
-  // --- the result line under the bar --------------------------------------------
+  // --- the result, in the dock above the bar ---------------------------------------
 
+  // The result stays in view at the foot of the window until it is dismissed or the
+  // next action replaces it.
   function report(title, lines) {
     clearChildren(result);
+    var head = document.createElement("div");
+    head.className = "rv-bulk-result-head";
     var heading = document.createElement("p");
     heading.className = "rv-bulk-result-title";
     heading.textContent = title;
-    result.appendChild(heading);
+    head.appendChild(heading);
+    var dismiss = document.createElement("button");
+    dismiss.type = "button";
+    dismiss.className = "rv-button-quiet rv-button-small";
+    dismiss.setAttribute("data-bulk-dismiss", "");
+    dismiss.textContent = "Dismiss";
+    head.appendChild(dismiss);
+    result.appendChild(head);
     if (lines.length) {
       var list = document.createElement("ul");
       lines.forEach(function (line) {
@@ -395,6 +406,21 @@
     } else {
       all.focus();
     }
+  });
+
+  // Cancel is a plain button (clients.html): Enter in a name field submits the
+  // confirm button instead, which stays disabled until every name matches.
+  dialog.querySelector("[data-bulk-cancel]").addEventListener("click", function () {
+    dialog.close("cancel");
+  });
+
+  result.addEventListener("click", function (event) {
+    var button = event.target.closest ? event.target.closest("[data-bulk-dismiss]") : null;
+    if (!button) {
+      return;
+    }
+    clearChildren(result);
+    all.focus();
   });
 
   dialog.querySelector("form").addEventListener("submit", function (event) {

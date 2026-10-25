@@ -274,12 +274,22 @@ th.num {
   left: -10000px;
 }
 
+/* The frame of a table (_macros.html): a named region the keyboard reaches, so it
+   shows where the focus is. It only scrolls on a narrow screen, below. */
+.table-scroll:focus-visible {
+  outline: 2px solid var(--rv-accent);
+  outline-offset: 2px;
+}
+
 /* A narrow screen (THE-1189): the file a client receives is also read on a phone,
    and its preview opens it as it is. At 390px the A4 padding and a table of six or
    seven columns made the page 249px wider than the screen. On a screen narrower
    than 40em the page fits: less padding, the facts in one column, a smaller cover
-   title. A table that is still wider than the page scrolls inside itself, so the
-   page never scrolls sideways and no column is squeezed until its dates break.
+   title. A table that is still wider than the page scrolls inside its frame, so the
+   page never scrolls sideways and no column is squeezed until its dates break. The
+   table stays a table (a table shown as a block loses its rows and cells in some
+   screen readers), and its caption is as wide as the frame and stays in place while
+   the columns scroll, so it wraps and is read whole.
    Print (print.css) is untouched: A4 keeps every rule above. */
 @media screen and (max-width: 40em) {
   body {
@@ -306,9 +316,15 @@ th.num {
     overflow-wrap: anywhere;
   }
 
-  table {
-    display: block;
+  .table-scroll {
     max-width: 100%;
     overflow-x: auto;
+    container-type: inline-size;
+  }
+
+  .table-scroll caption {
+    position: sticky;
+    left: 0;
+    width: 100cqi;
   }
 }
