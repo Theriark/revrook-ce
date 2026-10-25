@@ -27,8 +27,9 @@
 <script type="module" src="/static/js/scenes.js?v={{ asset_version }}"></script>
 {% block head %}{% endblock %}
 </head>
-{#- Signed in: the charcoal rail (brand, navigation, user) and the page column; from
-    1024px the rail folds to its icons when `rail` is compact (_rail.html).
+{#- Signed in: the charcoal rail (brand, navigation, user) and the page column, which
+    opens with the top bar (breadcrumb and search, _topbar.html); from 1024px the
+    rail folds to its icons when `rail` is compact (_rail.html).
     Signed out: the rook panel on the left and the form on the right. The brand is
     the lockup of _brand.html in all three places: the rook mark in its tile and the
     wordmark, drawn for the surface it sits on in either theme. -#}
@@ -43,6 +44,7 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 </header>
 <div class="rv-main">
+{% include "_topbar.html" %}
 {% else %}
 <body class="rv-signed-out">
 <a class="rv-skip-link" href="#main">Skip to content</a>
