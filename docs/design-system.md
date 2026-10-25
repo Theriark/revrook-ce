@@ -711,10 +711,11 @@ carries `aria-sort`. A search with no match is an empty state with the search ic
 (the check is kept for a clean flagged view) that repeats the words, then the
 narrowing and the flagged view in the words of their chips, so a domain or a status
 keeps its capitals ("within Not protected"), with a way back to every control; an
-unknown order or status is refused with 422. The tools sit on
-one row from 768 px, bottom-aligned so the search box lines up with the menus under
-their labels; below 600 px each takes the whole width. The table (`table.rv-checklist`)
-has no scroll box, so its head stays sticky: the control is the row heading with its
+unknown order or status is refused with 422. From 768 px the tools sit in a row that
+wraps when the toolbar is too narrow (two rows at 768 and 1024 px, one row at 1440 px,
+Reset included), bottom-aligned so the search box lines up with the menus under their
+labels; below 600 px each takes the whole width. The table (`table.rv-checklist`) has
+no scroll box, so its head stays sticky: the control is the row heading with its
 id and "gate control" under it, the status a pill, the coverage and the date in
 tabular figures, the owner, and the flags as a short dotted list (`ul.rv-flags`). A
 row whose status changed since the last report carries the violet mark of the rail on

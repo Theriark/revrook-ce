@@ -30,24 +30,36 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on 2026-10-24 from the application build
-documented and captured (commit `314d239c38965e5ea503ba6526c62d0d2ea7b523`, image
-`sha256:30bf7d9727764d91b490a73d7b621d4284fc18397ac140e648290c4336581ca6`), with synthetic
+Live captures of the Development site, taken on 2026-10-25 from the application build
+documented and captured (commit `b4634182e0fd68d760c209fcc6051ff9adceea2e`, image
+`sha256:cfcb12a8a3979bc10957ca220c59e26b28bbc7742669b868373a7451192ea7d5`), with synthetic
 test data only ([capture manifest](docs/images/README.md)). Later documentation-only
 commits are deployed on top with the same application code; the deployed head is read
 from the deployment receipt and the package manifest.
 
-**Home**: four stat cards, then the rookery skyline, one rook per client as tall as its
-score, above the card of each client ([guide 2](docs/guides/02-clients-and-home.md),
+**Home**: the top bar with the breadcrumb and the search of the clients, four stat
+cards, then the rookery skyline, one rook per client as tall as its score
+([guide 2](docs/guides/02-clients-and-home.md),
 [guide 8](docs/guides/08-scenes-rail-and-explorer.md)).
 
-![Home with the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
+![Home with the top bar and the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
+
+**What moves the score**: the hundred points of each client split into what it earns
+and what costs it the rest, with the controls that cost the most
+([guide 2](docs/guides/02-clients-and-home.md#what-moves-the-score)).
+
+![The score drivers on Home at 1440 px, dark theme](docs/images/home-1440-drivers-dark.png)
 
 **A client overview**: the domain keep in the coverage card, one block per domain built
 of its controls by status, with a domain chosen from the keyboard; the bars under it
 carry the same facts.
 
 ![The domain keep of a client overview at 1440 px, dark theme](docs/images/client-overview-1440-keep-chosen-dark.png)
+
+**Clients**: the filters in use as chips and the bulk actions, with three clients
+chosen ([guide 9](docs/guides/09-top-bar-filters-and-bulk-actions.md)).
+
+![The clients list with three clients chosen at 1440 px, light theme](docs/images/clients-1440-selected.png)
 
 **Evidence Explorer**: which evidence exports feed which controls of one client.
 
@@ -81,7 +93,7 @@ carry the same facts.
 | [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |
 | [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state and the release workflow check |
 | [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
-| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the scenes, the folded rail and the Evidence Explorer, with live screenshots ([docs/images](docs/images/README.md)) |
+| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the scenes, the folded rail, the Evidence Explorer, the top bar, the checklist tools, the score drivers and the bulk actions, with live screenshots ([docs/images](docs/images/README.md)) |
 
 Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
