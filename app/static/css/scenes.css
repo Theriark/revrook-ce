@@ -214,6 +214,17 @@
   }
 }
 
+/* The domain keep stands in two rows once the library has more than six domains,
+   seen from above, so it needs more height than the one row of the rookery: in a
+   21 by 9 stage the fit that keeps every block whole (framingDistance in
+   scenes.js) steps so far back that the blocks shrink by a quarter. From 600px
+   the stage of the keep is 16 by 9 (THE-1188); a phone keeps 16 by 10. */
+@media (min-width: 600px) {
+  .rv-scene[data-scene="keep"] .rv-scene-stage {
+    aspect-ratio: 16 / 9;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rv-scene-state.is-loading .rv-scene-state-text {
     animation: none;

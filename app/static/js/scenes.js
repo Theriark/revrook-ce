@@ -341,6 +341,51 @@ function place(count, spacing, limit) {
   return positions;
 }
 
+// The home distance that keeps every corner of every node inside the stage
+// (THE-1188). The camera orbits `target` at `yaw` and `pitch` and looks at it
+// with a vertical field of `fov` degrees and the stage's `aspect`; for each
+// corner the distance is found at which it sits exactly on the edge of the view
+// (in its width and in its height), and the largest wins, so nothing is cut,
+// whatever the shape of the stage. `margin` keeps a little air round the edge
+// (0.88 leaves six percent on each side) and `floor` stops a lone node filling
+// the stage. The earlier estimate fitted the width of the front row and the
+// tallest node but not the depth of a second row seen from above, so at 768px
+// the front blocks of a client's keep ran off the foot of the stage. Pure, so a
+// test can run it without a browser.
+export function framingDistance(corners, view, target, fov, aspect, margin = 0.88, floor = 4.5) {
+  const tall = Math.tan(((fov / 2) * Math.PI) / 180) * margin;
+  const wide = tall * aspect;
+  // The camera's own axes: back (from the target to the camera), right and up.
+  const cp = Math.cos(view.pitch);
+  const sp = Math.sin(view.pitch);
+  const cy = Math.cos(view.yaw);
+  const sy = Math.sin(view.yaw);
+  const back = { x: cp * sy, y: sp, z: cp * cy };
+  const right = { x: cy, y: 0, z: -sy };
+  const up = { x: -sp * sy, y: cp, z: -sp * cy };
+  let distance = floor;
+  corners.forEach((corner) => {
+    const v = { x: corner.x - target.x, y: corner.y - target.y, z: corner.z - target.z };
+    const along = v.x * back.x + v.y * back.y + v.z * back.z;
+    const across = Math.abs(v.x * right.x + v.z * right.z);
+    const high = Math.abs(v.x * up.x + v.y * up.y + v.z * up.z);
+    distance = Math.max(distance, across / wide + along, high / tall + along);
+  });
+  return distance;
+}
+
+// The eight corners of a box (THREE.Box3 or anything with min and max).
+function cornersOf(box, into) {
+  [box.min.x, box.max.x].forEach((x) => {
+    [box.min.y, box.max.y].forEach((y) => {
+      [box.min.z, box.max.z].forEach((z) => {
+        into.push({ x, y, z });
+      });
+    });
+  });
+  return into;
+}
+
 // --- one scene: built from the page once, drawn on demand, disposed whole -------
 
 function buildScene(THREE, root, options) {
@@ -388,16 +433,12 @@ function buildScene(THREE, root, options) {
   const target = new THREE.Vector3(0, Math.min(0.6, 0.25 + tallest / 2), rows > 1 ? -0.9 : 0);
   const view = { yaw: home.yaw, pitch: home.pitch, distance: home.distance };
 
-  // The home distance fits the row to the stage: as near as the width of the stage
-  // allows for the span of the row (its sideways extent at the home yaw, plus the
-  // depth of a second row), and never so near that the tallest node is cut off.
+  // The home distance fits every node to the stage at the home view: the nearest
+  // distance at which no corner of any node (its plinth, its layers, its wire top)
+  // falls outside the view, for the shape the stage has now (framingDistance).
+  const corners = [];
   function fitDistance() {
-    const half = (camera.fov / 2) * (Math.PI / 180);
-    const wide = Math.tan(half) * camera.aspect;
-    const across = (span / 2) * Math.cos(home.yaw) + (rows > 1 ? 1.4 : 0.6) * Math.sin(home.yaw) + 0.8;
-    const byWidth = across / wide;
-    const byHeight = (tallest + 1.6) / (2 * Math.tan(half));
-    return Math.max(byWidth, byHeight, 4.5);
+    return framingDistance(corners, home, target, camera.fov, camera.aspect);
   }
 
   scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.5));
@@ -428,6 +469,10 @@ function buildScene(THREE, root, options) {
     scene.add(built.group);
     pickables.push(built.group);
     nodes.set(entry.id, { entry, group: built.group, materials: built.materials });
+  });
+  const bounds = new THREE.Box3();
+  nodes.forEach((node) => {
+    cornersOf(bounds.setFromObject(node.group), corners);
   });
 
   let rafId = 0;
@@ -953,4 +998,8 @@ async function main() {
   }
 }
 
-main();
+// Imported outside a browser (the test of framingDistance), the module only
+// defines its functions.
+if (typeof document !== "undefined") {
+  main();
+}
