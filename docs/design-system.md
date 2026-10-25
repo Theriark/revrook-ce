@@ -822,6 +822,15 @@ column holds the problems to fix first (`#problems`, `.rv-errors`) or the succes
 strip, and the card of the two reports (`ul.rv-kinds`), each with its name, what it
 is for, the quiet preview button and the primary export button.
 
+A preview opens the file as it is sent, so the file itself fits a phone (THE-1189):
+at 390 px the A4 padding and a table of six or seven columns made the quarterly
+review 249 px wider than the screen. Below 40em on a screen, `app/reports/report.css`
+gives the page less padding, the facts one column and the cover title a smaller
+size, and a table that is still wider than the page scrolls inside itself, so the
+page never scrolls sideways and no date is broken to fit. Print (`print.css`, A4)
+is unchanged. The rule is in every exported file, so the golden reports changed by
+that block only.
+
 The export history. The section head and the success strip after an export, then
 the table (`table.rv-exports`, with `rv-table-cards`): when, the report, the file
 and the SHA-256 in `code.rv-digest` (which breaks anywhere, so a card on a phone
