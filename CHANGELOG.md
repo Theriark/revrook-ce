@@ -8,6 +8,8 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Added
 
+- Bulk actions on the clients list (THE-1189, [docs/design-system.md](docs/design-system.md), Clients): a select box on every row, one that selects the page, and a bar at the foot of the window to make a report for every chosen client, download the chosen rows as CSV, or delete them. Only actions the application already has are used, one client after another: the report builder's report for the last full quarter, and the System page's deletion after a dialog that asks for the name of each client (ten at most, checked again by the server). Without script the list is as before.
+
 - Repository, container and CI foundations: a multi-stage non-root image, a compose stack (web, worker, PostgreSQL 16), hashed requirement files, the nine-check merge gate and the licence audit.
 - Sign-in with Argon2id, signed session cookies, CSRF protection, API tokens, an append-only audit trail and strict response headers.
 - An evidence store: content-addressed files, immutable revisions, assurance labels, a hash chain with a verify command, per-client pseudonymisation, retention and deletion per client.

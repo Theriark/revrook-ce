@@ -24,6 +24,7 @@ from app.security import SessionData, new_csrf_token
 from app.sources import source_icon
 from app.theme import COLOR_SCHEMES, rail_of, theme_of
 from app.ui.brand import (
+    BULK_ACTION_FILES,
     DRIVER_FILES,
     FILTER_CHIP_FILES,
     asset_version,
@@ -39,6 +40,8 @@ templates.env.globals["asset_version"] = asset_version()
 templates.env.globals["filter_chips_version"] = asset_version(files=FILTER_CHIP_FILES)
 # The score drivers of Home link their own stylesheet (home.html).
 templates.env.globals["drivers_version"] = asset_version(files=DRIVER_FILES)
+# The bulk actions of the clients list link their own two files (clients.html).
+templates.env.globals["bulk_actions_version"] = asset_version(files=BULK_ACTION_FILES)
 # The mark of an evidence source (_icons.html, source_mark).
 templates.env.globals["source_icon"] = source_icon
 router = APIRouter()

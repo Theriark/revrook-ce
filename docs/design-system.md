@@ -582,7 +582,30 @@ Below 1024 px, where the sidebar ends, every row becomes a card (two to a row fr
 768 px, one on a phone): the heading row is kept for assistive technology only and
 each cell names its column before its value. The empty list is
 an empty state that says what a client is; a search or filter that matches nothing
-is its own empty state with the way back to the whole list. The form that adds a
+is its own empty state with the way back to the whole list.
+
+Bulk actions (THE-1189, `app/static/js/bulk-actions.js` and
+`app/static/css/bulk-actions.css`, linked by `clients.html` with their own digest).
+The list works without them: the select column, the box that selects the page and
+the bar are `hidden` until the script reveals them. With it every row has a select
+box labelled with the client name (in the top corner of the card below 1024 px),
+"Select every client on this page" above the table is checked, mixed or clear, and a
+chosen row is tinted as well as ticked. Once a client is chosen, a bar sticks to the
+foot of the window (`#bulk-bar`): the count in words, then Make reports, Download as
+CSV, Delete and Clear the selection. Every action is one the application already
+has, run one client after another with the CSRF token of the page, so a refusal of
+one never stops the others: Make reports posts the report builder's own form
+(`POST /clients/<id>/reports/snapshot`, the last full quarter) after a dialog that
+names the clients; Delete posts the System page's form
+(`POST /system/clients/<id>/delete`) after a dialog that asks for the name of every
+client, as the System page does, at most ten at a time, and the server checks each
+name again; a deletion counts only when the answer is the System page's
+`?deleted=1`, never the sign-in page of an ended session. The download is made in the
+browser from the rows on the page (a cell that starts like a formula is written as
+text). The result (`#bulk-result`, a polite live region) lists each client with what
+happened and, for a report, the link to it. The dialog (`dialog.rv-dialog`) is the
+native modal: the focus starts in its first field, Escape cancels it and the focus
+returns to the button that opened it. The form that adds a
 client is a card at the end of the page, and the primary action of the page header
 leads to it.
 
