@@ -5,7 +5,7 @@ their data-filter-text, the search box and the empty state. It adds no element, 
 event handler and no script, and every link of a chip still points at /clients with
 exactly the values the list was asked for: an ampersand in the search never becomes
 another parameter. A `show` or `band` that is not one of the known values is refused
-(422) without its text on the page.
+(422) without its text in the refusal.
 
 The template tests render clients.html and need no database; one of them renders it
 again with autoescaping off to prove the check below fails when the escaping goes.
@@ -73,9 +73,7 @@ class Parsed(HTMLParser):
         if tag == "script":
             self._script = []
 
-    def handle_startendtag(
-        self, tag: str, attrs: list[tuple[str, str | None]]
-    ) -> None:
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self.tags.append((tag, {name: value or "" for name, value in attrs}))
 
     def handle_endtag(self, tag: str) -> None:
@@ -150,9 +148,7 @@ def render(query: ListQuery, *, autoescape: bool = True) -> str:
 def hostile_query() -> ListQuery:
     """The hostile search through the parser of the route, with a filter, a band
     and a sort beside it."""
-    return read_query(
-        HOSTILE, "needs-work", "score", "asc", "comfortable", "1", "none"
-    )
+    return read_query(HOSTILE, "needs-work", "score", "asc", "comfortable", "1", "none")
 
 
 # --- the search, rendered -------------------------------------------------------------
@@ -283,6 +279,9 @@ async def test_the_list_page_refuses_an_unknown_show_or_band(
         response = await ui_browser.get("/clients", params={field: value})
         html = response.text
         assert response.status_code == 422, value
-        assert value not in html, value
+        # The refusal does not repeat the value. The page's own address is still
+        # in the theme form's hidden `next` field, as an escaped attribute.
+        main = html[html.index("<main") : html.index("</main>")]
+        assert value not in main, value
         assert injected(html) == [], value
         assert "data-filter-chip" not in html, value
