@@ -77,8 +77,8 @@
     count.textContent = picked.length
       ? plural(picked.length, "client", "clients") + " selected"
       : "No client selected";
-    bar.querySelectorAll("[data-bulk-action]").forEach(function (button) {
-      var action = button.getAttribute("data-bulk-action");
+    bar.querySelectorAll("[data-bulk-command]").forEach(function (button) {
+      var action = button.getAttribute("data-bulk-command");
       var tooMany = action === "delete" && picked.length > MAX_DELETE;
       button.disabled = busy || (action !== "clear" && picked.length === 0) || tooMany;
       if (action === "delete") {
@@ -403,12 +403,12 @@
   });
 
   bar.addEventListener("click", function (event) {
-    var button = event.target.closest ? event.target.closest("[data-bulk-action]") : null;
+    var button = event.target.closest ? event.target.closest("[data-bulk-command]") : null;
     if (!button || button.disabled || busy) {
       return;
     }
     var list = chosen();
-    var action = button.getAttribute("data-bulk-action");
+    var action = button.getAttribute("data-bulk-command");
     opener = button;
     if (action === "clear") {
       rows().forEach(function (row) {

@@ -160,9 +160,12 @@ def test_the_selection_is_hidden_until_the_script_reveals_it() -> None:
 
 def test_the_bar_offers_the_actions_and_the_dialog_asks_first() -> None:
     bar = LIST.split('id="bulk-bar"', 1)[1].split("</div>\n</div>", 1)[0]
-    for action in ("report", "csv", "delete", "clear"):
-        assert f'data-bulk-action="{action}"' in bar, action
-    assert 'class="rv-button-danger rv-button-small" data-bulk-action="delete"' in bar
+    # data-bulk-command, not data-bulk-action: the same-origin link test of
+    # tests/test_brand_shell.py reads any attribute ending in action= as a URL.
+    for command in ("report", "csv", "delete", "clear"):
+        assert f'data-bulk-command="{command}"' in bar, command
+    assert 'class="rv-button-danger rv-button-small" data-bulk-command="delete"' in bar
+    assert "data-bulk-action" not in LIST and "data-bulk-action" not in SCRIPT
     assert 'id="bulk-result" role="status" aria-live="polite"' in LIST
     dialog = LIST.split('<dialog class="rv-dialog rv-bulk-dialog"', 1)[1]
     dialog = dialog.split("</dialog>", 1)[0]

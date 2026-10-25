@@ -281,7 +281,9 @@ async def test_home_draws_the_split_of_a_client_with_evidence(
     assert label is not None and label.group(1).startswith("Synthetic Client Ltd: ")
     assert " of 100 points earned" in label.group(1)
     assert " lost to " in label.group(1)
-    segments = SEGMENT.findall(card)
+    # The track under the bar matches the pattern too; the first part drawn on it
+    # is what the client earns.
+    segments = [part for part in SEGMENT.findall(card) if part[0] != "track"]
     assert segments and segments[0][0] == "earned"
     assert f'href="/clients/{client_id}/controls/' in card
 

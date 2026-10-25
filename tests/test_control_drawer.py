@@ -33,11 +33,11 @@ CONTROL = (TEMPLATES / "control.html").read_text(encoding="utf-8")
 HOSTS = ("checklist.html", "home.html", "client_overview.html")
 LIBRARY = load_library()
 ID = re.compile(r' id="([^"]+)"')
-# A link to a control in a host template: the path of an attention item or the
-# control of a checklist row.
+# A link to a control in a host template: the path of an attention item, the
+# control of a checklist row, or a control of a score driver card on Home.
 CONTROL_LINK = re.compile(
     r'<a [^>]*href="/(?:\{\{ item\.path \}\}'
-    r'|clients/\{\{ client_id \}\}/controls/[^"]+)"[^>]*>'
+    r'|clients/\{\{ (?:client\.)?client_id \}\}/controls/[^"]+)"[^>]*>'
 )
 DRAWER_HEADERS = {"HX-Request": "true", "HX-Target": DRAWER_TARGET}
 DIALOG_TAG = '<dialog class="rv-drawer" id="control-drawer" aria-label="Control">'

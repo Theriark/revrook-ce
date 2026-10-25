@@ -396,7 +396,8 @@ def test_the_sparklines_and_the_bars_carry_their_words_and_their_links() -> None
     assert spark in HOME
     mark = '<circle class="rv-spark-mark" cx="{{ mark.x }}" cy="{{ mark.y }}" r="4"'
     assert mark in HOME
-    assert HOME.count('role="img"') == 2  # the ring and the sparkline
+    # The sparkline; the score bars that replaced the rings are in _drivers.html.
+    assert HOME.count('role="img"') == 1
     assert 'role="group" aria-label="{{ bar.name }} by status" data-roving' in HOME
     assert 'href="#domain-row-{{ bar.code }}"' in HOME
     assert '<tr id="domain-row-{{ bar.code }}" tabindex="-1">' in HOME
