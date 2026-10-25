@@ -620,10 +620,28 @@ report prints. Both read the same rows, labels and results as before; nothing is
 stored on either page except the notes, which were already saved as they are typed.
 
 The checklist. Under the client header, the section head names the page and its
-purpose, then a canvas band (`.rv-checklist-toolbar`) holds two chips with their
+purpose, then a canvas band (`form.rv-checklist-toolbar`, THE-1188) holds the tools
+of the list: a search over the name, the id, the domain and the owner of a control
+(`q`, labelled for assistive technology, the search icon in the field), a Status menu
+(any status or one of the five labels, `status`), an Order menu (`sort`: the library
+order, the order of the report and the default; status, worst first, with the gate
+controls and then the heaviest first among equals; evidence, oldest first, with the
+controls that have no dated evidence at the top; name, A to Z), the primary "Show
+controls" button and, once a search, a status or another order is in use, a quiet
+Reset that takes those three away. It is one GET form in a `search` element labelled
+Checklist, so it works without script and the address names what is shown; nothing
+submits on its own when a menu changes. Under the tools the two chips with their
 counts, all controls and the ones that changed or need a look (the one that applies
-carries `aria-current="true"`), and the count line (`#checklist-count`), which also
-says when no report exists yet to compare against. The table (`table.rv-checklist`)
+carries `aria-current="true"`), keep the search and the order; the chip of a
+narrowing from a chart segment takes the domain and the status away and keeps the
+rest (`ChecklistQuery.params` in `app/ui/viewmodels.py`). The count line
+(`#checklist-count`) says how many controls are shown, the words searched for, the
+order in use and when no report exists yet to compare against; the caption of the
+table names the order too, and the sorted column carries `aria-sort`. A search with
+no match is an empty state that repeats the words and the narrowing, with a way back
+to every control; an unknown order or status is refused with 422. The tools sit on
+one row from 768 px, bottom-aligned so the search box lines up with the menus under
+their labels; below 600 px each takes the whole width. The table (`table.rv-checklist`)
 has no scroll box, so its head stays sticky: the control is the row heading with its
 id and "gate control" under it, the status a pill, the coverage and the date in
 tabular figures, the owner, and the flags as a short dotted list (`ul.rv-flags`). A
