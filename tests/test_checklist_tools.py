@@ -223,7 +223,8 @@ def test_the_tools_are_one_labelled_get_form_with_the_chips() -> None:
     # Nothing refined: nothing to reset, and no hidden choice is carried.
     assert ">Reset</a>" not in tools and 'type="hidden"' not in tools
     assert 'id="show-all" class="rv-chip" href="/clients/5/checklist"' in tools
-    assert "controls shown. Order: library order." in tools
+    assert "controls shown. Order: Library order." in tools
+    assert "behind it. Order: Library order.</caption>" in page
     headings = page.count('<th scope="row"><a class="rv-control-link"')
     assert headings == len(LIBRARY.controls)
     assert "aria-sort" not in page
@@ -244,11 +245,32 @@ def test_a_refined_list_keeps_every_choice_and_offers_a_reset() -> None:
     assert f'id="show-all" class="rv-chip" href="/clients/5/checklist{kept}"' in page
     chip = 'href="/clients/5/checklist?show=flagged&amp;q=mfa&amp;sort=title"'
     assert f'id="show-narrowed" class="rv-chip rv-chip-narrowed" {chip}' in page
-    # The empty state names the search, the narrowing and the flagged view.
+    # The empty state names the search, then the narrowing and the flagged view
+    # by the words of their chips, so their capitals survive (seen on
+    # Development: "of not protected", "name, a to z").
     assert 'id="checklist-empty"' in page and "No control matches" in page
-    text = "No control of identity, not protected that changed or needs a look"
-    assert f'{text} has "mfa" in its name, id, domain or owner.' in page
-    assert 'Searched for "mfa".' in page and "Order: name, a to z." in page
+    text = 'No control has "mfa" in its name, id, domain or owner'
+    within = "within Identity, not protected and Changed or needs a look."
+    assert f"{text}, {within}" in page
+    assert 'Searched for "mfa".' in page and "Order: Name, A to Z." in page
+    # No match is not good news: a search icon, not the check of a clean list.
+    icon = page[page.index('id="checklist-empty"') :].split("</svg>", 1)[0]
+    assert '<circle cx="11" cy="11" r="6.5"/>' in icon
+    assert '<path d="m5 12.5 4.5 4.5L19 7.5"/>' not in icon
+
+
+def test_a_narrowing_alone_keeps_the_words_of_its_chip() -> None:
+    page = render(ChecklistQuery(status="not-protected"), [], narrowed="Not protected")
+    assert "Nothing is listed under Not protected today." in page
+    assert "of not protected" not in page
+    searched = render(
+        ChecklistQuery(status="not-protected", q="zz"), [], narrowed="Not protected"
+    )
+    assert "owner, within Not protected.</p>" in searched
+    flagged = render(ChecklistQuery(show="flagged", q="zz"), [])
+    assert "owner, within Changed or needs a look.</p>" in flagged
+    plain = render(ChecklistQuery(q="zz"), [])
+    assert 'has "zz" in its name, id, domain or owner.</p>' in plain
 
 
 def test_a_sorted_column_says_so_to_assistive_technology() -> None:

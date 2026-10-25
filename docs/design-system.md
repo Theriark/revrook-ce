@@ -690,9 +690,12 @@ narrowing from a chart segment takes the domain and the status away and keeps th
 rest (`ChecklistQuery.params` in `app/ui/viewmodels.py`). The count line
 (`#checklist-count`) says how many controls are shown, the words searched for, the
 order in use and when no report exists yet to compare against; the caption of the
-table names the order too, and the sorted column carries `aria-sort`. A search with
-no match is an empty state that repeats the words and the narrowing, with a way back
-to every control; an unknown order or status is refused with 422. The tools sit on
+table names the order too, in the words of the Order menu, and the sorted column
+carries `aria-sort`. A search with no match is an empty state with the search icon
+(the check is kept for a clean flagged view) that repeats the words, then the
+narrowing and the flagged view in the words of their chips, so a domain or a status
+keeps its capitals ("within Not protected"), with a way back to every control; an
+unknown order or status is refused with 422. The tools sit on
 one row from 768 px, bottom-aligned so the search box lines up with the menus under
 their labels; below 600 px each takes the whole width. The table (`table.rv-checklist`)
 has no scroll box, so its head stays sticky: the control is the row heading with its

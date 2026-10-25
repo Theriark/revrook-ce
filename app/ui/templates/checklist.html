@@ -46,12 +46,12 @@
 <li><a id="show-flagged" class="rv-chip" href="/clients/{{ client_id }}/checklist{{ query.params(show='flagged') }}"{% if query.show == "flagged" %} aria-current="true"{% endif %}>Changed or needs a look <span class="rv-chip-count">{{ flagged_total }}</span></a></li>
 {% if narrowed %}<li><a id="show-narrowed" class="rv-chip rv-chip-narrowed" href="/clients/{{ client_id }}/checklist{{ query.params(domain='', status='') }}" aria-current="true">{{ narrowed }} <span class="rv-chip-count">{{ rows|length }}</span><span class="rv-chip-remove" aria-hidden="true">&#10005;</span><span class="rv-sr-only">, remove this narrowing</span></a></li>{% endif %}
 </ul>
-<p class="rv-toolbar-note" id="checklist-count">{{ rows|length }} of {{ total }} controls shown.{% if query.q %} Searched for "{{ query.q }}".{% endif %} Order: {{ query.sort_words|lower }}.{% if not has_earlier %} No report has been made for this client yet, so no control is marked as changed.{% endif %}</p>
+<p class="rv-toolbar-note" id="checklist-count">{{ rows|length }} of {{ total }} controls shown.{% if query.q %} Searched for "{{ query.q }}".{% endif %} Order: {{ query.sort_words }}.{% if not has_earlier %} No report has been made for this client yet, so no control is marked as changed.{% endif %}</p>
 </form>
 </search>
 {% if rows %}
 <table id="checklist" class="rv-checklist">
-<caption>Every control, its status and the evidence behind it; order: {{ query.sort_words|lower }}</caption>
+<caption>Every control, its status and the evidence behind it. Order: {{ query.sort_words }}.</caption>
 <thead>
 <tr>
 <th scope="col"{% if query.sort == "title" %} aria-sort="ascending"{% endif %}>Control</th>
@@ -77,14 +77,16 @@
 </table>
 {% else %}
 <div class="rv-empty" id="checklist-empty">
-{{ i.icon("check", "xl") }}
 {% if query.q %}
+{{ i.icon("search", "xl") }}
 <p class="rv-empty-title">No control matches</p>
-<p class="rv-empty-text">No control{% if narrowed %} of {{ narrowed|lower }}{% endif %}{% if query.show == "flagged" %} that changed or needs a look{% endif %} has "{{ query.q }}" in its name, id, domain or owner.</p>
+<p class="rv-empty-text">No control has "{{ query.q }}" in its name, id, domain or owner{% if narrowed or query.show == "flagged" %}, within {% if narrowed %}{{ narrowed }}{% endif %}{% if narrowed and query.show == "flagged" %} and {% endif %}{% if query.show == "flagged" %}Changed or needs a look{% endif %}{% endif %}.</p>
 {% elif narrowed %}
+{{ i.icon("search", "xl") }}
 <p class="rv-empty-title">No control matches</p>
-<p class="rv-empty-text">No control of {{ narrowed|lower }} is on this list today.</p>
+<p class="rv-empty-text">Nothing is listed under {{ narrowed }} today.</p>
 {% else %}
+{{ i.icon("check", "xl") }}
 <p class="rv-empty-title">Nothing changed and nothing needs a look</p>
 <p class="rv-empty-text">{% if has_earlier %}Every control has the status it had at the last report, its evidence is current and no exception is open.{% else %}No control has old evidence or an open exception. A change of status appears here once a report has been made to compare against.{% endif %}</p>
 {% endif %}
