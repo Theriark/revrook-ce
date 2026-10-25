@@ -35,6 +35,7 @@ from app.scoring.snapshot import (
     score_snapshot,
     trend,
 )
+from app.ui.drivers import ScoreDrivers, drivers_of
 from app.ui.viewmodels import (
     CURRENT,
     EXPIRED,
@@ -134,6 +135,8 @@ class ClientPosture:
     evidence: int
     protected_before: int | None
     needs_work_before: int | None
+    # What moves the score (app/ui/drivers.py); None when no control is counted.
+    drivers: ScoreDrivers | None = None
 
     @property
     def ring_dash(self) -> str:
@@ -194,6 +197,7 @@ def posture_of(
         evidence=evidence,
         protected_before=protected_before,
         needs_work_before=needs_work_before,
+        drivers=drivers_of(result, {row.control_id: row.title for row in view.rows}),
     )
 
 

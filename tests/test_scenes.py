@@ -39,7 +39,7 @@ HOME = (TEMPLATES / "home.html").read_text(encoding="utf-8")
 OVERVIEW = (TEMPLATES / "client_overview.html").read_text(encoding="utf-8")
 EXPLORER = (TEMPLATES / "evidence_explorer.html").read_text(encoding="utf-8")
 HEX_LITERAL = re.compile(r"#[0-9a-fA-F]{3,8}\b")
-ROOK = re.compile(r'<li class="rv-rook[^"]*" data-client="(\d+)" data-name="([^"]*)"')
+ROOK = re.compile(r'<li class="rv-driver[^"]*" data-client="(\d+)" data-name="([^"]*)"')
 BLOCK = re.compile(r'<li class="rv-domain" data-code="([A-Z]+)" data-name="([^"]*)"')
 # What every fallback of the scene module needs, and what it must never do.
 REQUIRED_IN_SCRIPT = (
@@ -183,7 +183,7 @@ def test_the_stage_macro_is_hidden_until_the_browser_can_draw() -> None:
 
 def test_home_and_the_overview_feed_their_scenes_from_the_page() -> None:
     assert '{{ sc.stage("rookery-scene", "rookery", "rookery-list",' in HOME
-    assert '<ul class="rv-rookery" id="rookery-list">' in HOME
+    assert '<ul class="rv-drivers" id="rookery-list">' in HOME
     for attribute in (
         'data-client="{{ client.client_id }}"',
         'data-score="{{ client.score_share }}"',
@@ -205,8 +205,9 @@ def test_home_and_the_overview_feed_their_scenes_from_the_page() -> None:
         'data-href="/clients/{{ client_id }}/checklist?domain={{ bar.code }}"',
     ):
         assert attribute in OVERVIEW, attribute
-    # Home keeps the rings and the overview its bars: the scene adds, never replaces.
-    assert '<svg class="rv-ring"' in HOME and '<svg class="rv-bar"' in OVERVIEW
+    # Home keeps its score bars (THE-1189) and the overview its domain bars: the
+    # scene adds, never replaces.
+    assert "d.bar(split," in HOME and '<svg class="rv-bar"' in OVERVIEW
 
 
 # --- the navigation and the explorer -----------------------------------------------
@@ -340,18 +341,19 @@ async def test_the_pages_carry_their_scenes_and_the_rail_state(
     rooks = ROOK.findall(html)
     assert [int(found) for found, _ in rooks] == [client_id]
     assert 'data-insufficient="' in html and 'data-needs-work="' in html
-    # The attributes say what the ring says: the same share and the same band.
+    # The attributes say what the card says: the same band (THE-1189).
     rook = re.search(
-        r'<li class="rv-rook[^>]*data-score="(\d+)"[^>]*data-band="([^"]+)"', html
-    )
-    assert rook is not None
-    ring = re.search(
-        r'<title id="ring-\d+-title">[^<]*?(score [\d.]+, ([^<]+)|insufficient)',
+        r'<li class="rv-driver[^>]*data-score="(\d+)"[^>]*data-band="([^"]+)"'
+        r'[^>]*data-evidence="(\d+)"',
         html,
     )
-    assert ring is not None
-    if ring.group(2):
-        assert rook.group(2) == ring.group(2)
+    assert rook is not None
+    # The seeded client has evidence, so its card names the band of the scene, not
+    # the empty state (which tests/test_score_drivers.py covers on its own).
+    assert int(rook.group(3)) > 0
+    band = re.search(r'<span class="rv-driver-band">([^<]+)</span>', html)
+    assert band is not None
+    assert band.group(1) == rook.group(2)
 
     overview = await ui_browser.get(f"/clients/{client_id}")
     page = overview.text

@@ -4,8 +4,12 @@
 {#- The filters in use (THE-1061): their stylesheet and script are linked here, not
     in the shell, with their own digest as the `v` query. Without the script every
     chip is still a plain link to the list without that filter. -#}
+{#- The bulk actions (THE-1189) link their own two files the same way. Without the
+    script the selection stays hidden and every row keeps its own links. -#}
 {% block head %}<link rel="stylesheet" href="/static/css/filter-chips.css?v={{ filter_chips_version }}">
-<script src="/static/js/filter-chips.js?v={{ filter_chips_version }}" defer></script>{% endblock %}
+<script src="/static/js/filter-chips.js?v={{ filter_chips_version }}" defer></script>
+<link rel="stylesheet" href="/static/css/bulk-actions.css?v={{ bulk_actions_version }}">
+<script src="/static/js/bulk-actions.js?v={{ bulk_actions_version }}" defer></script>{% endblock %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
@@ -70,10 +74,19 @@
 {% if query.band %}<p class="rv-bands-note"><a href="/clients{{ query.params(band='', page=1) }}">Show every band</a></p>{% endif %}
 </section>
 {% if rows %}
-<table id="clients" class="rv-clients{% if query.density == "compact" %} rv-table-compact{% endif %}">
+{#- Bulk actions (THE-1189): the script reveals the select boxes and the bar, and
+    runs only actions the application already has, one client after another: make
+    a report (the report builder's own POST, the last full quarter) and delete (the
+    System page's POST, which still checks the name typed for each client). The
+    download is made in the browser from the rows on the page. -#}
+<div class="rv-bulk-select" id="bulk-select" hidden>
+<label class="rv-bulk-all"><input type="checkbox" id="bulk-all" data-bulk-all> Select every client on this page</label>
+</div>
+<table id="clients" class="rv-clients{% if query.density == "compact" %} rv-table-compact{% endif %}" data-bulk-table data-csrf="{{ csrf_token }}">
 <caption>{{ page.start }} to {{ page.end }} of {{ page.total }} client{% if page.total != 1 %}s{% endif %}{% if query.q %} matching "{{ query.q }}"{% endif %}{% for item in bands %}{% if query.band == item.key %}, {{ item.name|lower }}{% endif %}{% endfor %}, by {{ query.sort_words }}</caption>
 <thead>
 <tr>
+<th scope="col" class="rv-bulk-cell" data-bulk-cell hidden><span class="rv-sr-only">Select</span></th>
 <th scope="col"{% if query.aria_sort('name') %} aria-sort="{{ query.aria_sort('name') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='name', order=query.next_order('name'), page=1) }}">Client{% if query.sort == "name" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
 <th scope="col"{% if query.aria_sort('score') %} aria-sort="{{ query.aria_sort('score') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='score', order=query.next_order('score'), page=1) }}">Last report{% if query.sort == "score" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
 <th scope="col">Controls at last report</th>
@@ -83,7 +96,8 @@
 </thead>
 <tbody>
 {% for row in rows %}
-<tr>
+<tr data-bulk-row="{{ row.id }}" data-name="{{ row.name }}" data-score="{% if row.report %}{{ row.report.score_text }}{% endif %}" data-band="{% if row.report %}{{ row.report.band }}{% endif %}" data-report-day="{% if row.report %}{{ row.report.as_of.date().isoformat() }}{% endif %}" data-newest="{% if row.newest %}{{ row.newest.date().isoformat() }}{% endif %}" data-exports="{{ row.exports }}">
+<td class="rv-bulk-cell" data-bulk-cell hidden><input type="checkbox" id="bulk-{{ row.id }}" value="{{ row.id }}" data-bulk-pick aria-label="Select {{ row.name }}"></td>
 <th scope="row" data-label="Client"><a class="rv-client-name" href="/clients/{{ row.id }}">{{ row.name }}</a></th>
 <td data-label="Last report">
 {% if row.report %}
@@ -120,6 +134,28 @@
 {% endfor %}
 </tbody>
 </table>
+<div class="rv-bulk-bar" id="bulk-bar" role="region" aria-labelledby="bulk-count" hidden>
+<p class="rv-bulk-count" id="bulk-count">No client selected</p>
+<div class="rv-bulk-actions">
+<button type="button" class="rv-button-small" data-bulk-command="report">Make reports</button>
+<button type="button" class="rv-button-quiet rv-button-small" data-bulk-command="csv">Download as CSV</button>
+<button type="button" class="rv-button-danger rv-button-small" data-bulk-command="delete">Delete</button>
+<button type="button" class="rv-button-quiet rv-button-small" data-bulk-command="clear">Clear the selection</button>
+</div>
+</div>
+<div class="rv-bulk-result" id="bulk-result" role="status" aria-live="polite"></div>
+<dialog class="rv-dialog rv-bulk-dialog" id="bulk-dialog" aria-labelledby="bulk-dialog-title" aria-describedby="bulk-dialog-text">
+<form method="dialog" class="rv-bulk-dialog-form">
+<h2 id="bulk-dialog-title"></h2>
+<p id="bulk-dialog-text"></p>
+<ul class="rv-bulk-dialog-list" id="bulk-dialog-list"></ul>
+<p class="rv-bulk-dialog-note" id="bulk-dialog-note" hidden></p>
+<div class="rv-dialog-actions">
+<button type="submit" class="rv-button-quiet" value="cancel" data-bulk-cancel>Cancel</button>
+<button type="submit" value="confirm" data-bulk-confirm></button>
+</div>
+</form>
+</dialog>
 {% if page.pages > 1 %}
 <div class="rv-pager" role="navigation" aria-label="Pages of the list">
 <span class="rv-pager-status">Page {{ page.number }} of {{ page.pages }}</span>

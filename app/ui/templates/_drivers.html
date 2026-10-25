@@ -1,0 +1,21 @@
+{#- What moves the score (app/ui/drivers.py, docs/design-system.md, Score drivers):
+    one bar of a hundred points, the earned part first and then every driver that
+    costs points, in the order of DRIVERS. The bar is an image whose words are its
+    label; the same numbers are in the words beside it and in the table under
+    "Show the numbers", so no driver is told by its colour alone. -#}
+{% macro bar(split, label, size="row") -%}
+<svg class="rv-drv-bar rv-drv-bar-{{ size }}" viewBox="0 0 100 10" preserveAspectRatio="none" role="img" aria-label="{{ label }}"><rect class="rv-drv-track" x="0" y="0" width="100" height="10"/>{% if split.earned > 0 %}<rect class="rv-drv-earned" x="0" y="0" width="{{ split.earned_width }}" height="10"/>{% endif %}{% for loss in split.losses %}<rect class="rv-drv-{{ loss.driver.key }}" x="{{ loss.x }}" y="0" width="{{ loss.width }}" height="10"/>{% endfor %}</svg>
+{%- endmacro %}
+
+{% macro swatch(key) -%}
+<svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-drv-{{ key }}" width="12" height="12" rx="3"/></svg>
+{%- endmacro %}
+
+{% macro legend(drivers) -%}
+<ul class="rv-drv-legend" aria-label="What the parts of a bar mean">
+<li>{{ swatch("earned") }}<span class="rv-drv-legend-name">Earned</span><span class="rv-drv-legend-text">the points the evidence shows</span></li>
+{% for driver in drivers %}
+<li>{{ swatch(driver.key) }}<span class="rv-drv-legend-name">{{ driver.text }}</span><span class="rv-drv-legend-text">{{ driver.meaning }}</span></li>
+{% endfor %}
+</ul>
+{%- endmacro %}

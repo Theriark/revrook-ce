@@ -50,6 +50,11 @@ ASSET_FILES = (
 # not in the shell: clients.html links them itself, with their own digest
 # (asset_version of these files) as the `v` query, for the same reason.
 FILTER_CHIP_FILES = ("css/filter-chips.css", "js/filter-chips.js")
+# The stylesheet of the score drivers of Home (home.html links it, THE-1189).
+DRIVER_FILES = ("css/drivers.css",)
+# The stylesheet and the script of the bulk actions of the clients list
+# (clients.html links them, THE-1189).
+BULK_ACTION_FILES = ("css/bulk-actions.css", "js/bulk-actions.js")
 
 
 def available_brand_files(brand_dir: Path = BRAND_DIR) -> frozenset[str]:

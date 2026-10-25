@@ -1,0 +1,197 @@
+/*
+ * revrook bulk actions of the clients list (THE-1189, docs/design-system.md,
+ * Bulk actions), linked by clients.html after the shell's stylesheets. The select
+ * box of each row, the box that selects the page, the bar under the table and the
+ * result line. Role tokens of revrook.css only; every rule that sets a text
+ * colour also sets its background (tests/test_bulk_actions.py checks each pair in
+ * both themes). A chosen row is told by its ticked box and the words of the bar,
+ * never by its tint alone. The only motion is the busy mark of revrook.css, which
+ * stops under prefers-reduced-motion.
+ */
+
+.rv-bulk-select {
+  margin: 0 0 8px;
+}
+
+main .rv-bulk-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+main .rv-bulk-all input,
+main .rv-bulk-cell input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+main .rv-clients .rv-bulk-cell {
+  width: 44px;
+  vertical-align: middle;
+}
+
+main .rv-clients tr.is-chosen {
+  background-color: var(--rv-accent-tint);
+}
+
+main .rv-clients tr.is-chosen > td,
+main .rv-clients tr.is-chosen > th {
+  color: var(--rv-text);
+  background-color: var(--rv-accent-tint);
+}
+
+/* The bar stays in sight at the foot of the window while the list scrolls */
+.rv-bulk-bar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--rv-line-strong);
+  border-radius: 12px;
+  box-shadow: var(--rv-shadow-2);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-bulk-count {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rv-bulk-actions button {
+  margin: 0;
+}
+
+.rv-bulk-result {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-bulk-result:empty {
+  display: none;
+}
+
+.rv-bulk-result-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.rv-bulk-result ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-bulk-result li {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 4px;
+  list-style: none;
+}
+
+.rv-bulk-mark {
+  flex: none;
+  width: 1.25em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.rv-bulk-ok .rv-bulk-mark {
+  color: var(--rv-status-protected);
+  background-color: var(--rv-canvas);
+}
+
+.rv-bulk-failed .rv-bulk-mark {
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-canvas);
+}
+
+/* The dialog: the names, or a field per name, scroll inside it */
+.rv-bulk-dialog-list {
+  max-height: 40vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.rv-bulk-dialog-list li {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+  list-style: none;
+}
+
+.rv-bulk-dialog-list label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-bulk-dialog-list input {
+  margin-bottom: 0;
+}
+
+.rv-bulk-dialog-note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-status-not-protected);
+  background-color: var(--rv-surface);
+}
+
+/* The cards of the list (below 1024px, revrook.css): the select box sits in the
+   top corner of its card, beside the name, and the name keeps clear of it */
+@media (max-width: 1023px) {
+  main .rv-clients.has-bulk tbody tr {
+    position: relative;
+  }
+
+  main .rv-clients.has-bulk tbody td.rv-bulk-cell {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: auto;
+    padding: 8px;
+    background-color: transparent;
+  }
+
+  main .rv-clients.has-bulk tbody th {
+    padding-right: 56px;
+  }
+
+  .rv-bulk-bar {
+    bottom: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-bulk-result .rv-busy {
+    animation: none;
+  }
+}

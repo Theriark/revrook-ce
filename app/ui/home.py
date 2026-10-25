@@ -53,6 +53,7 @@ from app.ui.dashboard import (
     trend_chart,
     weekly_series,
 )
+from app.ui.drivers import DRIVERS, portfolio_of
 from app.ui.viewmodels import SourceRow, read_earlier, source_rows
 from app.web import clock_of, current_session, session_factory
 
@@ -223,6 +224,10 @@ async def load_board(
     return {
         "clients": postures,
         "with_evidence": sum(1 for item in postures if item.evidence),
+        # What moves the score, over the clients with evidence: a client without
+        # any is all "not checked" and would only say that nothing is imported.
+        "portfolio": portfolio_of(item.drivers for item in postures if item.evidence),
+        "drivers": DRIVERS,
         "unread": unread,
         "stats": stat_cards(postures, weekly, evidence_summary(sources)),
         "attention": prioritised(attention)[:MAX_ATTENTION],

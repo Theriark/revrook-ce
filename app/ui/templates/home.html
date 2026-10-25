@@ -2,6 +2,10 @@
 {% import "_status.html" as s %}
 {% import "_icons.html" as i %}
 {% import "_scene.html" as sc %}
+{% import "_drivers.html" as d %}
+{#- The score drivers (THE-1189): their stylesheet is linked here, not in the
+    shell, with its own digest as the `v` query. -#}
+{% block head %}<link rel="stylesheet" href="/static/css/drivers.css?v={{ drivers_version }}">{% endblock %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
@@ -53,28 +57,69 @@
 
 <section id="rookery" aria-labelledby="rookery-title">
 <div class="rv-section-head">
-<h2 id="rookery-title">Posture by client</h2>
-<p class="rv-section-note">The score of each client from its evidence as it is today. A dashed ring means the evidence is too thin for a score.</p>
+<h2 id="rookery-title">What moves the score</h2>
+<p class="rv-section-note">Every score is out of 100. Each bar shows the points a client earns from its evidence as it is today, and what costs it the rest.</p>
 </div>
-{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The cards below carry the same facts.", "Point at a rook, or at a card below, to read it here. A press chooses it.", "The rookery skyline: one rook per client, as tall as its score, a wire rook where the evidence is too thin, a footprint where nothing is imported, and a notch at its foot for every control that needs work. Drag to turn the yard.") }}
-<ul class="rv-rookery" id="rookery-list">
+{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Point at a rook, or at a bar below, to read it here. A press chooses it.", "The rookery skyline: one rook per client, as tall as its score, a wire rook where the evidence is too thin, a footprint where nothing is imported, and a notch at its foot for every control that needs work. Drag to turn the yard.") }}
+{% if portfolio %}
+{% set mean = portfolio.drivers %}
+{% set biggest = mean.biggest %}
+{# A client whose evidence is too thin has a lower bound for a score, so a mean
+   that counts one is a lower bound as well, and says so. #}
+{% set thin = clients|selectattr("evidence")|selectattr("drivers")|selectattr("insufficient")|list|length %}
+<div class="rv-drv-summary" id="drivers-summary">
+<p class="rv-drv-headline">{% if portfolio.clients == 1 %}The client with evidence scores <strong>{{ mean.earned_text }}</strong> of 100.{% if thin %} Its evidence is too thin for a score, so this is a lower bound.{% endif %}{% else %}Across the {{ portfolio.clients }} clients with evidence, the mean score is <strong>{{ mean.earned_text }}</strong> of 100.{% if thin %} {{ thin }} of them {% if thin == 1 %}has{% else %}have{% endif %} evidence too thin for a score, so the mean is a lower bound.{% endif %}{% endif %}{% if biggest %} The most points go to <strong>{{ biggest.driver.text|lower }}</strong>: {{ biggest.text }} {% if portfolio.clients == 1 %}points{% else %}points on average{% endif %}.{% else %} No points are lost.{% endif %}</p>
+{{ d.bar(mean, ("Every client with evidence" if portfolio.clients > 1 else "The client with evidence") ~ ": " ~ mean.label, "large") }}
+{{ d.legend(drivers) }}
+</div>
+{% else %}
+<div class="rv-empty rv-empty-small" id="drivers-empty">
+{{ i.icon("info", "lg") }}
+<p class="rv-empty-title">No score to split yet</p>
+<p class="rv-empty-text">No client has evidence. Import the first export of a client: its bar then shows the points it earns and what costs it the rest.</p>
+</div>
+{% endif %}
+<ul class="rv-drivers" id="rookery-list">
 {% for client in clients %}
-<li class="rv-rook{% if client.insufficient %} rv-rook-insufficient{% endif %}" data-client="{{ client.client_id }}" data-name="{{ client.name }}" data-score="{{ client.score_share }}" data-score-text="{{ client.score_text }}" data-band="{{ client.band }}" data-insufficient="{{ 'true' if client.insufficient else 'false' }}" data-evidence="{{ client.evidence }}" data-needs-work="{{ client.needs_work }}" data-href="/clients/{{ client.client_id }}">
-<a class="rv-rook-link" href="/clients/{{ client.client_id }}">
-<svg class="rv-ring" viewBox="0 0 72 72" width="72" height="72" role="img" aria-labelledby="ring-{{ client.client_id }}-title">
-<title id="ring-{{ client.client_id }}-title">{{ client.name }}: {% if client.insufficient %}insufficient evidence, lower bound {{ client.score_text }}{% else %}score {{ client.score_text }}, {{ client.band }}{% endif %}</title>
-<circle class="rv-ring-track" cx="36" cy="36" r="30"/>
-{% if not client.insufficient %}<circle class="rv-ring-arc" cx="36" cy="36" r="30" stroke-dasharray="{{ client.ring_dash }}" transform="rotate(-90 36 36)"/>{% endif %}
-<text class="rv-ring-value" x="36" y="43" text-anchor="middle">{% if client.insufficient %}?{% else %}{{ client.score_text }}{% endif %}</text>
-</svg>
-<span class="rv-rook-name">{{ client.name }}</span>
-<span class="rv-rook-band">{{ client.band }}</span>
-</a>
-<span class="rv-rook-meta">{% if client.evidence %}{{ client.needs_work }} control{% if client.needs_work != 1 %}s{% endif %} need{% if client.needs_work == 1 %}s{% endif %} work, evidence coverage {{ client.coverage_percent }}%{% else %}No evidence imported yet{% endif %}</span>
-<span class="rv-rook-meta">{{ client.change_text }}</span>
+{% set split = client.drivers %}
+<li class="rv-driver{% if client.insufficient %} rv-driver-insufficient{% endif %}" data-client="{{ client.client_id }}" data-name="{{ client.name }}" data-score="{{ client.score_share }}" data-score-text="{{ client.score_text }}" data-band="{{ client.band }}" data-insufficient="{{ 'true' if client.insufficient else 'false' }}" data-evidence="{{ client.evidence }}" data-needs-work="{{ client.needs_work }}" data-href="/clients/{{ client.client_id }}">
+<p class="rv-driver-head"><a class="rv-driver-name" href="/clients/{{ client.client_id }}">{{ client.name }}</a>{% if client.evidence %}<span class="rv-driver-score">{% if client.insufficient %}at least {% endif %}{{ client.score_text }}</span>{% endif %}<span class="rv-driver-band">{% if client.evidence %}{{ client.band }}{% else %}No evidence yet{% endif %}</span></p>
+{% if client.evidence and split %}
+{{ d.bar(split, client.name ~ ": " ~ split.label) }}
+{% set worst = split.biggest %}
+<p class="rv-driver-why">{% if worst %}Most points lost to {{ worst.driver.text|lower }}: {{ worst.text }}.{% else %}Every counted control earns its full weight.{% endif %}{% if split.cap_control %} Held at {{ split.cap_limit }} by the gate control <a href="/clients/{{ client.client_id }}/controls/{{ split.cap_control }}" data-drawer>{{ split.cap_control }}</a>.{% endif %}{% if client.insufficient %} The evidence is too thin for a score, so this is a lower bound.{% endif %}</p>
+{% if split.top %}
+<p class="rv-driver-top"><span class="rv-driver-top-label">Costs the most points:</span> {% for item in split.top %}<a href="/clients/{{ client.client_id }}/controls/{{ item.control_id }}" data-drawer{% if item.title %} title="{{ item.title }}"{% endif %}>{{ item.control_id }}</a> ({{ item.text }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+{% endif %}
+{% elif client.evidence %}
+<p class="rv-driver-why">Every control of this client is marked not applicable, so no point is counted.</p>
+{% else %}
+<p class="rv-driver-why">Nothing is imported, so every control is not checked. <a href="/clients/{{ client.client_id }}/evidence">Import an export</a> to see what earns its points.</p>
+{% endif %}
+<p class="rv-driver-meta">{% if client.evidence %}{{ client.needs_work }} control{% if client.needs_work != 1 %}s{% endif %} need{% if client.needs_work == 1 %}s{% endif %} work, evidence coverage {{ client.coverage_percent }}%. {% endif %}{{ client.change_text }}.</p>
 </li>
 {% endfor %}
 </ul>
+{% if portfolio %}
+<details class="rv-chart-data" id="drivers-data">
+<summary>Show the numbers</summary>
+<div class="rv-table-scroll">
+<table>
+<caption>Points of 100 earned and lost by driver, per client with evidence (one decimal, so a row can add up to 99.9 or 100.1)</caption>
+<thead><tr><th scope="col">Client</th><th scope="col" class="rv-numeric">Earned</th>{% for driver in drivers %}<th scope="col" class="rv-numeric">{{ driver.text }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for client in clients %}{% if client.evidence and client.drivers %}
+<tr>
+<th scope="row">{{ client.name }}</th>
+<td class="rv-numeric">{{ client.drivers.earned_text }}</td>
+{% for driver in drivers %}<td class="rv-numeric">{{ client.drivers.text_of(driver.key) }}</td>{% endfor %}
+</tr>
+{% endif %}{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+{% endif %}
 </section>
 
 <section id="needs-attention" aria-labelledby="attention-title">

@@ -270,6 +270,38 @@ th.num {
   left: -10000px;
 }
 
+@media screen and (max-width: 40em) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .page {
+    min-height: 0;
+    padding: 1.25rem 1rem 1rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    overflow-wrap: anywhere;
+  }
+
+  dl.facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  dl.facts dd {
+    margin-bottom: 0.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
 </style>
 <style media="print">
 @page {

@@ -326,10 +326,32 @@ Its parts, in order:
   from the stored reports (`.rv-stat`, `.rv-spark`). The number is a link. The cards
   stand one to a row on a phone, two from 600 px and four from 1280 px, never three
   and one.
-- The rookery (`.rv-rookery`), the signature of Home: one posture ring per client,
-  the score inside, the band beside it, the controls that need work and the movement
-  since the last report under it. A client whose evidence is too thin for a score has
-  a dashed stone ring and a question mark, never a number that would read as a score.
+- What moves the score (`#rookery`, THE-1189), the signature of Home: the rookery
+  scene, then the score drivers. Every score is out of a hundred, and
+  `app/ui/drivers.py` splits those hundred points of each client into what it earns
+  and what costs it the rest, with the arithmetic of the scoring engine and nothing
+  else: a control earns `r x q x f` of its weight, and what it does not earn splits
+  without a remainder into its status (not protected, partly met, not checked), the
+  type of its evidence (a manual artefact or an attestation counts for less) and the
+  age of its evidence; a gate control that caps the score adds the points the cap
+  holds back. The sums are exact fractions, so earned and lost add up to a hundred.
+  The summary card (`#drivers-summary`) gives the mean over the clients with
+  evidence in one sentence ("the most points go to ..."), a 24 px bar and the legend,
+  each driver with what it means. Under it one card per client (`ul.rv-drivers`, the
+  list the scene reads its rooks from, with the same data attributes): the name, the
+  score and the band, a 12 px bar, the driver that costs the most in words, the gate
+  control that holds the score with a link to it, and the three controls that cost
+  the most points, each opening the control drawer. "Show the numbers"
+  (`#drivers-data`) holds every point in a table. A bar (`_drivers.html`, the `bar`
+  macro, `app/static/css/drivers.css`) is an image whose label is every number in
+  words: solid fills are a status, lighter fills the evidence, a dashed box the gate
+  cap, so no driver is told by its colour alone. A client whose evidence is too thin
+  has a dashed outline round its bar and "at least" before its score, the words of a
+  lower bound, and a summary whose mean counts such a client says that the mean is a
+  lower bound too; a client without evidence has no bar and the way to import one; when
+  no client has evidence the summary is an empty state that says so. This replaced
+  the ring per client, which showed the same number as the rook above it and nothing
+  of why.
 - Needs attention (`.rv-attention`): the eight most urgent controls across every
   client, gate controls first, then what is not protected, by weight. Every row is the
   status pill, the control, the client and the reason beyond the status (old evidence,
@@ -354,15 +376,15 @@ Its parts, in order:
   its evidence or its reports, with who did it and when (the exact time on hover).
 
 States: a fresh installation shows one empty state with the three first steps and
-one action; a client without evidence shows a dashed ring and "No evidence imported
-yet"; a client whose evidence cannot be read today is listed in a warning strip above
+one action; a client without evidence shows "No evidence yet" and the way to import
+an export instead of a bar; a client whose evidence cannot be read today is listed in a warning strip above
 the dashboard instead of stopping it; the attention list, the chart and the timeline
 each have their own empty state that says what fills them. The page is
 rendered whole on the server: there is no part that loads later, so there is no
 loading state to show.
 
 Charts are inline SVG drawn on the server with the role tokens only: the sparkline
-and the ring arc in the accent, the lines in the text colour, the domain bars in the
+and the earned part of a score bar in the accent, the lines in the text colour, the domain bars in the
 status colours with the counts beside them, so nothing is told by colour alone. No
 library, no image, nothing loaded from outside. How they answer the pointer and the
 keyboard is the section Charts below.
@@ -469,7 +491,7 @@ domain keep of a client overview and the rookery wall of the Evidence Explorer
 ([evidence-explorer-preview.md](evidence-explorer-preview.md)). Depth means the same
 thing in every one of them: height is a measure, footprint is weight, status is shape
 and colour together, and every word stays in the DOM. A scene adds a way of looking
-at facts the page already shows and never replaces them: the rings, the bars and the
+at facts the page already shows and never replaces them: the cards, the bars and the
 tables are the record, and without script, without WebGL 2 or with the scenes hidden
 the page is exactly what the server drew.
 
@@ -498,7 +520,7 @@ empty box appears.
 The rookery skyline (Home, `#rookery-scene`). One rook per client on a charcoal
 yard, as tall as its score, crenellated like the mark: stone for a strong or a good
 band, amber for fair, red for weak or critical; a wire rook where the evidence is
-too thin for a score (the dashed ring of its card), a footprint where nothing is
+too thin for a score (the dashed outline of its bar), a footprint where nothing is
 imported yet, and a notch at its foot for every control that needs work. Pointing at
 a rook, or at its card, names it in the hover line; a press chooses it, marks its
 card with the violet rail and writes its facts in the detail line; Enter opens the
@@ -588,7 +610,31 @@ Below 1024 px, where the sidebar ends, every row becomes a card (two to a row fr
 768 px, one on a phone): the heading row is kept for assistive technology only and
 each cell names its column before its value. The empty list is
 an empty state that says what a client is; a search or filter that matches nothing
-is its own empty state with the way back to the whole list. The form that adds a
+is its own empty state with the way back to the whole list.
+
+Bulk actions (THE-1189, `app/static/js/bulk-actions.js` and
+`app/static/css/bulk-actions.css`, linked by `clients.html` with their own digest).
+The list works without them: the select column, the box that selects the page and
+the bar are `hidden` until the script reveals them. With it every row has a select
+box labelled with the client name (in the top corner of the card below 1024 px),
+"Select every client on this page" above the table is checked, mixed or clear, and a
+chosen row is tinted as well as ticked. Once a client is chosen, a bar sticks to the
+foot of the window (`#bulk-bar`): the count in words, then Make reports, Download as
+CSV, Delete and Clear the selection. Every action is one the application already
+has, run one client after another with the CSRF token of the page, so a refusal of
+one never stops the others: Make reports posts the report builder's own form
+(`POST /clients/<id>/reports/snapshot`, the last full quarter) after a dialog that
+names the clients; Delete posts the System page's form
+(`POST /system/clients/<id>/delete`) after a dialog that asks for the name of every
+client, as the System page does, at most ten at a time, and the server checks each
+name again; a deletion counts only when the answer is the System page's
+`?deleted=1`, never the sign-in page of an ended session. The download is made in the
+browser from the rows on the page (a cell that starts like a formula is written as
+text). The result (`#bulk-result`, a polite live region) lists each client with what
+happened and, for a report, the link to it; after a deletion it says that the counts
+drawn above still include the deleted clients and links to the list again. The dialog (`dialog.rv-dialog`) is the
+native modal: the focus starts in its first field, Escape cancels it and the focus
+returns to the button that opened it. The form that adds a
 client is a card at the end of the page, and the primary action of the page header
 leads to it.
 
@@ -825,6 +871,15 @@ with their counts; a business name that is not set shows where it will be. The s
 column holds the problems to fix first (`#problems`, `.rv-errors`) or the success
 strip, and the card of the two reports (`ul.rv-kinds`), each with its name, what it
 is for, the quiet preview button and the primary export button.
+
+A preview opens the file as it is sent, so the file itself fits a phone (THE-1189):
+at 390 px the A4 padding and a table of six or seven columns made the quarterly
+review 249 px wider than the screen. Below 40em on a screen, `app/reports/report.css`
+gives the page less padding, the facts one column and the cover title a smaller
+size, and a table that is still wider than the page scrolls inside itself, so the
+page never scrolls sideways and no date is broken to fit. Print (`print.css`, A4)
+is unchanged. The rule is in every exported file, so the golden reports changed by
+that block only.
 
 The export history. The section head and the success strip after an export, then
 the table (`table.rv-exports`, with `rv-table-cards`): when, the report, the file
