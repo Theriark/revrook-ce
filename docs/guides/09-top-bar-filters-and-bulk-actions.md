@@ -85,8 +85,9 @@ kept files and pseudonym key, and only the audit entry and the hash chain remain
 the System page, you type the name of every client you delete.
 
 1. Choose at most ten clients and press **Delete**.
-2. The dialog has one field per client, **Type <name> to delete it**. Type each name
-   exactly as it is shown. The red button stays disabled until every name matches;
+2. The dialog has one field per client, **Type** *name* **to delete it** (for
+   example "Type Seed Tidy Ltd (synthetic) to delete it"). Type each name exactly as
+   it is shown. The red button stays disabled until every name matches;
    then Enter or the button confirms. **Cancel** or Escape leaves everything as it was.
 3. The server checks each name again and deletes the clients one after another. The
    result card names each deleted client, says that the counts drawn above still

@@ -43,10 +43,10 @@ Open **System** in the Administration group.
   backup that restores, copy the database and the evidence folder instead
   ([operations](../operations.md#backup)). **Check the evidence hash chains** opens the
   integrity page ([3. Import evidence](03-import-evidence.md#check-the-hash-chains)).
-- **Delete a client**: press **Delete <client>** to open the confirmation, type the
-  exact name of the client in the field it shows and press **Delete <client> for
-  good**. Its evidence, facts, reports, exports, kept files and pseudonym key go for
-  good; only the audit entry and the hash chain remain. This cannot be undone.
+- **Delete a client**: press **Delete** *client* (for example **Delete Seed Tidy Ltd
+  (synthetic)**) to open the confirmation, type the exact name of the client in the
+  field it shows and press **Delete** *client* **for good**. Its evidence, facts,
+  reports, exports, kept files and pseudonym key go for good; only the audit entry and the hash chain remain. This cannot be undone.
 
 ## The glossary
 

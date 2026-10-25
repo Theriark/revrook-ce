@@ -47,9 +47,12 @@ within which chip, with a way back to every control.
 
 ![The checklist searched, filtered by status and ordered, at 1440 px](../images/checklist-1440-tools.png)
 
-From 768 px the tools stand on one row; below 600 px each takes the whole width.
+The tools wrap to the width they have. At 1440 px they stand on one row, **Reset**
+included. When there is less room they take two rows: at 768 px the search and
+**Status** share the first row and **Order**, **Show controls** and **Reset** the second,
+as in the picture below. Below 600 px each takes the whole width.
 
-![The tools of the checklist at 768 px](../images/checklist-768-tools.png)
+![The tools of the checklist at 768 px, on two rows](../images/checklist-768-tools.png)
 
 ## The drawer and the page of a control
 
