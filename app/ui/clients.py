@@ -35,7 +35,7 @@ from app.models import (
 )
 from app.posture import LiveClient, load_live, view_of
 from app.reports.completeness import MAX_SHORT, MAX_TEXT
-from app.reports.status import COUNTED_LABELS, StatusLabel
+from app.reports.status import LABELS, StatusLabel
 from app.reports.view import ControlRow, Finding, ReportContext, ReportView, iso_date
 from app.snapshots import earlier_bytes
 from app.sources import source_name
@@ -77,21 +77,29 @@ from app.ui.dashboard import (
 )
 from app.ui.overview import domain_lines
 from app.ui.viewmodels import (
+    CHECKLIST_SORT_KEYS,
+    CHECKLIST_SORTS,
     STATE_OF_FRESHNESS,
+    ChecklistQuery,
     checklist_rows,
     coverage_text,
     evidence_facts,
     only_flagged,
     read_earlier,
+    read_search,
     reason_text,
     refresh_list,
+    search_rows,
+    sort_rows,
     source_rows,
 )
 from app.web import cipher_of, clock_of, session_factory
 
 router = APIRouter()
 SHOW_CHOICES = ("all", "flagged")
-STATUS_CHOICES = tuple(label.key for label in COUNTED_LABELS)
+# A status of the checklist: one of the four counted labels (a segment of a chart)
+# or Not applicable (the status menu of the checklist).
+STATUS_CHOICES = tuple(label.key for label in LABELS)
 # The control drawer (templates/_drawer.html): a control asked for by htmx with this
 # target is answered as the fragment the drawer holds, not as the whole page.
 DRAWER_TARGET = "control-drawer-body"
@@ -354,8 +362,8 @@ def domain_name_of(request: Request, code: str) -> str:
 
 
 def status_of_key(key: str) -> StatusLabel:
-    """The counted status with this key; FormError (422) when there is none."""
-    for label in COUNTED_LABELS:
+    """The status with this key; FormError (422) when there is none."""
+    for label in LABELS:
         if label.key == key:
             return label
     raise FormError(f"Status must be one of {', '.join(STATUS_CHOICES)}.")
@@ -368,15 +376,21 @@ async def checklist(
     show: str = "all",
     domain: str = "",
     status: str = "",
+    q: str = "",
+    sort: str = "library",
 ) -> Response:
-    """The checklist, narrowed by `show` (all or flagged) and, from a segment of a
-    chart, by `domain` (a code of the library) and `status` (a counted label)."""
+    """The checklist, narrowed by `show` (all or flagged), by `domain` (a code of
+    the library, from a segment of a chart) and `status` (a label, from a segment
+    or the status menu), searched by `q` and ordered by `sort` (THE-1188)."""
 
     async def handle(user: AppUser) -> Response:
         if show not in SHOW_CHOICES:
             raise FormError("Show must be all or flagged.")
+        if sort not in CHECKLIST_SORT_KEYS:
+            raise FormError(f"Sort must be one of {', '.join(CHECKLIST_SORT_KEYS)}.")
         domain_name = domain_name_of(request, domain) if domain else ""
         status_label = status_of_key(status) if status else None
+        query = ChecklistQuery(show, domain, status, read_search(q), sort)
         start, end = read_period("", "", clock_of(request)().date())
         loaded = await load_client(request, user, client_id, start, end)
         async with session_factory(request)() as session:
@@ -395,6 +409,7 @@ async def checklist(
             shown = [item for item in shown if item.row.domain_code == domain]
         if status_label is not None:
             shown = [item for item in shown if item.row.label == status_label]
+        shown = sort_rows(search_rows(shown, query.q), query.sort)
         narrowed = ""
         if domain_name and status_label is not None:
             narrowed = f"{domain_name}, {status_label.text.lower()}"
@@ -410,6 +425,9 @@ async def checklist(
             show=show,
             domain=domain,
             status=status,
+            query=query,
+            statuses=LABELS,
+            sorts=CHECKLIST_SORTS,
             narrowed=narrowed,
             has_earlier=loaded.earlier is not None,
         )

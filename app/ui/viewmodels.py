@@ -7,9 +7,10 @@ are out of date first, so the MSP knows which file to fetch next.
 """
 
 from collections.abc import Collection, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from fractions import Fraction
+from urllib.parse import urlencode
 
 from app.checks.model import ControlResult
 from app.evidence.assurance import Assurance
@@ -17,8 +18,10 @@ from app.evidence.expiry import Freshness
 from app.evidence.service import EvidenceView
 from app.reports.status import (
     NEEDS_ATTENTION,
+    NOT_APPLICABLE,
     NOT_CHECKED,
     NOT_PROTECTED,
+    PROTECTED,
     StatusLabel,
     label_for,
 )
@@ -45,6 +48,20 @@ EXPIRED_FLAG = "Evidence expired"
 EXPIRING_FLAG = "Evidence expires within 30 days"
 EXCEPTION_FLAG = "Open exception"
 LATEST = datetime.max.replace(tzinfo=UTC)
+# The orders of the checklist (THE-1188): the key of `?sort=` and its words in the
+# menu. The library order is the default and the order of the report.
+CHECKLIST_SORTS = (
+    ("library", "Library order"),
+    ("status", "Status, worst first"),
+    ("evidence", "Evidence, oldest first"),
+    ("title", "Name, A to Z"),
+)
+CHECKLIST_SORT_KEYS = tuple(key for key, _ in CHECKLIST_SORTS)
+MAX_CHECKLIST_SEARCH = 200
+# Worst first: what is not protected, then what needs attention, then what nobody
+# could check, then what is protected; a control marked not applicable goes last.
+WORST_FIRST = (NOT_PROTECTED, NEEDS_ATTENTION, NOT_CHECKED, PROTECTED, NOT_APPLICABLE)
+STATUS_RANK = {label.key: rank for rank, label in enumerate(WORST_FIRST)}
 # Why a control is Not checked, in words for the person who reads the page.
 REASON_TEXT = {
     "licence_or_scope": "The export has no such field, or the tool is not licensed.",
@@ -173,6 +190,87 @@ def checklist_rows(
 def only_flagged(rows: Sequence[ChecklistRow]) -> list[ChecklistRow]:
     """The rows whose status changed or that need a look; nothing else."""
     return [item for item in rows if item.changed or item.flagged]
+
+
+@dataclass(frozen=True)
+class ChecklistQuery:
+    """What the person asked the checklist for (THE-1188); every value is known.
+
+    `show`, `domain` and `status` narrow the rows, `q` searches them and `sort`
+    orders them. `params` is the query part of the checklist's address with some
+    values changed, starting with a question mark; a default value is left out
+    and the template writes the path itself.
+    """
+
+    show: str = "all"
+    domain: str = ""
+    status: str = ""
+    q: str = ""
+    sort: str = "library"
+
+    def params(self, **changes: str) -> str:
+        values = {**asdict(self), **changes}
+        default = asdict(ChecklistQuery())
+        kept = {key: value for key, value in values.items() if value != default[key]}
+        return f"?{urlencode(kept)}" if kept else ""
+
+    @property
+    def sort_words(self) -> str:
+        return dict(CHECKLIST_SORTS)[self.sort]
+
+    @property
+    def refined(self) -> bool:
+        """Whether a search, a status or an order other than the library's is in
+        use: the toolbar then offers to reset them."""
+        return bool(self.q or self.status or self.sort != "library")
+
+
+def read_search(text: str) -> str:
+    """The words of a search: spaces folded, at most MAX_CHECKLIST_SEARCH long."""
+    return " ".join(text.split())[:MAX_CHECKLIST_SEARCH]
+
+
+def search_rows(rows: Sequence[ChecklistRow], words: str) -> list[ChecklistRow]:
+    """The rows whose name, id, domain or owner holds the words, in any case."""
+    if not words:
+        return list(rows)
+    wanted = words.casefold()
+    return [
+        item
+        for item in rows
+        if wanted in item.row.title.casefold()
+        or wanted in item.row.control_id.casefold()
+        or wanted in item.row.domain_name.casefold()
+        or wanted in item.owner.casefold()
+    ]
+
+
+def sort_rows(rows: Sequence[ChecklistRow], sort: str) -> list[ChecklistRow]:
+    """The rows in the chosen order; rows that tie keep the library order.
+
+    status: worst first, then the gate controls, then the heaviest; evidence: the
+    controls with no dated evidence first, then the oldest; title: by name.
+    """
+    if sort == "status":
+        return sorted(
+            rows,
+            key=lambda item: (
+                STATUS_RANK.get(item.row.label.key, len(STATUS_RANK)),
+                not item.row.gate,
+                -item.row.weight,
+            ),
+        )
+    if sort == "evidence":
+        return sorted(
+            rows,
+            key=lambda item: (
+                item.row.evidence_at is not None,
+                item.row.evidence_at or LATEST,
+            ),
+        )
+    if sort == "title":
+        return sorted(rows, key=lambda item: item.row.title.casefold())
+    return list(rows)
 
 
 @dataclass(frozen=True)

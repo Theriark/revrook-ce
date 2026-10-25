@@ -7,29 +7,57 @@
 <div class="rv-section-head rv-checklist-head">
 <div><h2 id="checklist-title">Checklist</h2><p class="rv-section-note">Every control of the library as a report made today would show it, with the evidence behind each status.</p></div>
 </div>
-<div class="rv-toolbar rv-checklist-toolbar">
-{#- A segment of a chart on the overview narrows the list to a domain and a status
-    (`?domain=`, `?status=`): the two chips keep that narrowing, and a third chip
-    names it and takes it away. -#}
-{% set narrow_query = ("&domain=" ~ domain if domain else "") ~ ("&status=" ~ status if status else "") %}
-{% set all_query = ("?" ~ narrow_query[1:]) if narrow_query else "" %}
-{% set clear_query = ("?show=" ~ show) if show != "all" else "" %}
-<ul class="rv-chips" aria-label="Show">
-<li><a id="show-all" class="rv-chip" href="/clients/{{ client_id }}/checklist{{ all_query }}"{% if show == "all" %} aria-current="true"{% endif %}>All controls <span class="rv-chip-count">{{ total }}</span></a></li>
-<li><a id="show-flagged" class="rv-chip" href="/clients/{{ client_id }}/checklist?show=flagged{{ narrow_query }}"{% if show == "flagged" %} aria-current="true"{% endif %}>Changed or needs a look <span class="rv-chip-count">{{ flagged_total }}</span></a></li>
-{% if narrowed %}<li><a id="show-narrowed" class="rv-chip rv-chip-narrowed" href="/clients/{{ client_id }}/checklist{{ clear_query }}" aria-current="true">{{ narrowed }} <span class="rv-chip-count">{{ rows|length }}</span><span class="rv-chip-remove" aria-hidden="true">&#10005;</span><span class="rv-sr-only">, remove this narrowing</span></a></li>{% endif %}
-</ul>
-<p class="rv-toolbar-note" id="checklist-count">{{ rows|length }} of {{ total }} controls shown.{% if not has_earlier %} No report has been made for this client yet, so no control is marked as changed.{% endif %}</p>
+{#- The tools of the list (THE-1188): a search over the name, the id, the domain and
+    the owner of a control, the status menu and the order, sent together as one GET
+    form, so the list works without script and the address names what is shown.
+    `query` (ChecklistQuery) keeps the other choices in every link: a chip of the
+    filter band keeps the search and the order; the narrowing chip (a segment of a
+    chart on the overview narrows the list to a domain and a status) takes the
+    domain and the status away and keeps the rest. The landmark is the search
+    element around the form (Pico draws a [role=search] as one joined pill). -#}
+<search aria-label="Checklist">
+<form class="rv-toolbar rv-checklist-toolbar" id="checklist-tools" method="get" action="/clients/{{ client_id }}/checklist">
+{% if query.show != "all" %}<input type="hidden" name="show" value="{{ query.show }}">{% endif %}
+{% if query.domain %}<input type="hidden" name="domain" value="{{ query.domain }}">{% endif %}
+<div class="rv-toolbar-search rv-checklist-search">
+<label for="checklist-q" class="rv-sr-only">Search controls by name, id, domain or owner</label>
+{{ i.icon("search", "sm") }}
+<input id="checklist-q" name="q" type="search" value="{{ query.q }}" placeholder="Search by name, id, domain or owner" maxlength="200" autocomplete="off">
 </div>
+<div class="rv-field rv-checklist-field">
+<label for="checklist-status">Status</label>
+<select id="checklist-status" name="status">
+<option value=""{% if not query.status %} selected{% endif %}>Any status</option>
+{% for label in statuses %}<option value="{{ label.key }}"{% if query.status == label.key %} selected{% endif %}>{{ label.text }}</option>
+{% endfor %}</select>
+</div>
+<div class="rv-field rv-checklist-field">
+<label for="checklist-sort">Order</label>
+<select id="checklist-sort" name="sort">
+{% for key, words in sorts %}<option value="{{ key }}"{% if query.sort == key %} selected{% endif %}>{{ words }}</option>
+{% endfor %}</select>
+</div>
+<div class="rv-checklist-actions">
+<button type="submit">Show controls</button>
+{% if query.refined %}<a class="rv-button-quiet" role="button" href="/clients/{{ client_id }}/checklist{{ query.params(q='', status='', sort='library') }}">Reset</a>{% endif %}
+</div>
+<ul class="rv-chips rv-checklist-chips" aria-label="Show">
+<li><a id="show-all" class="rv-chip" href="/clients/{{ client_id }}/checklist{{ query.params(show='all') }}"{% if query.show == "all" %} aria-current="true"{% endif %}>All controls <span class="rv-chip-count">{{ total }}</span></a></li>
+<li><a id="show-flagged" class="rv-chip" href="/clients/{{ client_id }}/checklist{{ query.params(show='flagged') }}"{% if query.show == "flagged" %} aria-current="true"{% endif %}>Changed or needs a look <span class="rv-chip-count">{{ flagged_total }}</span></a></li>
+{% if narrowed %}<li><a id="show-narrowed" class="rv-chip rv-chip-narrowed" href="/clients/{{ client_id }}/checklist{{ query.params(domain='', status='') }}" aria-current="true">{{ narrowed }} <span class="rv-chip-count">{{ rows|length }}</span><span class="rv-chip-remove" aria-hidden="true">&#10005;</span><span class="rv-sr-only">, remove this narrowing</span></a></li>{% endif %}
+</ul>
+<p class="rv-toolbar-note" id="checklist-count">{{ rows|length }} of {{ total }} controls shown.{% if query.q %} Searched for "{{ query.q }}".{% endif %} Order: {{ query.sort_words|lower }}.{% if not has_earlier %} No report has been made for this client yet, so no control is marked as changed.{% endif %}</p>
+</form>
+</search>
 {% if rows %}
 <table id="checklist" class="rv-checklist">
-<caption>Every control, its status and the evidence behind it</caption>
+<caption>Every control, its status and the evidence behind it; order: {{ query.sort_words|lower }}</caption>
 <thead>
 <tr>
-<th scope="col">Control</th>
-<th scope="col">Status</th>
+<th scope="col"{% if query.sort == "title" %} aria-sort="ascending"{% endif %}>Control</th>
+<th scope="col"{% if query.sort == "status" %} aria-sort="other"{% endif %}>Status</th>
 <th scope="col">Coverage</th>
-<th scope="col">Evidence dated</th>
+<th scope="col"{% if query.sort == "evidence" %} aria-sort="ascending"{% endif %}>Evidence dated</th>
 <th scope="col">Owner</th>
 <th scope="col">Why it needs a look</th>
 </tr>
@@ -50,7 +78,10 @@
 {% else %}
 <div class="rv-empty" id="checklist-empty">
 {{ i.icon("check", "xl") }}
-{% if narrowed %}
+{% if query.q %}
+<p class="rv-empty-title">No control matches</p>
+<p class="rv-empty-text">No control{% if narrowed %} of {{ narrowed|lower }}{% endif %}{% if query.show == "flagged" %} that changed or needs a look{% endif %} has "{{ query.q }}" in its name, id, domain or owner.</p>
+{% elif narrowed %}
 <p class="rv-empty-title">No control matches</p>
 <p class="rv-empty-text">No control of {{ narrowed|lower }} is on this list today.</p>
 {% else %}

@@ -985,3 +985,60 @@ search {
     pointer-events: none;
   }
 }
+
+/* ---------- The tools of the checklist (checklist.html, THE-1188) ----------
+   One canvas band: the search, the status menu, the order and the buttons on
+   the first row, bottom-aligned so the search box lines up with the menus under
+   their labels; the chips of the filter band and the count line each take a row
+   of their own. Below 768px the menus share a row and the search is full width;
+   below 600px every tool takes the whole width. */
+.rv-checklist-toolbar {
+  align-items: flex-end;
+}
+
+.rv-checklist-toolbar .rv-checklist-search {
+  flex: 1 1 18rem;
+}
+
+.rv-checklist-field {
+  display: flex;
+  flex: 0 1 13rem;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The search box, the menus and the buttons share one height (38px), so their
+   edges line up on the row. */
+.rv-checklist-toolbar .rv-checklist-search [type="search"],
+.rv-checklist-toolbar select {
+  height: 38px;
+  min-width: 0;
+  margin: 0;
+}
+
+.rv-checklist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rv-checklist-actions > * {
+  margin: 0;
+}
+
+.rv-checklist-chips {
+  flex-basis: 100%;
+}
+
+@media (max-width: 599px) {
+  .rv-checklist-toolbar .rv-checklist-search,
+  .rv-checklist-field,
+  .rv-checklist-actions {
+    flex-basis: 100%;
+  }
+
+  .rv-checklist-actions > * {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
