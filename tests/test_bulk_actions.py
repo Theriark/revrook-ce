@@ -102,6 +102,10 @@ def test_the_script_builds_no_markup_and_posts_only_to_existing_actions() -> Non
     # an ended session, never a success.
     assert 'landed.searchParams.get("deleted") === "1"' in SCRIPT
     assert SCRIPT.count('=== "/login"') == 2
+    # After any deletion the counts drawn by the server are stale, and it says so
+    # with a link to a new list, not only once the page is empty (THE-1221).
+    assert "if (gone) {" in SCRIPT and "if (!rows().length)" not in SCRIPT
+    assert "The counts above still include the deleted clients. " in SCRIPT
     # Words go in as text, and the dialog never runs a stale choice on Escape.
     assert ".textContent" in SCRIPT and 'dialog.returnValue = "";' in SCRIPT
     assert "var MAX_DELETE = 10;" in SCRIPT

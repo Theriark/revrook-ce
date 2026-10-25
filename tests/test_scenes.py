@@ -343,12 +343,17 @@ async def test_the_pages_carry_their_scenes_and_the_rail_state(
     assert 'data-insufficient="' in html and 'data-needs-work="' in html
     # The attributes say what the card says: the same band (THE-1189).
     rook = re.search(
-        r'<li class="rv-driver[^>]*data-score="(\d+)"[^>]*data-band="([^"]+)"', html
+        r'<li class="rv-driver[^>]*data-score="(\d+)"[^>]*data-band="([^"]+)"'
+        r'[^>]*data-evidence="(\d+)"',
+        html,
     )
     assert rook is not None
+    # The seeded client has evidence, so its card names the band of the scene, not
+    # the empty state (which tests/test_score_drivers.py covers on its own).
+    assert int(rook.group(3)) > 0
     band = re.search(r'<span class="rv-driver-band">([^<]+)</span>', html)
     assert band is not None
-    assert band.group(1) in (rook.group(2), "No evidence yet")
+    assert band.group(1) == rook.group(2)
 
     overview = await ui_browser.get(f"/clients/{client_id}")
     page = overview.text

@@ -64,8 +64,11 @@
 {% if portfolio %}
 {% set mean = portfolio.drivers %}
 {% set biggest = mean.biggest %}
+{# A client whose evidence is too thin has a lower bound for a score, so a mean
+   that counts one is a lower bound as well, and says so. #}
+{% set thin = clients|selectattr("evidence")|selectattr("drivers")|selectattr("insufficient")|list|length %}
 <div class="rv-drv-summary" id="drivers-summary">
-<p class="rv-drv-headline">{% if portfolio.clients == 1 %}The client with evidence scores <strong>{{ mean.earned_text }}</strong> of 100.{% else %}Across the {{ portfolio.clients }} clients with evidence, the mean score is <strong>{{ mean.earned_text }}</strong> of 100.{% endif %}{% if biggest %} The most points go to <strong>{{ biggest.driver.text|lower }}</strong>: {{ biggest.text }} {% if portfolio.clients == 1 %}points{% else %}points on average{% endif %}.{% else %} No points are lost.{% endif %}</p>
+<p class="rv-drv-headline">{% if portfolio.clients == 1 %}The client with evidence scores <strong>{{ mean.earned_text }}</strong> of 100.{% if thin %} Its evidence is too thin for a score, so this is a lower bound.{% endif %}{% else %}Across the {{ portfolio.clients }} clients with evidence, the mean score is <strong>{{ mean.earned_text }}</strong> of 100.{% if thin %} {{ thin }} of them {% if thin == 1 %}has{% else %}have{% endif %} evidence too thin for a score, so the mean is a lower bound.{% endif %}{% endif %}{% if biggest %} The most points go to <strong>{{ biggest.driver.text|lower }}</strong>: {{ biggest.text }} {% if portfolio.clients == 1 %}points{% else %}points on average{% endif %}.{% else %} No points are lost.{% endif %}</p>
 {{ d.bar(mean, ("Every client with evidence" if portfolio.clients > 1 else "The client with evidence") ~ ": " ~ mean.label, "large") }}
 {{ d.legend(drivers) }}
 </div>

@@ -218,6 +218,9 @@ def test_home_replaces_the_ring_cards_with_the_score_bars() -> None:
     assert "<caption>" in rookery and 'scope="row"' in rookery
     assert "Import an export" in rookery and "lower bound" in rookery
     assert "data-drawer>{{ split.cap_control }}</a>" in rookery
+    # A mean that counts a lower bound says it is one (review of THE-1221).
+    assert 'selectattr("insufficient")' in rookery
+    assert "so the mean is a lower bound" in rookery
     link = '<link rel="stylesheet" href="/static/css/drivers.css?v='
     assert link + '{{ drivers_version }}">' in HOME
 
@@ -276,6 +279,10 @@ async def test_home_draws_the_split_of_a_client_with_evidence(
     assert 'id="drivers-summary"' in html and 'id="drivers-empty"' not in html
     assert "The client with evidence scores <strong>" in html
     card = html.split(f'data-client="{client_id}"', 1)[1].split("</li>", 1)[0]
+    # The summary calls the score a lower bound exactly when the card does.
+    summary = html.split('id="drivers-summary"', 1)[1].split("</p>", 1)[0]
+    thin = 'data-insufficient="true"' in card.split(">", 1)[0]
+    assert ("so this is a lower bound" in summary) == thin
     assert 'class="rv-drv-bar rv-drv-bar-row"' in card
     label = re.search(r'role="img" aria-label="([^"]+)"', card)
     assert label is not None and label.group(1).startswith("Synthetic Client Ltd: ")

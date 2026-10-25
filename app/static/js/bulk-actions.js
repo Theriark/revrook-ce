@@ -257,12 +257,16 @@
           return line.ok;
         }).length;
         report(plural(gone, "client", "clients") + " deleted of " + lines.length + ". Only the audit entries remain.", lines);
-        if (!rows().length) {
+        // The rows go at once, but the counts of the chips, the chart of the bands
+        // and the pages were made by the server before; only a new list is current.
+        if (gone) {
           var again = document.createElement("p");
           var link = document.createElement("a");
           link.href = window.location.pathname + window.location.search;
           link.textContent = "Load the list again";
+          again.appendChild(document.createTextNode("The counts above still include the deleted clients. "));
           again.appendChild(link);
+          again.appendChild(document.createTextNode(" to update them."));
           result.appendChild(again);
         }
       }

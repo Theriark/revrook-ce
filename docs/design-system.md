@@ -347,7 +347,8 @@ Its parts, in order:
   words: solid fills are a status, lighter fills the evidence, a dashed box the gate
   cap, so no driver is told by its colour alone. A client whose evidence is too thin
   has a dashed outline round its bar and "at least" before its score, the words of a
-  lower bound; a client without evidence has no bar and the way to import one; when
+  lower bound, and a summary whose mean counts such a client says that the mean is a
+  lower bound too; a client without evidence has no bar and the way to import one; when
   no client has evidence the summary is an empty state that says so. This replaced
   the ring per client, which showed the same number as the rook above it and nothing
   of why.
@@ -630,7 +631,8 @@ name again; a deletion counts only when the answer is the System page's
 `?deleted=1`, never the sign-in page of an ended session. The download is made in the
 browser from the rows on the page (a cell that starts like a formula is written as
 text). The result (`#bulk-result`, a polite live region) lists each client with what
-happened and, for a report, the link to it. The dialog (`dialog.rv-dialog`) is the
+happened and, for a report, the link to it; after a deletion it says that the counts
+drawn above still include the deleted clients and links to the list again. The dialog (`dialog.rv-dialog`) is the
 native modal: the focus starts in its first field, Escape cancels it and the focus
 returns to the button that opened it. The form that adds a
 client is a card at the end of the page, and the primary action of the page header
