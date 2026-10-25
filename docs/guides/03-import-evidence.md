@@ -35,7 +35,10 @@ page of a client, which opens the editor on that client).
    the export was taken (UTC)** (the time the tool made the export, not the time of
    this import) and press **Import the file**.
 
-![The profile editor after reading a leavers file](../images/profile-editor-preview-1440.png)
+![The profile editor after reading a leavers file, captured on 2026-10-24 before the top bar was added](../images/profile-editor-preview-1440.png)
+
+This picture is from the capture set of 2026-10-24: the steps are the same, but the
+page now has the top bar of the picture above it.
 
 The result card names the evidence item, the profile and the facts stored, and says
 which controls read this export: the others keep their status until their own export

@@ -30,9 +30,9 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on @@DATE@@ from the application build
-documented and captured (commit `@@COMMIT@@`, image
-`@@DIGEST@@`), with synthetic
+Live captures of the Development site, taken on 2026-10-25 from the application build
+documented and captured (commit `b4634182e0fd68d760c209fcc6051ff9adceea2e`, image
+`sha256:cfcb12a8a3979bc10957ca220c59e26b28bbc7742669b868373a7451192ea7d5`), with synthetic
 test data only ([capture manifest](docs/images/README.md)). Later documentation-only
 commits are deployed on top with the same application code; the deployed head is read
 from the deployment receipt and the package manifest.
