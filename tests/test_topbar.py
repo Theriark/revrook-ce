@@ -180,6 +180,9 @@ def test_a_signed_out_page_has_no_top_bar() -> None:
 
 def test_the_top_bar_uses_tokens_scrolls_with_the_page_and_wraps() -> None:
     section = FOLLOW_UP.split("/* ---------- The top bar (_topbar.html", 1)[1]
+    # Only the rules of the bar: the next section of the stylesheet starts with
+    # the same rule of dashes.
+    section = section.split("/* ---------- ", 1)[0]
     assert "border-bottom: 1px solid var(--rv-line);" in section
     assert "background-color: var(--rv-surface);" in section
     # Not sticky: a bar over the page would cover the focus of a field under it.
