@@ -38,6 +38,9 @@
  *   icons the moment the button is pressed and htmx posts the form; a refused
  *   or failed post puts the rail back, since nothing was remembered; without
  *   the script the form posts and the page comes back with the rail as chosen.
+ * - the search of the top bar (templates/_topbar.html): the / key moves focus
+ *   to it from anywhere outside a field, a menu or an open dialog; without the
+ *   script the search is reached like any field.
  */
 (function () {
   "use strict";
@@ -454,8 +457,31 @@
     }
   }
 
+  // The / key: focus the search of the top bar, unless a person is typing in a
+  // field (where / is a character) or a dialog is open (the drawer).
+  function focusSearch(event) {
+    if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+    var target = event.target;
+    if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) {
+      return;
+    }
+    if (document.querySelector("dialog[open]")) {
+      return;
+    }
+    var search = document.getElementById("topbar-q");
+    if (!search) {
+      return;
+    }
+    event.preventDefault();
+    search.focus();
+    search.select();
+  }
+
   function ready() {
     watchDrawer();
+    document.addEventListener("keydown", focusSearch);
     document.addEventListener("click", applyTheme);
     document.addEventListener("click", applyRail);
     document.addEventListener("htmx:afterRequest", themePosted);

@@ -461,6 +461,7 @@ async def control_page(
         context = client_context(loaded, "checklist", control.id)
         context.update(
             control=control,
+            crumb_leaf=control.id,
             row=row,
             result=result,
             finding=draft.findings.get(control_id, Finding()),
