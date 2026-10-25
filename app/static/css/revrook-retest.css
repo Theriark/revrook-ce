@@ -821,3 +821,27 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
   stroke: var(--rv-surface);
   stroke-width: 1;
 }
+
+/* The edition badge in the bar (live acceptance of THE-1133 at 768px): the badge
+   shares the brand column with the lockup, and from 768px the avatar and the user
+   name widen the user block beside it, so the column was 228px, the lockup shrank
+   and the badge lay over "rook". The lockup keeps its width and the badge shows
+   only where the column holds both side by side (tile 40, gap 10, wordmark 88,
+   gap 12, badge 149: 299px). The user block grows with the user name, so the
+   column is measured and not the window. From 1024px the rail stacks the badge
+   under the lockup and below 600px revrook.css hides it */
+@media (max-width: 1023px) {
+  .rv-app .rv-header .rv-brand {
+    container: rv-brand / inline-size;
+  }
+
+  .rv-app .rv-header .rv-lockup {
+    flex: none;
+  }
+
+  @container rv-brand (max-width: 319px) {
+    .rv-app .rv-edition {
+      display: none;
+    }
+  }
+}
