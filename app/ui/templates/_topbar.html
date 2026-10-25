@@ -1,0 +1,34 @@
+{#- The top bar of the page column (docs/design-system.md, The shell): the breadcrumb
+    of the page and the search of the clients. The trail comes from the page's own
+    context (app/ui/breadcrumbs.py); the last step is the page itself, marked
+    aria-current and not a link. The search is a plain GET form to the clients list
+    (its `q`), so it works without script; revrook.js lets the / key move focus to
+    it from anywhere outside a field. The landmark is the search element, not
+    role="search" on the form: Pico draws every [role=search] as one joined pill,
+    which squeezed the field and stretched the button. Not a header element: the
+    rail is the banner of the page, and two banners would confuse a screen
+    reader's landmarks. -#}
+{% import "_icons.html" as i %}
+{% set trail = breadcrumb_trail(nav=nav|default(""), title=title|default(""), client_id=client_id|default(none), client_name=client_name|default(""), section=section|default(""), leaf=crumb_leaf|default("")) %}
+<div class="rv-topbar" id="topbar">
+<div class="rv-topbar-inner">
+<nav class="rv-breadcrumb" aria-label="Breadcrumb">
+<ol>
+{% for crumb in trail %}
+<li>{% if not loop.first %}{{ i.icon("chevron-right", "sm") }}{% endif %}{% if crumb.path is not none %}<a href="/{{ crumb.path }}">{{ crumb.text }}</a>{% else %}<span aria-current="page">{{ crumb.text }}</span>{% endif %}</li>
+{% endfor %}
+</ol>
+</nav>
+<search class="rv-topbar-search" aria-label="Clients">
+<form class="rv-topbar-form" method="get" action="/clients">
+<label for="topbar-q" class="rv-sr-only">Search clients by name</label>
+<span class="rv-topbar-field">
+{{ i.icon("search", "sm") }}
+<input id="topbar-q" name="q" type="search" placeholder="Search clients" maxlength="200" autocomplete="off" aria-keyshortcuts="/" aria-describedby="topbar-q-key">
+<kbd class="rv-topbar-key" id="topbar-q-key"><span class="rv-sr-only">Shortcut: </span>/</kbd>
+</span>
+<button type="submit" class="rv-button-quiet rv-button-small">Search</button>
+</form>
+</search>
+</div>
+</div>

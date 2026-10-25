@@ -420,9 +420,10 @@ def test_the_sparklines_and_the_bars_carry_their_words_and_their_links() -> None
     assert '<input type="hidden" name="band" value="{{ query.band }}">' in LIST
     # The checklist names a narrowing and takes it away.
     assert 'id="show-narrowed" class="rv-chip rv-chip-narrowed"' in CHECKLIST
-    assert "?show=flagged{{ narrow_query }}" in CHECKLIST
-    assert 'href="/clients/{{ client_id }}/checklist{{ all_query }}"' in CHECKLIST
-    assert 'href="/clients/{{ client_id }}/checklist{{ clear_query }}"' in CHECKLIST
+    # Every chip keeps the other choices of the list (ChecklistQuery, THE-1188).
+    assert "checklist{{ query.params(show='flagged') }}" in CHECKLIST
+    assert "checklist{{ query.params(show='all') }}" in CHECKLIST
+    assert "checklist{{ query.params(domain='', status='') }}" in CHECKLIST
     assert "No control matches" in CHECKLIST
 
 

@@ -755,6 +755,227 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
   }
 }
 
+/* ---------- The top bar (_topbar.html, THE-1188) ----------
+   The first row of the page column: the breadcrumb on the left, the search of
+   the clients on the right, on the surface with a hairline under it. It scrolls
+   with the page (a sticky bar would cover the focus of a field above it). The
+   inner row is as wide as the content and starts at the same left edge; below
+   768px the search takes its own row, and a long client name wraps instead of
+   being cut. Pico styles every list in a nav as a menu: the trail undoes its
+   padding and its negative margins. */
+.rv-topbar {
+  border-bottom: 1px solid var(--rv-line);
+  background-color: var(--rv-surface);
+}
+
+.rv-topbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  max-width: 1200px;
+  padding: 12px 16px;
+}
+
+.rv-breadcrumb {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.rv-breadcrumb ol,
+.rv-breadcrumb ol:first-of-type,
+.rv-breadcrumb ol:last-of-type {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.rv-breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.rv-breadcrumb .rv-icon {
+  flex: none;
+  color: var(--rv-text-secondary);
+}
+
+.rv-breadcrumb a {
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--rv-text-secondary);
+  text-decoration: none;
+}
+
+.rv-breadcrumb a:hover {
+  color: var(--rv-text);
+  text-decoration: underline;
+}
+
+.rv-breadcrumb [aria-current="page"] {
+  padding: 2px 4px;
+  font-weight: 600;
+  color: var(--rv-text);
+}
+
+search {
+  display: block;
+}
+
+.rv-topbar-search {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.rv-topbar-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.rv-topbar-field {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+
+.rv-topbar-field .rv-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  margin-top: -9px;
+  color: var(--rv-text-secondary);
+  pointer-events: none;
+}
+
+.rv-topbar-field [type="search"] {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  margin: 0;
+  padding: 0 12px 0 40px;
+  font-size: 14px;
+}
+
+.rv-topbar-key {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .rv-topbar-inner {
+    padding: 12px 32px;
+  }
+
+  .rv-topbar-search {
+    flex: 0 1 16rem;
+  }
+}
+
+/* With a keyboard at hand (from 1024px) the shortcut shows inside the field,
+   and the field takes more room. */
+@media (min-width: 1024px) {
+  .rv-topbar-search {
+    flex-basis: 22rem;
+  }
+
+  .rv-topbar-field [type="search"] {
+    padding-right: 40px;
+  }
+
+  .rv-topbar-key {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    display: block;
+    min-width: 20px;
+    margin-top: -11px;
+    padding: 0 6px;
+    border: 1px solid var(--rv-line-strong);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-canvas);
+    box-shadow: none;
+    pointer-events: none;
+  }
+}
+
+/* ---------- The tools of the checklist (checklist.html, THE-1188) ----------
+   One canvas band: the search, the status menu, the order and the buttons on
+   the first row, bottom-aligned so the search box lines up with the menus under
+   their labels; the chips of the filter band and the count line each take a row
+   of their own. Below 768px the menus share a row and the search is full width;
+   below 600px every tool takes the whole width. */
+.rv-checklist-toolbar {
+  align-items: flex-end;
+}
+
+.rv-checklist-toolbar .rv-checklist-search {
+  flex: 1 1 18rem;
+}
+
+.rv-checklist-field {
+  display: flex;
+  flex: 0 1 13rem;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The search box, the menus and the buttons share one height (38px), so their
+   edges line up on the row. */
+.rv-checklist-toolbar .rv-checklist-search [type="search"],
+.rv-checklist-toolbar select {
+  height: 38px;
+  min-width: 0;
+  margin: 0;
+}
+
+.rv-checklist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rv-checklist-actions > * {
+  margin: 0;
+}
+
+.rv-checklist-chips {
+  flex-basis: 100%;
+}
+
+@media (max-width: 599px) {
+  .rv-checklist-toolbar .rv-checklist-search,
+  .rv-checklist-field,
+  .rv-checklist-actions {
+    flex-basis: 100%;
+  }
+
+  .rv-checklist-actions > * {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+
 /* The long labels of the founder's Development inspection (THE-1133, 24 October).
    1. The clients list: the words beside the ring of the last report had a track
       of minmax(0, 1fr), so the cell could shrink to nothing and "Insufficient
@@ -820,4 +1041,28 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
   fill: var(--rv-text);
   stroke: var(--rv-surface);
   stroke-width: 1;
+}
+
+/* The edition badge in the bar (live acceptance of THE-1133 at 768px): the badge
+   shares the brand column with the lockup, and from 768px the avatar and the user
+   name widen the user block beside it, so the column was 228px, the lockup shrank
+   and the badge lay over "rook". The lockup keeps its width and the badge shows
+   only where the column holds both side by side (tile 40, gap 10, wordmark 88,
+   gap 12, badge 149: 299px). The user block grows with the user name, so the
+   column is measured and not the window. From 1024px the rail stacks the badge
+   under the lockup and below 600px revrook.css hides it */
+@media (max-width: 1023px) {
+  .rv-app .rv-header .rv-brand {
+    container: rv-brand / inline-size;
+  }
+
+  .rv-app .rv-header .rv-lockup {
+    flex: none;
+  }
+
+  @container rv-brand (max-width: 319px) {
+    .rv-app .rv-edition {
+      display: none;
+    }
+  }
 }

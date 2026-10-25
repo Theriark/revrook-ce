@@ -383,7 +383,7 @@ async def test_the_overview_shows_the_posture_the_domains_and_the_changes(
     assert page.status_code == 200 and structure_problems(html) == []
     for part in OVERVIEW_PARTS:
         assert f'id="{part}"' in html, part
-    assert html.count('aria-current="page"') == 2  # the rail and the tabs
+    assert html.count('aria-current="page"') == 3  # the rail, the tabs, the breadcrumb
     assert 'href="/clients">Clients</a>' in html
     assert "Review flagged controls" in html and "Prepare a report" in html
     assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
@@ -410,7 +410,7 @@ async def test_the_checklist_has_the_filter_chips_and_the_control_its_verdict(
     page = await ui_browser.get(f"/clients/{client_id}/checklist")
     html = page.text
     assert page.status_code == 200 and structure_problems(html) == []
-    assert html.count('aria-current="page"') == 2  # the rail and the tabs
+    assert html.count('aria-current="page"') == 3  # the rail, the tabs, the breadcrumb
     assert 'id="show-all" class="rv-chip" href' in html
     assert 'aria-current="true">All controls <span class="rv-chip-count">' in html
     assert 'id="show-flagged" class="rv-chip"' in html
