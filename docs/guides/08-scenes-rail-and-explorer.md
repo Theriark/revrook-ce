@@ -13,17 +13,17 @@ move is immediate.
 
 ## The rookery on Home
 
-Under **Posture by client**, one rook per client stands on a charcoal yard, as tall as
+Under **What moves the score**, one rook per client stands on a charcoal yard, as tall as
 its score and crenellated like the revrook mark. A strong or good band is stone, fair
 is amber, weak or critical is red. A wire rook means the evidence is too thin for a
-score (the dashed ring of its card), a flat footprint means nothing is imported yet,
+score (the dashed outline of its bar in the score drivers), a flat footprint means nothing is imported yet,
 and every notch at the foot of a rook is a control that needs work.
 
 ![The rookery on Home at 1440 px, dark theme](../images/home-1440-dark.png)
 
 1. Point at a rook, or at its card, to read its name in the line under the stage.
-2. Press a rook to choose it: the others step back, its card gets the violet mark at
-   its left edge, and the detail line under the buttons names the client, its score,
+2. Press a rook to choose it: the others step back, its card in the score drivers gets
+   the violet mark at its left edge, and the detail line under the buttons names the client, its score,
    its band and how many controls need work.
 3. Or work from the keyboard: press Tab until the stage has focus, then **Left** and
    **Right** to choose the next client, **[** and **]** to turn the yard, **+** and
@@ -58,7 +58,9 @@ stands out at once.
 
 ![The domain keep with a domain chosen at 1440 px, dark theme](../images/client-overview-1440-keep-chosen-dark.png)
 
-From 768 px down the card spans the page and the keep has more room.
+From 768 px down the card spans the page and the keep has more room. The view is
+fitted from the corners of every block, so the whole keep stays inside its stage at
+every width; from 600 px the stage is 16 by 9.
 
 ![Coverage by domain at 768 px, light theme](../images/client-overview-768-keep.png)
 
@@ -128,9 +130,6 @@ or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 
 ## Known limits
 
-- At 768 px the keep can draw the block in the front right corner past the bottom edge
-  of its stage, depending on the angle; the bar of that domain under the stage is not
-  affected ([the picture at 768 px in the dark theme](../images/client-overview-768-keep-dark.png)).
 - The scenes were checked in a headless Chrome with a software renderer on the
   Development site; no hardware GPU, phone or touch screen has been measured.
 

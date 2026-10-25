@@ -5,7 +5,25 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
+## Update of 2026-10-25 (application build documented and captured, `@@SHORT@@`)
+
+Read on 2026-10-25 from the deployment receipt of the Development environment, before
+and after the screenshots of the [guides](guides/README.md) were captured again; both
+reads gave the same facts. Later documentation-only commits are deployed on top with the
+same application code; the deployed head is read from the deployment receipt and the
+package manifest.
+
+| Fact | Value |
+| --- | --- |
+| Application build documented and captured | commit `@@COMMIT@@` (merge of pull request #74), image `ghcr.io/theriark/revrook-ce@@@DIGEST@@`, CI run 40184907364, Dokploy deployment `ogG86UI70qyy2DI07CqAu`, deployed 2026-10-25T10:45:58Z on VM-09, the revision label of the image checked against the commit |
+| Screenshot capture source | the same commit and image: @@COUNTS@@ ([capture manifest](images/README.md)) |
+| Browser acceptance of that build | the live acceptance of the changed flows by their author on the same commit and image (Paperclip tasks THE-1188 and THE-1189); independent documentation QA follows this documentation |
+| Release candidate tags | `v27.0.0-rc.1` (commit `3d9c598e`), `v27.0.0-rc.2` (commit `742c2663`) and `v27.0.0-rc.3` (commit `bf22681a`) exist as annotated tags made by the `prepare-rc` job; none names this candidate. The tag of this candidate is minted by that job after the independent review of this documentation, not by this page |
+| Documentation package | the review copy in Nextcloud under the product folder, `Documentation/<label>/`, with its own `manifest.json`; its label is set by the release crew and recorded in that manifest, not on this page |
+
 ## Update of 2026-10-24 (application build documented and captured, `314d239c`)
+
+This section is history: the candidate of 2026-10-24.
 
 Read on 2026-10-24 from the deployment receipt of the Development environment, before
 and after the screenshots of the [guides](guides/README.md) were captured again; both

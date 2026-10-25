@@ -9,7 +9,45 @@ the application reports is `0.0.0.dev0`
 earlier ones are kept below as history. The full list of changes is the
 [CHANGELOG](../CHANGELOG.md).
 
+## Candidate of 2026-10-25
+
+| Fact | Value |
+| --- | --- |
+| Application build documented and captured | commit `@@COMMIT@@`, image `ghcr.io/theriark/revrook-ce@@@DIGEST@@` (deployment receipt of the Development environment: CI run 40184907364, Dokploy deployment `ogG86UI70qyy2DI07CqAu`, deployed 2026-10-25T10:45:58Z, read before and after the captures). Later documentation-only commits are deployed on top with the same application code; the deployed head is read from the deployment receipt and the package manifest. |
+| Screenshot capture source | the same commit and image: every picture of a signed-in page was captured again on 2026-10-25, @@WINDOW@@ Europe/Lisbon, and the two of the sign-in page were compared byte for byte with a fresh capture ([capture manifest](images/README.md)) |
+| Release candidate label | set by the `prepare-rc` job after the independent review of this documentation; the tags `v27.0.0-rc.1`, `v27.0.0-rc.2` and `v27.0.0-rc.3` name earlier candidates |
+| Documentation | the [guides](guides/README.md), with the new [guide 9](guides/09-top-bar-filters-and-bulk-actions.md) for the top bar, the filters in use and the bulk actions, and the README preview |
+
+### What changed since the candidate of 2026-10-24
+
+The top bar of every signed-in page, with the breadcrumb and a search of the clients
+that the / key reaches; the search, Status menu and Order menu of the checklist; on
+Home, the score drivers (what moves the score) in place of the ring per client, and a
+score chart that says when a range holds one report or none instead of drawing an empty
+plot; on the clients list, the filters in use as removable chips and the bulk actions
+(select, download as CSV, make reports, delete with the exact names); a report that fits
+a phone, its tables scrolling in their own frames; the domain keep fitted to its stage
+at every width; and the edition badge kept clear of the wordmark at 768 px. The
+CHANGELOG lists each of them.
+
+### Known limits of this candidate
+
+The limits 1 to 8, 10 and 11 of the candidate of 2026-10-24 below still hold. Limit 9
+(the keep at 768 px) is fixed: the view is fitted from the corners of every block
+([guide 8](guides/08-scenes-rail-and-explorer.md)). In addition:
+
+12. **The bulk actions run one client after another in the browser.** They use the
+    report builder's and the System page's own forms, so a long selection takes as long
+    as the same steps by hand, and leaving the page stops the remaining clients; the
+    result card says which were done. A deletion asks for every name and takes at most
+    ten clients at a time.
+13. **The score drivers explain the score of today.** They are read from the evidence as
+    it is now, like the checklist; the score of a stored report, on the clients list and
+    in Score over time, can differ until a new report is made.
+
 ## Candidate of 2026-10-24
+
+This section is history: the candidate of 2026-10-24.
 
 | Fact | Value |
 | --- | --- |

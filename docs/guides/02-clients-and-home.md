@@ -7,16 +7,17 @@ as the client pages; nothing on it is a check run on the fly.
 
 ![Home at 1440 px, light theme](../images/home-1440.png)
 
+Every signed-in page opens with the top bar: the breadcrumb of the page on the left and
+**Search clients** on the right, which the **/** key reaches from anywhere outside a
+field ([9. The top bar, the filters in use and bulk actions](09-top-bar-filters-and-bulk-actions.md#the-top-bar)).
+
 From top to bottom:
 
 1. Four stat cards: clients, controls protected, controls that need work and exports to
    refresh, each with the change since the last reports.
-2. **Posture by client**: the rookery skyline, one rook per client as tall as its
-   score, above a card per client with the ring and the band of its last report. A
-   dashed ring with a question mark, and a wire rook, mean the evidence is too thin for
-   a score (**Insufficient evidence**); a flat footprint means nothing is imported yet.
-   The scene is a way of looking at the cards under it and never replaces them
-   ([8. Scenes, the folded rail and the Evidence Explorer](08-scenes-rail-and-explorer.md)).
+2. **What moves the score**: the rookery skyline, one rook per client as tall as its
+   score ([8. Scenes, the folded rail and the Evidence Explorer](08-scenes-rail-and-explorer.md)),
+   then the score drivers described below.
 3. **Needs attention**: the gate controls first, then what is not protected, by weight,
    across all clients. **Open** shows the control in a drawer over the page
    ([4. The checklist](04-checklist-and-control-notes.md#the-drawer-and-the-page-of-a-control)).
@@ -38,7 +39,52 @@ one to a row and the navigation scrolls sideways.
 
 ![Home on a phone](../images/home-390.png)
 
-![Posture by client on a phone](../images/home-390-rookery.png)
+![The rookery and the score drivers on a phone](../images/home-390-rookery.png)
+
+## What moves the score
+
+Every score is out of a hundred. The score drivers split those hundred points of each
+client into what it earns and what costs it the rest, with the arithmetic of the
+scoring engine, so the parts add up to a hundred exactly and nothing is estimated.
+
+![What moves the score at 1440 px, light theme](../images/home-1440-drivers.png)
+
+1. **The summary** gives the mean score over the clients with evidence and names the
+   driver that costs the most points on average. When it counts a client whose evidence
+   is too thin for a score, it says that the mean is a lower bound.
+2. **The bar and its legend**: **Earned** (the points the evidence shows), **Not
+   protected**, **Partly met** and **Not checked** (a status), **Evidence type** (a
+   manual artefact or an attestation counts for less than an automatic export),
+   **Evidence age** (evidence past its maximum age counts for less) and **Gate cap** (a
+   gate control that is not met holds the score down). Solid fills are a status,
+   lighter fills the evidence and a dashed box the gate cap, so no driver is told by
+   its colour alone.
+3. **One card per client**: the name, the score and the band, its bar, the driver that
+   costs it the most in words, the gate control that holds the score, and the three
+   controls that cost the most points, each opening the control drawer. A client whose
+   evidence is too thin has a dashed outline round its bar and **at least** before its
+   score; a client without evidence has no bar and a link to import an export.
+4. **Show the numbers** holds every point of every client in a table.
+
+![What moves the score at 1440 px, dark theme](../images/home-1440-drivers-dark.png)
+
+## Score over time with few reports
+
+A line joins two stored reports or more of the same client; nothing is drawn that is
+not stored. When a range holds few reports, the chart says so instead of drawing an
+empty plot:
+
+- Each client keeps its own mark shape (circle, square, diamond and so on) and dash,
+  and the legend counts the reports of each client in the range.
+- A client with one report in the range is one larger mark in a dashed ring, and a note
+  above the drawing names it ("... have one report in the last 90 days, so they are
+  drawn as ringed marks without a line"). With one report per client the note says
+  there is no line yet and invites the 90-day range.
+- A line that enters from a report before the range starts at the left edge with no
+  mark there, and the note names that report and its date.
+- Switching every client off in the legend says so and how to bring a line back.
+
+![Score over time and Controls by domain at 1440 px, light theme](../images/home-1440-score-over-time.png)
 
 ## Clients: the list
 
@@ -53,6 +99,11 @@ the links **Open**, **Checklist**, **Evidence** and **Reports**.
 - **Search by name** and the chips **All clients**, **Needs work**, **No report yet** and
   **No evidence yet** filter the list; the headings sort it; **Comfortable** and
   **Compact** change the density. Fifty clients make a page.
+- Every filter in use is a chip under **Filtered by**; press its cross to remove it, or
+  **Clear all filters**.
+- With script, a select box on every row chooses clients for **Make reports**,
+  **Download as CSV** and **Delete** in a bar at the foot of the window
+  ([9. Bulk actions](09-top-bar-filters-and-bulk-actions.md#bulk-actions-on-the-clients-list)).
 - Below 1024 px the rows are cards, two to a row from 768 px and one on a phone.
 
 ![The clients list at 768 px](../images/clients-768.png)

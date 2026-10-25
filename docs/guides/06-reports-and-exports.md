@@ -70,6 +70,19 @@ important notice, is one tall picture in
 sections are described in [reports](../reports.md). The cyber insurance evidence pack
 opens the same way from its own **Preview** and is not pictured here.
 
+## A report on a phone
+
+The file fits a narrow screen as well as paper. Below about 640 px it has less padding,
+the facts of the cover in one column and a smaller title, and the page never scrolls
+sideways. A table that is still wider than the screen scrolls inside its own frame:
+swipe it, or give it focus with Tab and use the arrow keys. Its caption stays whole at
+the left edge while the columns move, and a date in a table is never broken across
+lines. Printing keeps the A4 layout.
+
+![The cover of the quarterly security review on a phone](../images/report-preview-file-390.png)
+
+![A table of the review scrolling in its frame on a phone](../images/report-preview-file-390-table.png)
+
 ## The export history
 
 Open the tab **Export history** of the client.
