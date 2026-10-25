@@ -58,7 +58,9 @@ TEMPLATE = (ROOT / "app/ui/templates/home.html").read_text(encoding="utf-8")
 TREND = (ROOT / "app/ui/templates/_trend_chart.html").read_text(encoding="utf-8")
 CHART = (ROOT / "app/ui/templates/_chart.html").read_text(encoding="utf-8")
 SECTIONS = ("stats", "rookery", "needs-attention", "trend", "domains", "recent-changes")
-RING_TITLE = re.compile(r'<title id="ring-(\d+)-title">([^<]+)</title>')
+DRIVER = re.compile(
+    r'<li class="rv-driver[^"]*" data-client="(\d+)" data-name="([^"]*)"'
+)
 POLYLINE = re.compile(r'<polyline points="([^"]+)"')
 STAT_VALUE = re.compile(r'id="stat-evidence">\s*<a class="rv-stat-value"[^>]*>(\d+)<')
 DOMAIN_SUM = re.compile(r'<span class="rv-domain-sum">(\d+) of (\d+) protected</span>')
@@ -338,9 +340,10 @@ def test_the_template_draws_every_part_without_an_image_or_a_colour_alone() -> N
         assert f'id="{part}"' in TEMPLATE, part
     assert 'id="home-empty"' in TEMPLATE
     assert "<img" not in TEMPLATE and "url(" not in TEMPLATE
-    # The ring and the sparkline; the trend chart holds links, so it is a group
-    # (the _chart.html macro), drawn once for every width it has (_trend_chart.html)
-    assert TEMPLATE.count('role="img"') == 2
+    # The sparkline (the score bars are the _drivers.html macro, THE-1189); the
+    # trend chart holds links, so it is a group (the _chart.html macro), drawn once
+    # for every width it has (_trend_chart.html)
+    assert TEMPLATE.count('role="img"') == 1
     assert '<div id="trend-body">\n{% include "_trend_chart.html" %}' in TEMPLATE
     assert 'c.score_chart(chart, "trend-title", "trend"' in TREND
     assert 'role="group" aria-labelledby="{{ title_id }} {{ prefix }}-desc' in CHART
@@ -406,9 +409,10 @@ async def test_the_dashboard_shows_every_part_for_a_client_with_evidence(
     shown = STATUS_SPAN.findall(html)
     found = STATUS.findall(html)
     assert shown and len(shown) == len(found)
-    rings = RING_TITLE.findall(html)
-    assert [int(found_id) for found_id, _ in rings] == [client_id]
-    assert rings[0][1].startswith("Synthetic Client Ltd: ")
+    cards = DRIVER.findall(html)
+    assert [int(found_id) for found_id, _ in cards] == [client_id]
+    assert cards[0][1] == "Synthetic Client Ltd"
+    assert 'id="drivers-summary"' in html and 'id="drivers-data"' in html
     assert f'href="/clients/{client_id}"' in html
     assert "No earlier report" in html
     assert 'id="trend-empty"' in html
@@ -450,5 +454,5 @@ async def test_the_home_page_lists_a_client_whose_evidence_cannot_be_read(
     assert page.status_code == 200
     assert structure_problems(page.text) == []
     assert '<b id="main">' not in page.text and "&lt;b id=" in page.text
-    assert len(RING_TITLE.findall(page.text)) == 2
+    assert len(DRIVER.findall(page.text)) == 2
     assert 'id="unread"' not in page.text
