@@ -139,6 +139,26 @@ The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded a
 `revrook.css` so that they win by order; they belong in `revrook.css` at its next
 rewrite.
 
+The top bar (`_topbar.html`, THE-1188) opens the page column of every signed-in page,
+above the stale-worker banner: the breadcrumb of the page on the left and the search of
+the clients on the right, on the surface with a hairline under it. The trail is made by
+`breadcrumb_trail` (`app/ui/breadcrumbs.py`, a template global) from what the page
+already has in its context: Home alone on Home; Home and the place of the rail (`nav`)
+elsewhere; on a page of one client Home, Clients, the client, its tab (`section`) and,
+deeper, the page itself (`crumb_leaf`: the control id on the control page, "Report of"
+and the pack date on a made report); a refusal is Home and its title. Every step but
+the last is a link; the last is the page, a `span` with `aria-current="page"`, and a
+chevron icon (hidden from assistive technology) stands between the steps. The nav is
+labelled Breadcrumb and the bar is not a `header`, so the rail stays the one banner of
+the page. The search is a plain GET form in a labelled `search` element (the landmark;
+Pico draws any `[role=search]` as one joined pill) to the clients list with its `q`, so it works without script and finds the same clients the list's
+own search does; no new endpoint. From anywhere outside a field, a menu or an open
+dialog, the / key moves focus to it (`revrook.js`, `aria-keyshortcuts="/"`), and from
+1024 px the key is shown inside the field. The bar scrolls with the page: a sticky bar
+would cover the focus of a field under it. Below 768 px the search takes its own row
+and a long client name wraps; nothing in the trail is cut with an ellipsis. Its rules
+are in `revrook-retest.css`.
+
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
 panel with the stacked lockup and three lines about the product on the left, the
 lockup in a row, the badge, the form and the footer on the right. Below 768 px the
