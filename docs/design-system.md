@@ -647,7 +647,10 @@ window) and shows it as a block only while open. The focus starts in its first
 field, Escape and Cancel close it and the focus returns to the button that opened
 it. Cancel is a plain button and the confirm button the only submit button, so Enter
 in a name field confirms, and only once every name matches (until then the confirm
-button is disabled and Enter does nothing). The form that adds a
+button is disabled and Enter does nothing). The list of names scrolls inside the
+dialog, so it keeps 5px round its fields (and gives it back with a negative margin):
+a list that scrolls clips what is drawn outside it, and the focus ring of a field
+(3px, offset 2px) needs that room on every side. The form that adds a
 client is a card at the end of the page, and the primary action of the page header
 leads to it.
 
@@ -899,6 +902,12 @@ cells in some screen readers), and below 40em its caption is as wide as the fram
 sticks to its left edge, so it wraps and is read whole while the columns scroll. The
 frame shows a focus outline. Print (`print.css`, A4) is unchanged. The golden
 reports changed by the CSS block and the frames around their tables only.
+
+A date in a report table is never broken across lines: every cell that holds a date
+is `td.date` (`white-space: nowrap`), the column grows instead, and on a phone the
+table scrolls in its frame. A "By when" answer is free text, so its cell is `td.date`
+only when the answer is one ISO date (the `iso_day` test of `app/reports/render.py`);
+longer words still wrap.
 
 The export history. The section head and the success strip after an export, then
 the table (`table.rv-exports`, with `rv-table-cards`): when, the report, the file

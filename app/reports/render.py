@@ -77,6 +77,14 @@ def _day(value: datetime | date | None) -> str:
     return value.isoformat()
 
 
+ISO_DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _is_iso_day(value: object) -> bool:
+    """A free-text answer that is one date, so its cell keeps it on one line."""
+    return isinstance(value, str) and ISO_DAY.fullmatch(value) is not None
+
+
 @functools.cache
 def _environment() -> Environment:
     environment = Environment(
@@ -86,6 +94,7 @@ def _environment() -> Environment:
         keep_trailing_newline=True,
     )
     environment.filters["day"] = _day
+    environment.tests["iso_day"] = _is_iso_day
     return environment
 
 

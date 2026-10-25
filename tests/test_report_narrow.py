@@ -77,6 +77,22 @@ def test_every_table_sits_in_a_named_frame_the_keyboard_reaches(kind: str) -> No
     assert len(ids) == len(set(ids))
 
 
+DATE_CELL = re.compile(r'<td( class="[^"]*")?>(\d{4}-\d{2}-\d{2}|No date)(?=</td>|<p)')
+
+
+@pytest.mark.parametrize("kind", KINDS)
+@pytest.mark.parametrize("name", ["A", "B", "C"])
+def test_a_date_in_a_table_is_never_broken(kind: str, name: str) -> None:
+    # At 768px, above the narrow rules, a squeezed column broke 2026-10-30 after
+    # its second hyphen (THE-1189 live recheck, D8). Every cell that holds a date
+    # is td.date, which keeps it on one line, on screen and in print.
+    assert re.search(r"\ntd\.date \{\s*white-space: nowrap;\s*\}", CSS)
+    html = make_report_golden.golden_html(LIBRARY, kind, name).decode("utf-8")
+    cells = DATE_CELL.findall(html)
+    assert cells
+    assert {attribute for attribute, _ in cells} == {' class="date"'}
+
+
 def test_print_keeps_the_a4_layout() -> None:
     assert "@media" not in PRINT and "overflow-x" not in PRINT
     assert "size: A4;" in PRINT

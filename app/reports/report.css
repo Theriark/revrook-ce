@@ -157,6 +157,13 @@ th.num {
   text-align: right;
 }
 
+/* A date is read whole: a narrow column broke 2026-10-30 after its second hyphen
+   (THE-1189, at 768px). The column grows instead; on a phone its table scrolls in
+   its frame (below) */
+td.date {
+  white-space: nowrap;
+}
+
 .status {
   display: inline-block;
   font-weight: 700;
