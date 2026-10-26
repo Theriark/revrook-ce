@@ -17,6 +17,7 @@ from datetime import date, timedelta
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine
+from test_revamp_markup import parents
 
 from app.checks.library import load_library
 from app.evidence.service import EvidenceContext
@@ -32,10 +33,9 @@ from app.ui.dashboard import (
     short_name,
 )
 from app.ui.horizon import EDGE_ROOM, HORIZON_WIDTH, review_horizon
-from app.ui.textfit import ELLIPSIS, fit_lines, shorten, text_width
+from app.ui.textfit import ELLIPSIS, WIDE, fit_lines, shorten, text_width
 from helpers import NOW
 from html_structure import structure_problems
-from test_revamp_markup import parents
 from ui_helpers import make_report, seed_client, sign_in
 
 SAMPLE = "Design Review Sample Client"
@@ -45,6 +45,7 @@ SHEET = (STATIC_DIR / "css/revamp.css").read_text(encoding="utf-8")
 CSS = re.sub(r"/\*.*?\*/", "", SHEET, flags=re.DOTALL)
 CHARTS_JS = (STATIC_DIR / "js/charts.js").read_text(encoding="utf-8")
 SCENES_JS = (STATIC_DIR / "js/scenes.js").read_text(encoding="utf-8")
+EXPLORER_JS = (STATIC_DIR / "js/evidence-explorer.js").read_text(encoding="utf-8")
 TSPAN = re.compile(r"<tspan[^>]*>([^<]*)</tspan>")
 MONTH_TEXT = re.compile(
     r'<text class="rv-horizon-month" x="([0-9.]+)" y="71" text-anchor="(middle|end)">'
@@ -83,8 +84,9 @@ def test_fitting_keeps_whole_words_and_wide_letters_count_wide() -> None:
     assert fit_lines("Alder Ltd", 136, 12, 2) == ("Alder Ltd",)
     assert text_width("WWW", 12) > 3 * text_width("iii", 12)
     assert shorten("Alder and Finch Ltd", 60, 12) == "Alder..."
-    # A character the table does not know counts wide, a full-width one an em
-    assert text_width("\u0416", 12) == text_width("W", 12)
+    # A character the table does not know counts as wide as the widest capital,
+    # a full-width one as an em
+    assert text_width("\u0416", 12) == WIDE * 12 / 1000 >= text_width("W", 12)
     assert text_width("\u6f22", 12) == 12
     # An accented capital is as wide as its letter
     assert text_width("\u00c9", 12) == text_width("E", 12)
@@ -190,6 +192,9 @@ def test_a_restored_context_takes_its_ground_from_the_stylesheet_again() -> None
     assert "groundOf(root)" in ground and "renderer.setClearColor(next, 1);" in ground
     # The renderer is still disposed whole when the stage goes
     assert "renderer.dispose();\n    renderer.forceContextLoss();" in SCENES_JS
+    # The wall of the evidence explorer sets its ground again too
+    after = EXPLORER_JS.split('"webglcontextrestored",', 1)[1]
+    assert "renderer.setClearColor(GROUND, 1);" in after.split("{ signal }", 1)[0]
 
 
 # --- D4: the dates of the freshness table ------------------------------------------

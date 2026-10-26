@@ -44,7 +44,6 @@
   var GAP = 10;
   var EDGE = 4;
   var ELLIPSIS = "...";
-  var SVG_NS = "http://www.w3.org/2000/svg";
   // Left and Right only: Up and Down keep scrolling the page while a mark or a
   // sparkline has the focus (a review found them swallowed, THE-867).
   var NEXT_KEYS = ["ArrowRight"];
@@ -586,7 +585,7 @@
           cut = fitLine(spans[n], room) || cut;
         }
         if (cut && !text.querySelector("title")) {
-          var title = document.createElementNS(SVG_NS, "title");
+          var title = document.createElementNS(text.namespaceURI, "title");
           title.textContent = whole.join(" ");
           text.insertBefore(title, text.firstChild);
         }
