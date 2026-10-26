@@ -2246,6 +2246,14 @@ main .rv-attention-what a:hover {
   fill: var(--rv-text);
 }
 
+/* The leader from the end of a line to its label when the label had to move
+   (THE-1414): thin and quieter than the line, so it reads as a pointer */
+.rv-chart-line .rv-chart-leader {
+  stroke: var(--rv-text-secondary);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
 /* The chart is drawn twice, in a wide and a narrow geometry, and the width
    decides which one shows: the wide drawing of 640 units shrank to half at 390px
    and its labels with it, so below 600px the narrow drawing (320 units, so its
