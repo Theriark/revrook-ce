@@ -11,6 +11,7 @@ without it.
 """
 
 import re
+from datetime import timedelta
 from html.parser import HTMLParser
 
 import httpx
@@ -18,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.checks.library import load_library
 from app.evidence.service import EvidenceContext
+from helpers import NOW
 from html_structure import structure_problems
 from ui_helpers import make_report, seed_client, sign_in
 
@@ -32,6 +34,7 @@ CELLS = (
     '<td data-label="Why it needs a look">',
 )
 HIDDEN_STAGE = re.compile(r'<div class="rv-scene" id="rookery-scene"[^>]* hidden>')
+SVG_TEXT = re.compile(r'<text class="([a-z-]+)"')
 
 
 class Parents(HTMLParser):
@@ -108,3 +111,40 @@ async def test_the_pages_render_what_the_finding_rules_select(
     assert structure_problems(page) == []
     rule = '<details class="rv-rule-more">\n<summary>The rule as the library writes it'
     assert rule in page
+
+
+async def test_the_pages_render_what_the_review_rules_select(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    # THE-1311 decision d53d2a49, the residuals of the review of 79256ca8
+    csrf = await sign_in(ui_browser, db_engine)
+    client_id = await seed_client(db_engine, ui_ctx)
+    report = await make_report(ui_browser, csrf, client_id)
+    added = await ui_browser.post(
+        f"/clients/{client_id}/exceptions",
+        data={
+            "csrf_token": csrf,
+            "control_id": load_library().controls[0].id,
+            "owner": "Synthetic Owner",
+            "reason": "Accepted for the test.",
+            "review_date": (NOW.date() + timedelta(days=12)).isoformat(),
+        },
+    )
+    assert added.status_code == 303, added.text
+    html = (await ui_browser.get(f"/clients/{client_id}/exceptions")).text
+    assert structure_problems(html) == []
+    # .rv-horizon svg { overflow: visible }: the drawing stands in the horizon, and
+    # .rv-horizon-month:nth-of-type(even) counts the months only: every text of the
+    # drawing before the word Today is a month
+    horizon = html.split('<section class="rv-horizon"', 1)[1].split("</section>", 1)[0]
+    drawing = horizon.split("<svg ", 1)[1].split("</svg>", 1)[0]
+    texts = SVG_TEXT.findall(drawing)
+    assert texts[-1] == "rv-horizon-label" and 11 <= len(texts) - 1 <= 12
+    assert set(texts[:-1]) == {"rv-horizon-month"}
+    # .rv-verdict .rv-verdict-facts > div { min-width: 0 }: each fact is a div of
+    # the list of facts
+    assert '<dl class="rv-facts rv-verdict-facts">\n<div><dt>Open</dt>' in html
+    # .rv-sheet-band .rv-sheet: the Pico colours are set on the sheet in the band
+    preview = (await ui_browser.get(report)).text
+    assert structure_problems(preview) == []
+    assert parents(preview, "class", "rv-sheet") == ["rv-sheet-band"]
