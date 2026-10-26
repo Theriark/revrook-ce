@@ -145,6 +145,27 @@ def test_the_paper_of_the_preview_and_the_cover_reads_in_every_theme() -> None:
         assert contrast(cover[word], cover["--rv-paper"]) >= BODY_MINIMUM, word
 
 
+def test_the_findings_of_the_deployed_check_have_their_rules() -> None:
+    # THE-1311 decision ebb42405, from the deployed check of 11e716e0: a faint
+    # battlement in the dark theme, a void beyond 1448px, no marker on the folded
+    # rule of a control, a checklist of 15753px at 390px
+    assert "repeating-linear-gradient(90deg, var(--rv-keep-crest) 0 40px" in CSS
+    light, dark = tokens(":root"), tokens(':root[data-theme="dark"]')
+    assert light["--rv-keep-crest"] == light["--rv-keep"]
+    assert contrast(dark["--rv-keep-crest"], dark["--rv-keep"]) >= 2
+    wide = CSS.split("@media (min-width: 1449px) {", 1)[1].split("\n}\n", 1)[0]
+    for rule in (
+        ".rv-app .rv-content,",
+        "margin-inline: auto;",
+        "left: -100vw;",
+        "border-image-outset: 0 100vw;",
+    ):
+        assert rule in wide, rule
+    assert ".rv-rule-more[open] > summary::before {\n  transform: rotate(90deg);" in CSS
+    phone = "main .rv-checklist tbody tr[data-control] {\n    display: flex;"
+    assert phone in CSS
+
+
 # --- the pages ----------------------------------------------------------------------
 
 
