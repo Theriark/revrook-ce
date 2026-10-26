@@ -71,6 +71,13 @@ const WORDS = {
   footprints: "Every client is a footprint: nothing is imported yet. Import an export and its rook rises here.",
 };
 
+// The ground of a stage: the colour the stylesheet gives it (--rv-scene-ground,
+// the charcoal of the keep band on Home, THE-1313), or the brand charcoal.
+function groundOf(node) {
+  const value = getComputedStyle(node).getPropertyValue("--rv-scene-ground").trim();
+  return /^#[0-9a-f]{6}$/i.test(value) ? parseInt(value.slice(1), 16) : GROUND;
+}
+
 function words(node, text) {
   if (node) {
     node.textContent = text;
@@ -417,7 +424,8 @@ function buildScene(THREE, root, options) {
     powerPreference: "low-power",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(GROUND, 1);
+  const ground = groundOf(root);
+  renderer.setClearColor(ground, 1);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 21 / 9, 0.1, 80);
   const spacing = kind === "keep" ? 1.7 : 1.25;
@@ -441,15 +449,21 @@ function buildScene(THREE, root, options) {
     return framingDistance(corners, home, target, camera.fov, camera.aspect);
   }
 
-  scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.5));
+  scene.add(new THREE.HemisphereLight(0xffffff, ground, 1.5));
   const sun = new THREE.DirectionalLight(0xffffff, 1.7);
   sun.position.set(4, 9, 6);
   scene.add(sun);
+  // Depth: a cool rim light from behind the yard picks out the battlements, and
+  // the far side of the yard fades into the ground colour.
+  const rim = new THREE.DirectionalLight(ACCENT, 0.9);
+  rim.position.set(-5, 4, -8);
+  scene.add(rim);
+  scene.fog = new THREE.Fog(ground, home.distance * 0.9, home.distance * 2.4);
 
   // The ground: a wide disc, and a thin ring as the edge of the yard.
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(span * 0.9 + 1.5, 72),
-    new THREE.MeshStandardMaterial({ color: GROUND, roughness: 1 })
+    new THREE.MeshStandardMaterial({ color: ground, roughness: 1 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.02;
@@ -539,6 +553,8 @@ function buildScene(THREE, root, options) {
     // or further away keeps its own distance.
     const atHome = Math.abs(view.distance - home.distance) < 0.001;
     home.distance = fitDistance();
+    scene.fog.near = home.distance * 0.9;
+    scene.fog.far = home.distance * 2.4;
     if (atHome) {
       view.distance = home.distance;
     }

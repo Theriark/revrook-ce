@@ -14,10 +14,12 @@ evidence a client, an insurer or a quarterly review asks for. The interface is c
 dense and readable: charcoal and white with one violet-blue accent, status always as
 an icon and its words, and nothing that moves unless the person did something.
 
-The one signature of revrook is the charcoal rail on the left: the rook's plumage,
-carrying the brand lockup, the navigation and the signed-in user, with a 3 px violet-blue
-mark on the current page. Signed-out pages show the same charcoal as a panel with the
-stacked lockup next to the form.
+The one signature of revrook is the keep: every signed-in page opens with a charcoal
+band whose top edge is the battlement of the rook mark, carrying the title, the purpose
+and the one primary action (see The keep below). The rail on the left carries the brand
+lockup, the navigation and the signed-in user, with a 3 px violet-blue mark on the
+current page; it is stone in the light theme and the darkest surface in the dark one.
+Signed-out pages show the charcoal as a panel with the stacked lockup next to the form.
 
 ## Tokens
 
@@ -957,6 +959,38 @@ the quiet one. An address no page answers (404) and a method a page does not tak
 (405) get the same page, in the signed-out shell when nobody is signed in; under
 `/api/`, the probes and `/static/` the answer stays JSON. The htmx fragment of the
 same refusal is unchanged.
+
+## The keep
+
+The revamp (THE-1313) is one layer stylesheet, `app/static/css/revamp.css`, linked in the
+shell after every other stylesheet and versioned like them. It changes tokens and adds
+rules; it never edits `revrook.css`, and it writes a colour only as the value of a custom
+property (`tests/test_revamp.py` checks this and the contrast of every pair it adds).
+
+- **The rail.** The rail rules of `revrook.css` draw with the rail tokens; the layer gives
+  them the rail's own values on `.rv-app .rv-header` (`--rv-rail-ground`, `--rv-rail-ink`,
+  `--rv-rail-quiet`, `--rv-rail-hover`, `--rv-rail-current`), so the same rules draw a stone
+  rail with a white pill for the page in use in the light theme, and the darkest surface
+  in the dark one. The wordmark keeps rev in the ink and rook in the link colour.
+- **The band.** `.rv-page-header`, the client tabs (`.rv-tabs-strip`) and the problem page,
+  when they open the content, take back its padding and stand on `--rv-keep` (the brand
+  charcoal; near-black in the dark theme). Inside the band the roles take their dark
+  values, so every rule that reads text on surface draws on the charcoal. The first 14 px
+  of its background is a row of merlons with the page showing through the gaps: a
+  decoration of the band that tells nothing.
+- **Home.** The stat cards are one ledger (columns with hairlines, 40 px tabular figures)
+  standing on the foot of the band. Under What moves the score, the keep panel holds the
+  gauge (the mean score of every client with evidence; the ring is hidden from assistive
+  technology and its number and words are text beside it; a mean that counts a lower
+  bound is drawn in the quiet colour) and the rookery stage. From 1280 px the dashboard
+  is two rows of two columns, 7 to 5: Needs attention beside Score over time, Controls by
+  domain beside Recent changes; below that width each part takes the full width.
+- **Scenes.** A stage reads its ground from `--rv-scene-ground` (the keep inside the keep
+  panel, the brand charcoal elsewhere); a cool rim light from behind and a fog on the far
+  side of the yard give the rooks depth. Nothing else about the scenes changed.
+- **Chips and tables.** A status badge is a soft fill of its status (`--rv-tint-*`) with
+  the words in the status colour; a table head sits on the canvas and a row lights on
+  hover where the pointer can hover.
 
 ## Floors every page keeps
 
