@@ -144,6 +144,16 @@ def test_the_band_carries_the_header_the_tabs_and_the_problem_page() -> None:
     assert "repeating-linear-gradient(90deg, var(--rv-keep)" in css
 
 
+def test_the_band_runs_to_the_right_edge_of_the_window() -> None:
+    # THE-1347: the band stopped at the 1200px of the content on a wide window
+    css = strip_comments(CSS)
+    assert ".rv-main {\n  overflow-x: clip;\n}" in css
+    layer = css.split(".rv-content > .rv-page-header::before,", 1)[1].split("}")[0]
+    assert "inset: 0 -100vw 0 0;" in layer and "z-index: -1;" in layer
+    tabs = css.split(".rv-content > .rv-tabs-strip {", 1)[1].split("}")[0]
+    assert "fill 0 / 0 / 0 100vw" in tabs
+
+
 def test_motion_stays_off_under_reduced_motion() -> None:
     assert "@media (prefers-reduced-motion: reduce)" in CSS
     assert "transition:" not in strip_comments(CSS).split("prefers-reduced")[0]
@@ -187,6 +197,23 @@ def test_the_scene_takes_its_ground_from_the_stage_and_adds_depth() -> None:
     assert "new THREE.Fog(ground," in SCENES
     assert "scene.fog.near = home.distance" in SCENES
     assert "--rv-scene-ground: var(--rv-keep);" in CSS
+
+
+def test_the_scene_takes_the_new_ground_after_a_theme_switch() -> None:
+    # THE-1347: the ground was read once, so a switch of theme left the old band
+    apply = SCENES.split("function applyGround() {", 1)[1].split("}", 1)[0]
+    for step in (
+        "groundOf(root)",
+        "renderer.setClearColor(next, 1);",
+        "scene.fog.color.setHex(next);",
+        "sky.groundColor.setHex(next);",
+        "floor.material.color.setHex(next);",
+        "invalidate();",
+    ):
+        assert step in apply, step
+    assert 'attributeFilter: ["data-theme"]' in SCENES
+    assert 'matchMedia("(prefers-color-scheme: dark)")' in SCENES
+    assert "themeWatcher.disconnect();" in SCENES.split("function dispose() {", 1)[1]
 
 
 # --- the THE-1314 baseline defects --------------------------------------------------

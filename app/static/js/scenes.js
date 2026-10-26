@@ -449,7 +449,8 @@ function buildScene(THREE, root, options) {
     return framingDistance(corners, home, target, camera.fov, camera.aspect);
   }
 
-  scene.add(new THREE.HemisphereLight(0xffffff, ground, 1.5));
+  const sky = new THREE.HemisphereLight(0xffffff, ground, 1.5);
+  scene.add(sky);
   const sun = new THREE.DirectionalLight(0xffffff, 1.7);
   sun.position.set(4, 9, 6);
   scene.add(sun);
@@ -807,10 +808,29 @@ function buildScene(THREE, root, options) {
   const sizer = new ResizeObserver(() => resize());
   sizer.observe(stage);
 
+  // A theme switch changes the band in place (revrook.js sets data-theme; the
+  // System theme follows the colour scheme of the device): the scene takes the
+  // new ground for its clear colour, its fog, its sky light and its floor.
+  function applyGround() {
+    const next = groundOf(root);
+    renderer.setClearColor(next, 1);
+    scene.fog.color.setHex(next);
+    sky.groundColor.setHex(next);
+    floor.material.color.setHex(next);
+    invalidate();
+  }
+  const themeWatcher = new MutationObserver(applyGround);
+  themeWatcher.observe(page.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  const schemeQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  if (schemeQuery) {
+    schemeQuery.addEventListener("change", applyGround, { signal });
+  }
+
   function dispose() {
     controller.abort();
     watcher.disconnect();
     sizer.disconnect();
+    themeWatcher.disconnect();
     if (rafId) {
       window.cancelAnimationFrame(rafId);
       rafId = 0;

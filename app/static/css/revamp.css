@@ -169,15 +169,32 @@
 
 /* The band spans the page column: it takes back the padding of the content and
    gives it again inside. Its top edge is the battlement of the mark: a row of
-   merlons drawn as the first 14px of its own background, the page showing through
-   the gaps (a decoration of the band; nothing is told by it). */
+   merlons drawn as the first 14px of its background, the page showing through
+   the gaps (a decoration of the band; nothing is told by it).
+   The band is full-bleed (THE-1347): the content stops at 1200px, so on a wide
+   window the band ended short of the right edge. Its background is a layer
+   behind the words that carries on to the right of the window; the page column
+   clips what lies past the window without becoming a scroll box. */
+.rv-main {
+  overflow-x: clip;
+}
+
 .rv-content > .rv-page-header,
 .rv-content > .rv-problem {
   position: relative;
+  isolation: isolate;
   margin: -24px -16px 24px;
   padding: calc(var(--rv-keep-edge) + 20px) 16px 28px;
   border-bottom: 0;
   background-color: transparent;
+}
+
+.rv-content > .rv-page-header::before,
+.rv-content > .rv-problem::before {
+  content: "";
+  position: absolute;
+  inset: 0 -100vw 0 0;
+  z-index: -1;
   background-image:
     repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
     linear-gradient(var(--rv-keep), var(--rv-keep));
@@ -237,10 +254,14 @@
   padding-bottom: 12px;
 }
 
+/* The tabs carry the band on to the right of the window too: the image of the
+   border fills the strip and reaches out past its right edge */
 .rv-content > .rv-tabs-strip {
   margin: 0 -16px 28px;
   padding: 0 16px;
   background-color: var(--rv-keep);
+  border-image: linear-gradient(var(--rv-keep), var(--rv-keep)) fill 0 / 0 / 0 100vw
+    0 0;
 }
 
 @media (min-width: 768px) {

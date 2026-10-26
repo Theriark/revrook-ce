@@ -32,7 +32,7 @@
 <g class="rv-chart-line" data-series="{{ line.client_id }}">
 {% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
 {% for mark in line.marks %}<a class="rv-mark" href="/{{ mark.path }}" data-tip="{{ mark.tip }}"><title>{{ mark.tip }}</title>{% if solo %}<circle class="rv-mark-halo" cx="{{ mark.x }}" cy="{{ mark.y }}" r="8"/>{% endif %}{{ marker(shape, mark.x, mark.y, 5 if solo else 3.5) }}</a>{% endfor %}
-{% if chart.labelled %}<text x="{{ chart.right + 10 }}" y="{{ line.label_y }}" dominant-baseline="middle">{{ line.short_name }}</text>{% endif %}
+{% if chart.labelled %}<text x="{{ chart.right + 10 }}" y="{{ line.label_y }}" dominant-baseline="middle">{% for words in line.label or [line.short_name] %}<tspan x="{{ chart.right + 10 }}"{% if not loop.first %} dy="14"{% endif %}>{{ words }}</tspan>{% endfor %}</text>{% endif %}
 </g>
 {% endfor %}
 </svg>
