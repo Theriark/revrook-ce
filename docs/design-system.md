@@ -997,6 +997,52 @@ property (`tests/test_revamp.py` checks this and the contrast of every pair it a
   and source letters, is folded under it. Below 768 px a card puts its short cells two
   to a line, and the imported items and the explorer controls show their first twelve
   rows with a link that makes the table the target and shows every row (no script).
+- **The edges of the band.** In the dark theme each merlon has a 2 px crest of a lighter
+  shade (`--rv-keep-crest`; the band itself in the light theme), so the battlement reads
+  on a near-black page. Beyond 1448 px the content, the top bar and the footer stand in
+  the middle of the page column, and the band and the tabs reach both of its edges; the
+  column clips what lies past them. A folded rule shows a triangle drawn with borders,
+  turned down when it is open (Pico's marker is an image the content security policy
+  blocks). On a phone the facts of a checklist control run as short lines, the label
+  beside its value and the status chip without one.
+
+### The routes
+
+The pages after the client overview have their own layout on the same layer (THE-1360):
+
+- **Exceptions.** The register opens with its verdict as a ledger and the review
+  horizon: the coming year as one line, today at its left end, every open exception a
+  merlon at its review date and those past their date stacked before today
+  (`app/ui/horizon.py`). Merlons closer than a merlon and its gap stack, three at most;
+  an exception due more than a year away is counted, not drawn. The words above the
+  drawing and the register under it carry the same dates, so the drawing is for the eye
+  only. From 1280 px the words stand at the left and the drawing fills the card; on a
+  phone every second month is named, in larger letters. Each review date says how many
+  days are left or late.
+- **Reports.** The builder is three steps joined by a rail. From 1280 px the reports
+  made before and the score over time stand beside the steps, each kept report a row of
+  two lines so its period stays whole; the column does not stick, so a long list scrolls
+  with the page. The preview is paper in both themes, a white sheet in the keep with the
+  battlement for its edge; inside it the roles, and the Pico colours that read them,
+  take their light values.
+- **Export history.** A ledger of the kept files; under each SHA-256 its first eight
+  characters stand as the seal of the row, to compare by eye with the copy a client
+  holds.
+- **Settings.** The cover line of every report stands beside the form, a strip of paper
+  in both themes, and each domain weight is a bar beside its number.
+- **System.** The worker is a verdict ledger, the services are tiles and the clients that
+  can be deleted are a grid of quiet buttons, each with its own confirmation.
+- **Glossary.** Four chapters and an index of every term; each term has its own address
+  (`#term-...`) and is marked when it is the target. The index is a nav, which Pico lays
+  out as one row, so the layer sets it back to a column.
+- **Verdicts and cards.** A long value in a verdict keeps its words whole, and on a phone
+  the action of a card takes the whole card.
+- **The keep panel without a scene.** When the browser draws no scene (no WebGL 2,
+  nothing to draw, or no script) the panel is one column and the gauge lies on its side.
+
+`tests/test_revamp_routes.py` draws these pages through the application and reads the
+rules they depend on; `tests/test_revamp_markup.py` checks that the pages still render
+the elements those rules select, where the selectors expect them.
 
 ## Floors every page keeps
 
