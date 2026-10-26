@@ -33,6 +33,24 @@
 </dl>
 </section>
 
+{#- The review horizon (THE-1360, app/ui/horizon.py): the coming year as one line,
+    today at its left end, each open exception a merlon at its review date and
+    those past their date stacked before today. The drawing is for the eye only;
+    the sentence above it and the register below carry the same dates. -#}
+{% if open_rows %}
+<section class="rv-horizon" id="review-horizon" aria-labelledby="horizon-title">
+<h3 id="horizon-title" class="rv-horizon-title">Reviews in the coming year</h3>
+<p class="rv-horizon-words" id="horizon-words">{% if horizon.overdue %}{{ horizon.overdue }} past {% if horizon.overdue == 1 %}its{% else %}their{% endif %} review date, before the line of today. {% endif %}{% if horizon.soon %}{{ horizon.soon }} due in the next 30 days. {% endif %}{{ horizon.within_year }} due within a year{% if horizon.beyond_year %}, {{ horizon.beyond_year }} later and not drawn{% endif %}. The register below lists every date.</p>
+<svg viewBox="0 0 640 76" width="640" height="76" preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false">
+<line class="rv-horizon-axis" x1="0" x2="640" y1="52.5" y2="52.5"/>
+{% for x, label in horizon.months %}<line class="rv-horizon-tick" x1="{{ x }}" x2="{{ x }}" y1="48" y2="57"/><text class="rv-horizon-month" x="{{ x }}" y="71" text-anchor="middle">{{ label }}</text>{% endfor %}
+<line class="rv-horizon-today" x1="{{ horizon.today_x }}" x2="{{ horizon.today_x }}" y1="4" y2="60"/>
+<text class="rv-horizon-label" x="{{ horizon.today_x + 4 }}" y="10">Today</text>
+{% for mark in horizon.marks %}<rect class="rv-horizon-mark rv-horizon-{{ mark.state }}" x="{{ mark.x }}" y="{{ mark.y }}" width="10" height="12" rx="1"/>{% endfor %}
+</svg>
+</section>
+{% endif %}
+
 {% if rows %}
 <div class="rv-table-scroll rv-exceptions-scroll" role="region" aria-label="Exceptions register" tabindex="0">
 <table id="exceptions" class="rv-table-cards rv-exceptions">
@@ -50,12 +68,13 @@
 </thead>
 <tbody>
 {% for row in rows %}
+{%- set days = (row.review_date - today).days %}
 <tr{% if row.closed %} class="rv-exception-closed"{% endif %}>
 <th scope="row"><a href="/clients/{{ client_id }}/controls/{{ row.control_id }}">{{ row.title }}</a><span class="rv-cell-note">{{ row.control_id }}</span></th>
 <td data-label="Owner">{{ row.owner }}</td>
 <td data-label="Reason" class="rv-exception-text">{{ row.reason }}</td>
 <td data-label="Compensating control" class="rv-exception-text">{% if row.compensating_control %}{{ row.compensating_control }}{% else %}<span class="rv-text-secondary">None</span>{% endif %}</td>
-<td data-label="Review date" class="rv-date">{{ row.review_date.isoformat() }}</td>
+<td data-label="Review date" class="rv-date">{{ row.review_date.isoformat() }}{% if not row.closed %}<span class="rv-review-when">{% if days == 0 %}today{% elif days > 0 %}in {{ days }} day{% if days != 1 %}s{% endif %}{% else %}{{ -days }} day{% if days != -1 %}s{% endif %} late{% endif %}</span>{% endif %}</td>
 <td data-label="State">
 {% if row.closed %}
 <span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Closed</span>

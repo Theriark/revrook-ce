@@ -10,6 +10,18 @@
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Export {{ exported }} was made and an unchangeable copy was kept.</span></p>
 {% endif %}
 {% if rows %}
+{#- The ledger of the kept files (THE-1360): how many, how large together, and the
+    newest; under the hash of each row stands its seal, the first eight
+    characters, to compare by eye with the copy a client holds. -#}
+<section class="rv-verdict rv-exports-ledger" id="exports-ledger" aria-labelledby="exports-ledger-title">
+<h3 id="exports-ledger-title" class="rv-sr-only">The kept files</h3>
+<div class="rv-verdict-status"><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> {{ rows|length }} kept file{% if rows|length != 1 %}s{% endif %}</span></div>
+<dl class="rv-facts rv-verdict-facts">
+<div><dt>Newest export</dt><dd>{{ rows[0][0].exported_at.strftime("%Y-%m-%d") }}</dd></div>
+<div><dt>Size of every kept file</dt><dd>{{ "{:,}".format(rows|sum(attribute="0.size_bytes")) }} bytes</dd></div>
+<div><dt>Exported by</dt><dd>{{ rows|map(attribute="1")|unique|list|length }} {% if rows|map(attribute="1")|unique|list|length == 1 %}person{% else %}people{% endif %}</dd></div>
+</dl>
+</section>
 <table id="exports" class="rv-table-cards rv-exports">
 <caption>Exports of this client, newest first</caption>
 <thead>
@@ -30,7 +42,7 @@
 <td data-label="Report">{{ name }}</td>
 <td data-label="File"><code class="rv-digest">{{ record.filename }}</code></td>
 <td data-label="Size" class="rv-numeric">{{ "{:,}".format(record.size_bytes) }} bytes</td>
-<td data-label="SHA-256"><code class="rv-digest">{{ record.sha256 }}</code></td>
+<td data-label="SHA-256"><code class="rv-digest">{{ record.sha256 }}</code><span class="rv-seal" aria-hidden="true">{{ record.sha256[:8] }}</span></td>
 <td data-label="By">{{ who }}</td>
 <td class="rv-row-actions"><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client_id }}/exports/{{ record.id }}/download">Download</a></td>
 </tr>

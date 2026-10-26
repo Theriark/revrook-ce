@@ -13,6 +13,10 @@
 <p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>The name of your business is not set, so a report cannot be exported yet. <a href="/settings">Set it in the settings</a>.</span></p>
 {% endif %}
 
+{#- The builder (THE-1360): the three steps joined by one rail, and from 1280px the
+    reports made before beside them; the score over time follows across the page. -#}
+<div class="rv-builder">
+<div class="rv-builder-steps">
 <section class="rv-step" id="step-period" aria-labelledby="step-period-title">
 <h3 id="step-period-title" class="rv-step-title"><span class="rv-step-number">1</span>Choose the period</h3>
 <p class="rv-step-lead">The quarter the report covers. The evidence is still read as it is today.</p>
@@ -81,17 +85,9 @@
 </div>
 </form>
 </section>
-
-<section class="rv-card rv-history" id="history" aria-labelledby="history-title">
-<h3 id="history-title" class="rv-card-title">Score over time</h3>
-<p class="rv-card-subtitle">The score of {{ client_name }} at every report made before, as each report scored it. A point opens that report.</p>
-{#- The body of the card (_history_chart.html) is what the chart script swaps when a
-    span is chosen; app/ui/fragments.py renders it alone for that. -#}
-<div id="history-body">
-{% include "_history_chart.html" %}
 </div>
-</section>
 
+<div class="rv-builder-side">
 <section id="made-before" aria-labelledby="made-before-title">
 <div class="rv-section-head">
 <div><h3 id="made-before-title">Reports made before</h3><p class="rv-section-note">Every report of this client, the newest first. Each one opens as it was made.</p></div>
@@ -114,8 +110,20 @@
 <div class="rv-empty" id="snapshots-empty">
 {{ i.icon("inbox", "xl") }}
 <p class="rv-empty-title">No report has been made for this client yet</p>
-<p class="rv-empty-text">Choose the period and write the details above, then make the first report with step 3. It appears here, ready to preview and export.</p>
+<p class="rv-empty-text">Choose the period and write the details, then make the first report with step 3. It appears here, ready to preview and export.</p>
 </div>
 {% endif %}
+</section>
+</div>
+</div>
+
+<section class="rv-card rv-history" id="history" aria-labelledby="history-title">
+<h3 id="history-title" class="rv-card-title">Score over time</h3>
+<p class="rv-card-subtitle">The score of {{ client_name }} at every report made before, as each report scored it. A point opens that report.</p>
+{#- The body of the card (_history_chart.html) is what the chart script swaps when a
+    span is chosen; app/ui/fragments.py renders it alone for that. -#}
+<div id="history-body">
+{% include "_history_chart.html" %}
+</div>
 </section>
 {% endblock %}

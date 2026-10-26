@@ -4,38 +4,77 @@
 <div class="rv-page-header">
 <div><h1>Glossary</h1><p class="rv-page-purpose">The words revrook uses, each explained once, in the order you meet them.</p></div>
 </div>
+{#- The terms in four chapters (THE-1360): the evidence, the score, the decisions
+    about a control, and the reports with the abbreviations they use. The index
+    lists every term under its chapter and opens it in place; each term has its
+    own address (#term-...), so a page can link to one word. -#}
+{%- set chapters = [
+  ("The evidence", ["pack-date", "evidence", "assurance", "freshness"]),
+  ("The score", ["coverage", "best-case", "lower-bound", "gate-control"]),
+  ("A control and its decisions", ["statuses", "exception"]),
+  ("Reports and abbreviations", ["qbr", "mfa", "mail-records", "snapshot"]),
+] %}
+{%- set names = {
+  "pack-date": "Pack date",
+  "evidence": "Evidence",
+  "assurance": "Automatic export, manual artefact, attestation",
+  "freshness": "Freshness",
+  "coverage": "Coverage",
+  "best-case": "Best case",
+  "lower-bound": "Lower bound",
+  "gate-control": "Gate control",
+  "statuses": "Protected, Needs attention, Not protected, Not checked",
+  "exception": "Exception",
+  "qbr": "QBR",
+  "mfa": "MFA",
+  "mail-records": "SPF, DKIM, DMARC",
+  "snapshot": "Snapshot",
+} %}
+<div class="rv-glossary-layout">
+<nav class="rv-glossary-index" id="glossary-index" aria-labelledby="glossary-index-title">
+<p class="rv-glossary-index-title" id="glossary-index-title">Every term</p>
+{% for chapter, keys in chapters %}
+<p class="rv-glossary-chapter">{{ chapter }}</p>
+<ol>
+{% for key in keys %}<li><a href="#term-{{ key }}">{{ names[key] }}</a></li>{% endfor %}
+</ol>
+{% endfor %}
+</nav>
+<div class="rv-glossary-body">
 <dl id="glossary" class="rv-glossary">
-<div><dt>Pack date</dt>
+<div id="term-pack-date" class="rv-glossary-chapter-start"><dt>Pack date</dt>
 <dd>The date the evidence was read. Everything in a report is true as of that date.</dd></div>
-<div><dt>Evidence</dt>
+<div id="term-evidence"><dt>Evidence</dt>
 <dd>An export from a tool, a document or a statement, with the time it was captured. A status with no dated evidence is shown as Not checked.</dd></div>
-<div><dt>Automatic export, manual artefact, attestation</dt>
+<div id="term-assurance"><dt>Automatic export, manual artefact, attestation</dt>
 <dd>How much a piece of evidence proves. An automatic export is read from a tool's own file. A manual artefact is a document a named person reviewed on a date. An attestation is a statement with no document behind it, and counts for the least.</dd></div>
-<div><dt>Freshness</dt>
+<div id="term-freshness"><dt>Freshness</dt>
 <dd>Evidence counts in full up to its maximum age, counts less after that, and counts for nothing at twice that age.</dd></div>
-<div><dt>Coverage</dt>
+<div id="term-coverage" class="rv-glossary-chapter-start"><dt>Coverage</dt>
 <dd>How much of the score rests on evidence that is present and fresh. Coverage is shown beside the score so that better evidence is not read as better security.</dd></div>
-<div><dt>Best case</dt>
+<div id="term-best-case"><dt>Best case</dt>
 <dd>The score if every control that was not checked, or whose evidence is old, turned out to pass.</dd></div>
-<div><dt>Lower bound</dt>
+<div id="term-lower-bound"><dt>Lower bound</dt>
 <dd>A score that is shown as the least the client could have, because too little was checked to give a real score.</dd></div>
-<div><dt>Gate control</dt>
+<div id="term-gate-control"><dt>Gate control</dt>
 <dd>A control so important that, if it is not protected, it holds the whole score down.</dd></div>
-<div><dt>Protected, Needs attention, Not protected, Not checked</dt>
+<div id="term-statuses" class="rv-glossary-chapter-start"><dt>Protected, Needs attention, Not protected, Not checked</dt>
 <dd>The four statuses of a control. Each has an icon and words, so it can be told apart without colour. Not checked means nothing was verified.</dd></div>
-<div><dt>Exception</dt>
+<div id="term-exception"><dt>Exception</dt>
 <dd>A control that is knowingly not met, with an owner, a reason and a date to look at it again. It never changes a status.</dd></div>
-<div><dt>QBR</dt>
+<div id="term-qbr" class="rv-glossary-chapter-start"><dt>QBR</dt>
 <dd>Quarterly business review: the report you give a client each quarter.</dd></div>
-<div><dt>MFA</dt>
+<div id="term-mfa"><dt>MFA</dt>
 <dd>Multi-factor authentication: signing in with more than a password.</dd></div>
-<div><dt>SPF, DKIM, DMARC</dt>
+<div id="term-mail-records"><dt>SPF, DKIM, DMARC</dt>
 <dd>Three public settings of a mail domain that help receivers tell real mail from forged mail. SPF lists the servers allowed to send, DKIM signs the mail and DMARC says what to do when a check fails.</dd></div>
-<div><dt>Snapshot</dt>
+<div id="term-snapshot"><dt>Snapshot</dt>
 <dd>A stored copy of the state of a client on one day. A report is made from a snapshot, so it can be made again exactly.</dd></div>
 </dl>
 <div class="rv-alert" id="glossary-note">
 <p class="rv-alert-title">What a report is</p>
 <p>This product summarises settings observed on a date. It is not a certification, audit or attestation.</p>
+</div>
+</div>
 </div>
 {% endblock %}
