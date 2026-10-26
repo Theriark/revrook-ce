@@ -122,6 +122,9 @@
 {% endfor %}
 </tbody>
 </table>
+{#- On a phone the list shows its newest twelve items; this link (the table as the
+    target, no script) shows every one. Hidden from 768px, where every row shows. -#}
+{% if items|length > 12 %}<p class="rv-table-more"><a href="#items">Show all {{ items|length }} items</a></p>{% endif %}
 {% else %}
 <div class="rv-empty" id="items-empty">
 {{ i.icon("inbox", "xl") }}

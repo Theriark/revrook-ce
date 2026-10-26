@@ -536,8 +536,132 @@ span.rv-status-not-applicable {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   }
 
+  /* The trend drawing is 640 units wide: it takes the wider column */
+  .rv-dash-row-trend {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
   .rv-dash-row > .rv-card {
     margin-top: 32px;
+  }
+}
+
+/* ---------- The checklist in domains ---------- */
+
+/* In library order every domain is a row group with a header row: its name and
+   how many controls it holds */
+.rv-checklist .rv-group-row th {
+  padding: 20px 12px 8px;
+  border-bottom: 2px solid var(--rv-line-strong);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-group-count {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- A control: the sources by name, the library rule folded ---------- */
+
+.rv-read-from {
+  margin: 12px 0 8px;
+  font-size: 14px;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-read-from-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-rule-more {
+  margin: 0;
+  font-size: 13px;
+}
+
+.rv-rule-more summary {
+  font-weight: 600;
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
+}
+
+.rv-rule-more .rv-rule {
+  margin: 8px 0 0;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- Phone cards: two columns, long lists folded ---------- */
+
+/* The link that shows every row of a long list on a phone; from 768px every row
+   shows and the link is not needed */
+.rv-table-more {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* A card puts its short cells side by side, two to a line; its heading and
+     the long cells (why a control needs a look, what a source feeds, what a
+     control reads) keep the full width */
+  main .rv-table-cards tbody tr,
+  main .rv-checklist tbody tr[data-control] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  main .rv-table-cards tbody tr > th,
+  main .rv-checklist tbody tr[data-control] > th,
+  main .rv-checklist tbody tr[data-control] > td:last-child,
+  main .rv-explorer-table td:is([data-label="Feeds"], [data-label="Reads"]) {
+    grid-column: 1 / -1;
+  }
+
+  /* The scene button of an explorer row is shown by the script only */
+  main .rv-explorer-table td[data-label="Scene"]:has(> button[hidden]) {
+    display: none;
+  }
+
+  /* A domain header of the checklist is a heading between the cards */
+  main .rv-checklist tbody tr.rv-group-row {
+    margin: 24px 0 8px;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  main .rv-checklist tbody tr.rv-group-row th {
+    padding: 0 0 6px;
+  }
+
+  /* The imported items and the controls of the explorer: the first twelve, and
+     every one once the link has made the table the target */
+  main :is(#items, #explorer-controls) tbody tr:nth-child(n + 13) {
+    display: none;
+  }
+
+  main :is(#items, #explorer-controls):target tbody tr:nth-child(n + 13) {
+    display: grid;
+  }
+
+  .rv-table-more {
+    display: block;
+    margin: 0 0 24px;
+  }
+
+  :is(#items, #explorer-controls):target + .rv-table-more {
+    display: none;
   }
 }
 

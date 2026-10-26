@@ -120,6 +120,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% if view.controls|length > 12 %}<p class="rv-table-more"><a href="#explorer-controls">Show all {{ view.controls|length }} controls</a></p>{% endif %}
 <div class="rv-alert" id="explorer-note">
 <p class="rv-alert-title">What this view is</p>
 <p>A scene drawn in the browser from the same checks as the checklist of {{ view.client_name }} at {{ view.as_of[:16].replace("T", " ") }} UTC. It stores nothing, loads nothing from outside this installation, and is not part of any report. The tables are the record; the scene is a way of looking at them, like the rookery skyline of Home and the domain keep of a client overview.</p>

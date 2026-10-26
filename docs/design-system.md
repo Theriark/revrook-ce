@@ -991,6 +991,12 @@ property (`tests/test_revamp.py` checks this and the contrast of every pair it a
 - **Chips and tables.** A status badge is a soft fill of its status (`--rv-tint-*`) with
   the words in the status colour; a table head sits on the canvas and a row lights on
   hover where the pointer can hover.
+- **The checklist, a control and long lists.** In library order the checklist is one
+  row group per domain, headed by a row with the domain and its count. A control page
+  names the sources it reads; the rule as the library writes it, with its field names
+  and source letters, is folded under it. Below 768 px a card puts its short cells two
+  to a line, and the imported items and the explorer controls show their first twelve
+  rows with a link that makes the table the target and shows every row (no script).
 
 ## Floors every page keeps
 

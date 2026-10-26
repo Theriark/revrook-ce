@@ -20,9 +20,16 @@
 <div class="rv-control-main">
 <section class="rv-card" id="checked" aria-labelledby="checked-title">
 <h3 id="checked-title" class="rv-card-title">What was checked</h3>
-<p class="rv-rule">{{ control.rule.text }}</p>
 <p class="rv-result-detail">{{ result.detail }}</p>
 {% if reason %}<p class="rv-text-secondary">{{ reason }}</p>{% endif %}
+{#- The sources by name (the library's letters are its own shorthand), and the
+    rule as the library and the report write it, with its field names, folded
+    (THE-1313: the raw letters and field names led the card). -#}
+{% if read_from %}<p class="rv-read-from"><span class="rv-read-from-label">Read from</span> {{ read_from|join(", ") }}</p>{% endif %}
+<details class="rv-rule-more">
+<summary>The rule as the library writes it</summary>
+<p class="rv-rule">{{ control.rule.text }}</p>
+</details>
 {% if result.notes %}
 <ul class="rv-flags">
 {% for note in result.notes %}

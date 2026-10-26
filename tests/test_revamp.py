@@ -166,8 +166,10 @@ def test_home_puts_the_gauge_beside_the_rookery_in_the_keep() -> None:
 
 
 def test_home_lays_the_dashboard_in_two_rows_and_keeps_every_part() -> None:
-    first = HOME.split('<div class="rv-dash-row">', 2)
+    first = HOME.split('<div class="rv-dash-row', 2)
     assert len(first) == 3
+    # The trend chart takes the wider column of its row: its drawing is 640 wide
+    assert first[1].startswith(' rv-dash-row-trend">')
     assert 'id="needs-attention"' in first[1] and 'id="trend"' in first[1]
     assert 'id="domains"' in first[2] and 'id="recent-changes"' in first[2]
     assert '<div class="rv-two">' not in HOME
@@ -185,3 +187,38 @@ def test_the_scene_takes_its_ground_from_the_stage_and_adds_depth() -> None:
     assert "new THREE.Fog(ground," in SCENES
     assert "scene.fog.near = home.distance" in SCENES
     assert "--rv-scene-ground: var(--rv-keep);" in CSS
+
+
+# --- the THE-1314 baseline defects --------------------------------------------------
+
+
+def test_a_control_names_its_sources_and_folds_the_library_rule() -> None:
+    body = (ROOT / "app/ui/templates/_control_body.html").read_text(encoding="utf-8")
+    checked = body.split('id="checked"', 1)[1].split("</section>", 1)[0]
+    # The plain result leads; the library's letters and field names are folded
+    assert checked.index("rv-result-detail") < checked.index("rv-rule-more")
+    assert '{{ read_from|join(", ") }}' in checked
+    folded = checked.split('<details class="rv-rule-more">', 1)[1]
+    assert '<p class="rv-rule">{{ control.rule.text }}</p>' in folded
+    page = (ROOT / "app/ui/clients.py").read_text(encoding="utf-8")
+    assert "library.source_codes.get(code, code) for code in control.sources" in page
+
+
+def test_long_lists_show_twelve_rows_on_a_phone_and_every_row_on_demand() -> None:
+    for name, table, words in (
+        ("evidence_imports.html", "items", "items"),
+        ("evidence_explorer.html", "explorer-controls", "controls"),
+    ):
+        page = (ROOT / "app/ui/templates" / name).read_text(encoding="utf-8")
+        link = f'<p class="rv-table-more"><a href="#{table}">Show all '
+        assert link in page and f"{words}</a></p>" in page, name
+        assert page.index(f'id="{table}"') < page.index(link)
+    phone = strip_comments(CSS).split("@media (max-width: 767px) {", 1)[1]
+    assert "tbody tr:nth-child(n + 13) {\n    display: none;" in phone
+    assert ":target tbody tr:nth-child(n + 13) {\n    display: grid;" in phone
+    assert "grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);" in phone
+
+
+def test_the_checklist_domains_have_a_heading_style() -> None:
+    assert ".rv-checklist .rv-group-row th {" in CSS
+    assert "main .rv-checklist tbody tr.rv-group-row {" in CSS
