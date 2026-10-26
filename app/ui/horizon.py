@@ -12,7 +12,7 @@ is counted, not drawn.
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
-from typing import Protocol
+from typing import NamedTuple, Protocol
 
 HORIZON_DAYS = 365
 HORIZON_WIDTH = 640
@@ -24,6 +24,12 @@ MARK_HEIGHT = 12
 MARK_STEP = 14
 HORIZON_LEVELS = 3
 SOON_DAYS = 30
+# A month this close to the right end of the drawing is named up to the edge
+# instead of around its tick: "Jan 2028" centred on the last day ran 20 to 23px
+# past the drawing and to within 2px of the border of its card (THE-1401). Half
+# of "Jan 2027" at 11px is 24 units; a three-letter name at 26 units on a phone,
+# 20 units.
+EDGE_ROOM = 28
 MONTHS = (
     "Jan",
     "Feb",
@@ -77,12 +83,46 @@ class HorizonMark:
     review_date: date
 
 
+class Month(NamedTuple):
+    """The first day of a month ahead: the x of its tick and its name, with the
+    year when it is a January."""
+
+    x: str
+    label: str
+
+    @property
+    def at_edge(self) -> bool:
+        """Whether the name ends at the right edge of the drawing (EDGE_ROOM)."""
+        return float(self.x) > HORIZON_WIDTH - EDGE_ROOM
+
+    @property
+    def text_x(self) -> str:
+        return str(HORIZON_WIDTH) if self.at_edge else self.x
+
+    @property
+    def anchor(self) -> str:
+        return "end" if self.at_edge else "middle"
+
+    @property
+    def name(self) -> str:
+        return self.label.split(" ", 1)[0]
+
+    @property
+    def year(self) -> str:
+        """The year of a January, drawn in its own tspan that a phone hides; a
+        January at the right edge is named without it, as its neighbour December
+        leaves no room for it there (the sentence above and the register carry
+        every date)."""
+        _, _, year = self.label.partition(" ")
+        return "" if self.at_edge else year
+
+
 @dataclass(frozen=True)
 class Horizon:
     """The merlons, the first day of each month ahead and the counts in words."""
 
     marks: tuple[HorizonMark, ...]
-    months: tuple[tuple[str, str], ...]
+    months: tuple[Month, ...]
     today_x: int
     overdue: int
     soon: int
@@ -97,9 +137,9 @@ def day_x(days: int) -> float:
     return OVERDUE_GUTTER + MARK_WIDTH / 2 + span * within / HORIZON_DAYS
 
 
-def month_starts(today: date) -> tuple[tuple[str, str], ...]:
+def month_starts(today: date) -> tuple[Month, ...]:
     """The x and the name of the first day of every month in the year ahead."""
-    found: list[tuple[str, str]] = []
+    found: list[Month] = []
     year, month = today.year, today.month
     while True:
         month += 1
@@ -109,7 +149,7 @@ def month_starts(today: date) -> tuple[tuple[str, str], ...]:
         if days > HORIZON_DAYS:
             return tuple(found)
         label = f"{MONTHS[0]} {year}" if month == 1 else MONTHS[month - 1]
-        found.append((f"{day_x(days):.1f}", label))
+        found.append(Month(f"{day_x(days):.1f}", label))
 
 
 def level_of(middle: float, placed: list[tuple[float, int]]) -> int:

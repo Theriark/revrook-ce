@@ -777,12 +777,16 @@ function buildScene(THREE, root, options) {
     },
     { signal }
   );
+  // A restored context is a new one: three.js rebuilds its state on it with the
+  // default clear colour, black, so the sky stood black over the redrawn yard
+  // (THE-1401). Its listener runs first (it was added with the renderer); this
+  // one gives the stage its ground again from the stylesheet, which also redraws.
   canvas.addEventListener(
     "webglcontextrestored",
     () => {
       lost = false;
       options.hideState();
-      invalidate();
+      applyGround();
     },
     { signal }
   );

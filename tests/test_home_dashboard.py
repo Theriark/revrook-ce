@@ -288,7 +288,8 @@ def test_the_trend_chart_draws_a_line_per_client_and_keeps_the_labels_apart() ->
     # A client that is gone keeps its line under a neutral name; names are shortened.
     gone = trend_chart(same, {1: "A" * 40}, AS_OF + timedelta(hours=1))
     assert gone.lines[0].name == DELETED_CLIENT
-    assert gone.lines[1].short_name == "A" * 17 + "..."
+    # Shortened to the width of its room (THE-1401): 13 capitals A and "..."
+    assert gone.lines[1].short_name == "A" * 13 + "..."
     assert trend_chart([], names, AS_OF).lines == ()
 
 

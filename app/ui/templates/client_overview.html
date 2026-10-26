@@ -153,8 +153,8 @@
 <tr>
 <th scope="row">{{ row.name }}</th>
 <td>{{ s.status(row.state) }}</td>
-<td>{{ s.day(row.captured_at) }}</td>
-<td>{{ s.day(row.expires_at) }}</td>
+<td class="rv-date">{{ s.day(row.captured_at) }}</td>
+<td class="rv-date">{{ s.day(row.expires_at) }}</td>
 </tr>
 {% endfor %}
 </tbody>
