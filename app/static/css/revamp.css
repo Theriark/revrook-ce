@@ -1622,3 +1622,85 @@ span.rv-status-not-applicable {
     display: none;
   }
 }
+
+/* ---------- Findings of the deployed acceptance of 0b6372b1 (THE-1414) ---------- */
+
+/* F2: from 600px to 1023px the main navigation wraps onto a second row instead
+   of scrolling sideways. At 768px its eight links needed 1178px in 767px, and
+   Settings, System and Glossary sat out of view with the cut falling between two
+   links, so the fade at the edge had nothing to dim and gave no cue. The lists
+   flow inline, so a group can share a row with the next one; the links, their
+   order and the tab order are unchanged. The template's spaces between the items
+   take no room (font-size 0 here; every link sets its own size) */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .rv-app .rv-header .rv-nav {
+    display: block;
+    padding-bottom: 0;
+    overflow-x: visible;
+    font-size: 0;
+  }
+
+  .rv-app .rv-header .rv-nav-list {
+    display: inline;
+  }
+
+  .rv-app .rv-header .rv-nav li {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+    vertical-align: top;
+  }
+
+  .rv-app .rv-nav-strip::after,
+  .rv-app .rv-header .rv-nav::after {
+    display: none;
+  }
+}
+
+/* The client tabs from 600px: they wrap rather than scroll. At 768px all six
+   were in view, yet the strip scrolled by the 48px kept after the last tab for
+   the fade */
+@media (min-width: 600px) {
+  .rv-tabs-strip > nav {
+    overflow-x: visible;
+  }
+
+  .rv-tabs-strip > nav > ul {
+    flex-wrap: wrap;
+  }
+
+  .rv-tabs-strip::after,
+  .rv-tabs-strip > nav > ul::after {
+    display: none;
+  }
+}
+
+/* Below 600px both strips still scroll sideways; besides the fade, a chevron at
+   the right edge says that more links follow. It takes no pointer and goes with
+   the fade once the last link is in view (revrook.js, data-scroll-end) */
+@media (max-width: 599px) {
+  .rv-nav-strip::before,
+  .rv-tabs-strip::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    right: 14px;
+    width: 8px;
+    height: 8px;
+    margin-top: -6px;
+    border-top: 2px solid;
+    border-right: 2px solid;
+    transform: rotate(45deg);
+    pointer-events: none;
+    color: var(--rv-text-secondary);
+  }
+
+  .rv-app .rv-nav-strip::before {
+    color: var(--rv-stone);
+  }
+
+  .rv-nav-strip[data-scroll-end="true"]::before,
+  .rv-tabs-strip[data-scroll-end="true"]::before {
+    display: none;
+  }
+}
