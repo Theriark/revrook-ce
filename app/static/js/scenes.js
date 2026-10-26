@@ -17,6 +17,9 @@
  * Each of these leaves the page as the server drew it:
  * - no script, or no WebGL 2: the stage stays hidden, no empty box, no import;
  * - the scene library cannot be loaded: a note says so, the stage stays small;
+ * - the browser refuses a WebGL context when a scene is shown (WebGL switched off
+ *   or unavailable after the first check, THE-1414): the half-built canvas goes,
+ *   a note in the stage says so and the button can try again;
  * - a lost graphics context: drawing stops, the note says so, drawing resumes
  *   when the browser restores the context;
  * - prefers-reduced-motion: every move is immediate, nothing turns by itself;
@@ -68,6 +71,7 @@ const WORDS = {
   noModule: "The scene library could not be loaded. Reload the page; the cards and the bars show the same facts.",
   lost: "The browser paused its drawing (the graphics context was lost). It resumes by itself when it can; the page is unchanged.",
   closed: "The scene is closed.",
+  noWebGL: "This browser could not start the 3D view: WebGL is switched off or unavailable. The cards and the bars show the same facts.",
   footprints: "Every client is a footprint: nothing is imported yet. Import an export and its rook rises here.",
 };
 
@@ -873,7 +877,7 @@ function buildScene(THREE, root, options) {
 
 // --- the page: every stage, the shared options, the hide button ------------------
 
-async function prepare(root, THREE, motionQuery) {
+export async function prepare(root, THREE, motionQuery) {
   const state = root.querySelector(".rv-scene-state");
   const stateText = state ? state.querySelector(".rv-scene-state-text") : null;
   const tools = root.querySelector(".rv-scene-tools");
@@ -910,7 +914,25 @@ async function prepare(root, THREE, motionQuery) {
     if (built) {
       return built;
     }
-    built = buildScene(THREE, root, options);
+    try {
+      built = buildScene(THREE, root, options);
+    } catch (error) {
+      // The renderer could not get a WebGL context: say so in the stage instead
+      // of leaving the button doing nothing visible, and drop the empty canvas.
+      const left = root.querySelector(".rv-scene-stage canvas");
+      if (left) {
+        left.remove();
+      }
+      built = null;
+      root.classList.remove("is-closed");
+      options.setState("error", WORDS.noWebGL);
+      root.setAttribute("data-scene-state", "error");
+      if (tools) {
+        tools.hidden = true;
+      }
+      syncToggle();
+      return null;
+    }
     options.hideState();
     if (tools) {
       tools.hidden = false;
