@@ -18,13 +18,15 @@ from app.checks.library import load_library
 from app.evidence.service import EvidenceContext
 from app.ui.dashboard import (
     LABEL_GAP,
+    LABEL_ROOM,
+    LABEL_SIZE,
     LINE_STEP,
-    NAME_LENGTH,
     WIDE_CHART,
     ReportPoint,
     label_lines,
     trend_chart,
 )
+from app.ui.textfit import text_width
 from html_structure import structure_problems
 from tools.score_inputs import AS_OF
 from ui_helpers import make_report, seed_client, sign_in
@@ -48,10 +50,11 @@ def test_a_long_name_is_broken_between_its_words_not_cut() -> None:
     assert label_lines("Seed Gaps Ltd (synthetic)") == ("Seed Gaps Ltd", "(synthetic)")
     assert label_lines("Alder Ltd") == ("Alder Ltd",)
     assert label_lines(LONG_NAME) == ("Northwind Harbour", "Logistics Ltd")
-    # Longer than two lines: the second ends in "...", every line within its width
+    # Longer than two lines: the second ends in "...", every line within the room
+    # it is drawn in (THE-1401: fitted by its width, not its number of characters)
     longest = label_lines("Very Long Client Name Holdings and Partners International")
     assert len(longest) == 2 and longest[-1].endswith("...")
-    assert all(len(line) <= NAME_LENGTH for line in longest)
+    assert all(text_width(line, LABEL_SIZE) <= LABEL_ROOM for line in longest)
 
 
 def test_two_line_labels_keep_their_air_and_stay_in_the_plot() -> None:

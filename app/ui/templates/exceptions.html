@@ -43,7 +43,7 @@
 <p class="rv-horizon-words" id="horizon-words">{% if horizon.overdue %}{{ horizon.overdue }} past {% if horizon.overdue == 1 %}its{% else %}their{% endif %} review date, before the line of today. {% endif %}{% if horizon.soon %}{{ horizon.soon }} due in the next 30 days. {% endif %}{{ horizon.within_year }} due within a year{% if horizon.beyond_year %}, {{ horizon.beyond_year }} later and not drawn{% endif %}. The register below lists every date.</p>
 <svg viewBox="0 0 640 76" width="640" height="76" preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false">
 <line class="rv-horizon-axis" x1="0" x2="640" y1="52.5" y2="52.5"/>
-{% for x, label in horizon.months %}<line class="rv-horizon-tick" x1="{{ x }}" x2="{{ x }}" y1="48" y2="57"/><text class="rv-horizon-month" x="{{ x }}" y="71" text-anchor="middle">{{ label }}</text>{% endfor %}
+{% for month in horizon.months %}<line class="rv-horizon-tick" x1="{{ month.x }}" x2="{{ month.x }}" y1="48" y2="57"/><text class="rv-horizon-month" x="{{ month.text_x }}" y="71" text-anchor="{{ month.anchor }}">{{ month.name }}{% if month.year %}<tspan class="rv-horizon-year"> {{ month.year }}</tspan>{% endif %}</text>{% endfor %}
 <line class="rv-horizon-today" x1="{{ horizon.today_x }}" x2="{{ horizon.today_x }}" y1="4" y2="60"/>
 <text class="rv-horizon-label" x="{{ horizon.today_x + 4 }}" y="10">Today</text>
 {% for mark in horizon.marks %}<rect class="rv-horizon-mark rv-horizon-{{ mark.state }}" x="{{ mark.x }}" y="{{ mark.y }}" width="10" height="12" rx="1"/>{% endfor %}

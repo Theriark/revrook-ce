@@ -726,11 +726,14 @@ function buildWall(THREE, root, data, options) {
     },
     { signal }
   );
+  // A restored context is a new one: three.js rebuilds its state on it with the
+  // default clear colour, black, so the wall's ground is set again (THE-1401).
   canvas.addEventListener(
     "webglcontextrestored",
     () => {
       lost = false;
       options.hideState();
+      renderer.setClearColor(GROUND, 1);
       invalidate();
     },
     { signal }

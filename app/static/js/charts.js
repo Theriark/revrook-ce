@@ -26,7 +26,12 @@
  * - the sparklines (data-spark): one tab stop each; the marks on them show
  *   their week and value under the pointer and under the arrow keys;
  * - a link to a row of a folded table (#domain-row-..., #source-...) opens the
- *   fold and focuses the row.
+ *   fold and focuses the row;
+ * - the labels at the ends of the lines: the server fits each line of a label to
+ *   the room right of the plot by the widths of the widest face system-ui gives
+ *   (app/ui/textfit.py); a line the browser still draws wider than that room (a
+ *   font the table does not foresee) is shortened here with "...", and its title
+ *   keeps the whole name (THE-1401).
  */
 (function () {
   "use strict";
@@ -38,6 +43,7 @@
   var READY = "ready";
   var GAP = 10;
   var EDGE = 4;
+  var ELLIPSIS = "...";
   // Left and Right only: Up and Down keep scrolling the page while a mark or a
   // sparkline has the focus (a review found them swallowed, THE-867).
   var NEXT_KEYS = ["ArrowRight"];
@@ -535,6 +541,58 @@
     row.focus();
   }
 
+  // --- the labels at the ends of the lines -------------------------------------
+
+  // The room of a label: from its x to the right edge of the drawing, less the
+  // 4 units of air the server keeps (LABEL_ROOM in app/ui/dashboard.py).
+  function labelRoom(svg, text) {
+    var box = svg.viewBox && svg.viewBox.baseVal;
+    var x = parseFloat(text.getAttribute("x"));
+    if (!box || !box.width || isNaN(x)) {
+      return 0;
+    }
+    return box.width - x - EDGE;
+  }
+
+  function fitLine(span, room) {
+    // A line the server shortened already loses its "..." before it is cut again
+    var words = span.textContent.replace(/\.{3}$/, "");
+    var cut = false;
+    while (words.length > 1 && span.getComputedTextLength() > room) {
+      words = words.slice(0, -1);
+      span.textContent = words.replace(/\s+$/, "") + ELLIPSIS;
+      cut = true;
+    }
+    return cut;
+  }
+
+  function fitLabels(root) {
+    var charts = root.querySelectorAll("svg.rv-chart");
+    for (var c = 0; c < charts.length; c += 1) {
+      var texts = charts[c].querySelectorAll(".rv-chart-line > text");
+      for (var t = 0; t < texts.length; t += 1) {
+        var text = texts[t];
+        var room = labelRoom(charts[c], text);
+        // A drawing that is not shown (the wide one on a phone) measures 0
+        if (room <= 0 || !text.getComputedTextLength()) {
+          continue;
+        }
+        var spans = text.querySelectorAll("tspan");
+        var whole = [];
+        var cut = false;
+        for (var n = 0; n < spans.length; n += 1) {
+          whole.push(spans[n].textContent);
+          cut = fitLine(spans[n], room) || cut;
+        }
+        if (cut && !text.querySelector("title")) {
+          var title = document.createElementNS(text.namespaceURI, "title");
+          title.textContent = whole.join(" ");
+          text.insertBefore(title, text.firstChild);
+        }
+      }
+    }
+  }
+
   // --- wiring -------------------------------------------------------------------
 
   function prepare(root) {
@@ -546,6 +604,7 @@
     for (var n = 0; n < groups.length; n += 1) {
       prepareRoving(groups[n]);
     }
+    fitLabels(root);
     document.documentElement.setAttribute("data-charts", READY);
   }
 
@@ -612,6 +671,9 @@
     document.addEventListener("htmx:afterSwap", swapped);
     window.addEventListener("scroll", moveTip, { passive: true });
     window.addEventListener("resize", moveTip);
+    window.addEventListener("resize", function () {
+      fitLabels(document);
+    });
     prepare(document);
   }
 

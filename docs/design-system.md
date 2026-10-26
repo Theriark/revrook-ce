@@ -474,6 +474,15 @@ How a chart answers:
   drawn as a line, and the note names the report it comes from and its date. On
   Home the note invites the 90-day range; on the report builder it counts the older
   reports outside the span. No report at all is the empty state of the card.
+- Line labels: on the wide drawing each line is named at its end, in the 140 units
+  right of the plot. A name is fitted by the width it is drawn at, not by its
+  number of characters (`app/ui/textfit.py`, THE-1401): the widths are those of
+  DejaVu Sans Bold, the widest face `system-ui` resolves to, so a line that fits
+  them fits San Francisco, Segoe UI and Roboto too. The whole name on one line when
+  it fits, else broken between its words onto two; a name longer still ends in
+  "..." and carries the whole name as its title, as the tooltip and the table do.
+  `charts.js` measures the drawn lines as well and shortens one a font still draws
+  wider than its room. The drawing keeps its size; nothing runs past its edge.
 - Announcement: after a range is swapped in, its summary (`data-chart-summary`: the
   range, the reports and the clients drawn) is read out through one polite live
   region, since focus stays on the pressed button.
@@ -567,7 +576,8 @@ renderer's counts. The button above a stage closes the scenes in this browser
 (`localStorage`, `rv-scenes`) and then offers to show them again: it names the action
 it offers next, so it carries no pressed state as well; the detail and the tools go
 with the scene, the cards and the bars stay. A lost graphics context stops the drawing with a note and resumes when
-the browser restores it; a library that cannot be loaded leaves a note on the stage.
+the browser restores it, with the ground read again from the stylesheet (a restored
+context starts with a black clear colour, THE-1401); a library that cannot be loaded leaves a note on the stage.
 The ground is the brand charcoal in both themes, the same dark surface as the rail;
 the colours on it are the dark-theme status values of `revrook.css`, which reach 4.5
 to 1 on that ground. `tests/test_scenes.py` pins the module, the stylesheet, the
@@ -1017,7 +1027,9 @@ The pages after the client overview have their own layout on the same layer (THE
   an exception due more than a year away is counted, not drawn. The words above the
   drawing and the register under it carry the same dates, so the drawing is for the eye
   only. From 1280 px the words stand at the left and the drawing fills the card; on a
-  phone every second month is named, in larger letters. Each review date says how many
+  phone every second month is named, in larger letters, and a January without its
+  year. A month in the last 28 units of the drawing is named up to its right edge
+  (a January there without its year), so no name crosses the card (THE-1401). Each review date says how many
   days are left or late.
 - **Reports.** The builder is three steps joined by a rail. From 1280 px the reports
   made before and the score over time stand beside the steps, each kept report a row of

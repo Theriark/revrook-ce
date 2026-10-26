@@ -9,7 +9,6 @@ differently, and no rule of evidence changes. Coordinates of a drawing are float
 every score and count stays exact until it is written as text.
 """
 
-import textwrap
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
@@ -37,6 +36,7 @@ from app.scoring.snapshot import (
     trend,
 )
 from app.ui.drivers import ScoreDrivers, drivers_of
+from app.ui.textfit import fit_lines, shorten
 from app.ui.viewmodels import (
     CURRENT,
     EXPIRED,
@@ -67,7 +67,13 @@ CHART_BOTTOM = 28
 # units: a label is 12 units of text in a box of about 14, so at 14 two labels
 # touched (seen at 768px); 18 leaves 4 units of air, and six fit in the plot.
 LABEL_GAP = 18
-NAME_LENGTH = 20
+# A label is 12 units of text from 10 units right of the plot, and each of its lines
+# keeps to the 140 units left of the drawing less 4 units of air: it is fitted by
+# the width it is drawn at (app/ui/textfit.py), not by its number of characters
+# (THE-1401: "Design Review Sample", 20 characters, was 153 units wide and cut).
+LABEL_SIZE = 12
+LABEL_INSET = 10
+LABEL_ROOM = CHART_RIGHT - LABEL_INSET - 4
 # A long name is broken between its words onto a second line of its label, 14
 # units under the first (THE-1347: "Seed Gaps Ltd (synthetic)" was cut to "Seed
 # Gaps Ltd (sy..."); only a name longer than two lines still ends in "...".
@@ -555,18 +561,15 @@ class TrendLine:
 
 
 def short_name(name: str) -> str:
-    """A name on one line of a label, cut with "..." when it is too long."""
-    if len(name) <= NAME_LENGTH:
-        return name
-    return name[: NAME_LENGTH - 3].rstrip() + "..."
+    """A name on one line of a label, cut with "..." when it is too wide."""
+    return shorten(name, LABEL_ROOM, LABEL_SIZE)
 
 
 def label_lines(name: str) -> tuple[str, ...]:
     """The label of a line: the whole name on one line when it fits, else broken
     between its words onto LABEL_LINES lines; a name longer still ends in "..."
-    (the legend, the tooltip and the table under the chart carry all of it)."""
-    lines = textwrap.wrap(name, NAME_LENGTH, max_lines=LABEL_LINES, placeholder="...")
-    return tuple(lines) or (name,)
+    (its title, the tooltip and the table under the chart carry all of it)."""
+    return fit_lines(name, LABEL_ROOM, LABEL_SIZE, LABEL_LINES)
 
 
 @dataclass(frozen=True)

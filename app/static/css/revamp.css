@@ -1610,3 +1610,15 @@ span.rv-status-not-applicable {
     transition: none;
   }
 }
+
+/* ---------- Findings of the deployed acceptance of 66448bd4 (THE-1401) ---------- */
+
+/* On a phone the January of the horizon is named without its year: "Jan 2027",
+   26 units wide each side of its tick, ran 11px past the left of the drawing
+   when today is December 29 to 31. The year is a tspan of the name; the sentence
+   above and the register carry every date */
+@media (max-width: 599px) {
+  .rv-horizon-year {
+    display: none;
+  }
+}
