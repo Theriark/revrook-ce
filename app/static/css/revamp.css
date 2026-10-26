@@ -19,6 +19,8 @@
   /* The keep band: the brand charcoal in the light theme */
   --rv-keep: #2d2f3a;
   --rv-keep-raised: #32343e;
+  /* The crest on top of each merlon: the band itself in the light theme */
+  --rv-keep-crest: #2d2f3a;
   --rv-keep-edge: 14px;
   /* The rail in the light theme: stone, a white pill for the page in use */
   --rv-rail-ground: #f1efe9;
@@ -40,6 +42,7 @@
 :root[data-theme="dark"] {
   --rv-keep: #111218;
   --rv-keep-raised: #1b1c24;
+  --rv-keep-crest: #4d5261;
   --rv-rail-ground: #181920;
   --rv-rail-ink: #d9d6cf;
   --rv-rail-quiet: #a9a69e;
@@ -58,6 +61,7 @@
   :root[data-theme="system"] {
     --rv-keep: #111218;
     --rv-keep-raised: #1b1c24;
+    --rv-keep-crest: #4d5261;
     --rv-rail-ground: #181920;
     --rv-rail-ink: #d9d6cf;
     --rv-rail-quiet: #a9a69e;
@@ -1313,6 +1317,123 @@ span.rv-status-not-applicable {
 
 .rv-glossary > div.rv-glossary-chapter-start:not(:first-child) {
   border-top: 2px solid var(--rv-line-strong);
+}
+
+/* ---------- Findings of the deployed check of 11e716e0 (THE-1313 for THE-1360) ---------- */
+
+/* The battlement in the dark theme: the merlons are a shade darker than the page
+   there, so the edge read faint. Each merlon gets a crest, a 2px line of a lighter
+   shade on its top; in the light theme the crest is the band itself */
+.rv-content > .rv-page-header::before,
+.rv-content > .rv-problem::before,
+.rv-sheet-band {
+  background-image:
+    repeating-linear-gradient(90deg, var(--rv-keep-crest) 0 40px, transparent 40px 60px),
+    repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
+    linear-gradient(var(--rv-keep), var(--rv-keep));
+  background-size: 100% 2px, 100% var(--rv-keep-edge), 100% calc(100% - var(--rv-keep-edge) + 1px);
+  background-position: 0 0, 0 0, 0 calc(var(--rv-keep-edge) - 1px);
+}
+
+/* The page column on a wide window: the content stops at 1200px, so beyond 1448px
+   of window it stood at the left with a void at its right. From there the content,
+   the top bar and the footer stand in the middle of the column, and the band and
+   the tabs reach both of its edges (the column clips what lies past them) */
+@media (min-width: 1449px) {
+  .rv-app .rv-content,
+  .rv-app .rv-topbar-inner {
+    margin-inline: auto;
+  }
+
+  .rv-app .rv-footer {
+    padding-inline: calc((100% - 1200px) / 2 + 32px);
+  }
+
+  .rv-content > .rv-page-header::before,
+  .rv-content > .rv-problem::before {
+    left: -100vw;
+  }
+
+  .rv-content > .rv-tabs-strip {
+    border-image-outset: 0 100vw;
+  }
+}
+
+/* A folded rule shows that it opens: Pico draws the marker of a summary as an
+   image, which the content security policy blocks, so the library rule of a
+   control had no sign that it opens. A triangle of borders points right, and
+   down once the rule is open */
+.rv-rule-more summary {
+  display: list-item;
+  list-style: none;
+  cursor: pointer;
+}
+
+.rv-rule-more summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 8px;
+  border-style: solid;
+  border-width: 5px 0 5px 7px;
+  border-color: transparent transparent transparent currentColor;
+  vertical-align: 1px;
+}
+
+.rv-rule-more[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+/* The checklist on a phone: each control was a card of a name and three lines of
+   two labelled facts (266px), so 51 controls made a page of 15753px at 390px. The
+   facts now run as short lines, the label beside its value, the status chip
+   without one; why a control needs a look follows on one line */
+@media (max-width: 767px) {
+  main .rv-checklist tbody tr[data-control] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    margin-bottom: 8px;
+    padding: 4px 0 8px;
+  }
+
+  main .rv-checklist tbody tr[data-control] > th {
+    flex: 1 1 100%;
+    padding-bottom: 6px;
+  }
+
+  main .rv-checklist tbody tr[data-control] > td {
+    flex: 0 1 auto;
+    padding: 2px 0 2px 16px;
+  }
+
+  main .rv-checklist tbody tr[data-control] > td:last-child {
+    flex: 1 1 100%;
+    padding-right: 16px;
+  }
+
+  main .rv-checklist tbody tr[data-control] > td[data-label]::before {
+    display: inline;
+    margin: 0 6px 0 0;
+  }
+
+  main .rv-checklist tbody tr[data-control] > td[data-label="Status"]::before {
+    content: none;
+  }
+
+  main .rv-checklist tbody tr[data-control] > td.rv-coverage {
+    white-space: nowrap;
+  }
+
+  main .rv-checklist tbody tr[data-control] .rv-flags,
+  main .rv-checklist tbody tr[data-control] .rv-flags li {
+    display: inline;
+  }
+
+  main .rv-checklist tbody tr[data-control] .rv-flags li {
+    margin: 0 8px 0 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
