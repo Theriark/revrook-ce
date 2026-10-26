@@ -137,6 +137,10 @@ space (as wide as the fade, so with the last link in view nothing is under it), 
 `revrook.js` marks the strip `data-scroll-end="true"` while nothing lies to the right
 of what is in view, which hides the fade; without the script the fade stays. A link
 that keyboard focus scrolls into view stops 48 px clear of the edge (`scroll-padding`).
+From 600 px to 1023 px the navigation no longer scrolls: its links wrap onto a second
+row (at 768 px eight links needed 1178 px, and the edge fell between two links, so the
+fade gave no cue), and the client tabs wrap from 600 px. Below 600 px both strips still
+scroll, with a chevron beside the fade that goes with it (THE-1414, `revamp.css`).
 The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded after
 `revrook.css` so that they win by order; they belong in `revrook.css` at its next
 rewrite.
@@ -362,7 +366,9 @@ Its parts, in order:
   an open exception), and one action.
 - Score over time (`.rv-chart`, the body of the card in `_trend_chart.html`): one
   line per client from the stored reports of the last 7, 30 or 90 days, up to six,
-  labelled at its end and told apart by its dash pattern; every stored report is a
+  labelled at its end and told apart by its dash pattern (a label that the labels
+  around it moved away from its line end is tied to it by a short leader,
+  `line.rv-chart-leader`, THE-1414); every stored report is a
   mark on its line, a link to that report; a table under the chart carries every
   number, each date a link too. The chart is drawn twice (`ChartSize` in
   `app/ui/dashboard.py`, the `score_chart` macro of `_chart.html`): the wide drawing
@@ -528,7 +534,10 @@ and the detail line (`aria-live`). The block is hidden in the HTML; where script
 the stylesheet gives it its room at once (`@media (scripting: enabled)`, the note
 "Preparing the scene" on the charcoal), so the cards and the bars under it never move
 once the page is drawn, and without script, or when the module puts a stage away, no
-empty box appears.
+empty box appears. When the browser passes the WebGL 2 check but then refuses a context
+as a stage is shown (WebGL switched off or unavailable), the stage opens on a short
+note that says so (`data-scene-state="error"`), with no empty canvas, and the button
+can try again (THE-1414).
 
 The rookery skyline (Home, `#rookery-scene`). One rook per client on a charcoal
 yard, as tall as its score, crenellated like the mark: stone for a strong or a good

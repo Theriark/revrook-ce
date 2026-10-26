@@ -79,6 +79,14 @@ LABEL_ROOM = CHART_RIGHT - LABEL_INSET - 4
 # Gaps Ltd (sy..."); only a name longer than two lines still ends in "...".
 LABEL_LINES = 2
 LINE_STEP = 14
+# A label pushed away from the end of its line is tied to it by a short leader
+# (THE-1414: at 768px the label of one client sat level with the end of another
+# line): from just past the last mark (past the ring of a lone report) to 3 units
+# before the words. A label within LEADER_SLACK of its line end needs none.
+LEADER_START = 6
+LEADER_START_ALONE = 9
+LEADER_END = LABEL_INSET - 3
+LEADER_SLACK = 2
 DASHES = ("", "6 3", "2 3", "9 3 2 3", "1 3", "12 4")
 NEEDS_WORK = (NOT_PROTECTED, NEEDS_ATTENTION)
 URGENCY = {NOT_PROTECTED: 0, NEEDS_ATTENTION: 1}
@@ -554,6 +562,9 @@ class TrendLine:
     continues_from: str = ""
     # The lines of words of the label at the end of the line (label_lines)
     label: tuple[str, ...] = ()
+    # The leader from the end of the line to its label (x1, y1, x2, y2), or empty
+    # when the label sits beside the end of its line
+    leader: tuple[str, ...] = ()
 
     @property
     def short_name(self) -> str:
@@ -692,26 +703,47 @@ def _entering_y(
 
 
 def _label_places(drawn: Sequence[_Drawn], size: ChartSize) -> dict[int, float]:
-    """Where the label of each line goes: at the end of its line, pushed down by
-    LABEL_GAP from the label above when two ends are close. A stack that would
-    reach past the plot sat on the dates of the time axis (seen with several
-    clients at a score of 0), so it is moved up by the excess, keeping its gaps:
-    six labels of 18 units fit in the 180 units of the plot. A label of two lines
-    is centred on the end of its line and takes LINE_STEP more room; the place is
-    the middle of its first line."""
-    labels: dict[int, float] = {}
-    lowest = 0.0
+    """Where the label of each line goes: as near the end of its line as the
+    labels around it allow. Down the stack, a label is pushed down by LABEL_GAP
+    from the label above when two ends are close; up the stack, a label that
+    would reach past the plot (where it sat on the dates of the time axis, seen
+    with several clients at a score of 0) is lifted, and the label above it only
+    as far as their gap needs. A label far from the crowd stays at its line end
+    (THE-1414: lifting the whole stack by the excess moved a lone label 58 units
+    above its line). Six labels of 18 units fit in the 180 units of the plot. A
+    label of two lines is centred on the end of its line and takes LINE_STEP more
+    room; the place is the middle of its first line."""
+    stack = sorted(drawn, key=lambda item: item.last_y)
+    places: list[float] = []
     floor = size.top + LABEL_GAP / 2
-    for item in sorted(drawn, key=lambda item: item.last_y):
+    for item in stack:
         top = max(floor, item.last_y - item.extra / 2)
-        labels[item.client_id] = top
-        lowest = top + item.extra
-        floor = lowest + LABEL_GAP
+        places.append(top)
+        floor = top + item.extra + LABEL_GAP
     ceiling = size.height - size.bottom - LABEL_GAP / 2
-    excess = lowest - ceiling
-    if excess > 0:
-        labels = {client_id: y - excess for client_id, y in labels.items()}
-    return labels
+    for number in range(len(stack) - 1, -1, -1):
+        item = stack[number]
+        places[number] = min(places[number], ceiling - item.extra)
+        ceiling = places[number] - LABEL_GAP
+    return {item.client_id: place for item, place in zip(stack, places, strict=True)}
+
+
+def _leader(item: _Drawn, place: float, size: ChartSize) -> tuple[str, ...]:
+    """The leader from the end of a line to its label, or () when the drawing has
+    no labels or the middle of the label is within LEADER_SLACK of the line end."""
+    if not size.labelled:
+        return ()
+    middle = place + item.extra / 2
+    if abs(middle - item.last_y) <= LEADER_SLACK:
+        return ()
+    start = LEADER_START if item.polyline else LEADER_START_ALONE
+    end = size.width - size.right + LEADER_END
+    return (
+        f"{min(item.last_x + start, end - 1):.1f}",
+        f"{item.last_y:.1f}",
+        f"{end:.1f}",
+        f"{middle:.1f}",
+    )
 
 
 def _labels_fit(drawn: Sequence[_Drawn], size: ChartSize) -> bool:
@@ -828,6 +860,7 @@ def trend_chart(
             marks=item.marks,
             continues_from=item.continues_from,
             label=item.label,
+            leader=_leader(item, labels[item.client_id], size),
         )
         for item in drawn
     )

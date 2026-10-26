@@ -31,6 +31,9 @@
 {% set solo = not line.points %}
 <g class="rv-chart-line" data-series="{{ line.client_id }}">
 {% if line.points %}<polyline points="{{ line.points }}"{% if line.dash %} stroke-dasharray="{{ line.dash }}"{% endif %}/>{% endif %}
+{#- A label pushed away from the end of its line by the labels around it is tied
+    to it by a short leader (THE-1414), drawn under the marks. -#}
+{% if chart.labelled and line.leader %}{% set x1, y1, x2, y2 = line.leader %}<line class="rv-chart-leader" x1="{{ x1 }}" y1="{{ y1 }}" x2="{{ x2 }}" y2="{{ y2 }}"/>{% endif %}
 {% for mark in line.marks %}<a class="rv-mark" href="/{{ mark.path }}" data-tip="{{ mark.tip }}"><title>{{ mark.tip }}</title>{% if solo %}<circle class="rv-mark-halo" cx="{{ mark.x }}" cy="{{ mark.y }}" r="8"/>{% endif %}{{ marker(shape, mark.x, mark.y, 5 if solo else 3.5) }}</a>{% endfor %}
 {#- A label too long for its two lines ends in "..." (THE-1355): its title carries
     the whole name, so pointing at the label shows it, as the legend and the table
