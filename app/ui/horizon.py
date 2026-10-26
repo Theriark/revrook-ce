@@ -3,9 +3,10 @@
 The coming year as one line: today at its left end, every open exception a merlon
 standing at its review date, and the exceptions past their date stacked before
 today. The drawing is HORIZON_WIDTH units wide; its first OVERDUE_GUTTER units hold
-the overdue ones and the year after today runs to the right edge. Merlons on the
-same spot stack upwards, at most HORIZON_LEVELS high (the register under the drawing
-lists every one). An exception due more than a year away is counted, not drawn.
+the overdue ones and the year after today runs to the right edge. Merlons closer to
+each other than a merlon and its gap stack upwards, at most HORIZON_LEVELS high (the
+register under the drawing lists every one). An exception due more than a year away
+is counted, not drawn.
 """
 
 from collections.abc import Iterable
@@ -18,6 +19,7 @@ HORIZON_WIDTH = 640
 OVERDUE_GUTTER = 28
 HORIZON_AXIS = 52
 MARK_WIDTH = 10
+MARK_GAP = 2
 MARK_HEIGHT = 12
 MARK_STEP = 14
 HORIZON_LEVELS = 3
@@ -110,9 +112,24 @@ def month_starts(today: date) -> tuple[tuple[str, str], ...]:
         found.append((f"{day_x(days):.1f}", label))
 
 
+def level_of(middle: float, placed: list[tuple[float, int]]) -> int:
+    """The lowest free level for a merlon at `middle`, given those already placed.
+
+    A level is taken when a merlon on it stands closer than a merlon and its gap,
+    so two merlons a few days apart stack instead of overlapping (THE-1375).
+    """
+    level = 0
+    while level < HORIZON_LEVELS - 1 and any(
+        at == level and abs(other - middle) < MARK_WIDTH + MARK_GAP
+        for other, at in placed
+    ):
+        level += 1
+    return level
+
+
 def review_horizon(rows: Iterable[DueRow], today: date) -> Horizon:
     """Where every open row of the register stands in the year after `today`."""
-    stacks: dict[int, int] = {}
+    placed: list[tuple[float, int]] = []
     marks: list[HorizonMark] = []
     overdue = soon = within = beyond = 0
     for row in sorted(
@@ -132,9 +149,8 @@ def review_horizon(rows: Iterable[DueRow], today: date) -> Horizon:
             middle = day_x(days)
             state = "soon" if days <= SOON_DAYS else "later"
             soon += state == "soon"
-        slot = int(middle // (MARK_WIDTH + 2))
-        level = min(stacks.get(slot, 0), HORIZON_LEVELS - 1)
-        stacks[slot] = stacks.get(slot, 0) + 1
+        level = level_of(middle, placed)
+        placed.append((middle, level))
         top = HORIZON_AXIS - MARK_HEIGHT - level * MARK_STEP
         x = f"{middle - MARK_WIDTH / 2:.1f}"
         marks.append(HorizonMark(x, str(top), state, row.control_id, row.review_date))

@@ -10,7 +10,7 @@ PostgreSQL (DATABASE_URL) and are skipped without it.
 """
 
 import re
-from datetime import timedelta
+from datetime import date, timedelta
 
 import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -22,6 +22,7 @@ from app.ui.horizon import (
     HORIZON_DAYS,
     HORIZON_LEVELS,
     HORIZON_WIDTH,
+    MARK_GAP,
     MARK_HEIGHT,
     MARK_STEP,
     MARK_WIDTH,
@@ -45,6 +46,7 @@ OVERVIEW_TAB = re.compile(
     r'<a class="rv-nav-link" href="/clients/\d+" aria-current="page">'
 )
 BODY_MINIMUM = 4.5
+LONG_NAME = "Very Long Client Name Holdings and Partners International"
 
 
 def due(control: str, days: int, closed: bool = False) -> Due:
@@ -120,6 +122,35 @@ def test_the_horizon_names_the_months_ahead_and_caps_a_stack() -> None:
     assert review_horizon([], TODAY).marks == ()
 
 
+def test_the_horizon_edges_today_the_last_day_and_the_turn_of_the_year() -> None:
+    # THE-1375: the edge dates had no test
+    rows = [
+        due("PC-ACC-01", 0),
+        due("PC-ACC-02", HORIZON_DAYS),
+        due("PC-ACC-03", HORIZON_DAYS + 1),
+    ]
+    horizon = review_horizon(rows, TODAY)
+    assert (horizon.soon, horizon.within_year, horizon.beyond_year) == (1, 2, 1)
+    today, last = horizon.marks
+    # Today stands just after the line of today, the last day at the right edge
+    assert float(today.x) == OVERDUE_GUTTER and today.state == "soon"
+    assert float(last.x) + MARK_WIDTH == HORIZON_WIDTH and last.state == "later"
+    new_year = review_horizon([], date(2027, 1, 1)).months
+    assert len(new_year) == 12
+    assert new_year[0][1] == "Feb" and new_year[-1][1] == "Jan 2028"
+    assert review_horizon([], date(2026, 12, 31)).months[0][1] == "Jan 2027"
+
+
+def test_merlons_a_few_days_apart_stack_across_a_slot_boundary() -> None:
+    # THE-1375: days 9 and 10 fell into neighbouring 12-unit slots and overlapped
+    near = review_horizon([due("PC-ACC-01", 9), due("PC-ACC-02", 10)], TODAY)
+    first, second = near.marks
+    assert abs(float(first.x) - float(second.x)) < MARK_WIDTH + MARK_GAP
+    assert first.y != second.y
+    apart = review_horizon([due("PC-ACC-01", 9), due("PC-ACC-02", 30)], TODAY)
+    assert apart.marks[0].y == apart.marks[1].y
+
+
 # --- the stylesheet ------------------------------------------------------------------
 
 
@@ -164,6 +195,29 @@ def test_the_findings_of_the_deployed_check_have_their_rules() -> None:
     assert ".rv-rule-more[open] > summary::before {\n  transform: rotate(90deg);" in CSS
     phone = "main .rv-checklist tbody tr[data-control] {\n    display: flex;"
     assert phone in CSS
+
+
+def test_the_findings_of_the_check_of_6369873c_have_their_rules() -> None:
+    # The deployed check of 6369873c (THE-1360 report rev 3) and THE-1375
+    # 1) Pico lays a nav out as one row: the glossary index is a column again
+    assert ".rv-glossary-index {\n  display: block;\n}" in CSS
+    assert ".rv-glossary-index li {\n  display: block;\n}" in CSS
+    # 2) the action of a phone card takes the whole card
+    actions = "tbody tr > td.rv-row-actions {\n    grid-column: 1 / -1;"
+    assert "main .rv-table-cards " + actions in CSS
+    # 3) the horizon on a phone names every second month, larger
+    phone = CSS.split("@media (max-width: 599px) {", 1)[1].split("\n}\n", 1)[0]
+    assert "font-size: 20px;" in phone
+    assert ".rv-horizon-month:nth-of-type(even)," in phone
+    # 4) long values keep their words; the kept reports beside the builder in rows
+    assert "flex: 1 1 9rem;" in CSS and "text-wrap: balance;" in CSS
+    assert ".rv-builder-side .rv-snapshots tbody th {" in CSS
+    # (f) the column beside the builder no longer sticks
+    assert re.search(r"\.rv-builder[a-z-]* \{[^}]*sticky", CSS) is None
+    # (g) the paper of the preview resets every Pico colour it reads
+    paper = CSS.split(".rv-sheet-band .rv-sheet {", 1)[1].split("}", 1)[0]
+    for name in ("h4-color", "muted-border-color", "table-border-color"):
+        assert f"--pico-{name}:" in paper, name
 
 
 # --- the pages ----------------------------------------------------------------------
@@ -284,3 +338,19 @@ async def test_home_keeps_the_scene_a_child_of_the_keep_panel(
     panel = html.split('<div class="rv-keep rv-keep-panel" id="keep-panel">', 1)[1]
     gauge = panel.index('id="portfolio-gauge"')
     assert gauge < panel.index('<div class="rv-scene" id="rookery-scene"')
+
+
+async def test_a_shortened_chart_label_carries_the_whole_name(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    # THE-1355/1376: a name longer than two label lines ends in "..."; pointing at
+    # the label shows the whole name (its title), as the legend and the table do
+    csrf = await sign_in(ui_browser, db_engine)
+    client_id = await seed_client(db_engine, ui_ctx, LONG_NAME)
+    await make_report(ui_browser, csrf, client_id)
+    page = await ui_browser.get("/")
+    html = page.text
+    assert page.status_code == 200 and structure_problems(html) == []
+    assert f"<title>{LONG_NAME}</title><tspan" in html
+    label = html.split(f"<title>{LONG_NAME}</title>", 1)[1].split("</text>", 1)[0]
+    assert label.count("<tspan") == 2 and "...</tspan>" in label

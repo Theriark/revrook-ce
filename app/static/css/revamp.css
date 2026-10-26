@@ -1003,11 +1003,6 @@ span.rv-status-not-applicable {
     gap: 0 24px;
     align-items: start;
   }
-
-  .rv-builder-side {
-    position: sticky;
-    top: 16px;
-  }
 }
 
 /* ---------- Preview and export: paper in the keep (THE-1360) ----------
@@ -1052,8 +1047,16 @@ span.rv-status-not-applicable {
   --pico-h1-color: var(--rv-text);
   --pico-h2-color: var(--rv-text);
   --pico-h3-color: var(--rv-text);
+  --pico-h4-color: var(--rv-text);
+  --pico-h5-color: var(--rv-text);
+  --pico-h6-color: var(--rv-text);
   --pico-muted-color: var(--rv-text-secondary);
+  --pico-muted-border-color: var(--rv-line);
+  --pico-table-border-color: var(--rv-line);
+  --pico-background-color: var(--rv-surface);
   --pico-primary: var(--rv-link);
+  --pico-primary-underline: var(--rv-link);
+  --pico-primary-hover: var(--rv-text);
   border: 0;
   border-radius: 4px;
   color: var(--rv-text);
@@ -1272,7 +1275,7 @@ span.rv-status-not-applicable {
   margin: 0;
   padding: 0;
   list-style: none;
-  columns: 2 10rem;
+  columns: 2 9rem;
   column-gap: 16px;
 }
 
@@ -1434,6 +1437,143 @@ span.rv-status-not-applicable {
   main .rv-checklist tbody tr[data-control] .rv-flags li {
     margin: 0 8px 0 0;
   }
+}
+
+/* ---------- Findings of the deployed check of 6369873c (THE-1360) ---------- */
+
+/* The glossary index is a nav, and Pico lays every nav out as one row (flex,
+   space between) with inline list items, padded links and a negative margin on
+   the first and last list; the chapters stood side by side. It is a column */
+.rv-glossary-index {
+  display: block;
+}
+
+.rv-glossary-index :is(ol, ol:first-of-type, ol:last-of-type) {
+  margin: 0;
+}
+
+.rv-glossary-index li {
+  display: block;
+}
+
+.rv-glossary-index li a {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  color: var(--rv-link);
+  background-color: var(--rv-canvas);
+}
+
+/* A card on a phone gives its action the whole width: in the second column the
+   buttons of the exceptions and of the reports made before ran past the card */
+@media (max-width: 767px) {
+  main .rv-table-cards tbody tr > td.rv-row-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The review horizon on a phone: drawn 308px wide, its month names were 5px
+   high. Every second month is named, in letters almost twice as large; the
+   word Today gives way (the line stays, and the sentence above names it) */
+@media (max-width: 599px) {
+  .rv-horizon-month {
+    font-size: 20px;
+  }
+
+  .rv-horizon-month:nth-of-type(even),
+  .rv-horizon-label {
+    display: none;
+  }
+}
+
+/* The review horizon on a wide window: held to 96px high, the drawing stopped
+   short of the right of its card. From 1280px its words stand at the left and
+   the drawing takes the rest of the card */
+@media (min-width: 1280px) {
+  .rv-horizon {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    gap: 0 24px;
+    align-items: center;
+  }
+
+  .rv-horizon-title,
+  .rv-horizon-words {
+    grid-column: 1;
+  }
+
+  .rv-horizon svg {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+/* A long value keeps its words whole: an address or a date breaks only where it
+   must, and a line of a few words breaks between them, evenly */
+.rv-verdict .rv-verdict-facts dd,
+.rv-posture-facts dd {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+@media (min-width: 1024px) {
+  .rv-verdict .rv-verdict-facts {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .rv-verdict .rv-verdict-facts > div {
+    flex: 1 1 9rem;
+  }
+}
+
+/* The reports made before beside the builder: in a column 400px wide three
+   cells broke each date at its hyphens. There each report is a row of two lines,
+   the period whole, then its pack date and its button */
+@media (min-width: 1280px) {
+  .rv-builder-side .rv-snapshots thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .rv-builder-side .rv-snapshots tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rv-line);
+  }
+
+  .rv-builder-side .rv-snapshots tbody :is(th, td) {
+    padding: 0;
+    border: 0;
+  }
+
+  .rv-builder-side .rv-snapshots tbody th {
+    grid-column: 1 / -1;
+    white-space: nowrap;
+  }
+
+  .rv-builder-side .rv-snapshots td[data-label]::before {
+    content: attr(data-label) " ";
+    font-size: 13px;
+    color: var(--rv-text-secondary);
+    background-color: var(--rv-surface);
+  }
+}
+
+.rv-exports td[data-label="Size"] {
+  white-space: nowrap;
+}
+
+/* A domain whose name takes two lines keeps its weight and its bar on its middle */
+.rv-weights :is(th, td) {
+  vertical-align: middle;
 }
 
 @media (prefers-reduced-motion: reduce) {
