@@ -9,8 +9,9 @@ differently, and no rule of evidence changes. Coordinates of a drawing are float
 every score and count stays exact until it is written as text.
 """
 
+import textwrap
 from collections.abc import Collection, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from fractions import Fraction
 from math import pi
@@ -67,6 +68,11 @@ CHART_BOTTOM = 28
 # touched (seen at 768px); 18 leaves 4 units of air, and six fit in the plot.
 LABEL_GAP = 18
 NAME_LENGTH = 20
+# A long name is broken between its words onto a second line of its label, 14
+# units under the first (THE-1347: "Seed Gaps Ltd (synthetic)" was cut to "Seed
+# Gaps Ltd (sy..."); only a name longer than two lines still ends in "...".
+LABEL_LINES = 2
+LINE_STEP = 14
 DASHES = ("", "6 3", "2 3", "9 3 2 3", "1 3", "12 4")
 NEEDS_WORK = (NOT_PROTECTED, NEEDS_ATTENTION)
 URGENCY = {NOT_PROTECTED: 0, NEEDS_ATTENTION: 1}
@@ -540,12 +546,27 @@ class TrendLine:
     # The date of the report before the range that the line continues from (it
     # enters the plot at the left edge); empty when the line starts in the range.
     continues_from: str = ""
+    # The lines of words of the label at the end of the line (label_lines)
+    label: tuple[str, ...] = ()
 
     @property
     def short_name(self) -> str:
-        if len(self.name) <= NAME_LENGTH:
-            return self.name
-        return self.name[: NAME_LENGTH - 3].rstrip() + "..."
+        return short_name(self.name)
+
+
+def short_name(name: str) -> str:
+    """A name on one line of a label, cut with "..." when it is too long."""
+    if len(name) <= NAME_LENGTH:
+        return name
+    return name[: NAME_LENGTH - 3].rstrip() + "..."
+
+
+def label_lines(name: str) -> tuple[str, ...]:
+    """The label of a line: the whole name on one line when it fits, else broken
+    between its words onto LABEL_LINES lines; a name longer still ends in "..."
+    (the legend, the tooltip and the table under the chart carry all of it)."""
+    lines = textwrap.wrap(name, NAME_LENGTH, max_lines=LABEL_LINES, placeholder="...")
+    return tuple(lines) or (name,)
 
 
 @dataclass(frozen=True)
@@ -614,6 +635,12 @@ class _Drawn:
     rows: tuple[tuple[str, str, str], ...]
     marks: tuple[Mark, ...]
     continues_from: str
+    label: tuple[str, ...] = ()
+
+    @property
+    def extra(self) -> float:
+        """How far the lines of the label below the first one reach down."""
+        return (len(self.label) - 1) * LINE_STEP if self.label else 0.0
 
 
 def mark_of(point: ReportPoint, name: str, x: float, y: float) -> Mark:
@@ -666,18 +693,29 @@ def _label_places(drawn: Sequence[_Drawn], size: ChartSize) -> dict[int, float]:
     LABEL_GAP from the label above when two ends are close. A stack that would
     reach past the plot sat on the dates of the time axis (seen with several
     clients at a score of 0), so it is moved up by the excess, keeping its gaps:
-    six labels of 18 units fit in the 180 units of the plot."""
+    six labels of 18 units fit in the 180 units of the plot. A label of two lines
+    is centred on the end of its line and takes LINE_STEP more room; the place is
+    the middle of its first line."""
     labels: dict[int, float] = {}
+    lowest = 0.0
     floor = size.top + LABEL_GAP / 2
     for item in sorted(drawn, key=lambda item: item.last_y):
-        floor = max(floor, item.last_y)
-        labels[item.client_id] = floor
-        floor += LABEL_GAP
+        top = max(floor, item.last_y - item.extra / 2)
+        labels[item.client_id] = top
+        lowest = top + item.extra
+        floor = lowest + LABEL_GAP
     ceiling = size.height - size.bottom - LABEL_GAP / 2
-    excess = max(labels.values(), default=0.0) - ceiling
+    excess = lowest - ceiling
     if excess > 0:
         labels = {client_id: y - excess for client_id, y in labels.items()}
     return labels
+
+
+def _labels_fit(drawn: Sequence[_Drawn], size: ChartSize) -> bool:
+    """Whether the labels, stacked with their gaps, fit in the height of the plot."""
+    room = size.height - size.bottom - size.top - LABEL_GAP
+    needed = sum(item.extra + LABEL_GAP for item in drawn) - LABEL_GAP
+    return needed <= room
 
 
 def _anchor(number: int, count: int) -> str:
@@ -754,9 +792,25 @@ def trend_chart(
         dash = DASHES[number % len(DASHES)]
         drawn.append(
             _Drawn(
-                client_id, last_x, last_y, polyline, dash, rows, marks, continues_from
+                client_id,
+                last_x,
+                last_y,
+                polyline,
+                dash,
+                rows,
+                marks,
+                continues_from,
+                label_lines(name),
             )
         )
+    # Too many labels of two lines for the height of the plot: each takes one line
+    if not _labels_fit(drawn, size):
+        drawn = [
+            replace(
+                item, label=(short_name(names.get(item.client_id, DELETED_CLIENT)),)
+            )
+            for item in drawn
+        ]
     labels = _label_places(drawn, size)
     lines = tuple(
         TrendLine(
@@ -770,6 +824,7 @@ def trend_chart(
             rows=item.rows,
             marks=item.marks,
             continues_from=item.continues_from,
+            label=item.label,
         )
         for item in drawn
     )

@@ -62,8 +62,19 @@
 <th scope="col">Why it needs a look</th>
 </tr>
 </thead>
+{#- In library order the controls of a domain stand together, so each domain is
+    its own row group under a header row with its name and count (THE-1313: the
+    flat list of 51 rows read as one undivided table). Another order is one group. -#}
+{% set grouped = query.sort == "library" %}
 <tbody>
 {% for item in rows %}
+{% if grouped and (loop.first or loop.previtem.row.domain_name != item.row.domain_name) %}
+{% if not loop.first %}</tbody>
+<tbody>
+{% endif %}
+{% set in_domain = rows|selectattr("row.domain_name", "equalto", item.row.domain_name)|list|length %}
+<tr class="rv-group-row"><th scope="rowgroup" colspan="6">{{ item.row.domain_name }} <span class="rv-group-count">{{ in_domain }} control{% if in_domain != 1 %}s{% endif %}</span></th></tr>
+{% endif %}
 <tr data-control="{{ item.row.control_id }}" data-changed="{{ 'true' if item.changed else 'false' }}" data-flagged="{{ 'true' if item.flagged else 'false' }}">
 <th scope="row"><a class="rv-control-link" href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}" data-drawer>{{ item.row.title }}</a><span class="rv-cell-note">{{ item.row.control_id }}{% if item.row.gate %}, gate control{% endif %}</span></th>
 <td data-label="Status">{{ s.status(item.row.label) }}</td>

@@ -1,0 +1,728 @@
+/*
+ * The revamp of the interface (THE-1313, REV-316; docs/design-system.md, The keep).
+ * Loaded after every other stylesheet of the shell, so it restyles the same markup
+ * without touching revrook.css. Tokens only: no colour literal outside the token
+ * blocks, no image, nothing external.
+ *
+ * The idea is the rook as a keep. The rail is the quiet ground (stone in the light
+ * theme, the darkest surface in the dark one), and every page opens with the keep:
+ * a charcoal band whose top edge is the battlement of the revrook mark, carrying
+ * the title, the purpose and the one primary action, and the tabs of a client. The
+ * band is dark in both themes, so inside it the roles take their dark values (the
+ * same values the dark theme of revrook.css uses, which reach 4.5 to 1 on it);
+ * every rule in the band keeps reading var(--rv-text) on var(--rv-surface).
+ * On Home the band holds the portfolio gauge and the rookery skyline side by side,
+ * the stat ledger overlaps its foot, and the dashboard follows in two columns.
+ */
+
+:root {
+  /* The keep band: the brand charcoal in the light theme */
+  --rv-keep: #2d2f3a;
+  --rv-keep-raised: #32343e;
+  --rv-keep-edge: 14px;
+  /* The rail in the light theme: stone, a white pill for the page in use */
+  --rv-rail-ground: #f1efe9;
+  --rv-rail-ink: #2d2f3a;
+  --rv-rail-quiet: #5a5e6b;
+  --rv-rail-hover: #e4e2db;
+  --rv-rail-current: #ffffff;
+  --rv-rail-strong: #1f2029;
+  --rv-rail-line: #dcd9d1;
+  /* Status chips: a soft fill of each status, the status colour for the words */
+  --rv-tint-protected: #e7f2eb;
+  --rv-tint-needs-attention: #faf0da;
+  --rv-tint-not-protected: #fbe8e6;
+  --rv-tint-not-checked: #ececef;
+  --rv-radius-card: 14px;
+  --rv-shadow-ledger: 0 1px 0 rgba(45, 47, 58, 0.04), 0 10px 24px -12px rgba(45, 47, 58, 0.28);
+}
+
+:root[data-theme="dark"] {
+  --rv-keep: #111218;
+  --rv-keep-raised: #1b1c24;
+  --rv-rail-ground: #181920;
+  --rv-rail-ink: #d9d6cf;
+  --rv-rail-quiet: #a9a69e;
+  --rv-rail-hover: #262833;
+  --rv-rail-current: #2d3040;
+  --rv-rail-strong: #ffffff;
+  --rv-rail-line: #2a2d38;
+  --rv-tint-protected: #1b3225;
+  --rv-tint-needs-attention: #382c12;
+  --rv-tint-not-protected: #3c2123;
+  --rv-tint-not-checked: #2a2d38;
+  --rv-shadow-ledger: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.7);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --rv-keep: #111218;
+    --rv-keep-raised: #1b1c24;
+    --rv-rail-ground: #181920;
+    --rv-rail-ink: #d9d6cf;
+    --rv-rail-quiet: #a9a69e;
+    --rv-rail-hover: #262833;
+    --rv-rail-current: #2d3040;
+    --rv-rail-strong: #ffffff;
+    --rv-rail-line: #2a2d38;
+    --rv-tint-protected: #1b3225;
+    --rv-tint-needs-attention: #382c12;
+    --rv-tint-not-protected: #3c2123;
+    --rv-tint-not-checked: #2a2d38;
+    --rv-shadow-ledger: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 28px -12px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ---------- The rail ---------- */
+
+/* Every rule of the rail in revrook.css draws with the rail tokens (stone words,
+   white for the page in use, charcoal-soft for a hover, charcoal-deep for the
+   current pill). Here they are given the rail's own values, so the same rules draw
+   a stone rail in the light theme and the darkest surface in the dark one. */
+.rv-app .rv-header {
+  --rv-rail: var(--rv-rail-ground);
+  --rv-stone: var(--rv-rail-ink);
+  --rv-stone-dim: var(--rv-rail-quiet);
+  --rv-white: var(--rv-rail-strong);
+  --rv-gray: var(--rv-link);
+  --rv-charcoal-soft: var(--rv-rail-hover);
+  --rv-charcoal-deep: var(--rv-rail-current);
+  border-right: 1px solid var(--rv-rail-line);
+  border-bottom: 1px solid var(--rv-rail-line);
+}
+
+/* The ring of a focused control in the rail is the page's own focus colour */
+.rv-app .rv-header :is(a, button, input, select, summary):focus-visible {
+  outline-color: var(--rv-focus);
+}
+
+.rv-app .rv-header .rv-nav-link[aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--rv-primary), var(--rv-shadow-1);
+}
+
+.rv-app .rv-header .rv-nav-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rv-app .rv-header .rv-avatar {
+  color: var(--rv-white);
+  background-color: var(--rv-rail-current);
+  box-shadow: inset 0 0 0 1px var(--rv-rail-line);
+}
+
+@media (min-width: 1024px) {
+  .rv-app .rv-header {
+    border-bottom: 0;
+  }
+
+  .rv-user {
+    border-top-color: var(--rv-rail-line);
+  }
+}
+
+/* The top bar sits on the page, a hairline under it */
+.rv-topbar {
+  border-bottom: 1px solid var(--rv-line);
+}
+
+/* ---------- The keep: the band every page opens with ---------- */
+
+/* Inside the band the roles take their dark values (as in the dark theme of
+   revrook.css), so every rule that reads text on surface draws on the charcoal */
+.rv-keep,
+.rv-content > .rv-page-header,
+.rv-content > .rv-tabs-strip,
+.rv-content > .rv-problem {
+  --rv-surface: var(--rv-keep);
+  --rv-canvas: var(--rv-keep-raised);
+  --rv-text: #e6e7ec;
+  --rv-text-secondary: #aab0bd;
+  --rv-line: #3a3e4b;
+  --rv-line-strong: #4d5261;
+  --rv-ink: #5563dc;
+  --rv-link: #8b97f2;
+  --rv-primary: #8b97f2;
+  --rv-accent-deep: #aeb7f6;
+  --rv-accent-tint: #2b3050;
+  --rv-focus: #ffffff;
+  --rv-status-protected: #4fbf7a;
+  --rv-status-needs-attention: #e0a93c;
+  --rv-status-not-protected: #ff8a80;
+  --rv-status-not-checked: #aab0bd;
+  --rv-tint-protected: #1b3225;
+  --rv-tint-needs-attention: #382c12;
+  --rv-tint-not-protected: #3c2123;
+  --rv-tint-not-checked: #2a2d38;
+  --pico-color: var(--rv-text);
+  --pico-h1-color: var(--rv-text);
+  --pico-h2-color: var(--rv-text);
+  --pico-muted-color: var(--rv-text-secondary);
+  --pico-primary: var(--rv-link);
+  --pico-primary-underline: var(--rv-link);
+  --pico-primary-hover: var(--rv-text);
+  --pico-form-element-background-color: var(--rv-keep-raised);
+  --pico-form-element-color: var(--rv-text);
+  color: var(--rv-text);
+}
+
+/* The band spans the page column: it takes back the padding of the content and
+   gives it again inside. Its top edge is the battlement of the mark: a row of
+   merlons drawn as the first 14px of its background, the page showing through
+   the gaps (a decoration of the band; nothing is told by it).
+   The band is full-bleed (THE-1347): the content stops at 1200px, so on a wide
+   window the band ended short of the right edge. Its background is a layer
+   behind the words that carries on to the right of the window; the page column
+   clips what lies past the window without becoming a scroll box. */
+.rv-main {
+  overflow-x: clip;
+}
+
+.rv-content > .rv-page-header,
+.rv-content > .rv-problem {
+  position: relative;
+  isolation: isolate;
+  margin: -24px -16px 24px;
+  padding: calc(var(--rv-keep-edge) + 20px) 16px 28px;
+  border-bottom: 0;
+  background-color: transparent;
+}
+
+.rv-content > .rv-page-header::before,
+.rv-content > .rv-problem::before {
+  content: "";
+  position: absolute;
+  inset: 0 -100vw 0 0;
+  z-index: -1;
+  background-image:
+    repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
+    linear-gradient(var(--rv-keep), var(--rv-keep));
+  background-size: 100% var(--rv-keep-edge), 100% calc(100% - var(--rv-keep-edge) + 1px);
+  background-position: 0 0, 0 calc(var(--rv-keep-edge) - 1px);
+  background-repeat: no-repeat;
+}
+
+@media (min-width: 768px) {
+  .rv-content > .rv-page-header,
+  .rv-content > .rv-problem {
+    margin: -32px -32px 28px;
+    padding: calc(var(--rv-keep-edge) + 28px) 32px 32px;
+  }
+}
+
+.rv-content > .rv-page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+@media (min-width: 768px) {
+  .rv-content > .rv-page-header h1 {
+    font-size: 40px;
+  }
+}
+
+.rv-content > .rv-page-header .rv-page-purpose {
+  max-width: 42rem;
+  margin-top: 8px;
+  font-size: 16px;
+}
+
+.rv-content > .rv-page-header .rv-client-kicker a {
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
+}
+
+/* A quiet button in the band is outlined on the charcoal */
+.rv-content > .rv-page-header .rv-button-quiet {
+  border-color: var(--rv-line-strong);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-content > .rv-page-header .rv-button-quiet:hover {
+  border-color: var(--rv-text);
+  color: var(--rv-text);
+  background-color: var(--rv-keep-raised);
+}
+
+/* A client: the header and its tabs are one band; the tabs sit at its foot */
+.rv-content > .rv-page-header.rv-client-header {
+  margin-bottom: 0;
+  padding-bottom: 12px;
+}
+
+/* The tabs carry the band on to the right of the window too: the image of the
+   border fills the strip and reaches out past its right edge */
+.rv-content > .rv-tabs-strip {
+  margin: 0 -16px 28px;
+  padding: 0 16px;
+  background-color: var(--rv-keep);
+  border-image: linear-gradient(var(--rv-keep), var(--rv-keep)) fill 0 / 0 / 0 100vw
+    0 0;
+}
+
+@media (min-width: 768px) {
+  .rv-content > .rv-tabs-strip {
+    margin: 0 -32px 32px;
+    padding: 0 32px;
+  }
+}
+
+.rv-content > .rv-tabs-strip > nav {
+  border-bottom: 0;
+}
+
+.rv-content > .rv-tabs-strip .rv-nav-link {
+  padding: 12px 14px 14px;
+  text-decoration: none;
+  border-bottom-width: 3px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-content > .rv-tabs-strip .rv-nav-link:hover {
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-content > .rv-tabs-strip .rv-nav-link[aria-current="page"] {
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- Cards, sections and the ledger ---------- */
+
+.rv-card {
+  border-radius: var(--rv-radius-card);
+  box-shadow: none;
+}
+
+.rv-card-title {
+  font-size: 17px;
+  letter-spacing: -0.005em;
+}
+
+.rv-section-head h2 {
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+/* The stat cards are a ledger: one strip of columns with hairlines between them,
+   the number large and in tabular figures */
+.rv-stat-grid {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--rv-line);
+  border-radius: var(--rv-radius-card);
+  background-color: var(--rv-surface);
+  box-shadow: var(--rv-shadow-ledger);
+}
+
+.rv-stat-grid > .rv-card.rv-stat {
+  margin: 0;
+  padding: 20px 24px 18px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 0 -1px 0 var(--rv-line);
+}
+
+@media (min-width: 600px) {
+  .rv-stat-grid > .rv-card.rv-stat:nth-child(odd) {
+    box-shadow: inset -1px 0 0 var(--rv-line), inset 0 -1px 0 var(--rv-line);
+  }
+}
+
+@media (min-width: 1280px) {
+  .rv-stat-grid > .rv-card.rv-stat,
+  .rv-stat-grid > .rv-card.rv-stat:nth-child(odd) {
+    box-shadow: inset -1px 0 0 var(--rv-line);
+  }
+
+  .rv-stat-grid > .rv-card.rv-stat:last-child {
+    box-shadow: none;
+  }
+}
+
+main .rv-stat .rv-stat-value,
+main .rv-stat .rv-stat-value:hover {
+  font-size: 40px;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Status chips: a soft fill, the words in the status colour ---------- */
+
+span.rv-status-protected {
+  border-color: transparent;
+  background-color: var(--rv-tint-protected);
+}
+
+span.rv-status-needs-attention {
+  border-color: transparent;
+  background-color: var(--rv-tint-needs-attention);
+}
+
+span.rv-status-not-protected {
+  border-color: transparent;
+  background-color: var(--rv-tint-not-protected);
+}
+
+span.rv-status-not-checked,
+span.rv-status-not-applicable {
+  border-color: transparent;
+  background-color: var(--rv-tint-not-checked);
+}
+
+/* ---------- Tables: a stone head, a hover on the row ---------- */
+
+.rv-table-scroll {
+  border-radius: var(--rv-radius-card);
+}
+
+.rv-table-scroll thead th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-canvas);
+}
+
+@media (hover: hover) {
+  .rv-table-scroll tbody tr:hover > :is(td, th) {
+    background-color: var(--rv-canvas);
+  }
+}
+
+/* ---------- Home: the gauge and the rookery in the keep ---------- */
+
+/* The ledger of Home stands on the foot of the band */
+.rv-content > .rv-page-header:has(+ #stats) {
+  padding-bottom: 76px;
+}
+
+.rv-content > .rv-page-header + #stats {
+  position: relative;
+  margin-top: -76px;
+}
+
+/* The keep panel of Home: the band again, as a card, with the gauge of every
+   client on the left and the rookery skyline on the right */
+.rv-keep-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  margin: 0 0 20px;
+  padding: 24px 20px 20px;
+  border-radius: var(--rv-radius-card);
+  background-color: var(--rv-keep);
+}
+
+@media (min-width: 1024px) {
+  .rv-keep-panel {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 28px;
+    padding: 28px;
+  }
+}
+
+/* The scene draws its ground in the colour of the band it stands in (scenes.js
+   reads --rv-scene-ground from the stage) */
+.rv-keep-panel .rv-scene {
+  --rv-scene-ground: var(--rv-keep);
+  margin: 0;
+}
+
+.rv-gauge {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .rv-gauge {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+  }
+}
+
+.rv-gauge-ring {
+  position: relative;
+  width: 168px;
+  height: 168px;
+}
+
+.rv-gauge-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.rv-gauge-track {
+  fill: none;
+  stroke: var(--rv-line);
+  stroke-width: 7;
+}
+
+.rv-gauge-arc {
+  fill: none;
+  stroke: var(--rv-primary);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+/* A mean that counts a lower bound is drawn in the quiet colour (its words say
+   why); the arc keeps its length */
+.rv-gauge-arc-thin {
+  stroke: var(--rv-text-secondary);
+}
+
+/* The merlons of the mark round the ring: one tick a tenth of the score */
+.rv-gauge-ticks {
+  fill: none;
+  stroke: var(--rv-line-strong);
+  stroke-width: 3;
+}
+
+.rv-gauge-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.rv-gauge-number {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-gauge-of {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-gauge-words {
+  max-width: 22rem;
+}
+
+.rv-gauge-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-gauge-line {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-gauge-line strong {
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+/* The stage in the keep: no frame of its own, the ground is the band */
+.rv-keep-panel .rv-scene-stage {
+  border: 0;
+  border-radius: 10px;
+  background-color: var(--rv-keep);
+}
+
+/* Home in two columns from 1280px: what needs attention beside the trend, the
+   domains beside the recent changes */
+.rv-dash-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 24px;
+  align-items: start;
+}
+
+@media (min-width: 1280px) {
+  .rv-dash-row {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  /* The trend drawing is 640 units wide: it takes the wider column */
+  .rv-dash-row-trend {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .rv-dash-row > .rv-card {
+    margin-top: 32px;
+  }
+}
+
+/* ---------- The checklist in domains ---------- */
+
+/* In library order every domain is a row group with a header row: its name and
+   how many controls it holds */
+.rv-checklist .rv-group-row th {
+  padding: 20px 12px 8px;
+  border-bottom: 2px solid var(--rv-line-strong);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-group-count {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- A control: the sources by name, the library rule folded ---------- */
+
+.rv-read-from {
+  margin: 12px 0 8px;
+  font-size: 14px;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-read-from-label {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-rule-more {
+  margin: 0;
+  font-size: 13px;
+}
+
+.rv-rule-more summary {
+  font-weight: 600;
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
+}
+
+.rv-rule-more .rv-rule {
+  margin: 8px 0 0;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- Phone cards: two columns, long lists folded ---------- */
+
+/* The link that shows every row of a long list on a phone; from 768px every row
+   shows and the link is not needed */
+.rv-table-more {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* A card puts its short cells side by side, two to a line; its heading and
+     the long cells (why a control needs a look, what a source feeds, what a
+     control reads) keep the full width */
+  main .rv-table-cards tbody tr,
+  main .rv-checklist tbody tr[data-control] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  main .rv-table-cards tbody tr > th,
+  main .rv-checklist tbody tr[data-control] > th,
+  main .rv-checklist tbody tr[data-control] > td:last-child,
+  main .rv-explorer-table td:is([data-label="Feeds"], [data-label="Reads"]) {
+    grid-column: 1 / -1;
+  }
+
+  /* The scene button of an explorer row is shown by the script only */
+  main .rv-explorer-table td[data-label="Scene"]:has(> button[hidden]) {
+    display: none;
+  }
+
+  /* A domain header of the checklist is a heading between the cards */
+  main .rv-checklist tbody tr.rv-group-row {
+    margin: 24px 0 8px;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  main .rv-checklist tbody tr.rv-group-row th {
+    padding: 0 0 6px;
+  }
+
+  /* The imported items and the controls of the explorer: the first twelve, and
+     every one once the link has made the table the target */
+  main :is(#items, #explorer-controls) tbody tr:nth-child(n + 13) {
+    display: none;
+  }
+
+  main :is(#items, #explorer-controls):target tbody tr:nth-child(n + 13) {
+    display: grid;
+  }
+
+  .rv-table-more {
+    display: block;
+    margin: 0 0 24px;
+  }
+
+  :is(#items, #explorer-controls):target + .rv-table-more {
+    display: none;
+  }
+}
+
+/* ---------- The numbers under a chart ----------
+   The founder saw the band "Insufficient evidence" cut in the table under the
+   score chart. At 390px the cell was 61px wide: overflow-wrap: anywhere on every
+   scrolling cell (revrook.css) lets a word count as one letter wide, so the
+   table squeezed into the card instead of scrolling, and "Insufficient", "Critical"
+   and the dates broke a few letters a line. Here a word and a date stay whole and
+   the table scrolls inside its card. */
+.rv-chart-data .rv-table-scroll td {
+  overflow-wrap: break-word;
+}
+
+.rv-chart-data td a {
+  white-space: nowrap;
+}
+
+/* ---------- Problem pages ---------- */
+
+.rv-content > .rv-problem {
+  max-width: none;
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.rv-content > .rv-problem .rv-problem-code {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-keep-panel,
+  .rv-gauge-arc {
+    transition: none;
+  }
+}

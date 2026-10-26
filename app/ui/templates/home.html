@@ -60,7 +60,35 @@
 <h2 id="rookery-title">What moves the score</h2>
 <p class="rv-section-note">Every score is out of 100. Each bar shows the points a client earns from its evidence as it is today, and what costs it the rest.</p>
 </div>
+{#- The keep panel (THE-1313): the gauge of every client with evidence beside the
+    rookery skyline, on the charcoal of the band. The ring is drawn for the eye
+    only; its number and its words are the text beside it. -#}
+<div class="rv-keep rv-keep-panel" id="keep-panel">
+<div class="rv-gauge" id="portfolio-gauge">
+{% if portfolio %}
+{% set mean = portfolio.drivers %}
+{% set thin = clients|selectattr("evidence")|selectattr("drivers")|selectattr("insufficient")|list|length %}
+<div class="rv-gauge-ring">
+<svg viewBox="0 0 120 120" width="168" height="168" aria-hidden="true" focusable="false">
+<circle class="rv-gauge-track" cx="60" cy="60" r="48"/>
+<circle class="rv-gauge-arc{% if thin %} rv-gauge-arc-thin{% endif %}" cx="60" cy="60" r="48" stroke-dasharray="{{ '%.2f'|format((mean.earned|float) * 3.0159) }} 301.59" transform="rotate(-90 60 60)"/>
+{% for step in range(10) %}<line class="rv-gauge-ticks" x1="60" y1="2" x2="60" y2="7" transform="rotate({{ step * 36 }} 60 60)"/>{% endfor %}
+</svg>
+<p class="rv-gauge-value"><span class="rv-gauge-number">{{ mean.earned_text }}</span><span class="rv-gauge-of">of 100</span></p>
+</div>
+<div class="rv-gauge-words">
+<p class="rv-gauge-title">{% if portfolio.clients == 1 %}The client with evidence{% else %}Mean of {{ portfolio.clients }} clients with evidence{% endif %}</p>
+<p class="rv-gauge-line">{% if thin %}{{ thin }} {% if thin == 1 %}has{% else %}have{% endif %} evidence too thin for a score, so this is a lower bound.{% else %}Every counted score rests on enough evidence.{% endif %}{% if mean.biggest %} Most points go to <strong>{{ mean.biggest.driver.text|lower }}</strong>.{% endif %}</p>
+</div>
+{% else %}
+<div class="rv-gauge-words">
+<p class="rv-gauge-title">No score yet</p>
+<p class="rv-gauge-line">Import the first export of a client and its rook rises here, as tall as its score.</p>
+</div>
+{% endif %}
+</div>
 {{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Point at a rook, or at a bar below, to read it here. A press chooses it.", "The rookery skyline: one rook per client, as tall as its score, a wire rook where the evidence is too thin, a footprint where nothing is imported, and a notch at its foot for every control that needs work. Drag to turn the yard.") }}
+</div>
 {% if portfolio %}
 {% set mean = portfolio.drivers %}
 {% set biggest = mean.biggest %}
@@ -122,6 +150,7 @@
 {% endif %}
 </section>
 
+<div class="rv-dash-row rv-dash-row-trend">
 <section id="needs-attention" aria-labelledby="attention-title">
 <div class="rv-section-head">
 <h2 id="attention-title">Needs attention</h2>
@@ -148,8 +177,6 @@
 </div>
 {% endif %}
 </section>
-
-<div class="rv-two">
 <section class="rv-card" id="trend" aria-labelledby="trend-title">
 <h2 id="trend-title" class="rv-card-title">Score over time</h2>
 {#- The body of the card (_trend_chart.html) is what the chart script swaps when a
@@ -158,7 +185,9 @@
 {% include "_trend_chart.html" %}
 </div>
 </section>
+</div>
 
+<div class="rv-dash-row">
 <section class="rv-card" id="domains" aria-labelledby="domains-title">
 <h2 id="domains-title" class="rv-card-title">Controls by domain</h2>
 <p class="rv-card-subtitle">Every control of every client, by the status it has today. Each bar is one domain; a segment opens its numbers under the bars.</p>
@@ -195,7 +224,6 @@
 </div>
 </details>
 </section>
-</div>
 
 <section id="recent-changes" aria-labelledby="changes-title">
 <div class="rv-section-head">
@@ -216,6 +244,7 @@
 <p class="rv-text-secondary" id="changes-empty">Nothing has changed yet.</p>
 {% endif %}
 </section>
+</div>
 {% endif %}
 {% include "_drawer.html" %}
 {% endblock %}

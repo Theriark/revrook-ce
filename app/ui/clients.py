@@ -477,8 +477,12 @@ async def control_page(
             if entry.control_id == control_id
         ]
         context = client_context(loaded, "checklist", control.id)
+        library = library_of(request)
         context.update(
             control=control,
+            read_from=[
+                library.source_codes.get(code, code) for code in control.sources
+            ],
             crumb_leaf=control.id,
             row=row,
             result=result,

@@ -370,7 +370,7 @@ def test_the_score_chart_is_a_group_of_report_links_with_a_table() -> None:
     assert '<g class="rv-chart-line" data-series="{{ line.client_id }}">' in CHART
     assert '<tr data-series="{{ line.client_id }}">' in CHART
     assert '<a href="/{{ mark.path }}">{{ mark.day }}</a>' in CHART
-    assert '<div class="rv-table-scroll">\n<table>' in CHART
+    assert '<div class="rv-table-scroll">\n<table class="rv-table-cards' in CHART
     form = '<form class="rv-range" method="get" action="/{{ action }}"'
     assert form in CHART and 'data-fragment="{{ fragment }}"' in CHART
     assert 'name="{{ name }}" value="{{ value }}" aria-pressed=' in CHART

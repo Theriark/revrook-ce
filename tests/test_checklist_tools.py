@@ -337,3 +337,35 @@ async def test_the_checklist_searches_filters_and_orders_its_rows(
     for query in ({"sort": "blue"}, {"sort": ""}, {"status": "blue"}):
         refused = await ui_browser.get(address, params=query)
         assert refused.status_code == 422, query
+
+
+# --- the domains (THE-1313) ---------------------------------------------------------
+
+
+GROUP_ROW = re.compile(
+    r'<tr class="rv-group-row"><th scope="rowgroup" colspan="6">([^<]+) '
+    r'<span class="rv-group-count">(\d+) controls?</span></th></tr>'
+)
+
+
+def test_the_library_order_heads_every_domain_with_its_name_and_count() -> None:
+    rows = rows_of("A")
+    page = render(ChecklistQuery(), rows)
+    assert structure_problems(page) == []
+    groups = GROUP_ROW.findall(page)
+    names = list(dict.fromkeys(item.row.domain_name for item in rows))
+    assert [name for name, _ in groups] == [htmlib.escape(name) for name in names]
+    for (_, count), name in zip(groups, names, strict=True):
+        assert int(count) == sum(item.row.domain_name == name for item in rows)
+    table = page[page.index('<table id="checklist"') : page.index("</table>")]
+    assert table.count("<tbody>") == len(names) == table.count("</tbody>")
+    # Every control row is still a row of the table, in the library order
+    assert len(ROW.findall(page)) == len(rows)
+
+
+def test_another_order_is_one_list_without_domain_heads() -> None:
+    page = render(ChecklistQuery(sort="title"), sort_rows(rows_of("A"), "title"))
+    assert structure_problems(page) == []
+    assert 'class="rv-group-row"' not in page
+    table = page[page.index('<table id="checklist"') : page.index("</table>")]
+    assert table.count("<tbody>") == 1

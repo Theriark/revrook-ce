@@ -41,6 +41,7 @@ ASSET_FILES = (
     "css/revrook-retest.css",
     "css/charts.css",
     "css/scenes.css",
+    "css/revamp.css",
     "vendor/htmx/htmx.min.js",
     "js/revrook.js",
     "js/charts.js",
