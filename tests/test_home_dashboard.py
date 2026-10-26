@@ -65,6 +65,9 @@ POLYLINE = re.compile(r'<polyline points="([^"]+)"')
 STAT_VALUE = re.compile(r'id="stat-evidence">\s*<a class="rv-stat-value"[^>]*>(\d+)<')
 DOMAIN_SUM = re.compile(r'<span class="rv-domain-sum">(\d+) of (\d+) protected</span>')
 SCROLLED_TABLE = '<div class="rv-table-scroll">\n<table>'
+TREND_TABLE = (
+    '<div class="rv-table-scroll">\n<table class="rv-table-cards rv-trend-table">'
+)
 
 
 def view_of(name: str) -> ReportView:
@@ -370,9 +373,10 @@ def test_the_numbers_behind_the_trend_scroll_inside_their_card() -> None:
     # A long client name in the first column must not widen the card on a phone:
     # the table scrolls inside the card, like the table of the breakdown. The
     # table is the score_table macro of _chart.html, which the trend card draws.
+    # Below 768px each of its reports is a card (THE-1313).
     assert "c.score_table(trend," in TREND
-    assert SCROLLED_TABLE in CHART
-    assert CHART.count("<table>") == 1
+    assert TREND_TABLE in CHART
+    assert CHART.count("<table") == 1
 
 
 # --- the page -----------------------------------------------------------------------
