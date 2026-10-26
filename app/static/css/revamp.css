@@ -665,6 +665,21 @@ span.rv-status-not-applicable {
   }
 }
 
+/* ---------- The numbers under a chart ----------
+   The founder saw the band "Insufficient evidence" cut in the table under the
+   score chart. At 390px the cell was 61px wide: overflow-wrap: anywhere on every
+   scrolling cell (revrook.css) lets a word count as one letter wide, so the
+   table squeezed into the card instead of scrolling, and "Insufficient", "Critical"
+   and the dates broke a few letters a line. Here a word and a date stay whole and
+   the table scrolls inside its card. */
+.rv-chart-data .rv-table-scroll td {
+  overflow-wrap: break-word;
+}
+
+.rv-chart-data td a {
+  white-space: nowrap;
+}
+
 /* ---------- Problem pages ---------- */
 
 .rv-content > .rv-problem {

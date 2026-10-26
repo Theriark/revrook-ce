@@ -17,6 +17,7 @@ from fractions import Fraction
 import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
+from app import devseed
 from app.checks.library import load_library
 from app.evidence.service import EvidenceContext
 from app.snapshots import store_snapshot
@@ -172,6 +173,39 @@ def test_the_line_enters_from_the_newest_report_before_the_range() -> None:
     line = one_line(points, 30)
     assert line.continues_from == "2026-09-14"
     assert [day for day, _, _ in line.rows] == ["2026-10-23"]
+
+
+def test_the_development_seed_explains_the_short_ranges() -> None:
+    # The founder saw single points at 7 and 30 days on Development (THE-1313). The
+    # seed stores its reports 60, 30 and 0 days before it ran; three days later the
+    # report of day 30 is 33 days old, so the short ranges hold the newest report
+    # of each client and its line enters from the one before. That is the stored
+    # data, not the filter: 90 days holds every seeded report.
+    seeded = NOW - timedelta(days=3)
+    points: list[ReportPoint] = []
+    names: dict[int, str] = {}
+    for client_id, client in enumerate(devseed.DEMO_CLIENTS, start=1):
+        names[client_id] = client.name
+        for stage in client.stages:
+            if stage.report_days is not None:
+                instant = seeded - timedelta(days=stage.report_days)
+                points.append(at(instant, 50, len(points) + 1, client_id))
+    stored = len(points)
+
+    def counts(window: int) -> dict[str, tuple[int, str]]:
+        chart = trend_chart(points, names, NOW, days=window)
+        return {
+            line.name: (len(line.rows), line.continues_from) for line in chart.lines
+        }
+
+    tidy, gaps, stale, empty = (client.name for client in devseed.DEMO_CLIENTS)
+    assert counts(90) == {tidy: (3, ""), gaps: (3, ""), stale: (1, "")}
+    assert trend_chart(points, names, NOW, days=90).reports == stored
+    entering = "2026-09-21"  # the seed's report of day 30
+    for window in (30, 7):
+        found = counts(window)
+        assert found == {tidy: (1, entering), gaps: (1, entering), stale: (1, "")}
+        assert empty not in found
 
 
 def test_each_client_has_its_own_line_and_its_own_entry() -> None:

@@ -222,3 +222,17 @@ def test_long_lists_show_twelve_rows_on_a_phone_and_every_row_on_demand() -> Non
 def test_the_checklist_domains_have_a_heading_style() -> None:
     assert ".rv-checklist .rv-group-row th {" in CSS
     assert "main .rv-checklist tbody tr.rv-group-row {" in CSS
+
+
+def test_the_numbers_under_a_chart_keep_their_words_whole() -> None:
+    # The founder saw "Insufficient evidence" cut in the table under the score
+    # chart: at 390px the cell was 61px wide and the band broke a few letters a
+    # line. On a phone each report is a card; wider, a word and a date stay whole.
+    chart = (ROOT / "app/ui/templates/_chart.html").read_text(encoding="utf-8")
+    table = chart.split('<details class="rv-chart-data">', 1)[1].split("</table>")[0]
+    assert '<table class="rv-table-cards rv-trend-table">' in table
+    for label in ("Report date", "Score", "Band"):
+        assert f'<td data-label="{label}"' in table
+    css = strip_comments(CSS)
+    assert ".rv-chart-data .rv-table-scroll td {\n  overflow-wrap: break-word;" in css
+    assert ".rv-chart-data td a {\n  white-space: nowrap;" in css

@@ -100,12 +100,12 @@ Lines that start at the left edge come from each client's report {{ before }}, w
 <details class="rv-chart-data">
 <summary>Show the numbers</summary>
 <div class="rv-table-scroll">
-<table>
+<table class="rv-table-cards rv-trend-table">
 <caption>{{ caption }}</caption>
 <thead><tr><th scope="col">Client</th><th scope="col">Report date</th><th scope="col">Score</th><th scope="col">Band</th></tr></thead>
 <tbody>
 {% for line in chart.lines %}{% for mark in line.marks %}
-<tr data-series="{{ line.client_id }}"><th scope="row">{{ line.name }}</th><td><a href="/{{ mark.path }}">{{ mark.day }}</a></td><td class="rv-numeric">{{ mark.score }}</td><td>{{ mark.band }}</td></tr>
+<tr data-series="{{ line.client_id }}"><th scope="row">{{ line.name }}</th><td data-label="Report date"><a href="/{{ mark.path }}">{{ mark.day }}</a></td><td data-label="Score" class="rv-numeric">{{ mark.score }}</td><td data-label="Band">{{ mark.band }}</td></tr>
 {% endfor %}{% endfor %}
 </tbody>
 </table>
