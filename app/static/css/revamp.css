@@ -720,6 +720,601 @@ span.rv-status-not-applicable {
   background-color: var(--rv-surface);
 }
 
+/* ---------- The keep panel without a scene (THE-1360) ----------
+   The stage stands beside the gauge only when the browser draws it. Without
+   WebGL 2, with nothing to draw (scenes.js marks the stage unavailable) or
+   without script (the stage stays hidden), the second column of the panel was
+   left empty: 860px of charcoal at 1440px. The panel is then one column and the
+   gauge lies on its side, the ring beside its words. */
+.rv-keep-panel:has(> .rv-scene[data-scene-state="unavailable"]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rv-keep-panel:has(> .rv-scene[data-scene-state="unavailable"]) .rv-gauge {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 32px;
+}
+
+@media (scripting: none) {
+  .rv-keep-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rv-keep-panel .rv-gauge {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 32px;
+  }
+}
+
+/* ---------- The verdict of a page as a ledger (THE-1360) ----------
+   Exceptions, preview and export, System and evidence integrity open with a
+   verdict: the status and its facts. It stands as the ledger of Home does: one
+   strip on the surface, the status in the first column, each fact a column with
+   a hairline before it. */
+.rv-verdict {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--rv-radius-card);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  box-shadow: var(--rv-shadow-ledger);
+}
+
+.rv-verdict .rv-verdict-status {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-verdict .rv-verdict-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+
+.rv-verdict .rv-verdict-facts > div {
+  padding: 14px 16px;
+  box-shadow: inset 0 -1px 0 var(--rv-line);
+}
+
+.rv-verdict .rv-verdict-facts > div:nth-child(odd) {
+  box-shadow: inset -1px 0 0 var(--rv-line), inset 0 -1px 0 var(--rv-line);
+}
+
+.rv-verdict .rv-verdict-facts dt {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-verdict .rv-verdict-facts dd {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+@media (min-width: 1024px) {
+  .rv-verdict {
+    grid-template-columns: minmax(14rem, auto) minmax(0, 1fr);
+  }
+
+  .rv-verdict .rv-verdict-status {
+    padding: 20px 24px;
+    border-right: 1px solid var(--rv-line);
+    border-bottom: 0;
+  }
+
+  .rv-verdict .rv-verdict-facts {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .rv-verdict .rv-verdict-facts > div,
+  .rv-verdict .rv-verdict-facts > div:nth-child(odd) {
+    padding: 16px 24px;
+    box-shadow: inset -1px 0 0 var(--rv-line);
+  }
+
+  .rv-verdict .rv-verdict-facts > div:last-child {
+    box-shadow: none;
+  }
+}
+
+/* ---------- Exceptions: the review horizon (THE-1360) ----------
+   The signature of the register: the coming year as one line, today at its left
+   end, every open exception a merlon standing at its review date, and those past
+   their date stacked before today. The drawing is for the eye; its words above
+   it and the register below carry the same dates. */
+.rv-horizon {
+  margin: 0 0 24px;
+  padding: 20px 24px 12px;
+  border: 1px solid var(--rv-line);
+  border-radius: var(--rv-radius-card);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-horizon-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-horizon-words {
+  max-width: 44rem;
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-horizon svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 96px;
+}
+
+.rv-horizon-axis,
+.rv-horizon-tick {
+  stroke: var(--rv-line-strong);
+  stroke-width: 1;
+}
+
+.rv-horizon-today {
+  stroke: var(--rv-text);
+  stroke-width: 2;
+}
+
+.rv-horizon-month,
+.rv-horizon-label {
+  font-size: 11px;
+  fill: var(--rv-text-secondary);
+}
+
+.rv-horizon-label {
+  font-weight: 600;
+  fill: var(--rv-text);
+}
+
+.rv-horizon-mark {
+  fill: var(--rv-status-protected);
+}
+
+.rv-horizon-mark.rv-horizon-soon {
+  fill: var(--rv-primary);
+}
+
+.rv-horizon-mark.rv-horizon-overdue {
+  fill: var(--rv-status-needs-attention);
+}
+
+/* A row of the register past its review date carries the mark of the horizon at
+   its edge; its State cell says Overdue in words */
+#exceptions tbody tr:has(td .rv-status-needs-attention) > th {
+  box-shadow: inset 3px 0 0 var(--rv-status-needs-attention);
+}
+
+.rv-exceptions .rv-review-when {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* The form to add one: the control across the top, the owner and the date
+   beside each other, the reason beside what the client does instead; the
+   fields stop at a reading width instead of running across the page */
+@media (min-width: 1024px) {
+  #exception-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 16px;
+    max-width: 60rem;
+  }
+
+  #exception-form > :is(input[type="hidden"], .rv-field:first-of-type, .rv-field-row, .rv-actions) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Reports: the builder as a stair (THE-1360) ----------
+   Three steps joined by one rail at the left of their numbers: the steps are a
+   sequence. From 1280px the steps take the wide column and the reports made
+   before stand beside them, the score over time across the foot. */
+.rv-builder-steps {
+  position: relative;
+  min-width: 0;
+}
+
+.rv-builder-steps > section.rv-step {
+  position: relative;
+}
+
+.rv-builder-steps > section.rv-step + section.rv-step::before {
+  content: "";
+  position: absolute;
+  top: -17px;
+  left: 37px;
+  width: 2px;
+  height: 18px;
+  background-color: var(--rv-line-strong);
+}
+
+.rv-builder-steps .rv-step-title .rv-step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  line-height: 28px;
+}
+
+.rv-builder-side {
+  min-width: 0;
+}
+
+.rv-builder-side .rv-section-head h3 {
+  margin-top: 0;
+}
+
+@media (min-width: 1024px) {
+  fieldset.rv-topics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+
+  fieldset.rv-topics > legend {
+    grid-column: 1 / -1;
+  }
+
+  fieldset.rv-topics .rv-topic {
+    grid-template-columns: minmax(0, 1fr);
+    border-top: 1px solid var(--rv-line);
+  }
+
+  fieldset.rv-topics .rv-topic:nth-of-type(-n + 2) {
+    border-top: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .rv-builder {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .rv-builder-side {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+/* ---------- Preview and export: paper in the keep (THE-1360) ----------
+   The sheet is what the client receives, a white page, so it stays paper in
+   both themes; it stands in the charcoal of the keep with the battlement for its
+   top edge. Inside it the roles, and the Pico colours that read them, take
+   their light values. */
+.rv-sheet-band {
+  padding: calc(var(--rv-keep-edge) + 24px) 24px 32px;
+  border: 0;
+  border-radius: var(--rv-radius-card);
+  background-image:
+    repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
+    linear-gradient(var(--rv-keep), var(--rv-keep));
+  background-size: 100% var(--rv-keep-edge), 100% calc(100% - var(--rv-keep-edge) + 1px);
+  background-position: 0 0, 0 calc(var(--rv-keep-edge) - 1px);
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+
+.rv-sheet-band .rv-sheet {
+  color-scheme: light;
+  --rv-surface: #ffffff;
+  --rv-canvas: #f4f3ef;
+  --rv-text: #2d2f3a;
+  --rv-text-secondary: #5a5e6b;
+  --rv-line: #e4e2db;
+  --rv-line-strong: #d9d6cf;
+  --rv-gray: #8a8f98;
+  --rv-link: #4c5bd4;
+  --rv-primary: #4c5bd4;
+  --rv-focus: #2d2f3a;
+  --rv-status-protected: #1b6e3c;
+  --rv-status-needs-attention: #8a5a00;
+  --rv-status-not-protected: #b3261e;
+  --rv-status-not-checked: #5a5e6b;
+  --rv-tint-protected: #e7f2eb;
+  --rv-tint-needs-attention: #faf0da;
+  --rv-tint-not-protected: #fbe8e6;
+  --rv-tint-not-checked: #ececef;
+  --pico-color: var(--rv-text);
+  --pico-h1-color: var(--rv-text);
+  --pico-h2-color: var(--rv-text);
+  --pico-h3-color: var(--rv-text);
+  --pico-muted-color: var(--rv-text-secondary);
+  --pico-primary: var(--rv-link);
+  border: 0;
+  border-radius: 4px;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- Export history: each file sealed (THE-1360) ----------
+   Under the whole hash its first eight characters stand as the seal of the row,
+   large enough to compare by eye with the copy a client holds */
+.rv-exports-ledger {
+  margin-bottom: 24px;
+}
+
+.rv-seal {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--rv-line-strong);
+  border-radius: 6px;
+  font-family: var(--pico-font-family-monospace);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-exports .rv-digest {
+  display: block;
+  max-width: 22rem;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- Settings: the cover beside the form (THE-1360) ---------- */
+@media (min-width: 1024px) {
+  .rv-settings-business {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+#settings-form .rv-field {
+  max-width: 34rem;
+}
+
+.rv-cover-figure {
+  margin: 0;
+}
+
+/* The cover line: how the name reads on the first page of every report, a strip
+   of paper in both themes */
+.rv-cover {
+  margin: 0;
+  padding: 20px 22px 18px;
+  border-radius: 4px;
+  color-scheme: light;
+  --rv-paper: #ffffff;
+  --rv-paper-ink: #2d2f3a;
+  --rv-paper-quiet: #5a5e6b;
+  --rv-paper-rule: #4c5bd4;
+  color: var(--rv-paper-ink);
+  background-color: var(--rv-paper);
+  box-shadow: var(--rv-shadow-2);
+}
+
+.rv-cover-head {
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rv-paper-quiet);
+  font-size: 12px;
+  color: var(--rv-paper-quiet);
+  background-color: var(--rv-paper);
+}
+
+.rv-cover-name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  color: var(--rv-paper-ink);
+  background-color: var(--rv-paper);
+}
+
+.rv-cover-name.rv-cover-empty {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--rv-paper-quiet);
+  background-color: var(--rv-paper);
+}
+
+.rv-cover-sub {
+  margin: 4px 0 14px;
+  font-size: 15px;
+  color: var(--rv-paper-ink);
+  background-color: var(--rv-paper);
+}
+
+.rv-cover-rule {
+  height: 3px;
+  background-color: var(--rv-paper-rule);
+}
+
+.rv-cover-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* The weights as courses of a wall: one bar per domain, as long as its share
+   of the largest weight, beside the number */
+.rv-weights .rv-course {
+  display: block;
+  width: 100%;
+  min-width: 6rem;
+  height: 8px;
+}
+
+.rv-course rect {
+  fill: var(--rv-primary);
+}
+
+.rv-course .rv-course-track {
+  fill: var(--rv-canvas);
+}
+
+.rv-weights td.rv-course-cell {
+  width: 45%;
+  vertical-align: middle;
+}
+
+/* ---------- System: the services as tiles (THE-1360) ---------- */
+@media (min-width: 768px) {
+  .rv-services {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .rv-services li,
+  .rv-services li:first-child,
+  .rv-services li:last-child {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border: 1px solid var(--rv-line);
+    border-radius: 10px;
+  }
+}
+
+/* The clients that can be deleted: a grid of quiet buttons, each opening its
+   own confirmation under it */
+@media (min-width: 768px) {
+  .rv-delete-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 8px 12px;
+    align-items: start;
+  }
+
+  .rv-delete-list li {
+    margin: 0;
+  }
+}
+
+.rv-delete-list details.rv-confirm > summary {
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* ---------- Glossary: chapters and an index (THE-1360) ----------
+   The terms in four chapters, a heavier rule before each; from 1024px the index
+   of every term stands at the left and stays in view, and the term it opens is
+   marked at its edge */
+.rv-glossary-layout {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .rv-glossary-layout {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .rv-glossary-index {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+.rv-glossary-index {
+  padding: 16px 18px;
+  border: 1px solid var(--rv-line);
+  border-radius: var(--rv-radius-card);
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-glossary-index-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-glossary-index ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  columns: 2 10rem;
+  column-gap: 16px;
+}
+
+.rv-glossary-index li {
+  margin: 0;
+  padding: 3px 0;
+  list-style: none;
+  font-size: 14px;
+  break-inside: avoid;
+}
+
+.rv-glossary-index a {
+  color: var(--rv-link);
+  background-color: var(--rv-canvas);
+}
+
+@media (min-width: 1024px) {
+  .rv-glossary-index ol {
+    columns: 1;
+  }
+}
+
+.rv-glossary-index .rv-glossary-chapter {
+  margin: 12px 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-glossary > div {
+  scroll-margin-top: 16px;
+}
+
+.rv-glossary > div:target {
+  box-shadow: inset 3px 0 0 var(--rv-primary);
+}
+
+.rv-glossary dd {
+  max-width: 44rem;
+}
+
+.rv-glossary > div.rv-glossary-chapter-start:not(:first-child) {
+  border-top: 2px solid var(--rv-line-strong);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rv-keep-panel,
   .rv-gauge-arc {

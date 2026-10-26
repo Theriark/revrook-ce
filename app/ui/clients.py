@@ -75,6 +75,7 @@ from app.ui.dashboard import (
     posture_of,
     segments_of,
 )
+from app.ui.horizon import review_horizon
 from app.ui.overview import domain_lines
 from app.ui.viewmodels import (
     CHECKLIST_SORT_KEYS,
@@ -604,6 +605,10 @@ async def exceptions_response(
         "client_name": client.name,
         "section": "exceptions",
         "rows": lines,
+        # The review horizon over the register and the days left on each row
+        # (THE-1360): both count from the same today as the overdue flag.
+        "today": now.date(),
+        "horizon": review_horizon(lines, now.date()),
         "controls": controls,
         "errors": errors,
         "form": form,

@@ -11,6 +11,7 @@
 <section class="rv-card rv-settings-card" id="business" aria-labelledby="business-title">
 <h2 id="business-title" class="rv-card-title">Your business</h2>
 <p class="rv-card-subtitle">What a client sees on the cover of a report, and where revrook writes to you.</p>
+<div class="rv-settings-business">
 <form id="settings-form" method="post" action="/settings">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <div class="rv-field">
@@ -27,6 +28,18 @@
 <button type="submit">Save</button>
 </div>
 </form>
+{#- The cover line (THE-1360): the name as it stands on the first page of every
+    report, on paper in both themes. -#}
+<figure class="rv-cover-figure" id="cover-preview" aria-labelledby="cover-caption">
+<div class="rv-cover">
+<p class="rv-cover-head">Cover of a report</p>
+<p class="rv-cover-name{% if not msp_name %} rv-cover-empty{% endif %}">{% if msp_name %}{{ msp_name }}{% else %}Your business name goes here{% endif %}</p>
+<p class="rv-cover-sub">Security review for a client</p>
+<div class="rv-cover-rule" aria-hidden="true"></div>
+</div>
+<figcaption class="rv-cover-note" id="cover-caption">{% if errors %}The name as typed. It is not saved until the form is.{% elif msp_name %}The saved name, as the cover of every report prints it.{% else %}No name is saved yet, so no report can be exported.{% endif %}</figcaption>
+</figure>
+</div>
 </section>
 
 <div class="rv-section-head">
@@ -51,12 +64,15 @@
 <section class="rv-card" id="weights-card" aria-labelledby="weights-title">
 <h3 id="weights-title" class="rv-card-title">Weights of the domains</h3>
 <p class="rv-card-subtitle">How much each domain counts towards the score under the rules {{ ruleset }}. The weights are fixed by the rules and cannot be edited here.</p>
+{#- Each weight is also a course (THE-1360): a bar as long as its share of the
+    largest weight, drawn for the eye beside the number it repeats. -#}
+{%- set heaviest = domains|map(attribute="weight")|max %}
 <table id="weights" class="rv-weights">
 <caption>Weight of each domain in the score</caption>
-<thead><tr><th scope="col">Domain</th><th scope="col" class="rv-numeric">Weight</th></tr></thead>
+<thead><tr><th scope="col">Domain</th><th scope="col" class="rv-numeric">Weight</th><th scope="col"><span class="rv-sr-only">Weight as a bar</span></th></tr></thead>
 <tbody>
 {% for domain in domains %}
-<tr><th scope="row">{{ domain.name }}</th><td class="rv-numeric">{{ domain.weight }}</td></tr>
+<tr><th scope="row">{{ domain.name }}</th><td class="rv-numeric">{{ domain.weight }}</td><td class="rv-course-cell"><svg class="rv-course" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="rv-course-track" width="100" height="8" rx="2"/><rect width="{{ '%.1f'|format(domain.weight * 100 / heaviest) }}" height="8" rx="2"/></svg></td></tr>
 {% endfor %}
 </tbody>
 </table>
