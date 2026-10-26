@@ -1057,6 +1057,16 @@ span.rv-status-not-applicable {
   --pico-primary: var(--rv-link);
   --pico-primary-underline: var(--rv-link);
   --pico-primary-hover: var(--rv-text);
+  --pico-secondary: var(--rv-text-secondary);
+  --pico-contrast: var(--rv-text);
+  --pico-code-color: var(--rv-text);
+  --pico-code-background-color: var(--rv-canvas);
+  --pico-card-background-color: var(--rv-surface);
+  --pico-card-sectioning-background-color: var(--rv-canvas);
+  --pico-form-element-background-color: var(--rv-surface);
+  --pico-form-element-color: var(--rv-text);
+  --pico-form-element-border-color: var(--rv-text-secondary);
+  --pico-blockquote-border-color: var(--rv-line);
   border: 0;
   border-radius: 4px;
   color: var(--rv-text);
@@ -1473,11 +1483,13 @@ span.rv-status-not-applicable {
 }
 
 /* The review horizon on a phone: drawn 308px wide, its month names were 5px
-   high. Every second month is named, in letters almost twice as large; the
-   word Today gives way (the line stays, and the sentence above names it) */
+   high. Every second month is named, at 26 units (12.5px at 390px; 20 units
+   read 9.6px), set 8 units lower so the letters clear the ticks; the word Today
+   gives way (the line stays, and the sentence above names it) */
 @media (max-width: 599px) {
   .rv-horizon-month {
-    font-size: 20px;
+    font-size: 26px;
+    transform: translateY(8px);
   }
 
   .rv-horizon-month:nth-of-type(even),
@@ -1574,6 +1586,22 @@ span.rv-status-not-applicable {
 /* A domain whose name takes two lines keeps its weight and its bar on its middle */
 .rv-weights :is(th, td) {
   vertical-align: middle;
+}
+
+/* ---------- Findings of the review and the deployed check of 79256ca8 (THE-1360) ---------- */
+
+/* A month named at an end of the horizon was cut at the edge of the drawing:
+   January when today is one of the last days of December, or the January a year
+   ahead on the first day of the year. The drawing lets it show over the padding
+   of its card */
+.rv-horizon svg {
+  overflow: visible;
+}
+
+/* A fact of a verdict never grows wider than its column for a long word or
+   address: it may shrink, and the value breaks inside it */
+.rv-verdict .rv-verdict-facts > div {
+  min-width: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

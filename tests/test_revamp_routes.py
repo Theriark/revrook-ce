@@ -205,9 +205,10 @@ def test_the_findings_of_the_check_of_6369873c_have_their_rules() -> None:
     # 2) the action of a phone card takes the whole card
     actions = "tbody tr > td.rv-row-actions {\n    grid-column: 1 / -1;"
     assert "main .rv-table-cards " + actions in CSS
-    # 3) the horizon on a phone names every second month, larger
+    # 3) the horizon on a phone names every second month, larger (26 units, 12.5px
+    # at 390px after the review of 79256ca8; 20 units read 9.6px), clear of the ticks
     phone = CSS.split("@media (max-width: 599px) {", 1)[1].split("\n}\n", 1)[0]
-    assert "font-size: 20px;" in phone
+    assert "font-size: 26px;\n    transform: translateY(8px);" in phone
     assert ".rv-horizon-month:nth-of-type(even)," in phone
     # 4) long values keep their words; the kept reports beside the builder in rows
     assert "flex: 1 1 9rem;" in CSS and "text-wrap: balance;" in CSS
@@ -218,6 +219,29 @@ def test_the_findings_of_the_check_of_6369873c_have_their_rules() -> None:
     paper = CSS.split(".rv-sheet-band .rv-sheet {", 1)[1].split("}", 1)[0]
     for name in ("h4-color", "muted-border-color", "table-border-color"):
         assert f"--pico-{name}:" in paper, name
+
+
+def test_the_findings_of_the_review_of_79256ca8_have_their_rules() -> None:
+    # THE-1311 decision d8d997e9: a month at an end of the horizon was cut at the
+    # edge of the drawing (January when today is December 29 to 31), a fact of a
+    # verdict could grow past its column, and the paper of the preview still read
+    # some Pico colours of the dark theme
+    assert ".rv-horizon svg {\n  overflow: visible;\n}" in CSS
+    assert ".rv-verdict .rv-verdict-facts > div {\n  min-width: 0;\n}" in CSS
+    paper = CSS.split(".rv-sheet-band .rv-sheet {", 1)[1].split("}", 1)[0]
+    for name in (
+        "secondary",
+        "contrast",
+        "code-color",
+        "code-background-color",
+        "card-background-color",
+        "card-sectioning-background-color",
+        "form-element-background-color",
+        "form-element-color",
+        "form-element-border-color",
+        "blockquote-border-color",
+    ):
+        assert f"--pico-{name}: var(--rv-" in paper, name
 
 
 # --- the pages ----------------------------------------------------------------------
