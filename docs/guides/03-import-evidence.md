@@ -35,10 +35,7 @@ page of a client, which opens the editor on that client).
    the export was taken (UTC)** (the time the tool made the export, not the time of
    this import) and press **Import the file**.
 
-![The profile editor after reading a leavers file, captured on 2026-10-24 before the top bar was added](../images/profile-editor-preview-1440.png)
-
-This picture is from the capture set of 2026-10-24: the steps are the same, but the
-page now has the top bar of the picture above it.
+![The profile editor after reading a synthetic leavers file at 1440 px: the columns mapped, the first rows read with pseudonyms and UTC assumed, no profile saved yet](../images/profile-editor-preview-1440.png)
 
 The result card names the evidence item, the profile and the facts stored, and says
 which controls read this export: the others keep their status until their own export
@@ -53,6 +50,8 @@ Open the client and its tab **Evidence and imports**.
 
 - The verdict band: the state of the client's evidence as one pill, with the sources,
   the current ones, the ones to refresh and the items imported.
+- **How old is each export**: one bar per source on the same scale, its age against the
+  mark where it goes stale; a bar opens its row in the sources table.
 - **Refresh these exports**: a numbered list in the order to work in, the oldest export
   first, then the sources never imported.
 - **Sources**: every source a control reads, with its newest export and the date it

@@ -12,10 +12,13 @@ Open a client and its tab **Exceptions**.
 
 - The verdict band: how many exceptions are open and overdue, how many are closed, and
   the next review date.
+- **Reviews in the coming year**: the year ahead as one line, today at its left end,
+  every open exception a mark at its review date and those past their date stacked
+  before today. The words beside it and the register under it carry the same dates.
 - The table lists the exceptions, open first, the earliest review date at the top:
-  the control, the owner, the reason, the compensating control, the review date and
-  the state (**Open**, **Overdue** after the review date, **Closed**). From 768 px to
-  1279 px each exception is a card.
+  the control, the owner, the reason, the compensating control, the review date with
+  how many days are left or late, and the state (**Open**, **Overdue** after the review
+  date, **Closed**). From 768 px to 1279 px each exception is a card.
 
 ## Add an exception
 

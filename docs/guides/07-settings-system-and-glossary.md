@@ -8,12 +8,13 @@ Open **Settings** in the Administration group.
 
 - **Your business**: the name printed on every report and the address the evidence
   expiry reminders go to. These two are the only settings of the page; **Save** stores
-  them.
+  them. Beside the form, **Cover of a report** shows the saved name as the cover of every
+  report prints it.
 - **Fixed by the rules and the installation**, shown so you know what every report says
   and keeps: the disclaimer in every report, the retention and limits of the
   installation (raw files after import, reports and snapshots, largest import; these
   are environment variables, [configuration](../configuration.md)), the weights of the
-  eight domains under the rules PC-RULES 0.1, everyone who can sign in (the one
+  eight domains under the rules PC-RULES 0.1 (each weight also drawn as a bar), everyone who can sign in (the one
   administrator) and the note that a mapping to another framework is shown in a report
   only after a person has checked it against its source. None is shown until then
   ([mapping verification](../mapping-verification.md)).
@@ -36,14 +37,14 @@ Open **System** in the Administration group.
   it is on, and its last and next run. The two daily schedules, expiry reminders at
   06:00 and the retention purge at 03:30, are created by the worker
   ([operations](../operations.md#the-worker)).
-- **Reminders and outside services**: whether a mail relay, a reminder address, an
-  outside heartbeat and the metrics endpoint are set.
+- **Reminders and outside services**: one tile each for the mail relay, the reminder
+  address, the outside heartbeat and the metrics endpoint, saying whether it is set.
 - **Your data**: **Download all data as CSV files** is one zip with everything revrook
   holds, without user accounts, names typed by people or the kept files; for a full
   backup that restores, copy the database and the evidence folder instead
   ([operations](../operations.md#backup)). **Check the evidence hash chains** opens the
   integrity page ([3. Import evidence](03-import-evidence.md#check-the-hash-chains)).
-- **Delete a client**: press **Delete** *client* (for example **Delete Seed Tidy Ltd
+- **Delete a client**: a grid of buttons, one per client. Press **Delete** *client* (for example **Delete Seed Tidy Ltd
   (synthetic)**) to open the confirmation, type the exact name of the client in the
   field it shows and press **Delete** *client* **for good**. Its evidence, facts,
   reports, exports, kept files and pseudonym key go for good; only the audit entry and the hash chain remain. This cannot be undone.
@@ -53,7 +54,9 @@ Open **System** in the Administration group.
 Open **Glossary** in the Administration group: the words revrook uses, each explained
 once, in the order you meet them (pack date, evidence, the three evidence types,
 freshness, coverage, best case, lower bound, gate control, the four statuses,
-exception, QBR, MFA, SPF, DKIM and DMARC, snapshot), and what a report is.
+exception, QBR, MFA, SPF, DKIM and DMARC, snapshot), and what a report is. **Every
+term** on the left is an index in four chapters; each term has its own address, so a
+link can open the glossary at that term.
 
 ![The glossary at 1440 px](../images/glossary-1440.png)
 

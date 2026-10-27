@@ -10,36 +10,45 @@ as the client pages; nothing on it is a check run on the fly.
 Every signed-in page opens with the top bar: the breadcrumb of the page on the left and
 **Search clients** on the right, which the **/** key reaches from anywhere outside a
 field ([9. The top bar, the filters in use and bulk actions](09-top-bar-filters-and-bulk-actions.md#the-top-bar)).
+Under it the keep, a charcoal band whose top edge is the battlement of the revrook mark,
+carries the title of the page, its purpose and its one primary action (on Home, **Add a
+client**); on a client page it also carries the tabs of the client.
 
 From top to bottom:
 
-1. Four stat cards: clients, controls protected, controls that need work and exports to
-   refresh, each with the change since the last reports.
-2. **What moves the score**: the rookery skyline, one rook per client as tall as its
-   score ([8. Scenes, the folded rail and the Evidence Explorer](08-scenes-rail-and-explorer.md)),
+1. Four stat cards in one ledger standing on the foot of the band: clients, controls
+   protected, controls that need work and exports to refresh, each with the change
+   since the last reports and a sparkline of its weeks.
+2. **What moves the score**: a keep panel with the gauge of the mean score of every
+   client with evidence (in the quiet colour, and called a lower bound, when it counts
+   a client whose evidence is too thin) beside the rookery skyline, one rook per client
+   as tall as its score ([8. Scenes, the folded rail and the Evidence Explorer](08-scenes-rail-and-explorer.md)),
    then the score drivers described below.
 3. **Needs attention**: the gate controls first, then what is not protected, by weight,
    across all clients. **Open** shows the control in a drawer over the page
    ([4. The checklist](04-checklist-and-control-notes.md#the-drawer-and-the-page-of-a-control)).
    A client with an open exception for that control says so on the row.
-4. **Score over time** from the stored reports of the last 7, 30 or 90 days, and
-   **Controls by domain** as one bar per domain; **Show the numbers** opens the table
-   behind each chart. Point at a mark or a segment, or reach it with Tab and the
-   arrow keys, for its exact values; a mark opens that report.
-5. **Recent changes**: the newest entries of the audit trail that changed a client, its
-   evidence or its reports, with who made each change. A deleted client is named by its
-   number. This list is not pictured: on the shared Development installation it names
-   a seeded sign-in account (see the [capture manifest](../images/README.md)).
+4. **Score over time** from the stored reports of the last 7, 30 or 90 days, beside
+   Needs attention from 1280 px. **Show the numbers** opens the table behind the chart.
+   Point at a mark, or reach it with Tab and the arrow keys, for its exact values; a
+   mark opens that report. The name of each client stands at the end of its line, tied
+   to it by a short leader when names are moved apart so they do not overlap.
+5. **Controls by domain** as one bar per domain, beside **Recent changes** from 1280 px:
+   the newest entries of the audit trail that changed a client, its evidence or its
+   reports, with who made each change. A deleted client is named by its number. This
+   row is not pictured: on the shared Development installation Recent changes names a
+   seeded sign-in account (see the [capture manifest](../images/README.md)).
 
-The picture above is the page at 1440 px wide down to the two charts. On a tablet the
-navigation is a bar at the top and the cards stand two to a row; on a phone they stand
-one to a row and the navigation scrolls sideways.
+The picture above is the page at 1440 px wide down to Needs attention and Score over
+time. On a tablet the navigation wraps on two rows at the top and the cards stand two to
+a row; on a phone they stand one to a row and the navigation is a strip that scrolls
+sideways, with a chevron at its edge while more links lie beyond it.
 
-![Home at 768 px, light theme](../images/home-768.png)
+![Home at 768 px (tablet view), light theme](../images/home-768.png)
 
-![Home on a phone](../images/home-390.png)
+![Home on a phone at 390 px, light theme](../images/home-390.png)
 
-![The rookery and the score drivers on a phone](../images/home-390-rookery.png)
+![The gauge, the rookery and the score drivers on a phone at 390 px, light theme](../images/home-390-rookery.png)
 
 ## What moves the score
 
@@ -84,7 +93,7 @@ empty plot:
   mark there, and the note names that report and its date.
 - Switching every client off in the legend says so and how to bring a line back.
 
-![Score over time and Controls by domain at 1440 px, light theme](../images/home-1440-score-over-time.png)
+![Needs attention and Score over time at 1440 px, light theme](../images/home-1440-score-over-time.png)
 
 ## Clients: the list
 
@@ -106,9 +115,9 @@ the links **Open**, **Checklist**, **Evidence** and **Reports**.
   ([9. Bulk actions](09-top-bar-filters-and-bulk-actions.md#bulk-actions-on-the-clients-list)).
 - Below 1024 px the rows are cards, two to a row from 768 px and one on a phone.
 
-![The clients list at 768 px](../images/clients-768.png)
+![The clients list at 768 px (tablet view)](../images/clients-768.png)
 
-![The clients list on a phone](../images/clients-390.png)
+![The clients list on a phone at 390 px](../images/clients-390.png)
 
 ## Add a client
 
@@ -119,10 +128,11 @@ the links **Open**, **Checklist**, **Evidence** and **Reports**.
 
 ## The overview of a client
 
-The overview has the client header with the way back, the tabs **Overview**,
-**Checklist**, **Evidence and imports**, **Exceptions**, **Reports** and
-**Export history**, and the two actions **Review flagged controls** and
-**Prepare a report**.
+The overview opens on the keep: the name of the client under the link back to
+**Clients**, the two actions **Review flagged controls** and **Prepare a report**, and
+the tabs **Overview**, **Checklist**, **Evidence and imports**, **Exceptions**,
+**Reports** and **Export history** at the foot of the band. On a phone the tabs are a
+strip that scrolls sideways, with a chevron at its edge while more tabs lie beyond it.
 
 ![The overview of a client at 1440 px, light theme](../images/client-overview-1440.png)
 

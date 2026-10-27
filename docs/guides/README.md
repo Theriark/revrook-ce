@@ -2,11 +2,12 @@
 
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
 in the order a new installation meets them. Every picture is a live capture of the
-Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-10-25 from the
+Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-10-27 from the
 application build documented and captured (commit
-`b4634182e0fd68d760c209fcc6051ff9adceea2e`), with the synthetic test data of that site;
-one picture of the profile editor is still from the set of 2026-10-24 (see the
-[capture manifest](../images/README.md#known-limits-of-this-set)).
+`d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`), the revamped interface, with the synthetic
+test data of that site (see the [capture manifest](../images/README.md)). Pictures at
+1440 px are the desktop view; pictures at 768 px and 390 px are labelled as tablet and
+phone views in their captions.
 Later documentation-only commits are deployed on top with the same application code; the
 deployed head is read from the deployment receipt and the package manifest. The pictures
 are in [docs/images](../images/README.md) with a capture manifest (file, SHA-256, page,

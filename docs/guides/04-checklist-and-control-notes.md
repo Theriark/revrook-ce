@@ -14,14 +14,17 @@ report made today would show them, with the evidence behind each status.
   look** (the controls whose status changed since the last report or that need
   attention). The line under them says how many rows are shown, the words searched for
   and the order in use.
+- In **Library order** the rows are grouped by domain, each group headed by a row
+  with the name of the domain and how many controls it holds.
 - Each row: the control in plain language with its identifier and whether it is a gate
   control, the **Status** as an icon and words (Protected, Needs attention, Not
   protected, Not checked), the **Coverage**, the date of the evidence, the **Owner** of
   the open exception if any, and **Why it needs a look**.
 - A violet mark on a row means its status changed since the last report. The head of
-  the table stays in view while you scroll; on a phone every control is a card.
+  the table stays in view while you scroll; on a phone every control is a card whose
+  facts run as short lines, the label beside its value.
 
-![The checklist on a phone](../images/checklist-390.png)
+![The checklist on a phone at 390 px](../images/checklist-390.png)
 
 A status is never shown by colour alone. **Not checked** means nothing was verified:
 there is no dated evidence for the control ([controls](../controls.md)).
@@ -52,7 +55,7 @@ included. When there is less room they take two rows: at 768 px the search and
 **Status** share the first row and **Order**, **Show controls** and **Reset** the second,
 as in the picture below. Below 600 px each takes the whole width.
 
-![The tools of the checklist at 768 px, on two rows](../images/checklist-768-tools.png)
+![The tools of the checklist at 768 px (tablet view), on two rows](../images/checklist-768-tools.png)
 
 ## The drawer and the page of a control
 
@@ -72,8 +75,9 @@ The page of a control:
 
 1. The verdict band: the status as a large pill beside the facts of the evidence (the
    date, its state, its type and the coverage).
-2. **What was checked**: the rule in words and the finding, for example how many leavers
-   are still enabled after the grace period.
+2. **What was checked**: the finding, for example how many member users have MFA, and
+   **Read from**, the sources the control reads, by name. **The rule as the library
+   writes it** is folded under them; press it to read the rule with its field names.
 3. **Exceptions for this control**: the open exception with its owner and review date,
    or the empty state with **Add one on the exceptions page**
    ([5. Exceptions](05-exceptions.md)).

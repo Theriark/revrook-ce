@@ -26,7 +26,7 @@ the page cannot be shown there without re-installing it.
 
 ![The sign-in page at 1440 px](../images/sign-in-1440.png)
 
-![The sign-in page on a phone](../images/sign-in-390.png)
+![The sign-in page on a phone at 390 px](../images/sign-in-390.png)
 
 Five failed sign-ins lock the account for five minutes; while it is locked the password
 is not checked. The session is a signed cookie that lasts 12 hours and slides with use.
