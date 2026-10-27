@@ -9,7 +9,47 @@ the application reports is `0.0.0.dev0`
 earlier ones are kept below as history. The full list of changes is the
 [CHANGELOG](../CHANGELOG.md).
 
+## Candidate of 2026-10-27
+
+| Fact | Value |
+| --- | --- |
+| Application build documented and captured | commit `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83), image `ghcr.io/theriark/revrook-ce@sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef` (deployment receipt of the Development environment: CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z, read before and after the captures). Later documentation-only commits are deployed on top with the same application code; the deployed head is read from the deployment receipt and the package manifest. |
+| Screenshot capture source | the same commit and image: every picture of a signed-in page was captured again on 2026-10-27, between 01:56 and 02:32 Europe/Lisbon (UTC+00:00, so the same as UTC), the picture of the profile editor after reading a file included, and the two of the sign-in page were compared byte for byte with a fresh capture and kept ([capture manifest](images/README.md)) |
+| Release candidate label | set by the `prepare-rc` job after the independent review of this documentation; the tags `v27.0.0-rc.1` to `v27.0.0-rc.4` name earlier candidates (`v27.0.0-rc.4` is commit `8aa84591`, before the revamp) |
+| Documentation | the [guides](guides/README.md) and the README preview, every picture taken from the revamped interface |
+
+### What changed since the candidate of 2026-10-25
+
+The revamp of the interface: the keep, a charcoal band with the battlement of the mark
+that carries the title, the purpose, the one primary action and the tabs of a client on
+every page, and a stone rail in the light theme; on Home the stat cards as one ledger,
+the rookery in a keep panel beside a gauge of the mean score, and the dashboard in two
+columns from 1280 px; the checklist grouped by domain in library order and a control
+that names the sources it reads; the exceptions register with a horizon of the coming
+year; the report builder as three steps joined by a rail, with the reports made before
+and the score over time beside them; the preview as a white sheet in the keep; the
+export history as a ledger with the seal of each SHA-256; the settings with the cover
+line of a report beside the form; the system page as tiles; the glossary with an index;
+chart end labels fitted by their drawn width and tied to their lines; the navigation
+wrapped on two rows from 600 to 1023 px and a cue on the scrolling strips of a phone;
+and a note in the stage when the browser refuses a WebGL context. The CHANGELOG lists
+each of them.
+
+### Known limits of this candidate
+
+The limits 1 to 8 and 10 to 13 of the earlier candidates below still hold. In addition,
+the pictures show five layout findings of this candidate that the documentation reports
+and does not fix ([capture manifest](images/README.md#known-limits-of-this-set)):
+
+14. **Five layout findings on the revamped pages.** A chosen client card on a phone
+    keeps white strips behind its labels; with the rail folded the content stops about
+    200 px short of the right edge at 1440 px; the facts of the control drawer wrap; the
+    checklist at 768 px breaks a date after its second hyphen; and an owner such as
+    "Office manager" can break inside the word in the exceptions register.
+
 ## Candidate of 2026-10-25
+
+This section is history: the candidate of 2026-10-25.
 
 | Fact | Value |
 | --- | --- |

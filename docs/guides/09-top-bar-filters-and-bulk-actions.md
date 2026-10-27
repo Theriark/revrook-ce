@@ -103,6 +103,6 @@ No client was deleted for the pictures of this guide: the dialog was closed with
 The rows are cards with the select box in their top corner, and the bar stands at the
 foot of the screen with its buttons wrapping under the count.
 
-![Bulk actions on a phone](../images/clients-390-selected.png)
+![Bulk actions on a phone at 390 px](../images/clients-390-selected.png)
 
 Back to the [guides](README.md).

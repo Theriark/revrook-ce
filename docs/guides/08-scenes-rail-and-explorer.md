@@ -7,14 +7,18 @@ tables under it stay the record, and a scene adds nothing to a report. How the s
 are built is in the [design system](../design-system.md#scenes).
 
 A scene needs script and a browser with WebGL 2. Without them the page is the cards,
-the bars and the tables, with no empty box where the scene would be. Nothing in the
+the bars and the tables, with no empty box where the scene would be. When the browser
+offers WebGL 2 but then refuses to start it (WebGL switched off or unavailable), the
+stage shows a short note that says so instead of an empty drawing, and **Show the
+scene** can try again. Nothing in the
 rookery or the keep turns by itself, and when the system asks for reduced motion every
 move is immediate.
 
 ## The rookery on Home
 
-Under **What moves the score**, one rook per client stands on a charcoal yard, as tall as
-its score and crenellated like the revrook mark. A strong or good band is stone, fair
+Under **What moves the score**, a keep panel holds the gauge of the mean score on its
+left and the stage on its right. On the stage one rook per client stands on a charcoal
+yard, as tall as its score and crenellated like the revrook mark. A strong or good band is stone, fair
 is amber, weak or critical is red. A wire rook means the evidence is too thin for a
 score (the dashed outline of its bar in the score drivers), a flat footprint means nothing is imported yet,
 and every notch at the foot of a rook is a control that needs work.
@@ -34,12 +38,13 @@ and every notch at the foot of a rook is a control that needs work.
 
 ![A client chosen with the keyboard at 1440 px, dark theme](../images/home-1440-rook-chosen-dark.png)
 
-On a tablet the stage spans the page and the cards stand two to a row; on a phone the
-row of rooks is fitted to the width of the stage, so each rook is small.
+On a tablet the gauge stands above the stage, which spans the panel, and the cards
+stand two to a row; on a phone the row of rooks is fitted to the width of the stage, so
+each rook is small.
 
-![Home at 768 px, dark theme](../images/home-768-dark.png)
+![Home at 768 px (tablet view), dark theme](../images/home-768-dark.png)
 
-![Posture by client on a phone, dark theme](../images/home-390-rookery-dark.png)
+![The gauge and the rookery on a phone at 390 px, dark theme](../images/home-390-rookery-dark.png)
 
 ## The domain keep on a client overview
 
@@ -62,19 +67,20 @@ From 768 px down the card spans the page and the keep has more room. The view is
 fitted from the corners of every block, so the whole keep stays inside its stage at
 every width; from 600 px the stage is 16 by 9.
 
-![Coverage by domain at 768 px, light theme](../images/client-overview-768-keep.png)
+![Coverage by domain at 768 px (tablet view), light theme](../images/client-overview-768-keep.png)
 
-![Coverage by domain at 768 px, dark theme](../images/client-overview-768-keep-dark.png)
+![Coverage by domain at 768 px (tablet view), dark theme](../images/client-overview-768-keep-dark.png)
 
-![Coverage by domain on a phone, light theme](../images/client-overview-390-keep.png)
+![Coverage by domain on a phone at 390 px, light theme](../images/client-overview-390-keep.png)
 
-![Coverage by domain on a phone, dark theme](../images/client-overview-390-keep-dark.png)
+![Coverage by domain on a phone at 390 px, dark theme](../images/client-overview-390-keep-dark.png)
 
 ## Hide or show the scenes
 
 The button above a stage, **Hide the scene**, puts the scenes away in this browser: the
 stage, its buttons and its detail line go, and the cards and the bars stay where they
-were. The button then reads **Show the scene** and brings them back. The choice is
+were. On Home the gauge keeps its place in the panel. The button then reads **Show the
+scene** and brings them back. The choice is
 kept in this browser only (another browser, or another person, still sees the scenes).
 
 ![Home with the scenes hidden at 1440 px, dark theme](../images/home-1440-scenes-hidden-dark.png)
@@ -86,8 +92,9 @@ top, **Fold the rail**, folds it to a 72 px column of icons, so a wide table, a 
 or a scene gets the room. Point at an icon, or reach it with Tab, to read its name as
 a tooltip; the current page keeps its mark. The same button, now **Open the rail**,
 opens it again. The choice is remembered in this browser, so the next page is drawn
-folded or open from the start. Below 1024 px the navigation is a bar at the top and
-the button is not shown.
+folded or open from the start. Below 1024 px the navigation is a bar at the top (its
+links on two rows from 600 px, a strip that scrolls sideways on a phone) and the button
+is not shown.
 
 ![Home with the rail folded at 1440 px, dark theme](../images/home-1440-rail-folded-dark.png)
 
@@ -124,9 +131,9 @@ or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 
 ![The Evidence Explorer at 1440 px, dark theme](../images/evidence-explorer-1440-dark.png)
 
-![The Evidence Explorer at 768 px](../images/evidence-explorer-768.png)
+![The Evidence Explorer at 768 px (tablet view), light theme](../images/evidence-explorer-768.png)
 
-![The rookery wall on a phone](../images/evidence-explorer-390.png)
+![The rookery wall on a phone at 390 px, light theme](../images/evidence-explorer-390.png)
 
 ## Known limits
 

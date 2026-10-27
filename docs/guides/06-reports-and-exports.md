@@ -28,9 +28,12 @@ Open a client and its tab **Reports** (or **Prepare a report** on the overview).
    state of the client today as a snapshot and opens the preview page. A second press
    within 30 seconds opens the report the first press made instead of storing another.
 
-**Reports made before** lists every report of this client, the newest first, with its
-period and pack date; **Preview and export** opens each from the snapshot it was made
-from.
+The three steps are joined by a line down their left side. **Reports made before**
+lists every report of this client, the newest first, with its period and pack date;
+**Preview and export** opens each from the snapshot it was made from. From 1280 px it
+stands beside the steps. **Score over time**, under them, draws the score of this client
+at every report made before (90 days, a year or all reports); a point opens that
+report.
 
 ## Preview and export
 
@@ -40,8 +43,9 @@ from.
   exceptions, the data sources and the preparer. **Before you export** lists what
   stops an export, each line saying what is missing; the usual first one is the
   business name.
-- The paper sheet shows the cover and the summary as the client receives them: the
-  period, the pack date, the summary sentence and the counts by status.
+- The paper sheet, white in both themes and set in the keep with the battlement for
+  its edge, shows the cover and the summary as the client receives them: the period,
+  the pack date, the summary sentence and the counts by status.
 - **The reports**: for each of the two, **Preview** opens the file as it would be sent,
   and **Export the quarterly security review** or **Export the cyber insurance
   evidence pack** keeps an unchangeable copy and its SHA-256 and opens the export
@@ -79,9 +83,9 @@ swipe it, or give it focus with Tab and use the arrow keys. Its caption stays wh
 the left edge while the columns move, and a date in a table is never broken across
 lines. Printing keeps the A4 layout.
 
-![The cover of the quarterly security review on a phone](../images/report-preview-file-390.png)
+![The cover of the quarterly security review on a phone at 390 px](../images/report-preview-file-390.png)
 
-![A table of the review scrolling in its frame on a phone](../images/report-preview-file-390-table.png)
+![A table of the review scrolling in its frame on a phone at 390 px](../images/report-preview-file-390-table.png)
 
 ## The export history
 
@@ -89,8 +93,11 @@ Open the tab **Export history** of the client.
 
 ![The export history at 1440 px](../images/export-history-1440.png)
 
-Every file that was exported is kept as it was sent, with the time (UTC), the report,
-the file name, the size, the SHA-256 and who exported it. **Download** sends the kept
+The verdict band counts the kept files, the newest export, their size and who exported
+them. Every file that was exported is kept as it was sent, with the time (UTC), the
+report, the file name, the size, the SHA-256 and who exported it; under each SHA-256
+its first eight characters stand as the seal of the row, to compare by eye with the
+copy a client holds. **Download** sends the kept
 copy, checked against that hash, and never makes it again; a copy altered on disk is
 reported instead of sent. Deleting the client deletes its exports.
 

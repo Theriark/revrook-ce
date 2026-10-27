@@ -30,19 +30,21 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on 2026-10-25 from the application build
-documented and captured (commit `b4634182e0fd68d760c209fcc6051ff9adceea2e`, image
-`sha256:cfcb12a8a3979bc10957ca220c59e26b28bbc7742669b868373a7451192ea7d5`), with synthetic
+Live captures of the Development site, taken on 2026-10-27 from the application build
+documented and captured (commit `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`, image
+`sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef`), with synthetic
 test data only ([capture manifest](docs/images/README.md)). Later documentation-only
 commits are deployed on top with the same application code; the deployed head is read
 from the deployment receipt and the package manifest.
 
-**Home**: the top bar with the breadcrumb and the search of the clients, four stat
-cards, then the rookery skyline, one rook per client as tall as its score
+**Home**: the keep, the charcoal band with the battlement of the mark, carries the title
+and the one primary action; the four stat cards stand on its foot as one ledger; under
+**What moves the score** the gauge of the mean score sits beside the rookery skyline,
+one rook per client as tall as its score
 ([guide 2](docs/guides/02-clients-and-home.md),
 [guide 8](docs/guides/08-scenes-rail-and-explorer.md)).
 
-![Home with the top bar and the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
+![Home with the keep, the ledger, the gauge and the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
 
 **What moves the score**: the hundred points of each client split into what it earns
 and what costs it the rest, with the controls that cost the most
@@ -64,6 +66,16 @@ chosen ([guide 9](docs/guides/09-top-bar-filters-and-bulk-actions.md)).
 **Evidence Explorer**: which evidence exports feed which controls of one client.
 
 ![The Evidence Explorer at 1440 px, light theme](docs/images/evidence-explorer-1440.png)
+
+### On a phone
+
+The same pages at 390 px: the navigation is a strip under the brand that scrolls
+sideways, with a cue at its edge, and every card and table row takes the whole width
+([guide 2](docs/guides/02-clients-and-home.md)).
+
+![Home on a phone at 390 px, light theme](docs/images/home-390.png)
+
+![The gauge and the rookery on a phone at 390 px, light theme](docs/images/home-390-rookery.png)
 
 ## Documentation
 
