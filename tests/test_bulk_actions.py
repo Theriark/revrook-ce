@@ -234,6 +234,39 @@ def test_the_bar_hides_itself_without_the_base_sheet() -> None:
     assert re.search(r"\n\.rv-bulk-bar\[hidden\] \{\s*display: none;\s*\}", plain)
 
 
+def test_a_chosen_card_keeps_its_tint_under_the_pointer_and_in_its_labels() -> None:
+    # Pictured at 390px on Development d0a2e9fe (THE-1487, F1): the chosen card
+    # kept a white strip above each value, the name of its column drawn on the
+    # surface by revrook.css, and its cells went white again under the pointer,
+    # since the hover rule of the cards (main .rv-clients tbody tr:hover > td) is
+    # more specific than the rule of a chosen row. Both keep the tint now.
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+    hover = re.search(
+        r"\nmain \.rv-clients tr\.is-chosen:hover > td,\n"
+        r"main \.rv-clients tr\.is-chosen:hover > th \{([^}]*)\}",
+        plain,
+    )
+    assert hover is not None
+    assert "background-color: var(--rv-accent-tint);" in hover.group(1)
+    assert "color: var(--rv-text);" in hover.group(1)
+    cards = plain.split("@media (max-width: 1023px) {", 1)[1]
+    label = re.search(
+        r"\n  main \.rv-clients tr\.is-chosen > td\[data-label\]::before \{([^}]*)\}",
+        cards,
+    )
+    assert label is not None
+    assert label.group(1).strip() == "background-color: var(--rv-accent-tint);"
+    # The name of a column keeps the secondary text of revrook.css: it stays
+    # readable on the tint in both themes
+    from test_brand_contrast import THEMES, contrast_ratio, resolve
+
+    for theme in ("light", "dark"):
+        text = resolve("var(--rv-text-secondary)", THEMES[theme])
+        tint = resolve("var(--rv-accent-tint)", THEMES[theme])
+        assert text and tint
+        assert contrast_ratio(text, tint) >= 4.5, theme
+
+
 def test_the_dialog_is_a_card_not_the_whole_window() -> None:
     # Pico draws a dialog at least as wide and tall as the window, so the card
     # filled 1440 by 900 (THE-1189 acceptance D1). The minimums go, the card takes

@@ -252,6 +252,25 @@ dialog.rv-bulk-dialog[open] {
   }
 }
 
+/* A chosen row keeps its tint under the pointer (THE-1487, F1): the hover rules
+   of the table and of the cards (revrook.css) drew the cells of a chosen row on
+   the surface again while the pointer rested on the box that chose it, so the
+   card pictured at 390px was white but for its border */
+main .rv-clients tr.is-chosen:hover > td,
+main .rv-clients tr.is-chosen:hover > th {
+  color: var(--rv-text);
+  background-color: var(--rv-accent-tint);
+}
+
+/* On a card the name of each column stands above its value with its own
+   background, the surface, so a chosen card kept a white strip above each value.
+   The name takes the tint of its card */
+@media (max-width: 1023px) {
+  main .rv-clients tr.is-chosen > td[data-label]::before {
+    background-color: var(--rv-accent-tint);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rv-bulk-result .rv-busy {
     animation: none;
