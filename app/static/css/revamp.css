@@ -1623,6 +1623,88 @@ span.rv-status-not-applicable {
   }
 }
 
+/* ---------- Findings of the documentation captures of d0a2e9fe (THE-1487) ---------- */
+
+/* F2: with the rail folded at 1440px the page column is 1368px and the content
+   stops at 1200px, so 168px stood empty at its right. The content is centred
+   only beyond 1448px (above), the width at which that void appears beside the
+   open rail of 248px; beside the folded rail of 72px it appears beyond 1272px.
+   From there, while the rail is folded, the content, the top bar and the footer
+   stand in the middle of the column and the band and the tabs reach both of its
+   edges, as they do beyond 1448px */
+@media (min-width: 1273px) {
+  body[data-rail="compact"] .rv-content,
+  body[data-rail="compact"] .rv-topbar-inner {
+    margin-inline: auto;
+  }
+
+  body[data-rail="compact"] .rv-footer {
+    padding-inline: calc((100% - 1200px) / 2 + 32px);
+  }
+
+  body[data-rail="compact"] .rv-content > .rv-page-header::before,
+  body[data-rail="compact"] .rv-content > .rv-problem::before {
+    left: -100vw;
+  }
+
+  body[data-rail="compact"] .rv-content > .rv-tabs-strip {
+    border-image-outset: 0 100vw;
+  }
+}
+
+/* F3: the control drawer is a sheet of 38rem, and from 1024px the verdict in it
+   kept the two columns of a page: the status took 14rem and the four facts the
+   333px left, two to a row of 167px, where "11 of 11 (100%)" and "Automatic
+   export" broke into two lines (measured at 1440px). In the drawer the verdict
+   keeps the stacked form of a narrow page at every width: the status on its own
+   row, then the facts two to a row of half the sheet, each wide enough for its
+   value on one line */
+@media (min-width: 1024px) {
+  .rv-drawer .rv-verdict {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rv-drawer .rv-verdict .rv-verdict-status {
+    padding: 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--rv-line);
+  }
+
+  .rv-drawer .rv-verdict .rv-verdict-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rv-drawer .rv-verdict .rv-verdict-facts > div,
+  .rv-drawer .rv-verdict .rv-verdict-facts > div:last-child {
+    padding: 14px 16px;
+    box-shadow: inset 0 -1px 0 var(--rv-line);
+  }
+
+  .rv-drawer .rv-verdict .rv-verdict-facts > div:nth-child(odd) {
+    box-shadow: inset -1px 0 0 var(--rv-line), inset 0 -1px 0 var(--rv-line);
+  }
+}
+
+/* F4: from 768px to 1079px the checklist lets the coverage wrap (the retest
+   sheet), and the date of the evidence shares its class, so at 768px its column
+   was 82px and "2026-10-23" broke at its hyphens. A date is never broken: the
+   column takes the 96px it needs and the prose columns give it (measured at
+   768px: the table still fits the 704px of the page) */
+@media (min-width: 768px) and (max-width: 1079px) {
+  main .rv-checklist td[data-label="Evidence dated"] {
+    white-space: nowrap;
+  }
+}
+
+/* F5: in a scrolling table every cell may break anywhere (revrook.css), so the
+   Owner of an exception, a column with no minimum of its own, was 83px wide at
+   1440px and "Office manager" read "Office manage/r". A name breaks between its
+   words only, so the column is at least as wide as the longest word of an owner */
+main .rv-exceptions td[data-label="Owner"] {
+  overflow-wrap: break-word;
+}
+
 /* ---------- Findings of the deployed acceptance of 0b6372b1 (THE-1414) ---------- */
 
 /* F2: from 600px to 1023px the main navigation wraps onto a second row instead
