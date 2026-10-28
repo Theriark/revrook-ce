@@ -15,7 +15,8 @@ earlier ones are kept below as history. The full list of changes is the
 | --- | --- |
 | Application build documented and captured | commit `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83), image `ghcr.io/theriark/revrook-ce@sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef` (deployment receipt of the Development environment: CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z, read before and after the captures). Later documentation-only commits are deployed on top with the same application code; the deployed head is read from the deployment receipt and the package manifest. |
 | Layout fixes on top | commit `f6fc70857e776629e13edb04e75a353bee6682fe` (merge of pull request #84), image `ghcr.io/theriark/revrook-ce@sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a` (CI run 40449848051, Dokploy deployment `aPd-602wN_fXPbHuzopgJ`, deployed 2026-10-27T04:41:02Z): style rules only, fixing the five layout findings of the first capture |
-| Screenshot capture source | every picture of a signed-in page was captured again on 2026-10-27: 48 between 01:56 and 02:32 Europe/Lisbon (UTC+00:00, so the same as UTC) on `d0a2e9fe`, the picture of the profile editor after reading a file included, and the 6 that showed a layout finding between 04:53 and 05:02 on `f6fc7085`; the two of the sign-in page were compared byte for byte with a fresh capture and kept ([capture manifest](images/README.md)) |
+| Chosen-row fix on top | commit `ab870e4dd8af940747344544be459f84d773227e` (merge of pull request #87, on the merge of pull request #86), image `ghcr.io/theriark/revrook-ce@sha256:2b49e1635a8ebaccd629c65be3bf0ebc59ac20b9b954844626a178379deedf1b` (CI run 40671216666, Dokploy deployment `Om7IcLYGTMyOP2eIlEGmZ`, deployed 2026-10-28T10:37:26Z): one style rule, the links of a chosen client row let its tint through, and documentation |
+| Screenshot capture source | every picture of a signed-in page was captured again on 2026-10-27: 48 between 01:56 and 02:32 Europe/Lisbon (UTC+00:00, so the same as UTC) on `d0a2e9fe`, the picture of the profile editor after reading a file included, and the 6 that showed a layout finding between 04:53 and 05:02 on `f6fc7085`; on 2026-10-28 the 4 that show chosen rows were captured again between 10:51 and 10:53 on `ab870e4d`; the two of the sign-in page were compared byte for byte with a fresh capture and kept ([capture manifest](images/README.md)) |
 | Release candidate label | set by the `prepare-rc` job after the independent review of this documentation; the tags `v27.0.0-rc.1` to `v27.0.0-rc.4` name earlier candidates (`v27.0.0-rc.4` is commit `8aa84591`, before the revamp) |
 | Documentation | the [guides](guides/README.md) and the README preview, every picture taken from the revamped interface |
 
@@ -38,15 +39,14 @@ each of them.
 
 ### Known limits of this candidate
 
-The limits 1 to 8 and 10 to 13 of the earlier candidates below still hold. In addition
-([capture manifest](images/README.md#known-limits-of-this-set)):
-
-14. **A pale highlight behind the name of a chosen client card on a phone.** The link
-    text of the name keeps a light background on the tinted card. The five layout
-    findings of the first capture (white strips behind the labels of a chosen card, an
-    empty band beside the folded rail at 1440 px, the wrapped facts of the control
-    drawer, a broken date in the checklist at 768 px and an owner broken inside a word)
-    are fixed by pull request #84 and are no longer limits.
+The limits 1 to 8 and 10 to 13 of the earlier candidates below still hold. No limit is
+added. The five layout findings of the first capture (white strips behind the labels
+of a chosen card, an empty band beside the folded rail at 1440 px, the wrapped facts of
+the control drawer, a broken date in the checklist at 768 px and an owner broken inside
+a word) are fixed by pull request #84, and the pale highlight behind the name of a
+chosen client card on a phone, which that capture also showed, is fixed by pull request
+#86; the pictures that showed them were captured again on the build that carries each
+fix ([capture manifest](images/README.md#known-limits-of-this-set)).
 
 ## Candidate of 2026-10-25
 

@@ -30,13 +30,17 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on 2026-10-27 from the application build
-documented and captured (commit `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`, image
+Live captures of the Development site, taken on 2026-10-27 and 2026-10-28 from the
+application build documented and captured (commit
+`d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`, image
 `sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef`; the six
 pictures changed by the layout fixes on top, commit
 `f6fc70857e776629e13edb04e75a353bee6682fe`, image
 `sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a`, were taken
-again on that build), with synthetic test data only
+again on that build, and the four that show chosen rows were taken again on the fix of
+their links, commit `ab870e4dd8af940747344544be459f84d773227e`, image
+`sha256:2b49e1635a8ebaccd629c65be3bf0ebc59ac20b9b954844626a178379deedf1b`), with
+synthetic test data only
 ([capture manifest](docs/images/README.md)). Later documentation-only
 commits are deployed on top with the same application code; the deployed head is read
 from the deployment receipt and the package manifest.
