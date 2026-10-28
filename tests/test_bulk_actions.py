@@ -267,6 +267,30 @@ def test_a_chosen_card_keeps_its_tint_under_the_pointer_and_in_its_labels() -> N
         assert contrast_ratio(text, tint) >= 4.5, theme
 
 
+def test_the_links_of_a_chosen_row_stand_on_its_tint() -> None:
+    # Live check of f6fc7085 at 390px (THE-1487, F1): the links of a chosen card
+    # kept the surface behind them, from main a:not([role="button"]) and its
+    # :hover in revrook.css, so the name and the Checklist, Evidence and Reports
+    # links stood on strips inside the tint. The rule of a chosen row is more
+    # specific than both, and the link colours stay readable on the tint.
+    plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
+    links = re.search(
+        r'\nmain \.rv-clients tr\.is-chosen a:not\(\[role="button"\]\),\n'
+        r'main \.rv-clients tr\.is-chosen a:not\(\[role="button"\]\):hover \{([^}]*)\}',
+        plain,
+    )
+    assert links is not None
+    assert links.group(1).strip() == "background-color: transparent;"
+    from test_brand_contrast import THEMES, contrast_ratio, resolve
+
+    for theme in ("light", "dark"):
+        tint = resolve("var(--rv-accent-tint)", THEMES[theme])
+        for role in ("--rv-link", "--rv-accent-deep"):
+            colour = resolve(f"var({role})", THEMES[theme])
+            assert colour and tint
+            assert contrast_ratio(colour, tint) >= 4.5, (theme, role)
+
+
 def test_the_dialog_is_a_card_not_the_whole_window() -> None:
     # Pico draws a dialog at least as wide and tall as the window, so the card
     # filled 1440 by 900 (THE-1189 acceptance D1). The minimums go, the card takes
