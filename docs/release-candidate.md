@@ -5,19 +5,19 @@ workflows do. Read on 2026-10-19 against the `development` branch after phase 11
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or
 released, and writing it authorises none of that.
 
-## Update of 2026-10-27 (application build documented and captured, `d0a2e9fe`)
+## Update of 2026-10-27 (application build documented and captured, `f6fc7085`)
 
 Read on 2026-10-27 from the deployment receipt of the Development environment, before
-and after the screenshots of the [guides](guides/README.md) were captured again; both
-reads gave the same facts. Later documentation-only commits are deployed on top with the
-same application code; the deployed head is read from the deployment receipt and the
-package manifest.
+and after each of the two capture sessions of the screenshots of the
+[guides](guides/README.md); each pair of reads gave the same facts. Later
+documentation-only commits are deployed on top with the same application code; the
+deployed head is read from the deployment receipt and the package manifest.
 
 | Fact | Value |
 | --- | --- |
-| Application build documented and captured | commit `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83), image `ghcr.io/theriark/revrook-ce@sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef`, CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z on VM-09, the revision label of the image checked against the commit |
-| Screenshot capture source | the same commit and image: 54 pictures taken on 2026-10-27 between 01:56 and 02:32 Europe/Lisbon (UTC+00:00, so the same as UTC), after that deployment and before any later one; the 2 of the sign-in page kept after a byte-for-byte comparison with a fresh capture ([capture manifest](images/README.md)) |
-| Browser acceptance of that build | the revamp was checked live by its authors and tested independently on its own heads (Paperclip tasks THE-1313, THE-1360, THE-1401 and THE-1414); independent documentation QA follows this documentation |
+| Application build documented and captured | commit `f6fc70857e776629e13edb04e75a353bee6682fe` (merge of pull request #84), image `ghcr.io/theriark/revrook-ce@sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a`, CI run 40449848051, Dokploy deployment `aPd-602wN_fXPbHuzopgJ`, deployed 2026-10-27T04:41:02Z on VM-09, the revision label of the image checked against the commit. It adds style rules only to commit `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83, image `sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef`, CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z) |
+| Screenshot capture source | 48 pictures taken on `d0a2e9fe` on 2026-10-27 between 01:56 and 02:32 Europe/Lisbon (UTC+00:00, so the same as UTC); the 6 that showed a layout finding fixed by pull request #84 taken again on `f6fc7085` between 04:53 and 05:02; the 2 of the sign-in page kept after a byte-for-byte comparison with a fresh capture ([capture manifest](images/README.md)) |
+| Browser acceptance of that build | the revamp was checked live by its authors and tested independently on its own heads (Paperclip tasks THE-1313, THE-1360, THE-1401, THE-1414 and THE-1487); independent documentation QA follows this documentation |
 | Release candidate tags | `v27.0.0-rc.1` (commit `3d9c598e`), `v27.0.0-rc.2` (commit `742c2663`), `v27.0.0-rc.3` (commit `bf22681a`) and `v27.0.0-rc.4` (commit `8aa84591`) exist as annotated tags made by the `prepare-rc` job; none names this candidate. The tag of this candidate is minted by that job after the independent review of this documentation, not by this page |
 | Documentation package | the review copy in Nextcloud under the product folder, `Documentation/<label>/`, with its own `manifest.json`; its label is set by the release crew and recorded in that manifest, not on this page |
 

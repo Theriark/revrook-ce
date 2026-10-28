@@ -8,18 +8,26 @@ none holds a credential, a real person, a real customer or another environment.
 
 ## The current set
 
-The set holds 56 pictures. 54 were captured on 2026-10-27 between 01:56 and 02:32
+The set holds 56 pictures. 48 were captured on 2026-10-27 between 01:56 and 02:32
 Europe/Lisbon (UTC+00:00, so the same as UTC) while the Development site ran the
-application build documented and captured below, the revamped interface. The 2 of the
-sign-in page are kept because a fresh capture on that build was byte-identical. Later
-documentation-only commits are deployed on top with the same application code; the
-deployed head is read from the deployment receipt and the package manifest.
+application build documented and captured below, the revamped interface. 6 were
+captured again between 04:53 and 05:02 on the follow-up build, which fixes the five
+layout findings those pictures showed; it changes only style rules for those states,
+so the other pictures render the same on it. The 2 of the sign-in page are kept because
+a fresh capture on the first build was byte-identical. Later documentation-only commits
+are deployed on top with the same application code; the deployed head is read from the
+deployment receipt and the package manifest.
 
-| Fact | Value |
-| --- | --- |
-| Commit | `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83) |
-| Image | `ghcr.io/theriark/revrook-ce@sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef` |
-| Evidence | the deployment receipt of the Development environment (CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z), read before the first capture and after the last, with no deployment in between |
+| Fact | First build (48 pictures) | Follow-up build (6 pictures) |
+| --- | --- | --- |
+| Commit | `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83) | `f6fc70857e776629e13edb04e75a353bee6682fe` (merge of pull request #84) |
+| Image | `ghcr.io/theriark/revrook-ce@sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef` | `ghcr.io/theriark/revrook-ce@sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a` |
+| Evidence | deployment receipt (CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z), read before the first capture and after the last | deployment receipt (CI run 40449848051, Dokploy deployment `aPd-602wN_fXPbHuzopgJ`, deployed 2026-10-27T04:41:02Z), read before the first capture and after the last |
+
+The six pictures of the follow-up build are `home-1440-rail-folded-dark.png`,
+`client-overview-1440-rail-folded-dark.png`, `control-drawer-1440.png`,
+`checklist-768-tools.png`, `exceptions-1440.png` and `clients-390-selected.png`; the
+manifest gives each its build and the hash of the first capture it supersedes.
 
 `MANIFEST.json` in this folder is the capture manifest (schema 4): for every picture its
 file name, SHA-256, size in bytes and pixels, the page, the window it was taken in
@@ -106,14 +114,14 @@ empty by an earlier test of the site; it holds no data.
 - The scenes were drawn by a software renderer; no hardware GPU, phone or touch screen.
 - The note a stage shows when the browser refuses a WebGL context is not pictured: the
   capture browser draws the scenes ([guide 8](../guides/08-scenes-rail-and-explorer.md)).
-- The pictures show the interface as it is on this build, including five layout
-  findings that were reported for a fix and that this documentation does not change: a
-  chosen client card on a phone keeps white strips behind its labels
-  (`clients-390-selected.png`); with the rail folded the content stops about 200 px
-  short of the right edge at 1440 px (`home-1440-rail-folded-dark.png`); the facts of
-  the control drawer wrap (`control-drawer-1440.png`); the checklist at 768 px breaks a
-  date after its second hyphen (`checklist-768-tools.png`); and the owner "Office
-  manager" breaks inside the word in the exceptions register (`exceptions-1440.png`).
+- The set spans two builds. The five layout findings of the first capture (white
+  strips behind the labels of a chosen card on a phone, an empty band beside the folded
+  rail at 1440 px, the wrapped facts of the control drawer, a date broken at its hyphens
+  in the checklist at 768 px and "Office manager" broken inside the word) are fixed on
+  the follow-up build, and the six pictures that showed them were captured again on it.
+- On a phone the name of a chosen client card keeps a pale highlight behind its link
+  text (`clients-390-selected.png`). It predates the fixes and is reported for a later
+  change; this documentation does not change it.
 
 ## History
 
