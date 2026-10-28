@@ -1,9 +1,9 @@
 {
   "schemaVersion": 4,
-  "schemaNote": "Schema 4 (THE-1108, kept by THE-1277 and THE-1482): one capture set, taken on one deployed candidate; fields common to every picture are given once at the top. A picture kept from an earlier set says so under kept. Schema 3 and earlier, with several capture identities, are history (see history).",
+  "schemaNote": "Schema 4 (introduced with pull request #63, kept by pull requests #75 and #85): one capture set, taken on one deployed candidate; fields common to every picture are given once at the top. A picture kept from an earlier set says so under kept. Schema 3 and earlier, with several capture identities, are history (see history).",
   "product": "revrook-ce",
   "repository": "Theriark/revrook-ce",
-  "documentationRevision": "feat/revrook-ce-the-1482 (Paperclip task THE-1482, Jira REV-343), branched from development at d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5; its first part merged as pull request #85 (f192d49cd22c6351e866d8e72923eba6b3f56c43), its second part, the recapture of six pictures on f6fc7085, as pull request #87 (ab870e4dd8af940747344544be459f84d773227e), and the recapture of the four pictures with a chosen row on ab870e4d follows on the same branch",
+  "documentationRevision": "feat/revrook-ce-the-1482, branched from development at d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5; its first part merged as pull request #85 (f192d49cd22c6351e866d8e72923eba6b3f56c43), its second part, the recapture of six pictures on f6fc7085, as pull request #87 (ab870e4dd8af940747344544be459f84d773227e), and its third part, the recapture of the four pictures with a chosen row on ab870e4d, as pull request #88 (9267d2af934d0331b8ad542002c432dff605614b)",
   "candidate": {
     "commit": "d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5",
     "imageDigest": "sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef",
@@ -12,21 +12,21 @@
     "dokployDeployment": "l4TQ87N-4OEwvBzVw-XR5",
     "deployedAt": "2026-10-26T14:27:34.687Z",
     "target": "VM-09 Development, https://ce-dev-revrook.theriark.dev",
-    "evidence": "task client development_receipt read from THE-1482 at about 01:47Z (before the first capture) and at 02:32Z (after the last); both reads gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit, and no later deployment",
-    "browserAcceptance": "the revamp was live-checked by its authors and tested independently on its own heads (THE-1313, THE-1360, THE-1401, THE-1414); independent documentation QA of this set follows",
+    "evidence": "the deployment receipt of the Development environment read at about 01:47Z (before the first capture) and at 02:32Z (after the last); both reads gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit, and no later deployment",
+    "browserAcceptance": "the revamp was live-checked by its authors and tested independently on its own heads (pull requests #76 to #83); independent documentation QA of this set follows",
     "allPicturesOnThisCandidate": false,
     "exceptions": "sign-in-1440.png and sign-in-390.png are kept because a fresh capture on this candidate was byte-identical; six pictures were captured again on the follow-up build (see followUpBuild) and four on the third build (see thirdBuild), clients-390-selected.png on both; every other picture (45) was captured on this candidate"
   },
   "followUpBuild": {
     "commit": "f6fc70857e776629e13edb04e75a353bee6682fe",
-    "change": "merge of pull request #84 (THE-1487, REV-344): the five layout findings of this set fixed in app/static/css/bulk-actions.css and app/static/css/revamp.css, plus tests; no template, script or data change",
+    "change": "merge of pull request #84: the five layout findings of this set fixed in app/static/css/bulk-actions.css and app/static/css/revamp.css, plus tests; no template, script or data change",
     "imageDigest": "sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a",
     "image": "ghcr.io/theriark/revrook-ce@sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a",
     "ciRun": 40449848051,
     "dokployDeployment": "aPd-602wN_fXPbHuzopgJ",
     "deployedAt": "2026-10-27T04:41:02.843Z",
-    "evidence": "task client development_receipt read from THE-1482 at about 04:50Z (before the first capture) and at 05:02Z (after the last); both reads gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit; the live revamp.css carried the THE-1487 rules",
-    "captureWindow": "2026-10-27 04:53:47 to 05:01:49 Europe/Lisbon (UTC+00:00), one browser session of THE-1482",
+    "evidence": "the deployment receipt of the Development environment read at about 04:50Z (before the first capture) and at 05:02Z (after the last); both reads gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit; the live revamp.css carried the rules of pull request #84",
+    "captureWindow": "2026-10-27 04:53:47 to 05:01:49 Europe/Lisbon (UTC+00:00), one browser session of the documentation work",
     "recaptured": [
       "home-1440-rail-folded-dark.png",
       "client-overview-1440-rail-folded-dark.png",
@@ -41,14 +41,14 @@
   },
   "thirdBuild": {
     "commit": "ab870e4dd8af940747344544be459f84d773227e",
-    "change": "merge of pull request #87 (the second part of this documentation) on the merge of pull request #86 (THE-1487 follow-up, REV-344): one style rule in app/static/css/bulk-actions.css lets the links of a chosen client row (its name, Checklist, Evidence and Reports) show the tint of the row, plus tests/test_bulk_actions.py; no template, script or data change",
+    "change": "merge of pull request #87 (the second part of this documentation, documentation only) on application build 2e6b540ecde7561141b897e3be471ba311e53e04, the merge of pull request #86 (the follow-up of pull request #84), so the deployment runs that application code: one style rule in app/static/css/bulk-actions.css lets the links of a chosen client row (its name, Checklist, Evidence and Reports) show the tint of the row, plus tests/test_bulk_actions.py; no template, script or data change",
     "imageDigest": "sha256:2b49e1635a8ebaccd629c65be3bf0ebc59ac20b9b954844626a178379deedf1b",
     "image": "ghcr.io/theriark/revrook-ce@sha256:2b49e1635a8ebaccd629c65be3bf0ebc59ac20b9b954844626a178379deedf1b",
     "ciRun": 40671216666,
     "dokployDeployment": "Om7IcLYGTMyOP2eIlEGmZ",
     "deployedAt": "2026-10-28T10:37:26.924Z",
-    "evidence": "the controller's verified deployment notice on THE-1482 at 10:45:53Z (before the captures) and the task client development_receipt read from THE-1482 at about 11:02Z (after them) both gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit; the chosen rows of the captures show the tint under their links",
-    "captureWindow": "2026-10-28 10:51:50 to 10:52:47 Europe/Lisbon (UTC+00:00), one browser session of THE-1482; the run that took them was cut short by a provider session limit after the captures were imported, and the next run of the same task finished this manifest and the text",
+    "evidence": "the controller's verified deployment notice at 10:45:53Z (before the captures) and the deployment receipt of the Development environment read at about 11:02Z (after them) both gave this commit, digest, CI run and deployment, dockerImageProof verified true with the revision label checked against the commit; the chosen rows of the captures show the tint under their links",
+    "captureWindow": "2026-10-28 10:51:50 to 10:52:47 Europe/Lisbon (UTC+00:00), one browser session of the documentation work; the run that took them was cut short by a provider session limit after the captures were imported, and the next run of the same task finished this manifest and the text",
     "recaptured": [
       "clients-1440-selected.png",
       "clients-1440-report-dialog.png",
@@ -64,10 +64,10 @@
   "role": "administrator: the Development test account registered as REVROOK_DEV_ADMIN (names only; its user name revrook-admin shows in the rail and as Prepared by, as in every earlier set; no password in any frame)",
   "browser": "Theriark browser tools (Playwright, Chrome, SwiftShader software WebGL 2), CSS-pixel scale",
   "timezone": "Europe/Lisbon, UTC+00:00 on 2026-10-25 (the clock went back at 01:00 UTC that morning), so the capture times equal UTC",
-  "captureWindow": "2026-10-27 01:56:15 to 02:31:41 Europe/Lisbon (UTC+00:00 since the clock change of 25 October, so the same as UTC), in one browser session of THE-1482; the site signed the session out once, at about 02:25 between the evidence page and the integrity page, and the account signed in again before the next capture",
+  "captureWindow": "2026-10-27 01:56:15 to 02:31:41 Europe/Lisbon (UTC+00:00 since the clock change of 25 October, so the same as UTC), in one browser session of the documentation work; the site signed the session out once, at about 02:25 between the evidence page and the integrity page, and the account signed in again before the next capture",
   "data": "synthetic test data of the Development site only: the seed clients Seed Empty, Seed Gaps, Seed Stale and Seed Tidy Ltd (synthetic), the Design Review Sample Client, a client named test left empty by an earlier test, the business name Sample MSP and the reminder address reminders@example.test; the integrity page also lists the chains of clients deleted by earlier tests as Deleted client <n>; the profile editor reads leavers-synthetic.csv, four invented leavers at example.test addresses, shown only as pseudonyms",
   "privacy": {
-    "checked": "before every capture the text of the page was searched for an e-mail address and for ticket-style identifiers (THE-, REV-, TOPS-), and the position of every match was compared with the frame; after every capture the picture was opened and judged",
+    "checked": "before every capture the text of the page was searched for an e-mail address and for ticket-style identifiers (a project key, a hyphen and a number), and the position of every match was compared with the frame; after every capture the picture was opened and judged",
     "excluded": [
       {
         "what": "Recent changes on Home and on a client overview",
@@ -128,7 +128,7 @@
       "reason": "the result is the filtered clients list, which is pictured; the key itself has no picture"
     },
     {
-      "flow": "The note in a stage when the browser refuses a WebGL context (THE-1414)",
+      "flow": "The note in a stage when the browser refuses a WebGL context (pull request #83)",
       "reason": "the capture browser draws the scenes; the note is described in guide 8 and in the design system"
     }
   ],
@@ -147,7 +147,7 @@
     "the Evidence Explorer wall turns by itself, so the angle of each of its pictures is the one of that moment",
     "report-preview-file-full-1440.png is 16499 px tall; it was judged by its structure and by the text of the page, not at full legibility in one view; the rendered review is drawn by app/reports, which PRs 76 to 83 did not change, and differs from the set of 2026-10-25 by its generation date",
     "the five layout findings of the first capture of this set (white strips behind the labels of a chosen card on a phone, the empty band beside the folded rail at 1440 px, the wrapped facts of the control drawer, the broken date of the checklist at 768 px and Office manager broken inside the word) are fixed on the follow-up build f6fc7085, and the six pictures that showed them were captured again on it (see followUpBuild)",
-    "the set spans three builds of the same application code but for the THE-1487 style rules: 45 pictures were captured on d0a2e9fe, 5 on f6fc7085, 4 on ab870e4d, and 2 are kept; the pictures not recaptured on a later build show none of the states its rules select",
+    "the set spans three builds of the same application code but for the style rules of pull requests #84 and #86: 45 pictures were captured on d0a2e9fe, 5 on f6fc7085, 4 on ab870e4d, and 2 are kept; the pictures not recaptured on a later build show none of the states its rules select",
     "the pale highlight behind the name and the links of a chosen client row (a strip of the surface inside the tint, plain on a phone card) seen in the first capture is fixed on the third build ab870e4d (pull request #86), and the four pictures with a chosen row were captured again on it (see thirdBuild); no picture shows it any more"
   ],
   "history": {
