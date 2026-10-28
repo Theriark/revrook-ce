@@ -262,6 +262,15 @@ main .rv-clients tr.is-chosen:hover > th {
   background-color: var(--rv-accent-tint);
 }
 
+/* Every link of the page has the surface for background (revrook.css), so the
+   name of a chosen client and its Checklist, Evidence and Reports links stood on
+   strips of the surface inside the tint (THE-1487 live check of f6fc7085). The
+   links of a chosen row let the tint through, under the pointer too */
+main .rv-clients tr.is-chosen a:not([role="button"]),
+main .rv-clients tr.is-chosen a:not([role="button"]):hover {
+  background-color: transparent;
+}
+
 /* On a card the name of each column stands above its value with its own
    background, the surface, so a chosen card kept a white strip above each value.
    The name takes the tint of its card */
