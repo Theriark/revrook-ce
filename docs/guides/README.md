@@ -4,9 +4,10 @@ Step-by-step tutorials for every flow of the revrook Community Edition web inter
 in the order a new installation meets them. Every picture is a live capture of the
 Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-10-27 and
 2026-10-28 from the application build documented and captured (commit
-`d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`; the six pictures changed by the layout
+`d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`; the five pictures that show the layout
 fixes of commit `f6fc70857e776629e13edb04e75a353bee6682fe` were taken again on that
-build, and the four that show chosen rows on the fix of their links, commit
+build, and the four that show chosen rows on the fix of their links, application build
+`2e6b540ecde7561141b897e3be471ba311e53e04`, from the deployment of documentation commit
 `ab870e4dd8af940747344544be459f84d773227e`), the revamped interface, with the synthetic test data of that site (see the [capture manifest](../images/README.md)). Pictures at
 1440 px are the desktop view; pictures at 768 px and 390 px are labelled as tablet and
 phone views in their captions.

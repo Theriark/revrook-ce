@@ -6,7 +6,7 @@ The application exists since phase 0, so `STRICT` is `"true"`: every check runs 
 
 ## The four workflows
 
-This repository has exactly four workflows, and the GitHub Actions menu shows exactly these: `CI`, `Promote - Stage`, `Finalize Release` and `Promote - Production`. The earlier rule allowed three; the publishing contract of the 2027 release family (`publishing-contract`, root THE-218) requires a separate `finalize-release.yml`, so it is the fourth and the only addition. `tests/test_publishing_workflows.py` pins the set. No other workflow file may be added; a missing capability is reported, not solved with a new workflow.
+This repository has exactly four workflows, and the GitHub Actions menu shows exactly these: `CI`, `Promote - Stage`, `Finalize Release` and `Promote - Production`. The earlier rule allowed three; the publishing contract of the 2027 release family (`publishing-contract`) requires a separate `finalize-release.yml`, so it is the fourth and the only addition. `tests/test_publishing_workflows.py` pins the set. No other workflow file may be added; a missing capability is reported, not solved with a new workflow.
 
 `Promote - Stage` and `Finalize Release` are dispatched by the private publisher after the separately approved native Paperclip decision; they add no GitHub approval. Both have the run name `publishing:<request_id>` and take string inputs (see the table). Both share the one concurrency group below, run only from `development` or `stage` and perform no production deployment.
 

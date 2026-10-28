@@ -65,8 +65,8 @@ vectors. The hand vectors were reproduced without bending the engine: A scores 8
 and are recorded in the file: the statuses of the LOG and GOV controls of client B (the
 plan gives only their earned weight, 3.0 and 3.4, and the best-case domain scores), and
 that a stale control counts as missing evidence in the best case whatever its status.
-These vectors are hand-computed. The independent recomputation (the Test Engineer's,
-THE-310) is `tests/independent/recompute_vectors.py`: it does not import the app, types
+These vectors are hand-computed. The independent recomputation (the Test Engineer's)
+is `tests/independent/recompute_vectors.py`: it does not import the app, types
 the scoring model again from the plan with its own control table and checks that table
 against `data/controls.yaml` (the control file wins). Run it with
 `python3 -m unittest tests/independent/recompute_vectors.py`.

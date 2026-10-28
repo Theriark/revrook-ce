@@ -22,7 +22,7 @@ the deployed head is read from the deployment receipt and the package manifest.
 
 | Fact | First build (45 pictures) | Follow-up build (5 pictures) | Third build (4 pictures) |
 | --- | --- | --- | --- |
-| Commit | `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83) | `f6fc70857e776629e13edb04e75a353bee6682fe` (merge of pull request #84) | `ab870e4dd8af940747344544be459f84d773227e` (merge of pull request #87, on the merge of pull request #86) |
+| Commit | `d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5` (merge of pull request #83) | `f6fc70857e776629e13edb04e75a353bee6682fe` (merge of pull request #84) | `ab870e4dd8af940747344544be459f84d773227e` (merge of pull request #87, documentation only, deployed on application build `2e6b540ecde7561141b897e3be471ba311e53e04`, the merge of pull request #86) |
 | Image | `ghcr.io/theriark/revrook-ce@sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef` | `ghcr.io/theriark/revrook-ce@sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a` | `ghcr.io/theriark/revrook-ce@sha256:2b49e1635a8ebaccd629c65be3bf0ebc59ac20b9b954844626a178379deedf1b` |
 | Evidence | deployment receipt (CI run 40337009384, Dokploy deployment `l4TQ87N-4OEwvBzVw-XR5`, deployed 2026-10-26T14:27:34Z), read before the first capture and after the last | deployment receipt (CI run 40449848051, Dokploy deployment `aPd-602wN_fXPbHuzopgJ`, deployed 2026-10-27T04:41:02Z), read before the first capture and after the last | deployment receipt (CI run 40671216666, Dokploy deployment `Om7IcLYGTMyOP2eIlEGmZ`, deployed 2026-10-28T10:37:26Z), read before the first capture and after the last |
 

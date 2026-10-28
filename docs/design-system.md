@@ -140,12 +140,12 @@ that keyboard focus scrolls into view stops 48 px clear of the edge (`scroll-pad
 From 600 px to 1023 px the navigation no longer scrolls: its links wrap onto a second
 row (at 768 px eight links needed 1178 px, and the edge fell between two links, so the
 fade gave no cue), and the client tabs wrap from 600 px. Below 600 px both strips still
-scroll, with a chevron beside the fade that goes with it (THE-1414, `revamp.css`).
+scroll, with a chevron beside the fade that goes with it (pull request #83, `revamp.css`).
 The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded after
 `revrook.css` so that they win by order; they belong in `revrook.css` at its next
 rewrite.
 
-The top bar (`_topbar.html`, THE-1188) opens the page column of every signed-in page,
+The top bar (`_topbar.html`) opens the page column of every signed-in page,
 above the stale-worker banner: the breadcrumb of the page on the left and the search of
 the clients on the right, on the surface with a hairline under it. The trail is made by
 `breadcrumb_trail` (`app/ui/breadcrumbs.py`, a template global) from what the page
@@ -332,7 +332,7 @@ Its parts, in order:
   from the stored reports (`.rv-stat`, `.rv-spark`). The number is a link. The cards
   stand one to a row on a phone, two from 600 px and four from 1280 px, never three
   and one.
-- What moves the score (`#rookery`, THE-1189), the signature of Home: the rookery
+- What moves the score (`#rookery`), the signature of Home: the rookery
   scene, then the score drivers. Every score is out of a hundred, and
   `app/ui/drivers.py` splits those hundred points of each client into what it earns
   and what costs it the rest, with the arithmetic of the scoring engine and nothing
@@ -368,7 +368,7 @@ Its parts, in order:
   line per client from the stored reports of the last 7, 30 or 90 days, up to six,
   labelled at its end and told apart by its dash pattern (a label that the labels
   around it moved away from its line end is tied to it by a short leader,
-  `line.rv-chart-leader`, THE-1414); every stored report is a
+  `line.rv-chart-leader`, pull request #83); every stored report is a
   mark on its line, a link to that report; a table under the chart carries every
   number, each date a link too. The chart is drawn twice (`ChartSize` in
   `app/ui/dashboard.py`, the `score_chart` macro of `_chart.html`): the wide drawing
@@ -482,7 +482,7 @@ How a chart answers:
   reports outside the span. No report at all is the empty state of the card.
 - Line labels: on the wide drawing each line is named at its end, in the 140 units
   right of the plot. A name is fitted by the width it is drawn at, not by its
-  number of characters (`app/ui/textfit.py`, THE-1401): the widths are those of
+  number of characters (`app/ui/textfit.py`, pull request #82): the widths are those of
   DejaVu Sans Bold, the widest face `system-ui` resolves to, so a line that fits
   them fits San Francisco, Segoe UI and Roboto too. The whole name on one line when
   it fits, else broken between its words onto two; a name longer still ends in
@@ -537,7 +537,7 @@ once the page is drawn, and without script, or when the module puts a stage away
 empty box appears. When the browser passes the WebGL 2 check but then refuses a context
 as a stage is shown (WebGL switched off or unavailable), the stage opens on a short
 note that says so (`data-scene-state="error"`), with no empty canvas, and the button
-can try again (THE-1414).
+can try again (pull request #83).
 
 The rookery skyline (Home, `#rookery-scene`). One rook per client on a charcoal
 yard, as tall as its score, crenellated like the mark: stone for a strong or a good
@@ -567,7 +567,7 @@ inside the view, in its width and in its height, with six percent of air at each
 edge, measured again when the stage changes shape (a folded rail, a turned phone)
 unless a person has moved closer or away. It replaced an estimate from the width of
 the row and the tallest node, which left the depth of a second row out: a keep of
-seven domains in a 21 by 9 stage ran off the foot of the stage at 768 px (THE-1188).
+seven domains in a 21 by 9 stage ran off the foot of the stage at 768 px.
 The stage is 21 by 9 for the rookery, 16 by 9 for the keep from 600 px (its two rows
 seen from above need the height, or the fit steps back until the blocks are a
 quarter smaller) and 16 by 10 on a phone. A drag turns and tilts the yard; the buttons under it turn
@@ -586,7 +586,7 @@ renderer's counts. The button above a stage closes the scenes in this browser
 it offers next, so it carries no pressed state as well; the detail and the tools go
 with the scene, the cards and the bars stay. A lost graphics context stops the drawing with a note and resumes when
 the browser restores it, with the ground read again from the stylesheet (a restored
-context starts with a black clear colour, THE-1401); a library that cannot be loaded leaves a note on the stage.
+context starts with a black clear colour, pull request #82); a library that cannot be loaded leaves a note on the stage.
 The ground is the brand charcoal in both themes, the same dark surface as the rail;
 the colours on it are the dark-theme status values of `revrook.css`, which reach 4.5
 to 1 on that ground. `tests/test_scenes.py` pins the module, the stylesheet, the
@@ -635,7 +635,7 @@ each cell names its column before its value. The empty list is
 an empty state that says what a client is; a search or filter that matches nothing
 is its own empty state with the way back to the whole list.
 
-Bulk actions (THE-1189, `app/static/js/bulk-actions.js` and
+Bulk actions (`app/static/js/bulk-actions.js` and
 `app/static/css/bulk-actions.css`, linked by `clients.html` with their own digest).
 The list works without them: the select column, the box that selects the page and
 the bar are `hidden` until the script reveals them. With it every row has a select
@@ -710,7 +710,7 @@ report prints. Both read the same rows, labels and results as before; nothing is
 stored on either page except the notes, which were already saved as they are typed.
 
 The checklist. Under the client header, the section head names the page and its
-purpose, then a canvas band (`form.rv-checklist-toolbar`, THE-1188) holds the tools
+purpose, then a canvas band (`form.rv-checklist-toolbar`) holds the tools
 of the list: a search over the name, the id, the domain and the owner of a control
 (`q`, labelled for assistive technology, the search icon in the field), a Status menu
 (any status or one of the five labels, `status`), an Order menu (`sort`: the library
@@ -910,7 +910,7 @@ column holds the problems to fix first (`#problems`, `.rv-errors`) or the succes
 strip, and the card of the two reports (`ul.rv-kinds`), each with its name, what it
 is for, the quiet preview button and the primary export button.
 
-A preview opens the file as it is sent, so the file itself fits a phone (THE-1189):
+A preview opens the file as it is sent, so the file itself fits a phone:
 at 390 px the A4 padding and a table of six or seven columns made the quarterly
 review 249 px wider than the screen. Below 40em on a screen, `app/reports/report.css`
 gives the page less padding, the facts one column and the cover title a smaller
@@ -981,7 +981,7 @@ same refusal is unchanged.
 
 ## The keep
 
-The revamp (THE-1313) is one layer stylesheet, `app/static/css/revamp.css`, linked in the
+The revamp (pull request #76) is one layer stylesheet, `app/static/css/revamp.css`, linked in the
 shell after every other stylesheet and versioned like them. It changes tokens and adds
 rules; it never edits `revrook.css`, and it writes a colour only as the value of a custom
 property (`tests/test_revamp.py` checks this and the contrast of every pair it adds).
@@ -1027,7 +1027,7 @@ property (`tests/test_revamp.py` checks this and the contrast of every pair it a
 
 ### The routes
 
-The pages after the client overview have their own layout on the same layer (THE-1360):
+The pages after the client overview have their own layout on the same layer (pull requests #77 to #81):
 
 - **Exceptions.** The register opens with its verdict as a ledger and the review
   horizon: the coming year as one line, today at its left end, every open exception a
@@ -1038,7 +1038,7 @@ The pages after the client overview have their own layout on the same layer (THE
   only. From 1280 px the words stand at the left and the drawing fills the card; on a
   phone every second month is named, in larger letters, and a January without its
   year. A month in the last 28 units of the drawing is named up to its right edge
-  (a January there without its year), so no name crosses the card (THE-1401). Each review date says how many
+  (a January there without its year), so no name crosses the card (pull request #82). Each review date says how many
   days are left or late.
 - **Reports.** The builder is three steps joined by a rail. From 1280 px the reports
   made before and the score over time stand beside the steps, each kept report a row of
