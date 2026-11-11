@@ -1,5 +1,12 @@
 # Release candidate
 
+> **2026-11-11: the workflow set changed.** The repository now has three workflows:
+> `CI`, `Release candidate` (`prepare-rc.yml`, the former `mode=prepare-rc` job of
+> `CI`, unchanged) and `Promote - Stage`. `Finalize Release` and `Promote - Production`
+> were removed until a stable release is separately approved. The findings below were
+> read on 2026-10-19 and name the workflows of that time; the current flow is in
+> [ci-cd.md](ci-cd.md).
+
 Where revrook CE stands against the last phase of the plan, and what the release
 workflows do. Read on 2026-10-19 against the `development` branch after phase 11 part 1
 (commit `05874a7`). This page records findings only: nothing was dispatched, tagged or

@@ -1,8 +1,9 @@
 """Contract tests of the publishing workflows (2027 publishing contract).
 
-The private publisher dispatches promote-stage.yml and finalize-release.yml by input
-name and finds the run by its run name, so both are fixed here. The tests read the
-workflow files only; nothing is executed and nothing needs a network.
+The repository has three workflows: CI, Release candidate (prepare-rc.yml) and
+Promote - Stage. The private publisher dispatches prepare-rc.yml and promote-stage.yml
+by input name and finds a Stage run by its run name, so those are fixed here. The
+tests read the workflow files only; nothing is executed and nothing needs a network.
 """
 
 import re
@@ -26,7 +27,6 @@ STAGE_INPUTS = {
     "documentation_manifest_sha256",
     "rc_tag",
 }
-FINALIZE_INPUTS = STAGE_INPUTS | {"stage_promotion_run_id"}
 RC_KEYS = (
     "sourceCommit",
     "imageDigest",
@@ -65,35 +65,26 @@ def run_blocks(name: str) -> list[str]:
     return blocks
 
 
-def test_the_workflow_set_is_ci_stage_finalize_and_production() -> None:
+def test_the_workflow_set_is_ci_release_candidate_and_stage() -> None:
     names = sorted(path.name for path in WORKFLOWS.glob("*.yml"))
-    assert names == [
-        "ci.yml",
-        "finalize-release.yml",
-        "promote-production.yml",
-        "promote-stage.yml",
-    ]
+    assert names == ["ci.yml", "prepare-rc.yml", "promote-stage.yml"]
+    assert load("ci.yml")["name"] == "CI"
+    assert load("prepare-rc.yml")["name"] == "Release candidate"
+    assert load("promote-stage.yml")["name"] == "Promote - Stage"
 
 
-@pytest.mark.parametrize(
-    ("name", "inputs"),
-    [("promote-stage.yml", STAGE_INPUTS), ("finalize-release.yml", FINALIZE_INPUTS)],
-)
-def test_a_publishing_workflow_takes_exactly_its_contract_inputs(
-    name: str, inputs: set[str]
-) -> None:
-    triggers = load(name)["on"]
+def test_stage_takes_exactly_its_contract_inputs() -> None:
+    triggers = load("promote-stage.yml")["on"]
     assert set(triggers) == {"workflow_dispatch"}
     declared = triggers["workflow_dispatch"]["inputs"]
-    assert set(declared) == inputs
+    assert set(declared) == STAGE_INPUTS
     for definition in declared.values():
         assert definition["type"] == "string"
         assert definition["required"] is True
 
 
-@pytest.mark.parametrize("name", ["promote-stage.yml", "finalize-release.yml"])
-def test_a_publishing_run_is_named_publishing_request_id(name: str) -> None:
-    assert load(name)["run-name"] == RUN_NAME
+def test_a_stage_run_is_named_publishing_request_id() -> None:
+    assert load("promote-stage.yml")["run-name"] == RUN_NAME
 
 
 @pytest.mark.parametrize("name", sorted(path.name for path in WORKFLOWS.glob("*.yml")))
@@ -111,31 +102,23 @@ def test_every_deployment_run_shares_one_group_that_is_never_cancelled(
         assert concurrency == {"group": GROUP, "cancel-in-progress": False}
 
 
-def test_production_stays_disabled_and_closed() -> None:
-    workflow = load("promote-production.yml")
-    assert workflow["env"]["PRODUCTION_ENABLED"] == "false"
-    assert set(workflow["on"]) == {"workflow_dispatch"}
-    assert workflow["jobs"]["promote"]["needs"] == "guard"
-    assert 'PRODUCTION_ENABLED}" != "true"' in text("promote-production.yml")
-    # Nothing but the production recipe may write to main.
-    assert "heads/main" not in text("promote-stage.yml")
-    assert "heads/main" not in text("finalize-release.yml")
-
-
-@pytest.mark.parametrize("name", ["promote-stage.yml", "finalize-release.yml"])
-def test_a_publishing_workflow_never_rebuilds_or_deploys_production(
-    name: str,
-) -> None:
+@pytest.mark.parametrize("name", sorted(path.name for path in WORKFLOWS.glob("*.yml")))
+def test_no_workflow_writes_main_or_deploys_production(name: str) -> None:
     source = text(name)
+    assert "heads/main" not in source
+    environments = {job.get("environment") for job in load(name)["jobs"].values()}
+    assert "production" not in environments
+
+
+def test_stage_never_rebuilds_and_runs_in_the_stage_environment() -> None:
+    source = text("promote-stage.yml")
     assert "build-push-action" not in source
     assert ":latest" not in source
     assert not re.search(r"docker\s+(buildx\s+)?build\b", source)
-    environments = {job.get("environment") for job in load(name)["jobs"].values()}
-    assert "production" not in environments
     assert "environment: stage" in source
 
 
-@pytest.mark.parametrize("name", ["promote-stage.yml", "finalize-release.yml"])
+@pytest.mark.parametrize("name", ["promote-stage.yml", "prepare-rc.yml"])
 def test_inputs_reach_scripts_only_through_environment_variables(name: str) -> None:
     for block in run_blocks(name):
         assert "${{" not in block
@@ -163,10 +146,12 @@ def test_stage_consumes_the_existing_rc_and_never_writes_a_tag() -> None:
     source = text("promote-stage.yml")
     assert "RC_TAG: ${{ inputs.rc_tag }}" in source
     # Every RC key is verified, gateCycle included, and the RC-producing run is
-    # checked on development, apart from this Stage run.
+    # checked on development, apart from this Stage run: a Release candidate run, or
+    # a run of the former prepare-rc mode of CI for candidates made before it.
     for key in RC_KEYS:
         assert key in source
     assert '.head_branch == "development"' in source
+    assert '.path == ".github/workflows/prepare-rc.yml"' in source
     assert RC_JOB in source
     # Read only: nothing creates, moves or deletes a tag or a release.
     assert 'git/tags"' not in source
@@ -176,7 +161,6 @@ def test_stage_consumes_the_existing_rc_and_never_writes_a_tag() -> None:
     assert "--method DELETE" not in source
     assert "gh release" not in source
     assert "prefix=" not in source
-    assert "heads/main" not in source
 
 
 def test_the_stage_branch_is_the_only_ref_that_stage_moves() -> None:
@@ -185,31 +169,36 @@ def test_the_stage_branch_is_the_only_ref_that_stage_moves() -> None:
     assert "git/refs/heads/stage" in source
 
 
-def test_the_rc_is_prepared_by_a_job_of_ci_on_development() -> None:
-    workflow = load("ci.yml")
-    triggers = workflow["on"]["workflow_dispatch"]["inputs"]
-    assert set(triggers) == {"mode"} | PREPARE_RC_INPUTS
-    assert "prepare-rc" in triggers["mode"]["options"]
-    for name in PREPARE_RC_INPUTS:
-        assert triggers[name]["type"] == "string"
-        assert triggers[name]["required"] is False
-    # The merge gate runs only in mode ci, so prepare-rc and lock skip it.
-    assert "inputs.mode == 'ci'" in workflow["jobs"]["detect"]["if"]
-    assert "inputs.mode == 'ci'" in workflow["jobs"]["gate"]["if"]
+def test_the_rc_is_prepared_by_its_own_workflow_on_development() -> None:
+    workflow = load("prepare-rc.yml")
+    assert set(workflow["on"]) == {"workflow_dispatch"}
+    declared = workflow["on"]["workflow_dispatch"]["inputs"]
+    assert set(declared) == PREPARE_RC_INPUTS
+    for definition in declared.values():
+        assert definition["type"] == "string"
+        assert definition["required"] is True
+    assert set(workflow["jobs"]) == {"prepare-rc"}
     job = workflow["jobs"]["prepare-rc"]
     assert job["name"] == RC_JOB
-    assert "inputs.mode == 'prepare-rc'" in job["if"]
-    assert "refs/heads/development" in job["if"]
+    assert job["if"] == "github.ref == 'refs/heads/development'"
     assert job["environment"] == "development"
     assert job["permissions"] == {
         "actions": "read",
         "contents": "write",
         "packages": "read",
     }
+    # CI keeps the merge gate and the lock mode only.
+    ci = load("ci.yml")
+    ci_inputs = ci["on"]["workflow_dispatch"]["inputs"]
+    assert set(ci_inputs) == {"mode"}
+    assert ci_inputs["mode"]["options"] == ["ci", "lock"]
+    assert "prepare-rc" not in ci["jobs"]
+    assert "inputs.mode == 'ci'" in ci["jobs"]["detect"]["if"]
+    assert "inputs.mode == 'ci'" in ci["jobs"]["gate"]["if"]
 
 
 def test_prepare_rc_writes_a_tag_and_a_prerelease_and_nothing_else() -> None:
-    job = load("ci.yml")["jobs"]["prepare-rc"]
+    job = load("prepare-rc.yml")["jobs"]["prepare-rc"]
     source = "\n".join(
         step.get("run", "") + step.get("uses", "") for step in job["steps"]
     )
@@ -225,35 +214,17 @@ def test_prepare_rc_writes_a_tag_and_a_prerelease_and_nothing_else() -> None:
     assert "build-push-action" not in source
     assert "dokploy-deploy" not in source
     assert "heads/stage" not in source
-    assert "heads/main" not in source
     assert "--latest" not in source
     assert "--method PATCH" not in source
-    for block in (s["run"] for s in job["steps"] if "run" in s):
-        assert "${{" not in block
 
 
 def test_the_job_names_that_other_workflows_grep_for_exist() -> None:
     names = {key: value["name"] for key, value in load("ci.yml")["jobs"].items()}
     assert names["deploy-development"] == DEVELOPMENT_JOB
-    assert names["prepare-rc"] == RC_JOB
-    for name in ("promote-stage.yml", "finalize-release.yml"):
-        assert RC_JOB in text(name)
+    assert load("prepare-rc.yml")["jobs"]["prepare-rc"]["name"] == RC_JOB
+    assert RC_JOB in text("promote-stage.yml")
     assert DEVELOPMENT_JOB in text("promote-stage.yml")
-    assert DEVELOPMENT_JOB in text("ci.yml")
-
-
-def test_the_stable_tag_adds_the_stage_run_and_the_rc_tag() -> None:
-    source = text("finalize-release.yml")
-    for key in (*RC_KEYS, "stagePromotionRunId", "rcTag"):
-        assert key in source
-    # The RC-producing run and the Stage run are verified separately.
-    assert ".github/workflows/promote-stage.yml" in source
-    assert RC_JOB in source
-    assert "three different runs" in source
-    assert "GATE_CYCLE: ${{ steps.verify.outputs.gate_cycle }}" in source
-    assert "--verify-tag" in source
-    assert ".draft == false and .prerelease == false" in source
-    assert "Reconcile first" in source
+    assert DEVELOPMENT_JOB in text("prepare-rc.yml")
 
 
 def test_every_action_is_pinned_to_a_full_commit_sha() -> None:

@@ -182,8 +182,7 @@ def test_the_pdf_measurement_is_opt_in_and_the_workflow_set_is_known() -> None:
     )
     assert workflows == [
         "ci.yml",
-        "finalize-release.yml",
-        "promote-production.yml",
+        "prepare-rc.yml",
         "promote-stage.yml",
     ]
 
