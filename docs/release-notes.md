@@ -4,7 +4,7 @@ The notes of the release candidates of revrook CE built from `development`. revr
 has no released version yet: there is no stable tag, no stable GitHub release and no
 released image (the only image is the one built for each `development` commit and
 deployed to the Development environment, named below by its digest), and the version
-the application reports is `0.0.0.dev0`
+the application reports is `27.0.0.dev0`
 ([release-candidate.md](release-candidate.md)). The newest candidate comes first; the
 earlier ones are kept below as history. The full list of changes is the
 [CHANGELOG](../CHANGELOG.md).

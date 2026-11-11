@@ -39,8 +39,11 @@ async def test_the_evidence_page_has_its_verdict_the_refresh_list_and_the_tables
     html = page.text
     assert page.status_code == 200 and structure_problems(html) == []
     assert html.count('aria-current="page"') == 3  # the rail, the tabs, the breadcrumb
-    editor = f'href="/imports/profile-editor?client_id={client_id}">Import an export'
-    assert f"{editor}</a>" in html
+    imports = f'href="/imports?client_id={client_id}">Import evidence'
+    assert f"{imports}</a>" in html
+    # The DNS check runs from this page, with its weekly schedule as an option.
+    assert f'action="/clients/{client_id}/dns-check"' in html
+    assert 'name="weekly"' in html
     assert '<section class="rv-verdict" id="evidence-status"' in html
     for fact in ("Sources", "Current", "To refresh", "Items imported"):
         assert f"<dt>{fact}</dt>" in html, fact
@@ -144,7 +147,7 @@ async def test_the_integrity_page_starts_with_the_check_and_shows_its_verdict(
     assert structure_problems(html) == []
     assert '<span class="rv-user-name">admin</span>' in html
     assert 'id="integrity-empty"' in html and ">Check again</button>" in html
-    assert 'href="/imports/profile-editor">Open the profile editor</a>' in html
+    assert 'href="/imports">Import evidence</a>' in html
     assert 'id="integrity-start"' not in html and 'id="chains"' not in html
 
     await seed_client(db_engine, ui_ctx)

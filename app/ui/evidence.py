@@ -26,6 +26,13 @@ class ChainRow:
     records: int
     head: str
     problem: str
+    # The client was deleted: its chain stays by design, and the page folds it away
+    # while it is intact.
+    deleted: bool = False
+
+    @property
+    def folded(self) -> bool:
+        return self.deleted and self.ok
 
 
 async def _signed_in_user(request: Request) -> AppUser | None:
@@ -42,7 +49,14 @@ def _row(result: ChainResult, names: dict[int, str]) -> ChainRow:
         problem = ""
     else:
         problem = f"{result.reason} (record {result.failed_record_id})"
-    return ChainRow(label, result.ok, result.records, result.head_hash[:16], problem)
+    return ChainRow(
+        label,
+        result.ok,
+        result.records,
+        result.head_hash[:16],
+        problem,
+        deleted=result.client_id not in names,
+    )
 
 
 def _context(

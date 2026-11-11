@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "revrook"
-version = "0.0.0.dev0"
+version = "27.0.0.dev0"
 description = "Client security posture, insurance evidence and QBR reports for small MSPs (Community Edition)."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -28,7 +28,7 @@ dependencies = { file = ["requirements.in"] }
 include = ["app*"]
 
 [tool.setuptools.package-data]
-"app" = ["static/css/*.css", "static/js/*.js", "static/vendor/*/*", "static/brand/*"]
+"app" = ["static/css/*.css", "static/js/*.js", "static/vendor/*/*", "static/brand/*", "static/scripts/*"]
 "app.ui" = ["templates/*.html"]
 "app.checks" = ["*.json"]
 "app.reports" = ["*.css", "templates/*.html"]

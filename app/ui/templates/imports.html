@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% import "_icons.html" as i %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<div class="rv-page-header">
+<div><h1>Import evidence</h1><p class="rv-page-purpose">Drop every export of a client at once. revrook reads each file, recognises which source it is from its columns, and stores it as evidence. You do not pick a source.</p></div>
+</div>
+{% include "_errors.html" %}
+{% if not clients %}
+<div class="rv-empty" id="imports-empty">
+{{ i.icon("clients", "xl") }}
+<p class="rv-empty-title">No clients yet</p>
+<p class="rv-empty-text">Evidence belongs to one client. Add the client first, then import its exports here.</p>
+<a role="button" href="/clients">Add a client</a>
+</div>
+{% else %}
+{% if results %}
+<section id="import-results" aria-labelledby="import-results-title">
+<div class="rv-section-head">
+<div><h2 id="import-results-title">{{ stored }} of {{ results|length }} file{% if results|length != 1 %}s{% endif %} imported</h2><p class="rv-section-note">Each file is stored on its own: a file that was refused did not stop the others.{% if client_id %} <a href="/clients/{{ client_id }}/evidence">Open the evidence of this client</a> or its <a href="/clients/{{ client_id }}/checklist">checklist</a>.{% endif %}</p></div>
+</div>
+<table id="import-result-table" class="rv-table-cards">
+<caption>What happened to each file</caption>
+<thead>
+<tr>
+<th scope="col">File</th>
+<th scope="col">Source</th>
+<th scope="col">Result</th>
+<th scope="col" class="rv-numeric">Facts</th>
+<th scope="col" class="rv-numeric">Rows refused</th>
+</tr>
+</thead>
+<tbody>
+{% for item in results %}
+<tr>
+<th scope="row">{{ item.name }}</th>
+<td data-label="Source">{{ item.source or "Not recognised" }}</td>
+<td data-label="Result">{% if item.stored %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> {{ item.message }}</span>{% else %}<span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">&#10007;</span> Not imported.</span> {{ item.message }}{% endif %}</td>
+<td data-label="Facts" class="rv-numeric">{{ item.facts }}</td>
+<td data-label="Rows refused" class="rv-numeric">{{ item.rejected }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+{% endif %}
+<form id="rv-imports" method="post" action="/imports" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<fieldset class="rv-step">
+<legend><span class="rv-step-number">1</span>Client and files</legend>
+<div class="rv-field-row">
+<div class="rv-field">
+<label for="client_id">Client</label>
+<select id="client_id" name="client_id" required>
+{% for id, client_name in clients %}
+<option value="{{ id }}"{% if id == client_id %} selected{% endif %}>{{ client_name }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="rv-field">
+<label for="captured_at">When the files were exported (UTC)</label>
+<input id="captured_at" name="captured_at" type="datetime-local" value="{{ captured_at }}" aria-describedby="captured_at-help">
+<small id="captured_at-help" class="rv-help">Used for the CSV files, which carry no time of their own. A Microsoft Graph file keeps the time it says it was made.</small>
+</div>
+</div>
+<label class="rv-dropzone">
+{{ i.icon("upload", "lg") }}
+<span class="rv-dropzone-title">Drop the exports here, or choose them</span>
+<span class="rv-dropzone-hint">CSV or JSON, up to {{ max_files }} files and {{ max_megabytes }} MB in all.</span>
+<input id="files" name="files" type="file" accept=".csv,.json,text/csv,application/json" multiple required>
+<output class="rv-dropzone-file" aria-live="polite"></output>
+</label>
+<div class="rv-actions">
+<button type="submit">Import the files</button>
+</div>
+</fieldset>
+</form>
+
+<section id="import-sources" aria-labelledby="import-sources-title">
+<div class="rv-section-head">
+<div><h2 id="import-sources-title">What revrook recognises</h2><p class="rv-section-note">A file is recognised by its columns or, for Microsoft Graph, its fields. For Microsoft 365, <a href="/static/scripts/export-m365.ps1" download>download the export script</a> and run it in PowerShell with your administrator account: it reads the tenant (read-only) and writes the six Microsoft files in one folder, ready to drop here.</p></div>
+</div>
+<ul class="rv-import-sources">
+{% for name, kind in sources %}
+<li><strong>{{ name }}</strong> <span class="rv-cell-note">{{ kind }}</span></li>
+{% endfor %}
+<li><strong>Public DNS check</strong> <span class="rv-cell-note">not a file: run it from the evidence page of the client, once or every week</span></li>
+</ul>
+<p class="rv-section-note">An export of another tool with other column names: map its columns once in the <a href="/imports/profile-editor?client_id={{ client_id or '' }}">profile editor</a>. The saved mapping is recognised here from then on.</p>
+</section>
+{% endif %}
+{% endblock %}

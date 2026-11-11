@@ -43,10 +43,10 @@ from app.evidence.service import (
 from app.importers.dnscheck import DnsCheckImporter
 from app.importers.registry import ImporterRegistry
 from app.models import Client, EvidenceItem, Fact
+from app.sources import DNS_CONTROLS as DNS_CONTROLS
+from app.sources import DNS_SOURCE as DNS_SOURCE
 
-DNS_SOURCE = "dns-check"
 EXCHANGE_SOURCE = "exchange-export"
-DNS_CONTROLS = ("PC-EML-01", "PC-EML-02", "PC-EML-03")
 
 
 async def require_client(session: AsyncSession, client_id: int) -> None:

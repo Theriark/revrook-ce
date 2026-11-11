@@ -341,4 +341,8 @@ async def test_the_profile_editor_opens_on_the_client_it_was_called_for(
         clients = plain.text.split('id="client_id"', 1)[1].split("</select>", 1)[0]
         assert " selected>" not in clients, query
     evidence = await ui_browser.get(f"/clients/{second}/evidence")
-    assert f'href="{EDITOR}?client_id={second}"' in evidence.text
+    # The evidence page opens Import evidence on its client; that page links the
+    # editor for the same client.
+    assert f'href="/imports?client_id={second}"' in evidence.text
+    imports = await ui_browser.get(f"/imports?client_id={second}")
+    assert f'href="{EDITOR}?client_id={second}"' in imports.text

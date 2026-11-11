@@ -27,7 +27,7 @@ def test_package_imports(name: str) -> None:
 def test_version_matches_pyproject() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     project = pyproject["project"]
-    assert project["version"] == __version__ == "0.0.0.dev0"
+    assert project["version"] == __version__ == "27.0.0.dev0"
     assert project["requires-python"] == ">=3.12,<3.13"
 
 

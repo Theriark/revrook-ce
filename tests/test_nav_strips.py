@@ -24,6 +24,7 @@ PAGE = """{% extends "base.html" %}{% block content %}
 MAIN_LINKS = [
     ("/", "Home"),
     ("/clients", "Clients"),
+    ("/imports", "Import evidence"),
     ("/imports/profile-editor", "Profile editor"),
     ("/evidence/integrity", "Evidence integrity"),
     ("/experiments/evidence-explorer", "Evidence Explorer"),

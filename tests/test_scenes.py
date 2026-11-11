@@ -109,7 +109,12 @@ def test_the_scene_module_has_every_fallback_and_nothing_from_outside() -> None:
     assert "if (!supportsWebGL2()) {\n    putAway(every);\n    return;\n  }" in SCRIPT
     # The hide button names the action it offers next and carries no pressed state.
     assert "aria-pressed" not in SCRIPT
-    assert '"Hide the scene" : "Show the scene"' in SCRIPT
+    assert '"Hide the 3D view" : "Show the 3D view"' in SCRIPT
+    # The scenes start hidden, and nothing is imported until a person asks.
+    assert 'getItem(HIDE_KEY) !== "on"' in SCRIPT
+    assert SCRIPT.index("if (scenesHidden()) {\n    // Closed until asked") < (
+        SCRIPT.index("await import(THREE_URL)")
+    )
     # Only footprints: the detail line says what to do, not the hover hint.
     assert "entries.every((entry) => entry.footprint) ? WORDS.footprints" in SCRIPT
     assert "Import an export and its rook rises here." in SCRIPT

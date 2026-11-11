@@ -87,7 +87,7 @@
 </div>
 {% endif %}
 </div>
-{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Point at a rook, or at a bar below, to read it here. A press chooses it.", "The rookery skyline: one rook per client, as tall as its score, a wire rook where the evidence is too thin, a footprint where nothing is imported, and a notch at its foot for every control that needs work. Drag to turn the yard.") }}
+{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Hover over or select a rook, or a bar below, to see its details here.", "A 3D view of the same scores: one rook per client, as tall as its score. A wire rook has too little evidence for a score, a footprint has nothing imported yet, and each notch at its foot is a control that needs work.") }}
 </div>
 {% if portfolio %}
 {% set mean = portfolio.drivers %}
@@ -122,7 +122,7 @@
 {% elif client.evidence %}
 <p class="rv-driver-why">Every control of this client is marked not applicable, so no point is counted.</p>
 {% else %}
-<p class="rv-driver-why">Nothing is imported, so every control is not checked. <a href="/clients/{{ client.client_id }}/evidence">Import an export</a> to see what earns its points.</p>
+<p class="rv-driver-why">Nothing is imported, so every control is not checked. <a href="/imports?client_id={{ client.client_id }}">Import its exports</a> to see what earns its points.</p>
 {% endif %}
 <p class="rv-driver-meta">{% if client.evidence %}{{ client.needs_work }} control{% if client.needs_work != 1 %}s{% endif %} need{% if client.needs_work == 1 %}s{% endif %} work, evidence coverage {{ client.coverage_percent }}%. {% endif %}{{ client.change_text }}.</p>
 </li>

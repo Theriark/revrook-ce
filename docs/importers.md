@@ -116,6 +116,40 @@ token, and the upload size limit applies to the editor's POSTs as to the API.
 The file is only read for the preview and save; it is kept only when imported,
 under the usual retention rules. Nothing of its content is logged.
 
+## The import page
+
+`/imports` (Import evidence in the rail, `app/ui/imports.py`) takes one or more
+files for one client in one form: up to 20 files and the upload limit
+(`IMPORT_MAX_BYTES`, 20 MB) for all of them together. Nobody picks a source:
+
+1. Each file is matched by `app/importers/detect.py` to the importer whose required
+   columns (a CSV) or fields (the first record of a Graph JSON file) it has, with the
+   column resolution of the importers themselves. A saved column mapping of the
+   client counts as one more way of reading the file, so a vendor export mapped once
+   in the profile editor is recognised from then on, and the mapping wins over name
+   matching for its source.
+2. A Graph answer without a record (a tenant with no Conditional Access policy) has
+   nothing to match; it is recognised by its `@odata.context` instead.
+3. When more than one source fits, the one that finds the most of its columns wins.
+   A tie is not guessed: the file is refused with the names of the sources, to be
+   imported from the profile editor. A file that fits no source is refused with a
+   pointer to the profile editor.
+4. Every recognised file is stored on its own (`add_evidence`, as the API upload),
+   so a file that is refused (a duplicate, a missing column) does not stop the
+   others. The page lists each file with its source, the facts stored and the rows
+   refused. The file name is shown in that list only and never stored.
+
+The CSV files carry no capture time, so the page asks when the files were exported
+(default: now); a Graph file keeps its own `capturedAt`. The internal
+`reference-csv` source is not offered (`app.sources.INTERNAL_SOURCES`).
+
+`app/static/scripts/export-m365.ps1`, linked from the page, writes the five Microsoft
+files and the Exchange CSV below in one read-only PowerShell run (Graph scopes
+AuditLog.Read.All, SecurityEvents.Read.All, DeviceManagementManagedDevices.Read.All,
+Policy.Read.All and RoleManagement.Read.Directory, and an Exchange role that reads the
+organisation settings). The Intune export selects its fields, so no serial number,
+IMEI or phone number is written; mailboxes are written by their directory id.
+
 ## The five Microsoft sources
 
 Fields and columns marked **INFERRED** are not in the phase plan's list for the
@@ -412,7 +446,10 @@ client's pseudonym, the same one the `domain` of the Exchange DKIM rows gets. Th
 capture time is the time the run started. Facts: `dns.domain` (the columns the
 controls PC-EML-01 to 03 read, see `docs/dns-check.md`) and `dns.summary`
 (`domains`, `lookups_failed`). `POST /api/v1/clients/{id}/dns-check` runs it and
-`GET` reads the three controls with their capture time.
+`GET` reads the three controls with their capture time. In the browser it runs from
+the evidence page of the client (`POST /clients/{id}/dns-check`), once, or every
+Monday at 05:00 UTC as a `dns-check` schedule of the worker that keeps the domains
+entered; running it again without the weekly box switches that schedule off.
 
 ## The fields of the 51 controls (phase 4)
 

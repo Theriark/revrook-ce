@@ -109,7 +109,7 @@ from this page. The findings below stand; what changed since the first reading:
   released image (each image named in the updates above is the build of one
   `development` commit, deployed to the Development environment only). The release
   candidate tags of the update of 2026-10-24 mark Development candidates, not releases.
-  `pyproject.toml` and `app/__init__.py` both say `0.0.0.dev0` and the
+  `pyproject.toml` and `app/__init__.py` both say `27.0.0.dev0` and the
   [CHANGELOG](../CHANGELOG.md) has only an Unreleased section.
 - A release is a separate step with its own authorisation from the founders. The
   workflow that would run it fails closed until that approval enables it (finding R1).
@@ -177,9 +177,9 @@ Findings. None is fixed here: the workflow files belong to the platform engineer
   only. The version of the package is in `pyproject.toml`, but the version the
   application reports comes from a separate constant, `__version__` in
   `app/__init__.py`, and that is what `revrook_build_info` shows. `tests/test_packages.py`
-  pins both to `0.0.0.dev0` and fails when they differ. Dispatched as `0.1.0` while the
-  commit still says `0.0.0.dev0` in these files, it would tag an image whose
-  `revrook_build_info` says `0.0.0.dev0`. Suggested: a guard step that reads both files
+  pins both to `27.0.0.dev0` and fails when they differ. Dispatched as `0.1.0` while the
+  commit still says `27.0.0.dev0` in these files, it would tag an image whose
+  `revrook_build_info` says `27.0.0.dev0`. Suggested: a guard step that reads both files
   at the source commit and fails when either differs from the input.
 - **R3, no `release.yml`.** The repository has exactly four workflows by decision, so
   the build, the digest and the release candidate live in `ci.yml` (the `prepare-rc`

@@ -80,10 +80,10 @@
 
 <section class="rv-card" id="people" aria-labelledby="people-title">
 <h3 id="people-title" class="rv-card-title">Users and mappings</h3>
-<p class="rv-card-subtitle">Everyone who can sign in to this installation.</p>
+<p class="rv-card-subtitle">Everyone who can sign in to this installation. The Community Edition has one administrator{% if test_accounts %}; the others here are Development test accounts for the automated browser checks{% endif %}.</p>
 <ul id="users" class="rv-users">
 {% for name in usernames %}
-<li><span class="rv-user-mark" aria-hidden="true">{{ name[:1]|upper }}</span>{{ name }}</li>
+<li><span class="rv-user-mark" aria-hidden="true">{{ name[:1]|upper }}</span>{{ name }}{% if name in test_accounts %} <span class="rv-cell-note">Development test account</span>{% endif %}</li>
 {% endfor %}
 </ul>
 <h4 class="rv-card-heading">Mappings to other frameworks</h4>
