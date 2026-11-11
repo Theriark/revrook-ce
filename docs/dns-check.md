@@ -29,6 +29,18 @@ needed in the image. Every lookup has a deadline of five seconds. Any other valu
 `DNS_RESOLVER` stops the start with `DNS_RESOLVER must be an IP address or an
 https:// URL`.
 
+## From the browser
+
+The evidence page of a client (**Evidence and imports**, the card **Public DNS
+check**) runs the same check: the mail domains and the extra DKIM selectors go in the
+form, **Run the DNS check** posts them to `POST /clients/{id}/dns-check`, and the page
+comes back with the result stored as evidence. With **Run it again every Monday**
+ticked, the run also creates or updates a `dns-check` schedule of the worker for that
+client (`0 5 * * 1`, every Monday at 05:00 UTC) with the same domains and selectors;
+running it again with the box unticked switches the schedule off and keeps the domains
+for the next run. The step-by-step is in
+[guide 11](guides/11-public-dns-check.md).
+
 ## How a run is stored
 
 `POST /api/v1/clients/{id}/dns-check` with `{"domains": [...], "selectors": [...],

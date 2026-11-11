@@ -547,7 +547,7 @@ imported yet, and a notch at its foot for every control that needs work. Pointin
 a rook, or at its card, names it in the hover line; a press chooses it, marks its
 card with the violet rail and writes its facts in the detail line; Enter opens the
 client. While every client is only a footprint the detail line says so and what to
-do (import an export); with no client at all the stage is put away and Home keeps its
+do (import its exports); with no client at all the stage is put away and Home keeps its
 own empty state.
 
 The domain keep (client overview, `#keep-scene`, in the Coverage by domain card). One
@@ -581,10 +581,14 @@ while the page is open. Frames are drawn only when something changed, never whil
 the page is hidden or the stage is out of view; leaving the page disposes every
 geometry, material and the renderer, and `revrookScene` on each stage offers
 `dispose()`, `mount()` and `info()` so a test can cycle a scene and read the
-renderer's counts. The button above a stage closes the scenes in this browser
-(`localStorage`, `rv-scenes`) and then offers to show them again: it names the action
-it offers next, so it carries no pressed state as well; the detail and the tools go
-with the scene, the cards and the bars stay. A lost graphics context stops the drawing with a note and resumes when
+renderer's counts. The scenes start hidden: a page opens on its cards and bars with the stage closed
+(`is-closed`, `data-scene-state="disposed"`), its lead line saying what the 3D view
+would show, and the button above it reading **Show the 3D view**; three.js is loaded
+only once a person presses it, and the choice is kept in this browser
+(`localStorage`, `rv-scenes`, `on`) for every page with a scene, the Evidence
+Explorer included. The button then offers **Hide the 3D view**: it names the action it
+offers next, so it carries no pressed state as well; the detail and the tools go with
+the scene, the cards and the bars stay. A lost graphics context stops the drawing with a note and resumes when
 the browser restores it, with the ground read again from the stylesheet (a restored
 context starts with a black clear colour, pull request #82); a library that cannot be loaded leaves a note on the stage.
 The ground is the brand charcoal in both themes, the same dark surface as the rail;

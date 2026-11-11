@@ -21,9 +21,11 @@ From top to bottom:
    since the last reports and a sparkline of its weeks.
 2. **What moves the score**: a keep panel with the gauge of the mean score of every
    client with evidence (in the quiet colour, and called a lower bound, when it counts
-   a client whose evidence is too thin) beside the rookery skyline, one rook per client
-   as tall as its score ([8. Scenes, the folded rail and the Evidence Explorer](08-scenes-rail-and-explorer.md)),
-   then the score drivers described below.
+   a client whose evidence is too thin) beside the stage of the rookery skyline, one
+   rook per client as tall as its score, which opens with **Show the 3D view** and is
+   drawn only once you press it ([8. Scenes, the folded rail and the Evidence
+   Explorer](08-scenes-rail-and-explorer.md)); then the score drivers described below.
+   The pictures of this guide show the 3D view switched on.
 3. **Needs attention**: the gate controls first, then what is not protected, by weight,
    across all clients. **Open** shows the control in a drawer over the page
    ([4. The checklist](04-checklist-and-control-notes.md#the-drawer-and-the-page-of-a-control)).
@@ -72,7 +74,7 @@ scoring engine, so the parts add up to a hundred exactly and nothing is estimate
    costs it the most in words, the gate control that holds the score, and the three
    controls that cost the most points, each opening the control drawer. A client whose
    evidence is too thin has a dashed outline round its bar and **at least** before its
-   score; a client without evidence has no bar and a link to import an export.
+   score; a client without evidence has no bar and a link to import its exports.
 4. **Show the numbers** holds every point of every client in a table.
 
 ![What moves the score at 1440 px, dark theme](../images/home-1440-drivers-dark.png)
@@ -144,12 +146,14 @@ strip that scrolls sideways, with a chevron at its edge while more tabs lie beyo
 - **Controls by status** is the bar and the four pills; **Open the checklist** leads to
   every control with its evidence.
 - **Needs attention** lists the controls to fix first for this client.
-- **Coverage by domain** holds the domain keep, one block per domain as wide as its
-  weight in the score and built of its controls in layers by status, above one bar per
-  domain with its weight and score. A segment of a bar opens the checklist narrowed to
+- **Coverage by domain** holds the stage of the domain keep (hidden until **Show the
+  3D view** is pressed), one block per domain as wide as its weight in the score and
+  built of its controls in layers by status, above one bar per domain with its weight
+  and score. A segment of a bar opens the checklist narrowed to
   that domain and status ([8. Scenes](08-scenes-rail-and-explorer.md#the-domain-keep-on-a-client-overview)).
 - **How fresh is the evidence?** names the sources that need a fresh export and lists
-  every source with its newest export and the date it goes stale.
+  every source with its newest export and the date it goes stale for the strictest
+  control that reads it, the way the checklist measures it.
 - **Recent changes** is the audit trail of this client (not pictured, for the reason
   given under Home).
 
