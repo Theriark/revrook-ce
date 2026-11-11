@@ -13,7 +13,9 @@ name: Promote - Stage
 #   - development_run_id is the successful CI run on development for that commit whose
 #     deploy-development job succeeded;
 #   - rc_tag is an existing annotated release candidate prepared earlier on
-#     Development (the prepare-rc job of ci.yml). It is verified and CONSUMED: it must
+#     Development (the Release candidate workflow, prepare-rc.yml; candidates made
+#     before it by the prepare-rc mode of ci.yml are accepted too). It is verified and
+#     CONSUMED: it must
 #     point at source_commit and seal the same digest, development run, documentation
 #     manifest and an integer gateCycle, and the run that produced it must be a
 #     successful run on development. This workflow never mints, moves or deletes an
@@ -70,8 +72,8 @@ permissions:
   contents: write
   packages: write
 
-# One delivery run at a time per repository (shared with CI on development, and
-# Promote - Production and Finalize Release); a live run is never cancelled.
+# One delivery run at a time per repository (shared with CI on development and
+# Release candidate); a live run is never cancelled.
 concurrency:
   group: revrook-ce-delivery
   cancel-in-progress: false
@@ -228,16 +230,17 @@ jobs:
           }
           rc_run="$(jq -r '(.message | fromjson).workflowRunId' <<<"${object}")"
           gate_cycle="$(jq -r '(.message | fromjson).gateCycle' <<<"${object}")"
-          # The run that produced the RC: a successful prepare-rc run of this
-          # repository on development, separate from this Stage run.
+          # The run that produced the RC: a successful Release candidate run of this
+          # repository on development (or the former prepare-rc mode of CI),
+          # separate from this Stage run.
           jq -e --arg repo "${GITHUB_REPOSITORY}" '
               .repository.full_name == $repo
-              and .path == ".github/workflows/ci.yml"
+              and (.path == ".github/workflows/prepare-rc.yml" or .path == ".github/workflows/ci.yml")
               and .event == "workflow_dispatch"
               and .head_branch == "development"
               and .status == "completed"
               and .conclusion == "success"' <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}")" >/dev/null || {
-            echo "::error::run ${rc_run} is not a successful CI run on development that prepared ${RC_TAG}"
+            echo "::error::run ${rc_run} is not a successful Release candidate run on development that prepared ${RC_TAG}"
             exit 1
           }
           gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > rc-jobs.tsv
