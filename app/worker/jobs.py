@@ -35,6 +35,7 @@ from app.posture import load_live
 from app.preferences import get_reminder_recipient
 from app.settings import Settings
 from app.snapshots import recent_twin, store_snapshot
+from app.sources import source_max_ages
 from app.ui.common import last_quarter
 from app.worker.mail import mail_configured, send_mail
 from app.worker.purge import run_purge
@@ -137,7 +138,7 @@ def build_jobs(ctx: JobContext) -> dict[str, Job]:
         if recipient is None or not mail_configured(ctx.settings):
             return "skipped: no reminder address or no mail relay is set"
         async with ctx.session_factory() as session, session.begin():
-            due_now = await due_reminders(session, now)
+            due_now = await due_reminders(session, now, source_max_ages(ctx.library))
             claimed_at = now if ctx.clock is None else ctx.clock()
             claimed = await claim_reminders(session, due_now, claimed_at)
         if not claimed:

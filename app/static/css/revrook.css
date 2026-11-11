@@ -4500,3 +4500,26 @@ fieldset.rv-topics {
   align-items: center;
   gap: 12px;
 }
+
+/* Import evidence: what the page recognises, a grid of sources that wraps from one
+   column on a phone to three on a wide screen, each with its source mark */
+.rv-import-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 12px 24px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-import-sources li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+}
+
+.rv-import-sources .rv-cell-note {
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}

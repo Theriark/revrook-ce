@@ -85,6 +85,7 @@ from app.ui.viewmodels import (
     SourceRow,
     checklist_rows,
     control_sources,
+    count_rules,
     coverage_text,
     evidence_facts,
     item_state,
@@ -424,6 +425,7 @@ async def checklist(
             read_earlier(loaded.earlier),
             draft.owners,
             excepted,
+            count_rules(library_of(request)),
         )
         flagged = only_flagged(rows)
         shown = flagged if show == "flagged" else rows
@@ -512,7 +514,7 @@ async def control_page(
             exceptions=notes,
             suggestion=suggested_sentence(row),
             reason=reason_text(result.reason),
-            coverage=coverage_text(result),
+            coverage=coverage_text(result, control.rule.kind == "count"),
         )
         name = DRAWER_TEMPLATE if wants_drawer(request) else "control.html"
         return page(request, name, user, context)

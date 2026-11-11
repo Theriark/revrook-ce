@@ -175,7 +175,7 @@ def _base_context(request: Request, now: datetime) -> dict[str, Any]:
         "max_megabytes": f"{limit / 1_048_576:g}",
         "max_files": MAX_FILES,
         "sources": [
-            (source_name(adapter.source_code), file_kind(adapter))
+            (adapter.source_code, source_name(adapter.source_code), file_kind(adapter))
             for adapter in file_sources(request)
         ],
         "results": [],
