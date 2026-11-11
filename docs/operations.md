@@ -88,6 +88,12 @@ counts: a refreshed export stops the reminders of the old one. A threshold count
 when it is below half the life of the item, so an automatic export that is stale after
 35 days is reminded at 7 days and on the day, not at 30.
 
+An automatic export goes stale when the strictest control that reads its source says
+so, as the evidence pages and the checklist measure it (`app.sources.source_max_ages`):
+a device, backup or Intune export after 7 days, so it is reminded about on the day it
+goes stale; a source read only at 35 days keeps the 35 days of its `expires_at`. A
+manual artefact or an attestation keeps its own expiry.
+
 A reminder is sent once per threshold crossing. The pair (item, threshold) is a primary
 key in `reminder_sent` and is inserted before the message goes out; if the message
 cannot be sent the rows are removed and the next run tries again. `sent_at` is the time

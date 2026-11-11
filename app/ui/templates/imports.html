@@ -76,15 +76,15 @@
 </fieldset>
 </form>
 
-<section id="import-sources" aria-labelledby="import-sources-title">
+<section id="import-sources" class="rv-card" aria-labelledby="import-sources-title">
 <div class="rv-section-head">
-<div><h2 id="import-sources-title">What revrook recognises</h2><p class="rv-section-note">A file is recognised by its columns or, for Microsoft Graph, its fields. For Microsoft 365, <a href="/static/scripts/export-m365.ps1" download>download the export script</a> and run it in PowerShell with your administrator account: it reads the tenant (read-only) and writes the six Microsoft files in one folder, ready to drop here.</p></div>
+<div><h2 id="import-sources-title" class="rv-card-title">What revrook recognises</h2><p class="rv-section-note">A file is recognised by its columns or, for Microsoft Graph, its fields. For Microsoft 365, <a href="/static/scripts/export-m365.ps1" download>download the export script</a> and run it in PowerShell with your administrator account: it reads the tenant (read-only) and writes the six Microsoft files in one folder, ready to drop here.</p></div>
 </div>
 <ul class="rv-import-sources">
-{% for name, kind in sources %}
-<li><strong>{{ name }}</strong> <span class="rv-cell-note">{{ kind }}</span></li>
+{% for code, name, kind in sources %}
+<li>{{ i.source_mark(code) }}<span><strong>{{ name }}</strong><span class="rv-cell-note">{{ kind }}</span></span></li>
 {% endfor %}
-<li><strong>Public DNS check</strong> <span class="rv-cell-note">not a file: run it from the evidence page of the client, once or every week</span></li>
+<li>{{ i.source_mark("dns-check") }}<span><strong>Public DNS check</strong><span class="rv-cell-note">Not a file: run it from the evidence page of the client, once or every week</span></span></li>
 </ul>
 <p class="rv-section-note">An export of another tool with other column names: map its columns once in the <a href="/imports/profile-editor?client_id={{ client_id or '' }}">profile editor</a>. The saved mapping is recognised here from then on.</p>
 </section>

@@ -1,4 +1,10 @@
-"""Plain-language names of the evidence sources, and what to do to refresh one."""
+"""Plain-language names of the evidence sources, what to do to refresh one, which
+controls read each source and how old an export of it may get."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.checks.library import Library
 
 SOURCE_NAMES = {
     "entra-registration": "Microsoft Entra registration export",
@@ -57,6 +63,45 @@ def refresh_instruction(code: str) -> str:
     if code == DNS_SOURCE:
         return "Run the public DNS check again for the mail domains of this client."
     return "Export it again from the source system and import it on Import evidence."
+
+
+def control_sources(library: "Library") -> dict[str, tuple[str, ...]]:
+    """The sources (importer codes) each control reads, by control id.
+
+    A field is mapped to an adapter column in `field_map`; the three mail controls
+    also read the public DNS check, which is not a file and so not in `field_map`.
+    A manual-only control reads no source and gets an empty tuple.
+    """
+    found: dict[str, tuple[str, ...]] = {}
+    for control in library.controls:
+        codes = {
+            library.field_map[field].adapter
+            for field in control.fields
+            if field in library.field_map
+        }
+        if control.id in DNS_CONTROLS:
+            codes.add(DNS_SOURCE)
+        found[control.id] = tuple(sorted(codes))
+    return found
+
+
+def source_max_ages(library: "Library") -> dict[str, int]:
+    """The strictest automatic maximum age, in days, of the controls reading a source.
+
+    An export goes stale for the checks as soon as the strictest control that reads
+    it says so (a device export after 7 days, not after the 35 days of the store),
+    so the evidence pages and the expiry reminders measure a source by this age and
+    agree with the checklist.
+    """
+    ages: dict[str, int] = {}
+    reads = control_sources(library)
+    for control in library.controls:
+        days = control.max_age_days.automatic
+        if days is None:
+            continue
+        for code in reads[control.id]:
+            ages[code] = min(days, ages.get(code, days))
+    return ages
 
 
 def source_icon(code: str) -> str:

@@ -19,6 +19,7 @@ item, and the message holds client names, source names and dates only.
 """
 
 from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -26,6 +27,7 @@ from sqlalchemy import delete, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.evidence.assurance import Assurance
 from app.evidence.expiry import days_left, reminder_thresholds_due
 from app.models import Client, EvidenceItem, ReminderSent
 
@@ -50,8 +52,32 @@ class Reminder:
     thresholds: tuple[int, ...]
 
 
-async def due_reminders(session: AsyncSession, now: datetime) -> list[Reminder]:
-    """The items that crossed a threshold that has not been sent yet."""
+def effective_expiry(
+    source_code: str,
+    assurance: str,
+    captured_at: datetime,
+    expires_at: datetime,
+    max_ages: Mapping[str, int],
+) -> datetime:
+    """When an item goes stale for the checks: an automatic export at the strictest
+    control age of its source (app.sources.source_max_ages) when that comes first,
+    as the evidence pages and the checklist measure it; anything else at its own
+    expiry."""
+    days = max_ages.get(source_code)
+    if assurance != Assurance.AUTOMATIC_EXPORT.value or days is None:
+        return expires_at
+    return min(expires_at, captured_at + timedelta(days=days))
+
+
+async def due_reminders(
+    session: AsyncSession, now: datetime, max_ages: Mapping[str, int] | None = None
+) -> list[Reminder]:
+    """The items that crossed a threshold that has not been sent yet.
+
+    `max_ages` (source code to days) moves the expiry of an automatic export to the
+    strictest control that reads its source, so a device export is reminded about at
+    7 days, when the checklist marks it, not at the 35 days of the store.
+    """
     newest = await session.execute(
         select(
             EvidenceItem.id,
@@ -75,7 +101,17 @@ async def due_reminders(session: AsyncSession, now: datetime) -> list[Reminder]:
     if not candidates:
         return []
     item_ids = [row.id for row in candidates]
-    expiry = {row.id: row.expires_at for row in candidates}
+    ages = max_ages or {}
+    expiry = {
+        row.id: effective_expiry(
+            row.source_code,
+            row.assurance_level,
+            row.captured_at,
+            row.expires_at,
+            ages,
+        )
+        for row in candidates
+    }
     # A renewal keeps the item and moves its expiry: it starts a new cycle. A
     # threshold is crossed when fewer than threshold + 1 whole days are left (days
     # are rounded down), so it is never sent earlier than that before the expiry. A
@@ -103,8 +139,9 @@ async def due_reminders(session: AsyncSession, now: datetime) -> list[Reminder]:
         )
     reminders: list[Reminder] = []
     for row in candidates:
-        crossed = reminder_thresholds_due(row.expires_at, now)
-        lifetime = (row.expires_at - row.captured_at).days
+        expires_at = expiry[row.id]
+        crossed = reminder_thresholds_due(expires_at, now)
+        lifetime = (expires_at - row.captured_at).days
         # A threshold counts only when it is under half the life of the item: a
         # 30 day reminder on an export that is stale after 35 days is just noise.
         fresh = tuple(
@@ -117,8 +154,8 @@ async def due_reminders(session: AsyncSession, now: datetime) -> list[Reminder]:
                     client_name=row.client_name,
                     source_code=row.source_code,
                     assurance=row.assurance_level,
-                    expires_at=row.expires_at,
-                    days_left=days_left(row.expires_at, now),
+                    expires_at=expires_at,
+                    days_left=days_left(expires_at, now),
                     thresholds=fresh,
                 )
             )

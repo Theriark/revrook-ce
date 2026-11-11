@@ -34,6 +34,7 @@ from app.ui.viewmodels import (
     STALE,
     checklist_rows,
     control_sources,
+    count_rules,
     coverage_text,
     evidence_facts,
     flags_of,
@@ -206,6 +207,12 @@ def test_coverage_is_written_as_counts_and_a_share() -> None:
     assert coverage_text(result(None, None)) == NOT_MEASURED
     assert coverage_text(result(0, 0)) == NOT_MEASURED
     assert coverage_text(None) == NOT_MEASURED
+    # A count rule stores the problems: PC-ACC-02 with no administrator lacking MFA
+    # is Protected and reads "0 of 1 need work", never "0 of 1 (0%)".
+    assert coverage_text(result(0, 1), counts_problems=True) == "0 of 1 need work"
+    assert coverage_text(result(None, None), counts_problems=True) == NOT_MEASURED
+    assert {"PC-ACC-02", "PC-NET-02", "PC-EML-06", "PC-GOV-04"} <= count_rules(LIBRARY)
+    assert "PC-ACC-01" not in count_rules(LIBRARY)
 
 
 def test_a_reason_is_put_into_words() -> None:

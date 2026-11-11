@@ -16,6 +16,9 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Changed
 
+- Expiry reminders measure an automatic export by the strictest control that reads its source, as the evidence pages and the checklist do: a device export is reminded about when it goes stale at 7 days, not at 35 ([docs/operations.md](docs/operations.md#expiry-reminders)).
+- A control whose rule counts problems (PC-ACC-02, PC-EML-06, PC-GOV-04, PC-NET-02) shows its coverage as "0 of 2 need work" instead of "0 of 2 (0%)", which read as no coverage next to Protected.
+- Import evidence lists the recognised sources in a card, as a grid with their marks (one column on a phone, up to four on a wide screen). Checked with every page at 390, 768, 1024, 1440 and 1920 px: no page scrolls sideways.
 - Three workflows: `CI`, `Release candidate` and `Promote - Stage`. The release candidate job moved unchanged from `mode=prepare-rc` of `CI` into its own workflow, `prepare-rc.yml`; `Promote - Stage` accepts candidates from either. `Finalize Release` and `Promote - Production` were removed until a stable release is separately approved ([docs/ci-cd.md](docs/ci-cd.md)).
 - The evidence pages measure an export by the strictest control that reads it (a device export goes stale after 7 days, not after the 35 days of the store), so they no longer call an export current while the checklist marks its controls expired. The Evidence Explorer links the DNS check to PC-EML-01 to PC-EML-03 instead of calling them manual.
 - The reference user list (`reference-csv`) only proves the import pipeline in tests: no page, list or report shows it, and the Development seed no longer imports it.

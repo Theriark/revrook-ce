@@ -40,13 +40,13 @@ from app.scoring.snapshot import (
     parse_snapshot,
     score_snapshot,
 )
+from app.sources import control_sources as control_sources
 from app.sources import (
-    DNS_CONTROLS,
-    DNS_SOURCE,
     is_shown,
     refresh_instruction,
     source_name,
 )
+from app.sources import source_max_ages as source_max_ages
 
 NOT_ASSIGNED = "Not assigned"
 NOT_MEASURED = "Not measured"
@@ -147,12 +147,24 @@ def reason_text(reason: str | None) -> str:
     return REASON_TEXT.get(reason, reason)
 
 
-def coverage_text(result: ControlResult | None) -> str:
-    """How much of the population the control was checked on, for example 9 of 10."""
+def coverage_text(result: ControlResult | None, counts_problems: bool = False) -> str:
+    """How much of the population the control was checked on, for example 9 of 10.
+
+    A count rule ("few is good", such as administrators without MFA) stores the
+    number of problems, not the number that pass: it reads "0 of 1 need work", so a
+    Protected control never shows a coverage of 0%.
+    """
     if result is None or result.numerator is None or not result.denominator:
         return NOT_MEASURED
+    if counts_problems:
+        return f"{result.numerator} of {result.denominator} need work"
     share = percent(Fraction(result.numerator, result.denominator))
     return f"{result.numerator} of {result.denominator} ({share}%)"
+
+
+def count_rules(library: Library) -> frozenset[str]:
+    """The controls whose rule counts problems (rule kind count)."""
+    return frozenset(c.id for c in library.controls if c.rule.kind == "count")
 
 
 def flags_of(row: ControlRow, excepted: bool) -> tuple[str, ...]:
@@ -175,8 +187,12 @@ def checklist_rows(
     earlier: SnapshotInput | None,
     owners: Mapping[str, str],
     excepted: Collection[str],
+    counted_problems: Collection[str] = (),
 ) -> list[ChecklistRow]:
-    """Every control of the view as a checklist row, in the order of the library."""
+    """Every control of the view as a checklist row, in the order of the library.
+
+    `counted_problems` are the controls whose rule counts problems (count_rules).
+    """
     before = previous_labels(earlier)
     rows: list[ChecklistRow] = []
     for row in view.rows:
@@ -185,7 +201,9 @@ def checklist_rows(
         rows.append(
             ChecklistRow(
                 row=row,
-                coverage=coverage_text(results.get(row.control_id)),
+                coverage=coverage_text(
+                    results.get(row.control_id), row.control_id in counted_problems
+                ),
                 owner=owners.get(topic, NOT_ASSIGNED),
                 changed_from=old if old is not None and old != row.label else None,
                 reasons=flags_of(row, row.control_id in excepted),
@@ -291,44 +309,6 @@ class SourceRow:
     expires_at: datetime | None
     exports: int
     refresh: str | None
-
-
-def control_sources(library: Library) -> dict[str, tuple[str, ...]]:
-    """The sources (importer codes) each control reads, by control id.
-
-    A field is mapped to an adapter column in `field_map`; the three mail controls
-    also read the public DNS check, which is not a file and so not in `field_map`.
-    A manual-only control reads no source and gets an empty tuple.
-    """
-    found: dict[str, tuple[str, ...]] = {}
-    for control in library.controls:
-        codes = {
-            library.field_map[field].adapter
-            for field in control.fields
-            if field in library.field_map
-        }
-        if control.id in DNS_CONTROLS:
-            codes.add(DNS_SOURCE)
-        found[control.id] = tuple(sorted(codes))
-    return found
-
-
-def source_max_ages(library: Library) -> dict[str, int]:
-    """The strictest automatic maximum age, in days, of the controls reading a source.
-
-    An export goes stale for the checks as soon as the strictest control that reads
-    it says so (a device export after 7 days, not after the 35 days of the store),
-    so the evidence pages measure a source by this age and agree with the checklist.
-    """
-    ages: dict[str, int] = {}
-    reads = control_sources(library)
-    for control in library.controls:
-        days = control.max_age_days.automatic
-        if days is None:
-            continue
-        for code in reads[control.id]:
-            ages[code] = min(days, ages.get(code, days))
-    return ages
 
 
 def _measured(
