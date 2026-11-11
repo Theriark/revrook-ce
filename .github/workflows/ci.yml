@@ -528,6 +528,8 @@ jobs:
           # Built once. Only the source SHA tag is pushed (never latest); every
           # later step uses the digest.
           tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          build-args: |
+            REVISION=${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
