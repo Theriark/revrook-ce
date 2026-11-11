@@ -37,7 +37,7 @@ from app.snapshots import (
     recent_twin,
     store_snapshot,
 )
-from app.sources import source_name
+from app.sources import is_shown, source_name
 from app.ui.auth import redirect
 from app.ui.charts import HISTORY_RANGES, history_days, read_range
 from app.ui.common import (
@@ -135,7 +135,9 @@ async def used_sources(
         )
         .distinct()
     )
-    return tuple(sorted(source_name(code) for code in found.scalars()))
+    return tuple(
+        sorted(source_name(code) for code in found.scalars() if is_shown(code))
+    )
 
 
 async def build_report_view(

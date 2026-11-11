@@ -21,7 +21,7 @@ from app.evidence.errors import EvidenceError
 from app.evidence.service import EvidenceContext
 from app.models import Client, EvidenceItem, Snapshot
 from app.settings import Settings
-from app.sources import SOURCE_NAMES
+from app.sources import INTERNAL_SOURCES, SOURCE_NAMES
 from helpers import NOW
 from html_structure import structure_problems
 from ui_helpers import sign_in
@@ -70,13 +70,13 @@ async def test_every_source_has_evidence_on_a_seeded_client(
         for item in items
         if item.assurance_level == Assurance.AUTOMATIC_EXPORT
     }
-    assert automatic == set(SOURCE_NAMES)
+    assert automatic == set(SOURCE_NAMES) - INTERNAL_SOURCES
     levels = {item.assurance_level for item in items}
     assert levels == {level.value for level in Assurance}
     # Three rounds of every source, and the two manual items.
-    assert len(items) == 3 * len(SOURCE_NAMES) + 2
+    assert len(items) == 3 * len(set(SOURCE_NAMES) - INTERNAL_SOURCES) + 2
     gaps = {item.source_code for item in await items_of(db_engine, ids[GAPS])}
-    assert gaps == set(SOURCE_NAMES)
+    assert gaps == set(SOURCE_NAMES) - INTERNAL_SOURCES
     stale = await items_of(db_engine, ids[STALE])
     assert {item.source_code for item in stale} == set(
         next(c for c in devseed.DEMO_CLIENTS if c.name == STALE).sources
@@ -171,8 +171,10 @@ async def test_the_pages_answer_on_the_seeded_clients(
             assert page.status_code == 200, (name, path)
             assert structure_problems(page.text) == [], (name, path)
     evidence = await ui_browser.get(f"/clients/{ids[TIDY]}/evidence")
-    for code in SOURCE_NAMES:
+    for code in set(SOURCE_NAMES) - INTERNAL_SOURCES:
         assert SOURCE_NAMES[code] in evidence.text, code
+    for code in INTERNAL_SOURCES:
+        assert SOURCE_NAMES[code] not in evidence.text, code
     history = await ui_browser.get(f"/clients/{ids[TIDY]}/reports?span=all")
     assert 'id="history-empty"' not in history.text
     assert 'id="history-capped"' not in history.text

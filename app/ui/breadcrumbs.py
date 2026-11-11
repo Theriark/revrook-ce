@@ -17,6 +17,7 @@ HOME = "Home"
 PLACES = {
     "home": ("Home", ""),
     "clients": ("Clients", "clients"),
+    "imports": ("Import evidence", "imports"),
     "profile-editor": ("Profile editor", "imports/profile-editor"),
     "integrity": ("Evidence integrity", "evidence/integrity"),
     "explorer": ("Evidence Explorer", "experiments/evidence-explorer"),

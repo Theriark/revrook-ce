@@ -38,7 +38,7 @@ from app.reports.completeness import MAX_SHORT, MAX_TEXT
 from app.reports.status import LABELS, StatusLabel
 from app.reports.view import ControlRow, Finding, ReportContext, ReportView, iso_date
 from app.snapshots import earlier_bytes
-from app.sources import source_name
+from app.sources import DNS_SOURCE, is_shown, source_name
 from app.textcheck import control_character, normalise_breaks
 from app.ui.auth import redirect
 from app.ui.charts import age_bars, band_counts
@@ -76,13 +76,16 @@ from app.ui.dashboard import (
     segments_of,
 )
 from app.ui.horizon import review_horizon
+from app.ui.imports import dns_schedule
 from app.ui.overview import domain_lines
 from app.ui.viewmodels import (
     CHECKLIST_SORT_KEYS,
     CHECKLIST_SORTS,
     STATE_OF_FRESHNESS,
     ChecklistQuery,
+    SourceRow,
     checklist_rows,
+    control_sources,
     coverage_text,
     evidence_facts,
     only_flagged,
@@ -92,6 +95,7 @@ from app.ui.viewmodels import (
     refresh_list,
     search_rows,
     sort_rows,
+    source_max_ages,
     source_rows,
 )
 from app.web import cipher_of, clock_of, session_factory
@@ -112,6 +116,12 @@ NO_SUCH_CONTROL = "There is no such control."
 EXCEPTION_DONE = {
     "added": "The exception was added to the register.",
     "closed": "The exception was closed. It stays in the register as closed.",
+}
+# The message of the evidence page after the DNS check ran (`?done=`).
+DNS_DONE = {
+    "dns": "The DNS check ran and its result is stored as evidence.",
+    "dns-weekly": "The DNS check ran, its result is stored, and it runs again "
+    "every Monday.",
 }
 
 
@@ -232,10 +242,21 @@ async def clients_create(
 
 
 def needed_sources(request: Request) -> list[str]:
-    """The sources that a control reads and that an importer exists for."""
-    importers = set(request.app.state.importers.source_codes())
-    wanted = {target.adapter for target in library_of(request).field_map.values()}
+    """The sources that a control reads and that revrook can fill: a file with an
+    importer, or the public DNS check, which revrook runs itself."""
+    importers = set(request.app.state.importers.source_codes()) | {DNS_SOURCE}
+    reads = control_sources(library_of(request)).values()
+    wanted = {code for codes in reads for code in codes}
     return sorted(wanted & importers)
+
+
+def client_sources(
+    request: Request, views: list[EvidenceView], now: datetime
+) -> list[SourceRow]:
+    """The source rows of one client, each measured by the strictest control that
+    reads it, so the evidence pages and the checklist say the same thing."""
+    ages = source_max_ages(library_of(request))
+    return source_rows(views, needed_sources(request), ages, now)
 
 
 async def load_client(
@@ -303,7 +324,7 @@ async def overview(
         now = clock_of(request)()
         start, end = read_period(period_start.strip(), period_end.strip(), now.date())
         loaded = await load_client(request, user, client_id, start, end)
-        rows = source_rows(loaded.evidence, needed_sources(request))
+        rows = client_sources(request, loaded.evidence, now)
         name = loaded.live.name
         excepted = {entry.control_id for entry in loaded.live.exceptions}
         attention = attention_items(client_id, name, loaded.view, excepted)
@@ -737,7 +758,7 @@ async def exceptions_close(
 
 
 @router.get("/clients/{client_id}/evidence")
-async def evidence_page(request: Request, client_id: RowId) -> Response:
+async def evidence_page(request: Request, client_id: RowId, done: str = "") -> Response:
     async def handle(user: AppUser) -> Response:
         now = clock_of(request)()
         async with session_factory(request)() as session:
@@ -745,10 +766,13 @@ async def evidence_page(request: Request, client_id: RowId) -> Response:
             if client is None:
                 raise ClientNotFoundError("There is no client with this id.")
             views = await list_evidence(session, client_id, now)
-        rows = source_rows(views, needed_sources(request))
+        schedule = await dns_schedule(request, client_id)
+        config = schedule.config if schedule is not None else {}
+        rows = client_sources(request, views, now)
         items = [
             (view, STATE_OF_FRESHNESS[view.freshness], source_name(view.source_code))
             for view in views
+            if is_shown(view.source_code)
         ]
         context: dict[str, Any] = {
             "title": f"Evidence and imports - {client.name}",
@@ -761,14 +785,21 @@ async def evidence_page(request: Request, client_id: RowId) -> Response:
             "ages": age_bars(rows, now),
             "items": items,
             "facts": evidence_facts(rows, views),
-            # The editor opens on this client (THE-505, defect 8).
+            # The import page opens on this client (THE-505, defect 8).
             "client_actions": [
                 {
-                    "path": f"imports/profile-editor?client_id={client_id}",
-                    "text": "Import an export",
+                    "path": f"imports?client_id={client_id}",
+                    "text": "Import evidence",
                     "primary": True,
                 },
             ],
+            "done_message": DNS_DONE.get(done, ""),
+            # The domains of the weekly check, so the next run starts from them.
+            "dns": {
+                "domains": ", ".join(config.get("domains", [])),
+                "selectors": ", ".join(config.get("selectors", [])),
+                "weekly": schedule is not None and schedule.enabled,
+            },
         }
         return page(request, "evidence_imports.html", user, context)
 

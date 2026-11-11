@@ -49,12 +49,15 @@
 <article class="finding" aria-labelledby="finding-{{ item.rank }}">
 <h3 id="finding-{{ item.rank }}">{{ item.rank }}. {{ item.row.title }}</h3>
 <p>{{ m.status(item.row.label) }} <span class="secondary">{{ item.row.control_id }}{% if item.row.gate %} &middot; gate control{% endif %} &middot; {{ item.row.domain_name }}</span></p>
+{#- Only the notes that were written: a client never reads an empty placeholder. -#}
+{% if item.finding.did or item.finding.recommend or item.finding.need or item.finding.by_when %}
 <dl class="facts">
-<dt>What we did</dt><dd>{{ item.finding.did or not_entered }}</dd>
-<dt>What we recommend</dt><dd>{{ item.finding.recommend or not_entered }}</dd>
-<dt>What we need from you</dt><dd>{{ item.finding.need or not_entered }}</dd>
-<dt>By when</dt><dd>{{ item.finding.by_when or not_entered }}</dd>
+{% if item.finding.did %}<dt>What we did</dt><dd>{{ item.finding.did }}</dd>{% endif %}
+{% if item.finding.recommend %}<dt>What we recommend</dt><dd>{{ item.finding.recommend }}</dd>{% endif %}
+{% if item.finding.need %}<dt>What we need from you</dt><dd>{{ item.finding.need }}</dd>{% endif %}
+{% if item.finding.by_when %}<dt>By when</dt><dd>{{ item.finding.by_when }}</dd>{% endif %}
 </dl>
+{% endif %}
 </article>
 {% endfor %}
 {% else %}
@@ -69,7 +72,7 @@
 <thead><tr><th scope="col">Priority</th><th scope="col">Control</th><th scope="col">Action</th><th scope="col">By when</th></tr></thead>
 <tbody>
 {% for item in roadmap %}
-<tr><td>{{ item.priority }}</td><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ item.finding.recommend }}</td><td{% if item.finding.by_when is iso_day %} class="date"{% endif %}>{{ item.finding.by_when or not_entered }}</td></tr>
+<tr><td>{{ item.priority }}</td><td>{{ item.row.title }}<p class="note">{{ item.row.control_id }}</p></td><td>{{ item.finding.recommend }}</td><td{% if item.finding.by_when is iso_day %} class="date"{% endif %}>{{ item.finding.by_when or "" }}</td></tr>
 {% endfor %}
 </tbody>
 {% endcall %}

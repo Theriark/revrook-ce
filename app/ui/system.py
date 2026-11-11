@@ -4,6 +4,9 @@ It sits in its own module (and not in `app.ui.site`) because two of its answers 
 not pages: the export is a zip and the deletion is a redirect.
 """
 
+import os
+import re
+from collections.abc import Mapping
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, Request, Response
@@ -22,6 +25,15 @@ from app.worker.heartbeat import STALE_AFTER
 from app.worker.mail import mail_configured
 
 router = APIRouter()
+REVISION_VARIABLE = "REVROOK_REVISION"
+COMMIT = re.compile(r"[0-9a-f]{40}")
+
+
+def build_revision(env: Mapping[str, str] = os.environ) -> str | None:
+    """The commit the image was built from (REVROOK_REVISION, set by the image
+    build), shortened to 12 characters; None when it is missing or not a commit."""
+    value = env.get(REVISION_VARIABLE, "").strip().lower()
+    return value[:12] if COMMIT.fullmatch(value) else None
 
 
 def age_text(seconds: float | None) -> str:
@@ -50,6 +62,7 @@ async def system_page(request: Request, deleted: str = "") -> Response:
             "errors": [],
             "deleted": deleted == "1",
             "version": __version__,
+            "revision": build_revision(),
             "worker": overview.worker,
             "worker_label": overview.worker_label,
             "age": age_text(overview.worker.age_seconds),

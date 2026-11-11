@@ -169,10 +169,11 @@ def test_every_control_reads_known_adapters_and_manual_ones_read_none() -> None:
             assert adapters[control.id] == (), control.id
         for code in adapters[control.id]:
             assert code in SOURCE_NAMES, code
-    # Every adapter a control reads has an importer, except the two the release
-    # notes list as missing (their controls stay Not checked).
+    # Every source a control reads has an importer, or is the public DNS check,
+    # which revrook runs itself; the mail controls read it.
     read = {code for codes in adapters.values() for code in codes}
-    assert read - importers <= {"secure-score", "exchange-export"} or read <= importers
+    assert read - importers == {"dns-check"}
+    assert "dns-check" in adapters["PC-EML-01"] and "dns-check" in adapters["PC-EML-03"]
 
 
 def test_the_view_links_only_both_ends_and_counts_every_control() -> None:

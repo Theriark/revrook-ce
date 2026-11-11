@@ -26,7 +26,7 @@ from app.reports.status import (
     StatusLabel,
 )
 from app.reports.view import ControlRow
-from app.ui.viewmodels import CURRENT, SourceRow
+from app.ui.viewmodels import CURRENT, SourceRow, control_sources
 
 MANUAL_ONLY = "Manual evidence (no export)"
 
@@ -103,21 +103,10 @@ def iso(value: datetime | None) -> str | None:
 
 
 def adapters_of(library: Library) -> dict[str, tuple[str, ...]]:
-    """The adapters (source codes) each control reads, by control id.
-
-    A field is mapped to an adapter column in `field_map`; a field listed as
-    unavailable maps to nothing. A control whose fields map to nothing (the
-    manual-only controls) gets an empty tuple.
-    """
-    found: dict[str, tuple[str, ...]] = {}
-    for control in library.controls:
-        adapters = {
-            library.field_map[field].adapter
-            for field in control.fields
-            if field in library.field_map
-        }
-        found[control.id] = tuple(sorted(adapters))
-    return found
+    """The sources each control reads, by control id (see `control_sources`): the
+    adapter columns of `field_map`, and the public DNS check for the mail controls.
+    A manual-only control gets an empty tuple."""
+    return control_sources(library)
 
 
 def _label_counts(rows: Sequence[ControlRow]) -> Mapping[str, int]:

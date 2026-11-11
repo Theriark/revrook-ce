@@ -107,10 +107,11 @@ function stageOf(closed) {
     }
     return parts[s] || null;
   };
+  // The scenes start hidden; "on" is a browser where a person showed them before.
   if (closed) {
-    store["rv-scenes"] = "off";
-  } else {
     delete store["rv-scenes"];
+  } else {
+    store["rv-scenes"] = "on";
   }
   return { root, parts };
 }
@@ -187,20 +188,20 @@ def test_without_a_webgl_context_the_stage_says_so(tmp_path: Path) -> None:
     assert opened["noteHidden"] is False and opened["noteKind"] == "error"
     assert opened["note"].startswith(note)
     assert opened["canvases"] == 0 and opened["toolsHidden"] is True
-    assert opened["toggle"] == "Show the scene" and opened["toggleHidden"] is False
+    assert opened["toggle"] == "Show the 3D view" and opened["toggleHidden"] is False
     assert opened["api"] == "object"
-    # Closed before: the stage is closed with its button, as it was.
+    # Never shown in this browser: the stage starts closed with its button.
     before = out["closedBefore"]
     assert before["closed"] is True and before["sceneState"] == "disposed"
-    assert before["note"] == "The scene is closed."
-    # "Show the scene" now opens the stage on the note instead of doing nothing.
+    assert before["note"].startswith("The 3D view is off.")
+    # "Show the 3D view" opens the stage on the note instead of doing nothing.
     shown = out["shown"]
     assert shown["closed"] is False
     assert shown["sceneState"] == "error" and shown["noteHidden"] is False
     assert shown["note"].startswith(note) and "WebGL" in shown["note"]
     assert shown["canvases"] == 0 and shown["toolsHidden"] is True
-    assert shown["toggle"] == "Show the scene"
-    assert out["remembered"] is None
+    assert shown["toggle"] == "Show the 3D view"
+    assert out["remembered"] == "on"
     # A second press tries once more and leaves the same note; three tries in all.
     assert out["again"] == shown
     assert out["attempts"] == 3

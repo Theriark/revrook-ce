@@ -33,6 +33,7 @@ from app.ui.viewmodels import (
     NOT_MEASURED,
     STALE,
     checklist_rows,
+    control_sources,
     coverage_text,
     evidence_facts,
     flags_of,
@@ -40,6 +41,7 @@ from app.ui.viewmodels import (
     read_earlier,
     reason_text,
     refresh_list,
+    source_max_ages,
     source_rows,
 )
 from tools import report_clients
@@ -246,6 +248,35 @@ def test_sources_are_listed_by_name_and_the_oldest_export_is_refreshed_first() -
     assert all(row.refresh for row in refresh)
     dns_refresh = by_code["dns-check"].refresh
     assert dns_refresh is not None and "public DNS check" in dns_refresh
+
+
+def test_a_source_is_measured_by_the_strictest_control_that_reads_it() -> None:
+    # The device export feeds controls with a 7-day maximum age: at 19 days the
+    # store's 35 days call it current, the checklist calls it expired. The page now
+    # says what the checklist says, and the stale-after date moves with it.
+    ages = source_max_ages(LIBRARY)
+    assert ages["device-inventory"] == 7 and ages["entra-registration"] == 35
+    assert ages["dns-check"] == 35
+    views = [export_view("device-inventory", 19, Freshness.CURRENT)]
+    (old,) = source_rows(views, [])
+    assert old.state == CURRENT
+    (row,) = source_rows(views, [], ages, NOW)
+    assert row.state == EXPIRED and row.refresh is not None
+    assert row.expires_at == views[0].captured_at + timedelta(days=7)
+    (fresh,) = source_rows(
+        [export_view("device-inventory", 3, Freshness.CURRENT)], [], ages, NOW
+    )
+    assert fresh.state == CURRENT
+
+
+def test_the_mail_controls_read_the_dns_check_and_internal_sources_stay_hidden() -> (
+    None
+):
+    reads = control_sources(LIBRARY)
+    assert "dns-check" in reads["PC-EML-01"] and "dns-check" in reads["PC-EML-03"]
+    assert set(reads["PC-EML-02"]) == {"dns-check", "exchange-export"}
+    views = [export_view("reference-csv", 1, Freshness.CURRENT)]
+    assert source_rows(views, ["reference-csv"]) == []
 
 
 def test_a_source_that_is_not_wanted_is_still_listed_when_it_was_imported() -> None:

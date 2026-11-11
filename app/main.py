@@ -33,6 +33,7 @@ from app.ui import evidence as ui_evidence
 from app.ui import explorer as ui_explorer
 from app.ui import fragments as ui_fragments
 from app.ui import home as ui_home
+from app.ui import imports as ui_imports
 from app.ui import profiles as ui_profiles
 from app.ui import reports as ui_reports
 from app.ui import site as ui_site
@@ -210,6 +211,7 @@ def create_app(
     app.include_router(ui_explorer.router)
     app.include_router(ui_explorer.data_router)
     app.include_router(ui_fragments.router)
+    app.include_router(ui_imports.router)
     app.include_router(ui_profiles.router)
     app.include_router(ui_reports.router)
     app.include_router(ui_site.router)

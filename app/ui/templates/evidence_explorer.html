@@ -40,8 +40,11 @@
 </dl>
 </section>
 <section class="rv-card rv-explorer" id="explorer" aria-labelledby="explorer-title" data-explorer-url="{{ data_url }}" data-client="{{ view.client_name }}">
+<div class="rv-scene-bar">
 <h2 id="explorer-title" class="rv-card-title">The rookery wall of {{ view.client_name }}</h2>
-<p class="rv-card-subtitle">Each pillar is an evidence export, as tall as the number of controls it feeds; each tile is a control, grouped by domain around the wall; a beam joins an export to every control that reads it. Drag to turn the wall, or use the buttons. A pillar that is stale is low, an export never imported is only a footprint, and a tile that is not protected is cut through.</p>
+<button type="button" class="rv-button-quiet rv-button-small" id="explorer-toggle" hidden>Show the 3D view</button>
+</div>
+<p class="rv-card-subtitle">A 3D view of the tables below. Each pillar is an export, as tall as the number of controls it feeds; each tile is a control; a beam joins an export to every control that reads it. A stale export is a low pillar, one never imported is a footprint, and a control that is not protected is a tile cut through.</p>
 <div class="rv-explorer-stage" id="explorer-stage">
 <div class="rv-explorer-state" id="explorer-state" role="status">
 <p class="rv-explorer-state-text">The scene needs script and WebGL 2 in the browser. The tables below show the same facts.</p>
@@ -54,7 +57,7 @@
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-motion" aria-pressed="false" hidden>Turn by itself</button>
 <p class="rv-explorer-hover" id="explorer-hover" aria-hidden="true"></p>
 </div>
-<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">Point at a pillar or a tile, or press Show in scene on a row below, to read it here.</p>
+<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">Hover over or select a pillar or a tile, or use Show in scene on a row below, to see its details here.</p>
 <ul class="rv-legend rv-explorer-legend" aria-label="What the shapes mean">
 <li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Protected</span> <span class="rv-text-secondary">flat tile</span></li>
 <li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Needs attention</span> <span class="rv-text-secondary">tile with a ring</span></li>

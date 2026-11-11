@@ -3,8 +3,9 @@
 Starlette would copy a whole upload to a temporary file before the application can
 look at it, so a body is refused by its declared size first.
 
-* An upload route (evidence files, the profile editor) takes a file of at most
-  IMPORT_MAX_BYTES plus FORM_OVERHEAD_BYTES. It must declare its size (411).
+* An upload route (evidence files, the profile editor, the import page) takes at
+  most IMPORT_MAX_BYTES plus FORM_OVERHEAD_BYTES: on the import page that is all its
+  files together. It must declare its size (411).
 * Every other POST, PUT, PATCH and DELETE takes at most MAX_BODY_BYTES (1 MiB), which
   is far more than a JSON body or a form of this application needs. Over it is 413.
   A body sent in chunks (any Transfer-Encoding, whatever Content-Length says) is 411;
@@ -25,7 +26,7 @@ RowId = Annotated[int, Path(ge=1, le=MAX_ID)]
 
 UPLOAD_PATH = re.compile(
     r"^(/api/v1/clients/\d+/evidence(/\d+/revisions)?"
-    r"|/imports/profile-editor/(preview|save|import))$"
+    r"|/imports|/imports/profile-editor/(preview|save|import))$"
 )
 UPLOAD_METHODS = frozenset({"POST", "PUT", "PATCH"})
 BODY_METHODS = UPLOAD_METHODS | {"DELETE"}

@@ -216,7 +216,7 @@ def test_home_replaces_the_ring_cards_with_the_score_bars() -> None:
     assert "d.bar(mean," in rookery and "d.bar(split," in rookery
     assert "d.legend(drivers)" in rookery
     assert "<caption>" in rookery and 'scope="row"' in rookery
-    assert "Import an export" in rookery and "lower bound" in rookery
+    assert "Import its exports" in rookery and "lower bound" in rookery
     assert "data-drawer>{{ split.cap_control }}</a>" in rookery
     # A mean that counts a lower bound says it is one (review of THE-1221).
     assert 'selectattr("insufficient")' in rookery
@@ -321,4 +321,4 @@ async def test_home_says_so_when_no_client_has_evidence(
     assert 'id="drivers-data"' not in html
     card = html.split('data-name="Empty Client Ltd"', 1)[1].split("</li>", 1)[0]
     assert "rv-drv-bar" not in card
-    assert "No evidence yet" in card and "Import an export" in card
+    assert "No evidence yet" in card and "Import its exports" in card

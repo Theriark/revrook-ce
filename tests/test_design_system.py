@@ -60,6 +60,7 @@ TYPE_SCALE = {"12px", "13px", "14px", "15px", "16px", "20px", "24px", "28px", "1
 NAV_LINKS = (
     ("/", "Home"),
     ("/clients", "Clients"),
+    ("/imports", "Import evidence"),
     ("/imports/profile-editor", "Profile editor"),
     ("/evidence/integrity", "Evidence integrity"),
     ("/experiments/evidence-explorer", "Evidence Explorer"),

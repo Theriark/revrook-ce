@@ -71,8 +71,32 @@ const WORDS = {
   session: "Your session has ended. Reload the page and sign in again.",
   lost: "The browser paused its drawing (the graphics context was lost). It resumes by itself when it can; the tables below are unchanged.",
   empty: "There is nothing to draw yet: this client has no evidence source and no control.",
-  closed: "The scene is closed. Reload the page to draw it again; the tables below show the same facts.",
+  closed: "The 3D view is off. The tables below show the same facts.",
+  off: "The 3D view is off. The tables below show the same facts; Show the 3D view draws them as a wall.",
 };
+
+// The choice of the scenes of every page (app/static/js/scenes.js, HIDE_KEY).
+const SCENES_KEY = "rv-scenes";
+
+function scenesShown() {
+  try {
+    return window.localStorage.getItem(SCENES_KEY) === "on";
+  } catch (error) {
+    return false;
+  }
+}
+
+function rememberShown(on) {
+  try {
+    if (on) {
+      window.localStorage.setItem(SCENES_KEY, "on");
+    } else {
+      window.localStorage.removeItem(SCENES_KEY);
+    }
+  } catch (error) {
+    // A browser that refuses storage keeps the choice for this page only.
+  }
+}
 
 function words(node, text) {
   if (node) {
@@ -512,7 +536,7 @@ function buildWall(THREE, root, data, options) {
   function select(id, face) {
     selected = entries.has(id) ? id : null;
     const entry = selected ? entries.get(selected) : null;
-    words(detail, entry ? describe(entry, data) : "Nothing selected. Point at a pillar or a tile, or press Show in scene on a row below.");
+    words(detail, entry ? describe(entry, data) : "Nothing selected. Hover over or select a pillar or a tile, or use Show in scene on a row below.");
     markRows();
     if (entry && face) {
       turnTo(Math.PI / 2 - entry.angle);
@@ -837,6 +861,42 @@ async function main() {
     root.setAttribute("data-explorer", "no-webgl");
     return;
   }
+  // The 3D view starts hidden, as the scenes of the other pages do, and shares
+  // their choice in this browser; the tables below are the record either way.
+  const toggle = root.querySelector("#explorer-toggle");
+  let started = false;
+  if (toggle) {
+    toggle.hidden = false;
+    toggle.addEventListener("click", () => {
+      const api = root.revrookExplorer;
+      if (api && api.info()) {
+        api.dispose();
+        rememberShown(false);
+        words(toggle, "Show the 3D view");
+        return;
+      }
+      rememberShown(true);
+      words(toggle, "Hide the 3D view");
+      if (api) {
+        api.mount();
+      } else if (!started) {
+        started = true;
+        start();
+      }
+    });
+  }
+  if (!scenesShown()) {
+    setState("note", WORDS.off);
+    root.setAttribute("data-explorer", "off");
+    return;
+  }
+  started = true;
+  if (toggle) {
+    words(toggle, "Hide the 3D view");
+  }
+  await start();
+
+  async function start() {
   setState("loading", WORDS.loading);
   root.setAttribute("data-explorer", "loading");
 
@@ -913,10 +973,11 @@ async function main() {
   // back-forward cache draws the wall again when it is shown.
   window.addEventListener("pagehide", dispose);
   window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
+    if (event.persisted && scenesShown()) {
       mount();
     }
   });
+  }
 }
 
 main();

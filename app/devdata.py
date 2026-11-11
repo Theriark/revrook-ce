@@ -550,18 +550,6 @@ def exchange_export(profile: str, captured: datetime) -> bytes:
     return keyed_rows(EXCHANGE_HEADER, lines)
 
 
-def reference_users(profile: str, captured: datetime) -> bytes:
-    rows = [
-        [
-            user(number),
-            "true" if profile == TIDY or number % 4 else "false",
-            stamp(captured),
-        ]
-        for number in range(1, 9)
-    ]
-    return to_csv(("user_principal_name", "mfa_registered", "exported"), rows)
-
-
 # --- the public DNS check -----------------------------------------------------------
 
 
@@ -607,9 +595,9 @@ BUILDERS = {
     "training-csv": training,
     "leavers-csv": leavers,
     "exchange-export": exchange_export,
-    "reference-csv": reference_users,
 }
-# Every source is either built here or is the DNS check (SeedResolver above).
+# Every source a person imports is either built here or is the DNS check
+# (SeedResolver above); the internal test source of app.sources is not seeded.
 SOURCES = (*BUILDERS, DNS_SOURCE)
 
 

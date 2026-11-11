@@ -48,7 +48,7 @@
 
 <section id="refresh" aria-labelledby="refresh-title">
 <div class="rv-section-head">
-<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. Import a fresh file with the <a href="/imports/profile-editor?client_id={{ client_id }}">profile editor</a>, or through the API.</p></div>
+<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. An export is measured by the strictest control that reads it, as the checklist measures it. Drop fresh files on <a href="/imports?client_id={{ client_id }}">Import evidence</a>, or run the DNS check below.</p></div>
 </div>
 {% if refresh %}
 <div class="rv-refresh">
@@ -63,9 +63,35 @@
 {% endif %}
 </section>
 
+<section id="dns-check" class="rv-card rv-dns-check" aria-labelledby="dns-check-title">
+<div class="rv-section-head">
+<div><h3 id="dns-check-title">Public DNS check</h3><p class="rv-section-note">Reads the public SPF, DKIM and DMARC records of the client's mail domains for PC-EML-01 to PC-EML-03. Only DNS questions about these names leave revrook.</p></div>
+</div>
+{% if done_message %}<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ done_message }}</span></p>{% endif %}
+<form method="post" action="/clients/{{ client_id }}/dns-check">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="rv-field-row">
+<div class="rv-field">
+<label for="dns-domains">Mail domains</label>
+<input id="dns-domains" name="domains" type="text" required maxlength="4000" value="{{ dns.domains }}" placeholder="example.com, example.co.uk" aria-describedby="dns-domains-help">
+<small id="dns-domains-help" class="rv-help">Up to 20, separated by commas or spaces.</small>
+</div>
+<div class="rv-field">
+<label for="dns-selectors">Extra DKIM selectors (optional)</label>
+<input id="dns-selectors" name="selectors" type="text" maxlength="4000" value="{{ dns.selectors }}" aria-describedby="dns-selectors-help">
+<small id="dns-selectors-help" class="rv-help">selector1 and selector2 of Microsoft 365 are always checked.</small>
+</div>
+</div>
+<label class="rv-check"><input type="checkbox" name="weekly"{% if dns.weekly %} checked{% endif %}> Run it again every Monday, so the evidence stays current</label>
+<div class="rv-actions">
+<button type="submit">Run the DNS check</button>
+</div>
+</form>
+</section>
+
 <section id="sources-section" aria-labelledby="sources-title">
 <div class="rv-section-head">
-<div><h3 id="sources-title">Sources</h3><p class="rv-section-note">Every source a control reads, with its newest export and the date it goes stale.</p></div>
+<div><h3 id="sources-title">Sources</h3><p class="rv-section-note">Every source a control reads, with its newest export and the date it goes stale for the strictest control that reads it.</p></div>
 </div>
 <table id="sources" class="rv-table-cards rv-sources">
 <caption>The newest export of every source</caption>
@@ -129,8 +155,8 @@
 <div class="rv-empty" id="items-empty">
 {{ i.icon("inbox", "xl") }}
 <p class="rv-empty-title">Nothing imported yet</p>
-<p class="rv-empty-text">Export the first file from a tool this client uses, then import it with the profile editor or through the API. Every control that reads that source takes its status from it.</p>
-<a role="button" href="/imports/profile-editor?client_id={{ client_id }}">Import an export</a>
+<p class="rv-empty-text">Export the files from the tools this client uses and drop them all on Import evidence. Every control that reads a source takes its status from it.</p>
+<a role="button" href="/imports?client_id={{ client_id }}">Import evidence</a>
 </div>
 {% endif %}
 </section>

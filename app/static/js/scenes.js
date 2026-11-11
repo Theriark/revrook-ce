@@ -70,7 +70,7 @@ const WORDS = {
   loading: "Preparing the scene.",
   noModule: "The scene library could not be loaded. Reload the page; the cards and the bars show the same facts.",
   lost: "The browser paused its drawing (the graphics context was lost). It resumes by itself when it can; the page is unchanged.",
-  closed: "The scene is closed.",
+  closed: "The 3D view is off. The cards and the bars show the same facts.",
   noWebGL: "This browser could not start the 3D view: WebGL is switched off or unavailable. The cards and the bars show the same facts.",
   footprints: "Every client is a footprint: nothing is imported yet. Import an export and its rook rises here.",
 };
@@ -130,20 +130,22 @@ function supportsWebGL2() {
   return true;
 }
 
+// The scenes start hidden: the cards and the bars carry the facts, and the 3D view
+// is drawn (and three.js loaded) only once a person asks for it in this browser.
 function scenesHidden() {
   try {
-    return window.localStorage.getItem(HIDE_KEY) === "off";
+    return window.localStorage.getItem(HIDE_KEY) !== "on";
   } catch (error) {
-    return false;
+    return true;
   }
 }
 
 function rememberHidden(off) {
   try {
     if (off) {
-      window.localStorage.setItem(HIDE_KEY, "off");
-    } else {
       window.localStorage.removeItem(HIDE_KEY);
+    } else {
+      window.localStorage.setItem(HIDE_KEY, "on");
     }
   } catch (error) {
     // A browser that refuses storage keeps the choice for this page only.
@@ -906,7 +908,7 @@ export async function prepare(root, THREE, motionQuery) {
   // well: one signal, the words.
   function syncToggle() {
     if (toggle) {
-      words(toggle.querySelector(".rv-scene-toggle-text") || toggle, built ? "Hide the scene" : "Show the scene");
+      words(toggle.querySelector(".rv-scene-toggle-text") || toggle, built ? "Hide the 3D view" : "Show the 3D view");
     }
   }
 
@@ -1031,10 +1033,48 @@ async function main() {
   if (!roots.length) {
     return;
   }
+  if (scenesHidden()) {
+    // Closed until asked: no library is loaded. One press opens every stage of the
+    // page and is remembered; `prepare` then wires the button as usual.
+    let asked = false;
+    roots.forEach((root) => {
+      root.hidden = false;
+      root.classList.add("is-closed");
+      root.setAttribute("data-scene-state", "disposed");
+      words(root.querySelector(".rv-scene-state-text"), WORDS.closed);
+      const toggle = root.querySelector(".rv-scene-toggle");
+      if (!toggle) {
+        return;
+      }
+      toggle.hidden = false;
+      words(toggle.querySelector(".rv-scene-toggle-text") || toggle, "Show the 3D view");
+      toggle.addEventListener("click", () => {
+        if (asked) {
+          return;
+        }
+        asked = true;
+        rememberHidden(false);
+        roots.forEach((each) => {
+          const old = each.querySelector(".rv-scene-toggle");
+          if (old) {
+            // A fresh button for `prepare`, without this one-time listener.
+            old.replaceWith(old.cloneNode(true));
+          }
+        });
+        openStages(roots);
+      }, { once: true });
+    });
+    return;
+  }
+  await openStages(roots);
+}
+
+async function openStages(roots) {
   // The stages are revealed before the library is asked for, so the page settles
   // once; a reader of the DOM sees the same cards and bars whatever happens next.
   roots.forEach((root) => {
     root.hidden = false;
+    root.classList.remove("is-closed");
     root.setAttribute("data-scene-state", "loading");
     const text = root.querySelector(".rv-scene-state-text");
     words(text, WORDS.loading);

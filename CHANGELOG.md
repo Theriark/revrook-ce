@@ -2,11 +2,24 @@
 
 All notable changes to revrook CE are recorded in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project will follow [Semantic Versioning](https://semver.org/) once it has a release.
 
-No version has been released: there is no stable tag, no stable GitHub release and no released image (the only image is the one built for each `development` commit and deployed to the Development environment). The annotated tags `v27.0.0-rc.1`, `v27.0.0-rc.2` and `v27.0.0-rc.3` mark earlier release candidates of Development, made by the `prepare-rc` job; they are not releases. Everything below is under Unreleased and describes the release candidate that the Development environment runs. The version in `pyproject.toml` stays `0.0.0.dev0` until a release is authorised ([docs/release-candidate.md](docs/release-candidate.md)).
+No version has been released: there is no stable tag, no stable GitHub release and no released image (the only image is the one built for each `development` commit and deployed to the Development environment). The annotated tags `v27.0.0-rc.1`, `v27.0.0-rc.2` and `v27.0.0-rc.3` mark earlier release candidates of Development, made by the `prepare-rc` job; they are not releases. Everything below is under Unreleased and describes the release candidate that the Development environment runs. The version in `pyproject.toml` is `27.0.0.dev0`, the development line of the v27 candidates, until a release is authorised ([docs/release-candidate.md](docs/release-candidate.md)).
 
 ## [Unreleased]
 
 ### Added
+
+- **Import evidence** (`/imports`, in the rail): drop every export of a client at once, up to 20 files and 20 MB in all. Each file is recognised by its columns or its Microsoft Graph fields (an empty Graph answer by its `@odata.context`), including a vendor export with a saved column mapping of the profile editor, and stored on its own, so a refused file stops none of the others. The five Microsoft sources, which had no page before, are imported here ([docs/importers.md](docs/importers.md#the-import-page)).
+- The public DNS check runs from the evidence page of a client, once or every Monday (a `dns-check` schedule of the worker), instead of only through the API.
+- `app/static/scripts/export-m365.ps1`, offered for download on Import evidence: one read-only PowerShell run writes the six Microsoft 365 files (Entra registration, Secure Score, Intune devices, Conditional Access, directory roles and the Exchange Online settings CSV) ready to drop on the page.
+- The System page shows the commit the image was built from (`REVROOK_REVISION`, set by the image build) beside the version.
+
+### Changed
+
+- The evidence pages measure an export by the strictest control that reads it (a device export goes stale after 7 days, not after the 35 days of the store), so they no longer call an export current while the checklist marks its controls expired. The Evidence Explorer links the DNS check to PC-EML-01 to PC-EML-03 instead of calling them manual.
+- The reference user list (`reference-csv`) only proves the import pipeline in tests: no page, list or report shows it, and the Development seed no longer imports it.
+- The quarterly review prints only the notes that were written for a finding, never "Not yet entered".
+- The 3D scenes (Home, client overview, Evidence Explorer) start hidden behind **Show the 3D view**, and three.js is loaded only when a person asks; their wording is plainer.
+- Settings marks the Development test accounts of `DEV_SEED_ACCOUNTS`; the integrity page folds the intact chains of deleted clients into one line.
 
 - Bulk actions on the clients list ([docs/design-system.md](docs/design-system.md), Clients): a select box on every row, one that selects the page, and a bar at the foot of the window to make a report for every chosen client, download the chosen rows as CSV, or delete them. Only actions the application already has are used, one client after another: the report builder's report for the last full quarter, and the System page's deletion after a dialog that asks for the name of each client (ten at most, checked again by the server); after a deletion the result says the counts above still include the deleted clients and links to the list again. Without script the list is as before.
 - Repository, container and CI foundations: a multi-stage non-root image, a compose stack (web, worker, PostgreSQL 16), hashed requirement files, the nine-check merge gate and the licence audit.

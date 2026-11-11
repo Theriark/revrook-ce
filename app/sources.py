@@ -16,6 +16,11 @@ SOURCE_NAMES = {
     "reference-csv": "Reference user list",
 }
 DNS_SOURCE = "dns-check"
+# The DNS controls read the DNS check, which is not a column of `field_map`.
+DNS_CONTROLS = ("PC-EML-01", "PC-EML-02", "PC-EML-03")
+# Sources that only prove the import pipeline in tests: no control reads them, and
+# no page, list or report shows them to a person.
+INTERNAL_SOURCES = frozenset({"reference-csv"})
 # The mark drawn beside a source (app/ui/templates/_icons.html, source_mark): one
 # drawing per family of export, never a vendor logo. A code that is not listed
 # gets the generic list mark.
@@ -42,11 +47,16 @@ def source_name(code: str) -> str:
     return SOURCE_NAMES.get(code, code)
 
 
+def is_shown(code: str) -> bool:
+    """Whether a source is one a person sees (not an internal test source)."""
+    return code not in INTERNAL_SOURCES
+
+
 def refresh_instruction(code: str) -> str:
     """What the MSP does to bring the evidence of a source up to date."""
     if code == DNS_SOURCE:
         return "Run the public DNS check again for the mail domains of this client."
-    return "Export it again from the source system and import it."
+    return "Export it again from the source system and import it on Import evidence."
 
 
 def source_icon(code: str) -> str:

@@ -25,7 +25,7 @@ from app.models import AppUser, Client
 from app.posture import load_live, view_of
 from app.reports.view import ReportContext, ReportError
 from app.ui.brand import STATIC_DIR
-from app.ui.clients import needed_sources
+from app.ui.clients import client_sources
 from app.ui.common import FormError, guarded, last_quarter, library_of, page
 from app.ui.explorer_view import (
     ExplorerView,
@@ -34,7 +34,6 @@ from app.ui.explorer_view import (
     source_names,
     verdict_text,
 )
-from app.ui.viewmodels import source_rows
 from app.web import clock_of, session_factory
 
 router = APIRouter()
@@ -115,7 +114,7 @@ async def load_explorer(
         generated_on=now.date(),
     )
     rows = view_of(live, library, context).rows
-    sources = source_rows(evidence, needed_sources(request))
+    sources = client_sources(request, evidence, now)
     return build_explorer(library, client_id, live.name, now, rows, sources)
 
 

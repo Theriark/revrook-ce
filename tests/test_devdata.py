@@ -15,7 +15,7 @@ from app.checks.dnscheck import render_document, run_checks
 from app.evidence.files import sha256_hex
 from app.importers.dnscheck import DnsCheckImporter
 from app.importers.registry import build_default_registry
-from app.sources import DNS_SOURCE, SOURCE_NAMES
+from app.sources import DNS_SOURCE, INTERNAL_SOURCES, SOURCE_NAMES
 
 CAPTURED = datetime(2026, 10, 23, 11, 0, tzinfo=UTC)
 ADDRESS = re.compile(r"[\w.+-]+@([\w.-]+)")
@@ -30,8 +30,8 @@ MAX_ROWS = 1000
 def test_every_source_of_the_product_has_a_seed_file_or_is_the_dns_check() -> None:
     imported = set(build_default_registry().source_codes())
     assert imported | {DNS_SOURCE} == set(SOURCE_NAMES)
-    assert set(devdata.BUILDERS) == imported
-    assert set(devdata.SOURCES) == set(SOURCE_NAMES)
+    assert set(devdata.BUILDERS) == imported - INTERNAL_SOURCES
+    assert set(devdata.SOURCES) == set(SOURCE_NAMES) - INTERNAL_SOURCES
     for profile in devdata.PROFILES:
         codes = [seed.source_code for seed in devdata.seed_files(profile, CAPTURED)]
         assert codes == list(devdata.BUILDERS)

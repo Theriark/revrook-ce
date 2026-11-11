@@ -42,6 +42,10 @@ COPY app ./app
 COPY --from=builder /build/three/three.module.js /build/three/three.core.js ./app/static/vendor/three/
 # The control library and the NIST reference names (read by app.checks).
 COPY data ./data
+# The commit the image is built from (CI passes the source SHA), shown on the System
+# page beside the version. Last, so a new commit keeps every layer above cached.
+ARG REVISION=""
+ENV REVROOK_REVISION=${REVISION}
 USER 10001:10001
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \

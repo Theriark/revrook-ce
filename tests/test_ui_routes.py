@@ -267,7 +267,7 @@ async def test_the_imports_page_names_the_stale_export_to_refresh(
     assert page.status_code == 200
     first = REFRESH_FIRST.search(page.text)
     assert first is not None and first.group(1) == "Backup jobs export"
-    assert "Export it again from the source system and import it." in page.text
+    assert "Export it again from the source system and import it on" in page.text
     assert "Expired" in page.text
     overview = await ui_browser.get(f"/clients/{client_id}")
     assert "See which export to refresh" in overview.text

@@ -54,7 +54,12 @@ from app.ui.dashboard import (
     weekly_series,
 )
 from app.ui.drivers import DRIVERS, portfolio_of
-from app.ui.viewmodels import SourceRow, read_earlier, source_rows
+from app.ui.viewmodels import (
+    SourceRow,
+    read_earlier,
+    source_max_ages,
+    source_rows,
+)
 from app.web import clock_of, current_session, session_factory
 
 router = APIRouter()
@@ -177,6 +182,7 @@ async def load_board(
     the range of the trend chart; the sparklines keep their twelve weeks."""
     library = library_of(request)
     wanted = needed_sources(request)
+    ages = source_max_ages(library)
     start, end = read_period("", "", now.date())
     postures: list[ClientPosture] = []
     attention: list[AttentionItem] = []
@@ -209,7 +215,7 @@ async def load_board(
             excepted = {entry.control_id for entry in live.exceptions}
             attention.extend(attention_items(client_id, name, view, excepted))
             domain_rows.extend(view.domains)
-            sources.extend(source_rows(evidence, wanted))
+            sources.extend(source_rows(evidence, wanted, ages, now))
         since = now - timedelta(days=HISTORY_DAYS)
         points = report_points(await recent_snapshots(session, since))
         # The trend keeps the range chosen: its reports and, per client, the one

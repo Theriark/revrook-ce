@@ -1,11 +1,13 @@
 """Settings and the glossary (phase 9), and the reminder address (phase 10)."""
 
+import os
 from datetime import UTC
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from sqlalchemy import select, update
 
+from app.devseed import configured_accounts, seed_enabled
 from app.models import AppUser
 from app.preferences import (
     get_msp_name,
@@ -60,6 +62,10 @@ async def settings_response(
         "errors": errors,
         "saved": saved,
         "usernames": usernames,
+        # Development only: the sign-in names the dev seed keeps for automated checks.
+        "test_accounts": (
+            set(configured_accounts(os.environ)) if seed_enabled(os.environ) else set()
+        ),
         "disclaimer": DISCLAIMER,
         "domains": library.domains,
         "ruleset": f"{library.ruleset_id} {library.version}",

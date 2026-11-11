@@ -8,13 +8,14 @@ are out of date first, so the MSP knows which file to fetch next.
 
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from fractions import Fraction
 from urllib.parse import urlencode
 
+from app.checks.library import Library
 from app.checks.model import ControlResult
 from app.evidence.assurance import Assurance
-from app.evidence.expiry import Freshness
+from app.evidence.expiry import Freshness, state_of_item
 from app.evidence.service import EvidenceView
 from app.reports.status import (
     NEEDS_ATTENTION,
@@ -39,7 +40,13 @@ from app.scoring.snapshot import (
     parse_snapshot,
     score_snapshot,
 )
-from app.sources import refresh_instruction, source_name
+from app.sources import (
+    DNS_CONTROLS,
+    DNS_SOURCE,
+    is_shown,
+    refresh_instruction,
+    source_name,
+)
 
 NOT_ASSIGNED = "Not assigned"
 NOT_MEASURED = "Not measured"
@@ -286,38 +293,95 @@ class SourceRow:
     refresh: str | None
 
 
+def control_sources(library: Library) -> dict[str, tuple[str, ...]]:
+    """The sources (importer codes) each control reads, by control id.
+
+    A field is mapped to an adapter column in `field_map`; the three mail controls
+    also read the public DNS check, which is not a file and so not in `field_map`.
+    A manual-only control reads no source and gets an empty tuple.
+    """
+    found: dict[str, tuple[str, ...]] = {}
+    for control in library.controls:
+        codes = {
+            library.field_map[field].adapter
+            for field in control.fields
+            if field in library.field_map
+        }
+        if control.id in DNS_CONTROLS:
+            codes.add(DNS_SOURCE)
+        found[control.id] = tuple(sorted(codes))
+    return found
+
+
+def source_max_ages(library: Library) -> dict[str, int]:
+    """The strictest automatic maximum age, in days, of the controls reading a source.
+
+    An export goes stale for the checks as soon as the strictest control that reads
+    it says so (a device export after 7 days, not after the 35 days of the store),
+    so the evidence pages measure a source by this age and agree with the checklist.
+    """
+    ages: dict[str, int] = {}
+    reads = control_sources(library)
+    for control in library.controls:
+        days = control.max_age_days.automatic
+        if days is None:
+            continue
+        for code in reads[control.id]:
+            ages[code] = min(days, ages.get(code, days))
+    return ages
+
+
+def _measured(
+    view: EvidenceView, max_days: int | None, as_of: datetime | None
+) -> tuple[Freshness, datetime | None]:
+    """The state and the stale-after moment of an export under the controls' age."""
+    if max_days is None or as_of is None or view.expires_at is None:
+        return view.freshness, view.expires_at
+    stale_at = min(view.expires_at, view.captured_at + timedelta(days=max_days))
+    return state_of_item(view.captured_at, stale_at, as_of), stale_at
+
+
 def source_rows(
-    views: Sequence[EvidenceView], wanted: Collection[str]
+    views: Sequence[EvidenceView],
+    wanted: Collection[str],
+    max_ages: Mapping[str, int] | None = None,
+    as_of: datetime | None = None,
 ) -> list[SourceRow]:
     """One row per source, by name: every source with an export, and every source
     that a control reads (`wanted`) even when nothing was imported yet.
 
     `views` come newest first (as `list_evidence` gives them), so the first export of
-    a source is its newest.
+    a source is its newest. With `max_ages` (source_max_ages) and `as_of`, a source is
+    measured by the strictest control that reads it, as the checklist measures it;
+    without them, by the age the store gave the export. Internal test sources are
+    left out.
     """
     newest: dict[str, EvidenceView] = {}
     counts: dict[str, int] = {}
     for view in views:
         if view.assurance is not Assurance.AUTOMATIC_EXPORT:
             continue
+        if not is_shown(view.source_code):
+            continue
         counts[view.source_code] = counts.get(view.source_code, 0) + 1
         newest.setdefault(view.source_code, view)
     rows: list[SourceRow] = []
     for code, view in newest.items():
-        state = STATE_OF_FRESHNESS[view.freshness]
+        freshness, stale_at = _measured(view, (max_ages or {}).get(code), as_of)
+        state = STATE_OF_FRESHNESS[freshness]
         rows.append(
             SourceRow(
                 code=code,
                 name=source_name(code),
                 state=state,
                 captured_at=view.captured_at,
-                expires_at=view.expires_at,
+                expires_at=stale_at,
                 exports=counts[code],
                 refresh=None if state == CURRENT else refresh_instruction(code),
             )
         )
     for code in wanted:
-        if code not in newest:
+        if code not in newest and is_shown(code):
             rows.append(
                 SourceRow(
                     code=code,
