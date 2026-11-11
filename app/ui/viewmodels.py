@@ -341,6 +341,17 @@ def _measured(
     return state_of_item(view.captured_at, stale_at, as_of), stale_at
 
 
+def item_state(
+    view: EvidenceView, max_ages: Mapping[str, int], as_of: datetime
+) -> StatusLabel:
+    """The state of one stored export, measured as its source row measures it, so
+    the item list and the sources table of the evidence page agree."""
+    if view.assurance is not Assurance.AUTOMATIC_EXPORT:
+        return STATE_OF_FRESHNESS[view.freshness]
+    freshness, _ = _measured(view, max_ages.get(view.source_code), as_of)
+    return STATE_OF_FRESHNESS[freshness]
+
+
 def source_rows(
     views: Sequence[EvidenceView],
     wanted: Collection[str],

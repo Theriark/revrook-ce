@@ -37,6 +37,7 @@ from app.ui.viewmodels import (
     coverage_text,
     evidence_facts,
     flags_of,
+    item_state,
     only_flagged,
     read_earlier,
     reason_text,
@@ -267,6 +268,16 @@ def test_a_source_is_measured_by_the_strictest_control_that_reads_it() -> None:
         [export_view("device-inventory", 3, Freshness.CURRENT)], [], ages, NOW
     )
     assert fresh.state == CURRENT
+
+
+def test_an_item_of_the_list_is_measured_like_its_source_row() -> None:
+    ages = source_max_ages(LIBRARY)
+    device = export_view("device-inventory", 19, Freshness.CURRENT)
+    assert item_state(device, ages, NOW) == EXPIRED
+    entra = export_view("entra-registration", 19, Freshness.CURRENT)
+    assert item_state(entra, ages, NOW) == CURRENT
+    manual = evidence_view("leavers-csv", 19, Freshness.STALE, Assurance.ATTESTATION)
+    assert item_state(manual, ages, NOW) == STALE
 
 
 def test_the_mail_controls_read_the_dns_check_and_internal_sources_stay_hidden() -> (

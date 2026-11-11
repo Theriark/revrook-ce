@@ -81,13 +81,13 @@ from app.ui.overview import domain_lines
 from app.ui.viewmodels import (
     CHECKLIST_SORT_KEYS,
     CHECKLIST_SORTS,
-    STATE_OF_FRESHNESS,
     ChecklistQuery,
     SourceRow,
     checklist_rows,
     control_sources,
     coverage_text,
     evidence_facts,
+    item_state,
     only_flagged,
     read_earlier,
     read_search,
@@ -769,8 +769,9 @@ async def evidence_page(request: Request, client_id: RowId, done: str = "") -> R
         schedule = await dns_schedule(request, client_id)
         config = schedule.config if schedule is not None else {}
         rows = client_sources(request, views, now)
+        ages = source_max_ages(library_of(request))
         items = [
-            (view, STATE_OF_FRESHNESS[view.freshness], source_name(view.source_code))
+            (view, item_state(view, ages, now), source_name(view.source_code))
             for view in views
             if is_shown(view.source_code)
         ]
