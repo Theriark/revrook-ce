@@ -15,6 +15,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Changed
 
+- Three workflows: `CI`, `Release candidate` and `Promote - Stage`. The release candidate job moved unchanged from `mode=prepare-rc` of `CI` into its own workflow, `prepare-rc.yml`; `Promote - Stage` accepts candidates from either. `Finalize Release` and `Promote - Production` were removed until a stable release is separately approved ([docs/ci-cd.md](docs/ci-cd.md)).
 - The evidence pages measure an export by the strictest control that reads it (a device export goes stale after 7 days, not after the 35 days of the store), so they no longer call an export current while the checklist marks its controls expired. The Evidence Explorer links the DNS check to PC-EML-01 to PC-EML-03 instead of calling them manual.
 - The reference user list (`reference-csv`) only proves the import pipeline in tests: no page, list or report shows it, and the Development seed no longer imports it.
 - The quarterly review prints only the notes that were written for a finding, never "Not yet entered".
