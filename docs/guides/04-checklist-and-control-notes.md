@@ -86,7 +86,8 @@ The page of a control:
    wording above them. Notes are saved as you type (the card says "Saving" while a
    note is posted); **Save notes** posts them without script.
 
-To change a status, import newer evidence ([3. Import evidence](03-import-evidence.md)):
+To change a status, drop newer exports on **Import evidence** (the line at the foot
+of the page links to it, opened on this client; [3. Import evidence](03-import-evidence.md)):
 notes and exceptions never change a status and never raise the score.
 
 Next: [5. Exceptions](05-exceptions.md).

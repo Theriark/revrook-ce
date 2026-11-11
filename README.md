@@ -30,30 +30,29 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on 2026-10-27 and 2026-10-28 from the
-application build documented and captured (commit
-`d0a2e9fe8c769bb3fdb8ee884a3c16199dcc57a5`, image
-`sha256:91c6b72cb44ddd4aba33b1c04c0b2b27283311ebab5f752eba92faa5b67183ef`; the five
-pictures that show the layout fixes on top, commit
-`f6fc70857e776629e13edb04e75a353bee6682fe`, image
-`sha256:49ab77bf0718d3ee37cb477da54a1a1fd5ea9d2ceedd51fc406f952351e6045a`, were taken
-again on that build, and the four that show chosen rows were taken again on the fix of
-their links, application build `2e6b540ecde7561141b897e3be471ba311e53e04`, from the
-deployment of documentation commit `ab870e4dd8af940747344544be459f84d773227e`, image
-`sha256:2b49e1635a8ebaccd629c65be3bf0ebc59ac20b9b954844626a178379deedf1b`), with
-synthetic test data only
-([capture manifest](docs/images/README.md)). Later documentation-only
-commits are deployed on top with the same application code; the deployed head is read
-from the deployment receipt and the package manifest.
+Live captures of the Development site, taken on 2026-11-11 from the application build
+documented and captured (commit `99aaf21b26a93a54b6db1aa5534e602c6e2e8541`, the merge of pull request #90, image
+`sha256:6bd4e84cbbabccfd8b96ad5f44e9ed714262412bb81cceb61fdedb9c75967e6c`), with synthetic test data only
+([capture manifest](docs/images/README.md)). Later documentation-only commits are
+deployed on top with the same application code; the deployed head is read from the
+deployment receipt and the package manifest.
 
 **Home**: the keep, the charcoal band with the battlement of the mark, carries the title
 and the one primary action; the four stat cards stand on its foot as one ledger; under
 **What moves the score** the gauge of the mean score sits beside the rookery skyline,
-one rook per client as tall as its score
+one rook per client as tall as its score. The 3D view opens hidden and is drawn once
+**Show the 3D view** is pressed, as here
 ([guide 2](docs/guides/02-clients-and-home.md),
 [guide 8](docs/guides/08-scenes-rail-and-explorer.md)).
 
 ![Home with the keep, the ledger, the gauge and the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
+
+**Import evidence**: every export of a client dropped on one page, each file recognised
+by its columns and stored on its own, so a refused file stops none of the others
+([guide 3](docs/guides/03-import-evidence.md)); the six Microsoft 365 files come from
+one read-only script ([guide 10](docs/guides/10-microsoft-365-export.md)).
+
+![The result of an import at 1440 px, light theme: three of four files imported, one refused as not recognised](docs/images/imports-1440-result.png)
 
 **What moves the score**: the hundred points of each client split into what it earns
 and what costs it the rest, with the controls that cost the most
@@ -114,7 +113,7 @@ sideways, with a cue at its edge, and every card and table row takes the whole w
 | [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |
 | [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state and the release workflow check |
 | [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
-| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the scenes, the folded rail, the Evidence Explorer, the top bar, the checklist tools, the score drivers and the bulk actions, with live screenshots ([docs/images](docs/images/README.md)) |
+| [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the import page, the Microsoft 365 export script, the public DNS check, the scenes, the folded rail, the Evidence Explorer, the top bar, the checklist tools, the score drivers and the bulk actions, with live screenshots ([docs/images](docs/images/README.md)) |
 
 Changes are listed in the [CHANGELOG](CHANGELOG.md).
 

@@ -103,9 +103,12 @@ database.
 ## Real data
 
 The six demo files are the same shape as real exports. Write your own with the guides
-in [importers.md](importers.md), and upload them through the API (an API token is made
-the way `scripts/demo.sh` makes one) or, for a file whose columns have other names, with
-the **Profile editor** in the top bar. Plan the installation first: [install.md](install.md),
+in [importers.md](importers.md), and drop them all at once on **Import evidence** in the
+rail, which recognises each by its columns ([guide 3](guides/03-import-evidence.md));
+the six Microsoft 365 files come from one read-only script
+([guide 10](guides/10-microsoft-365-export.md)). The API takes them too (an API token is
+made the way `scripts/demo.sh` makes one), and a file whose columns have other names is
+mapped once in the **Profile editor**. Plan the installation first: [install.md](install.md),
 [configuration.md](configuration.md), [operations.md](operations.md) for backups.
 
 ## If something goes wrong
