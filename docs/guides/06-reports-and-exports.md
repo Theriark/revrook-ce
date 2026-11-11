@@ -23,7 +23,8 @@ Open a client and its tab **Reports** (or **Prepare a report** on the overview).
    insurance topics and the owner of each go into the pack. Everything here is saved as
    you type (the line under the form shows when); **Save the details** posts it without
    script. The notes for each control are written on its own page
-   ([4. The checklist](04-checklist-and-control-notes.md)).
+   ([4. The checklist](04-checklist-and-control-notes.md)); the review prints only
+   the notes that were written, never a placeholder for an empty one.
 3. **Make the report.** Press **Make the report for this period**. This stores the
    state of the client today as a snapshot and opens the preview page. A second press
    within 30 seconds opens the report the first press made instead of storing another.
@@ -85,7 +86,7 @@ lines. Printing keeps the A4 layout.
 
 ![The cover of the quarterly security review on a phone at 390 px](../images/report-preview-file-390.png)
 
-![A table of the review scrolling in its frame on a phone at 390 px](../images/report-preview-file-390-table.png)
+![The controls by status table of the review on a phone at 390 px](../images/report-preview-file-390-table.png)
 
 ## The export history
 

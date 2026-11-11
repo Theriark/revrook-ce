@@ -9,7 +9,48 @@ the application reports is `27.0.0.dev0`
 earlier ones are kept below as history. The full list of changes is the
 [CHANGELOG](../CHANGELOG.md).
 
+## Candidate of 2026-11-11
+
+| Fact | Value |
+| --- | --- |
+| Application build documented and captured | commit `99aaf21b26a93a54b6db1aa5534e602c6e2e8541` (merge of pull request #90), image `ghcr.io/theriark/revrook-ce@sha256:6bd4e84cbbabccfd8b96ad5f44e9ed714262412bb81cceb61fdedb9c75967e6c` (deployment receipt of the Development environment: CI run 43090547270, Dokploy deployment `74dTjv4AG-H9fHJgQ009u`, deployed 2026-11-11T20:01:55Z, read before the captures and verified against the image's revision label). Later documentation-only commits are deployed on top with the same application code; the deployed head is read from the deployment receipt and the package manifest. |
+| Version shown | `27.0.0.dev0`, with the build commit beside it on the System page |
+| Screenshot capture source | the same commit and image: every picture of the set, the two of the sign-in page included, was captured on 2026-11-11 between 20:28 and 20:49 Europe/Lisbon (UTC+00:00, so the same as UTC) in one browser session; 62 pictures, 6 of them new for the import page and the DNS check ([capture manifest](images/README.md)) |
+| Release candidate label | set by the `prepare-rc` job after the independent review of this documentation; the tags `v27.0.0-rc.1` to `v27.0.0-rc.4` name earlier candidates (`v27.0.0-rc.4` is commit `8aa84591`, before the revamp) |
+| Documentation | the [guides](guides/README.md), with the rewritten [guide 3](guides/03-import-evidence.md) for the import page and the new [guide 10](guides/10-microsoft-365-export.md) (the Microsoft 365 export script) and [guide 11](guides/11-public-dns-check.md) (the public DNS check), and the README preview |
+
+### What changed since the candidate of 2026-10-27
+
+One page, **Import evidence**, takes every export of a client at once and recognises
+each file by its columns or its Microsoft Graph fields, a saved column mapping of the
+profile editor included, so the five Microsoft sources can be imported from the
+interface for the first time; the public DNS check runs from the evidence page of a
+client, once or every Monday; `export-m365.ps1`, offered on the import page, writes the
+six Microsoft 365 files of a tenant in one read-only PowerShell run; the evidence pages
+measure an export by the strictest control that reads it, so they agree with the
+checklist, and the Evidence Explorer links the DNS check to the three mail controls;
+the reference user list is internal to the tests; the quarterly review prints only the
+notes that were written; the 3D scenes start hidden behind **Show the 3D view** and
+their wording is plainer; Settings marks the Development test accounts; the integrity
+page folds the intact chains of deleted clients into one line; and the System page
+shows the version `27.0.0.dev0` and the commit the image was built from. The CHANGELOG
+lists each of them.
+
+### Known limits of this candidate
+
+The limits 1 to 8 and 10 to 13 of the earlier candidates below still hold. In addition:
+
+14. **The Microsoft 365 export script is documented, not pictured.** It runs on the
+    MSP's own machine against a tenant; the documentation set has no tenant, so guide 10
+    describes its run and its files from the script itself, and the pictures show the
+    files it writes being imported, not the run.
+15. **The import page keeps the capture time of a CSV from the form.** The CSV
+    exports carry no time of their own, so the time typed on the page is the capture
+    time of every CSV of that import; the Microsoft Graph files keep their own.
+
 ## Candidate of 2026-10-27
+
+This section is history: the candidate of 2026-10-27.
 
 | Fact | Value |
 | --- | --- |

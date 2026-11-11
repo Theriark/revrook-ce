@@ -3,14 +3,18 @@
 Three pages carry a scene drawn in the browser: the rookery skyline on **Home**, the
 domain keep on the overview of a client, and the rookery wall of the **Evidence
 Explorer**. Each scene draws facts the page already shows: the cards, the bars and the
-tables under it stay the record, and a scene adds nothing to a report. How the scenes
-are built is in the [design system](../design-system.md#scenes).
+tables under it stay the record, and a scene adds nothing to a report. The scenes
+start hidden: a page opens on its cards and bars, with the button **Show the 3D
+view** above the stage, and nothing is drawn (and no scene library loaded) until you
+press it ([hide or show the scenes](#hide-or-show-the-scenes)). The pictures of this
+guide show the scenes after that press. How the scenes are built is in the
+[design system](../design-system.md#scenes).
 
 A scene needs script and a browser with WebGL 2. Without them the page is the cards,
 the bars and the tables, with no empty box where the scene would be. When the browser
 offers WebGL 2 but then refuses to start it (WebGL switched off or unavailable), the
-stage shows a short note that says so instead of an empty drawing, and **Show the
-scene** can try again. Nothing in the
+stage shows a short note that says so instead of an empty drawing, and **Show the 3D
+view** can try again. Nothing in the
 rookery or the keep turns by itself, and when the system asks for reduced motion every
 move is immediate.
 
@@ -25,7 +29,7 @@ and every notch at the foot of a rook is a control that needs work.
 
 ![The rookery on Home at 1440 px, dark theme](../images/home-1440-dark.png)
 
-1. Point at a rook, or at its card, to read its name in the line under the stage.
+1. Hover over a rook, or over its card, to read its name in the line under the stage.
 2. Press a rook to choose it: the others step back, its card in the score drivers gets
    the violet mark at its left edge, and the detail line under the buttons names the client, its score,
    its band and how many controls need work.
@@ -54,7 +58,7 @@ layers: protected at the foot, then needs attention, then not protected, and not
 checked as wire, in the colours of the bars under it. A heavy domain with red layers
 stands out at once.
 
-1. Point at a block, or at its bar, to read it in the line under the stage.
+1. Hover over a block, or over its bar, to read it in the line under the stage.
 2. Press a block, or focus the stage and press **Left** or **Right**, to choose a
    domain: the detail line names its protected controls, its weight and its score, and
    its bar gets a line in the margin of the card.
@@ -77,13 +81,16 @@ every width; from 600 px the stage is 16 by 9.
 
 ## Hide or show the scenes
 
-The button above a stage, **Hide the scene**, puts the scenes away in this browser: the
-stage, its buttons and its detail line go, and the cards and the bars stay where they
-were. On Home the gauge keeps its place in the panel. The button then reads **Show the
-scene** and brings them back. The choice is
-kept in this browser only (another browser, or another person, still sees the scenes).
+A page opens with its scenes hidden: the lead line of the stage says what the 3D view
+would show, and the button beside it reads **Show the 3D view**. On Home the gauge
+keeps its place in the panel. Press the button and every stage of the page opens, the
+library is loaded once, and the scene is drawn; the button then reads **Hide the 3D
+view** and puts the scenes away again: the stage, its buttons and its detail line go,
+and the cards and the bars stay where they were. The choice is kept in this browser
+only (another browser, or another person, still opens on the cards), and it holds for
+Home, the client overview and the Evidence Explorer together.
 
-![Home with the scenes hidden at 1440 px, dark theme](../images/home-1440-scenes-hidden-dark.png)
+![Home as it opens, the scenes hidden, at 1440 px, dark theme](../images/home-1440-scenes-hidden-dark.png)
 
 ## Fold the rail
 
@@ -117,11 +124,13 @@ or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 1. Choose the **Client** and press **Show**.
 2. The verdict band gives the status that needs the most work, with the sources, the
    current exports, the exports to refresh and the links between sources and controls.
-3. **The rookery wall**: an inner ring of pillars, one per evidence source, as tall as
-   the number of controls it feeds; an outer ring of tiles, one per control, grouped by
-   domain; a beam from a source to every control that reads it. The legend under the
-   buttons names every shape.
-4. Point at a pillar or a tile to name it; press it to bring its beams forward. A drag,
+3. **The rookery wall** opens with **Show the 3D view** in the head of its card (the
+   same choice as the scenes of Home and the client overview): an inner ring of
+   pillars, one per evidence source, as tall as the number of controls it feeds; an
+   outer ring of tiles, one per control, grouped by domain; a beam from a source to
+   every control that reads it. The public DNS check is a pillar of its own, joined to
+   the three mail controls. The legend under the buttons names every shape.
+4. Hover over a pillar or a tile to name it; select it to bring its beams forward. A drag,
    **Turn left**, **Turn right** and **Reset view** turn the wall; **Turn by itself**
    lets it turn slowly until you touch it (not under reduced motion).
 5. Under the scene, **Evidence sources** and the table of the controls carry the same

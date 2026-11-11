@@ -30,7 +30,11 @@ no link. `app/ui/explorer_view.py` turns the two into one view model, and
   status today, their evidence and the exports they read);
 - as JSON at `/experiments/evidence-explorer/data?client_id=N`, for the scene.
 
-The tables are the record. The scene is one way of looking at them.
+The tables are the record. The scene is one way of looking at them, and it starts
+hidden: the card opens with **Show the 3D view** in its head, and the wall is drawn
+(and the library loaded) only once a person presses it, the same choice the scenes of
+Home and the client overview keep in this browser. The public DNS check counts as a
+source of the three mail controls, so it stands as a pillar of its own.
 
 ## The scene: the rookery wall
 
@@ -44,7 +48,7 @@ a small disc for Not applicable. A beam joins a source to every control that rea
 it. Status is shape and colour together, never colour alone, and nothing is written
 inside the scene: the detail line, the legend and the tables carry every word.
 
-Pointing at a pillar or a tile names it; a press selects it and brings its beams
+Hovering over a pillar or a tile names it; selecting it brings its beams
 forward while the rest steps back; the same happens from the **Show in scene**
 button of a table row, which also turns the wall to face it. A drag turns and tilts
 the wall; the buttons under it turn it by a step or reset the view. The canvas is

@@ -21,8 +21,9 @@ Open **Settings** in the Administration group.
 
 The picture stops above the weights of the domains and **Users and mappings**. On the
 shared Development installation that card also lists a second sign-in account created
-by the Development seed (`DEV_SEED_ACCOUNTS` in `deploy/dokploy.json`), and its address
-is kept out of every picture ([capture manifest](../images/README.md)).
+by the Development seed (`DEV_SEED_ACCOUNTS` in `deploy/dokploy.json`), marked
+**Development test account** so nobody takes it for a second administrator; its
+address is kept out of every picture ([capture manifest](../images/README.md)).
 
 ## System
 
@@ -32,11 +33,15 @@ Open **System** in the Administration group.
 
 - The verdict band says whether the worker is running, the newest heartbeat, when the
   banner appears (90 seconds without a report), the schedules and the role of this
-  process. The purpose line names the version the application reports.
+  process. The purpose line names the version the application reports
+  (`27.0.0.dev0`, the development line of the v27 candidates) and, after it, the
+  commit the image was built from (`build` and its first twelve characters).
 - **Schedules**: what the worker runs, all times UTC, with the cron expression, whether
   it is on, and its last and next run. The two daily schedules, expiry reminders at
   06:00 and the retention purge at 03:30, are created by the worker
-  ([operations](../operations.md#the-worker)).
+  ([operations](../operations.md#the-worker)); a `dns-check` schedule is added for a
+  client whose DNS check was run from its evidence page, on while the weekly box is
+  ticked ([11. The public DNS check](11-public-dns-check.md)).
 - **Reminders and outside services**: one tile each for the mail relay, the reminder
   address, the outside heartbeat and the metrics endpoint, saying whether it is set.
 - **Your data**: **Download all data as CSV files** is one zip with everything revrook

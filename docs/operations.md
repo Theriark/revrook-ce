@@ -50,7 +50,10 @@ day-of-week`, with lists, ranges and steps), one of `@hourly`, `@daily`, `@weekl
 
 The worker creates two schedules when it starts and does not change them afterwards:
 `expiry-reminders` at 06:00 and `retention-purge` at 03:30 UTC every day. They can be
-switched off or changed in the database; `GET /api/v1/schedules` lists them.
+switched off or changed in the database; `GET /api/v1/schedules` lists them. A
+`dns-check` schedule (`dns-check-client-<id>`, every Monday at 05:00 UTC) is created
+or updated by the evidence page of a client when its DNS check is run with the weekly
+box ticked, and switched off when it is run without it ([dns-check](dns-check.md)).
 
 ```text
 POST   /api/v1/schedules                           add a schedule (kind, cron, client_id, domains...)
