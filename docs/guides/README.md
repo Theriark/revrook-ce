@@ -2,8 +2,9 @@
 
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
 in the order a new installation meets them. Every picture is a live capture, taken on
-2026-11-12, of a local build of commit `6ee1bba09be2c2a705a9347fa136ea9ff7c63d97` (the
-merge of pull request #108, the build Development runs) with the synthetic data of the
+2026-11-12, of a local build of commit `544b16606e7475b8b10db186c8ff38db78800eb7` (the
+merge of pull request #114) with the Evidence Explorer table fix of the same pull request
+as these pictures, with the synthetic data of the
 Development seed (see the [capture manifest](../images/README.md)); it is not a
 capture of a deployment. Pictures at 1440 px are the desktop view; pictures at 768 px
 and 390 px are labelled as tablet and phone views in their captions. The pictures

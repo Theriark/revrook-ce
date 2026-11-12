@@ -108,8 +108,9 @@ client opens its overview.
 
 ![The clients list at 1440 px](../images/clients-1440.png)
 
-- A chip per band (**Strong** to **No report yet**) counts the clients in that band of
-  their last report and narrows the list to them; a band with no client has no chip.
+- A chip per band (**Strong** to **Insufficient evidence**) counts the clients in that
+  band of their last report and narrows the list to them; a band with no client has no
+  chip. Clients without a report are under **No report yet** in the first row.
 - **Search by name** (the list has its own search, so the top bar shows none here; the
   / key goes to it) and the chips **All clients**, **Needs work**, **No report yet** and
   **No evidence yet** filter the list; the headings sort it; **Comfortable** and

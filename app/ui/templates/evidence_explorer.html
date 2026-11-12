@@ -96,6 +96,7 @@
 </section>
 <h2 id="explorer-companies-title">Companies</h2>
 <p class="rv-text-secondary">One row per active client: its score today and how many of the {{ portfolio.controls|length }} controls stand at each status.</p>
+<div class="rv-table-scroll rv-explorer-scroll" role="region" aria-label="Companies table" tabindex="0">
 <table id="explorer-companies" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-companies-title">
 <caption>Every active client, its score and its controls per status today</caption>
 <thead>
@@ -118,8 +119,10 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 <h2 id="explorer-controls-title">Controls across the companies</h2>
 <p class="rv-text-secondary">Every control of {{ portfolio.ruleset }} with how many clients stand at each status for it today. A tile of the scene takes the worst of them.</p>
+<div class="rv-table-scroll rv-explorer-scroll" role="region" aria-label="Controls table" tabindex="0">
 <table id="explorer-controls" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-controls-title">
 <caption>Every control and its clients per status today</caption>
 <thead>
@@ -141,6 +144,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% if portfolio.controls|length > 12 %}<p class="rv-table-more"><a href="#explorer-controls">Show all {{ portfolio.controls|length }} controls</a></p>{% endif %}
 {#- What the scene shows beside an office or a tile it chooses (evidence-explorer.js
     clones these through scene-card.js, never builds them): the company card of
@@ -182,6 +186,7 @@
 </section>
 <h2 id="explorer-sources-title">Evidence sources</h2>
 <p class="rv-text-secondary">One row per source a control reads: the state of its newest export and the controls it feeds. The newest export of every source is what the checks run on.</p>
+<div class="rv-table-scroll rv-explorer-scroll" role="region" aria-label="Sources table" tabindex="0">
 <table id="explorer-sources" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-sources-title">
 <caption>Every evidence source of {{ view.client_name }}, the state of its newest export and the controls it feeds</caption>
 <thead>
@@ -207,8 +212,10 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 <h2 id="explorer-controls-title">Controls and the exports they read</h2>
 <p class="rv-text-secondary">Every control of {{ view.ruleset }} with the status the report would give it today, the state of its evidence and the exports its rule reads. A manual-only control reads no export.</p>
+<div class="rv-table-scroll rv-explorer-scroll" role="region" aria-label="Controls table" tabindex="0">
 <table id="explorer-controls" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-controls-title">
 <caption>Every control of {{ view.client_name }}, its status today, its evidence and the sources it reads</caption>
 <thead>
@@ -234,6 +241,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% if view.controls|length > 12 %}<p class="rv-table-more"><a href="#explorer-controls">Show all {{ view.controls|length }} controls</a></p>{% endif %}
 <div class="rv-alert" id="explorer-note">
 <p class="rv-alert-title">What this view is</p>
