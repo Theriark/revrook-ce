@@ -31,7 +31,12 @@
  * scenes with the button under a stage; the choice is kept in this browser only.
  */
 
-import { officeBuilding, streetKit } from "./office.js";
+// The office model is imported with the version of this script (the `v` query of
+// its own address): a cache in front of the site keeps a static file for hours,
+// so an unversioned import served the previous buildings after a deploy.
+const OFFICE_URL = "./office.js" + new URL(import.meta.url).search;
+let officeBuilding = null;
+let streetKit = null;
 
 const THREE_URL = "/static/vendor/three/three.module.js";
 const HIDE_KEY = "rv-scenes";
@@ -1126,6 +1131,7 @@ async function openStages(roots) {
   let THREE;
   try {
     THREE = await import(THREE_URL);
+    ({ officeBuilding, streetKit } = await import(OFFICE_URL));
   } catch (error) {
     roots.forEach((root) => {
       root.setAttribute("data-scene-state", "error");
