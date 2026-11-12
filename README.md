@@ -30,12 +30,11 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures of the Development site, taken on 2026-11-11 from the application build
-documented and captured (commit `99aaf21b26a93a54b6db1aa5534e602c6e2e8541`, the merge of pull request #90, image
-`sha256:6bd4e84cbbabccfd8b96ad5f44e9ed714262412bb81cceb61fdedb9c75967e6c`), with synthetic test data only
-([capture manifest](docs/images/README.md)). Later documentation-only commits are
-deployed on top with the same application code; the deployed head is read from the
-deployment receipt and the package manifest.
+Live captures taken on 2026-11-12 of a local build of commit
+`544b16606e7475b8b10db186c8ff38db78800eb7` (the merge of pull request #114) with the
+Evidence Explorer table fix of the same pull request as these pictures, with the
+synthetic data of the Development seed only ([capture manifest](docs/images/README.md));
+they are not captures of a deployment.
 
 **Home**: the title and the one primary action on the page, the four stat cards as one
 ledger, **Needs attention** beside the score over time, and under **What moves the
@@ -71,7 +70,8 @@ chosen ([guide 9](docs/guides/09-top-bar-filters-and-bulk-actions.md)).
 
 ![The clients list with three clients chosen at 1440 px, light theme](docs/images/clients-1440-selected.png)
 
-**Evidence Explorer**: which evidence exports feed which controls of one client.
+**Evidence Explorer**: every client against every control, as a ring of offices and
+control tiles; for one client, which evidence exports feed which controls.
 
 ![The Evidence Explorer at 1440 px, light theme](docs/images/evidence-explorer-1440.png)
 

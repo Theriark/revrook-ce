@@ -297,6 +297,14 @@ main .rv-explorer-table tbody tr[data-selected="true"] > th {
   white-space: nowrap;
 }
 
+/* The tables of the Explorer are wider than their column between 768 and about
+   900px (eight columns and the Show in scene button): they scroll inside their
+   region, never the page. The rows are cards below 768px. */
+.rv-explorer-scroll td {
+  max-width: none;
+  overflow-wrap: normal;
+}
+
 @media (max-width: 599px) {
   .rv-explorer-stage {
     aspect-ratio: 4 / 3;
