@@ -81,6 +81,7 @@ from app.ui.overview import domain_lines
 from app.ui.viewmodels import (
     CHECKLIST_SORT_KEYS,
     CHECKLIST_SORTS,
+    NOT_ASSIGNED,
     ChecklistQuery,
     SourceRow,
     checklist_rows,
@@ -454,6 +455,9 @@ async def checklist(
             sorts=CHECKLIST_SORTS,
             narrowed=narrowed,
             has_earlier=loaded.earlier is not None,
+            # The Owner column shows only once a topic owner is set (report builder)
+            has_owners=any(item.owner != NOT_ASSIGNED for item in rows),
+            not_assigned=NOT_ASSIGNED,
         )
         return page(request, "checklist.html", user, context)
 

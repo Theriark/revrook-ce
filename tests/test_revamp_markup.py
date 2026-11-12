@@ -30,8 +30,7 @@ CELLS = (
     '<td data-label="Status">',
     '<td data-label="Coverage" class="rv-coverage">',
     '<td data-label="Evidence dated" class="rv-coverage">',
-    '<td data-label="Owner">',
-    '<td data-label="Why it needs a look">',
+    '<td data-label="Also needs a look">',
 )
 HIDDEN_STAGE = re.compile(r'<div class="rv-scene" id="rookery-scene"[^>]* hidden>')
 SVG_TEXT = re.compile(r'<text class="([a-z-]+)"')

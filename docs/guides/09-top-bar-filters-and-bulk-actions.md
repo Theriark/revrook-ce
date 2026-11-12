@@ -28,7 +28,7 @@ Every signed-in page opens with the top bar, above the page header.
 ## The filters in use on the clients list
 
 A search, a filter chip (**Needs work**, **No report yet**, **No evidence yet**) or a band
-of **Clients by band** narrows the list. Each one in use is shown under **Filtered by**
+chip (**Weak**, **Critical**, ...) narrows the list. Each one in use is shown under **Filtered by**
 as a chip with a cross:
 
 1. Search from the top bar or the list, for example `Seed`: the chip reads

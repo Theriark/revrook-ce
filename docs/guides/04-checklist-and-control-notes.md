@@ -18,8 +18,9 @@ report made today would show them, with the evidence behind each status.
   with the name of the domain and how many controls it holds.
 - Each row: the control in plain language with its identifier and whether it is a gate
   control, the **Status** as an icon and words (Protected, Needs attention, Not
-  protected, Not checked), the **Coverage**, the date of the evidence, the **Owner** of
-  the open exception if any, and **Why it needs a look**.
+  protected, Not checked), the **Coverage**, the date of the evidence, the **Owner** (a
+  column only once a topic owner is set) and **Also needs a look**: a change since the
+  last report, old evidence or an open exception, never the status again.
 - A violet mark on a row means its status changed since the last report. The head of
   the table stays in view while you scroll; on a phone every control is a card whose
   facts run as short lines, the label beside its value.

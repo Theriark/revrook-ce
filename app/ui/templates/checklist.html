@@ -5,7 +5,7 @@
 {% block content %}
 {% include "_client_nav.html" %}
 <div class="rv-section-head rv-checklist-head">
-<div><h2 id="checklist-title">Checklist</h2><p class="rv-section-note">Every control of the library as a report made today would show it, with the evidence behind each status.</p></div>
+<div><h2 id="checklist-title">Checklist</h2><p class="rv-section-note">Every control as a report made today would show it.</p></div>
 </div>
 {#- The tools of the list (THE-1188): a search over the name, the id, the domain and
     the owner of a control, the status menu and the order, sent together as one GET
@@ -58,8 +58,8 @@
 <th scope="col"{% if query.sort == "status" %} aria-sort="other"{% endif %}>Status</th>
 <th scope="col">Coverage</th>
 <th scope="col"{% if query.sort == "evidence" %} aria-sort="ascending"{% endif %}>Evidence dated</th>
-<th scope="col">Owner</th>
-<th scope="col">Why it needs a look</th>
+{% if has_owners %}<th scope="col">Owner</th>
+{% endif %}<th scope="col">Also needs a look</th>
 </tr>
 </thead>
 {#- In library order the controls of a domain stand together, so each domain is
@@ -73,15 +73,17 @@
 <tbody>
 {% endif %}
 {% set in_domain = rows|selectattr("row.domain_name", "equalto", item.row.domain_name)|list|length %}
-<tr class="rv-group-row"><th scope="rowgroup" colspan="6">{{ item.row.domain_name }} <span class="rv-group-count">{{ in_domain }} control{% if in_domain != 1 %}s{% endif %}</span></th></tr>
+<tr class="rv-group-row"><th scope="rowgroup" colspan="{{ 6 if has_owners else 5 }}">{{ item.row.domain_name }} <span class="rv-group-count">{{ in_domain }} control{% if in_domain != 1 %}s{% endif %}</span></th></tr>
 {% endif %}
 <tr data-control="{{ item.row.control_id }}" data-changed="{{ 'true' if item.changed else 'false' }}" data-flagged="{{ 'true' if item.flagged else 'false' }}">
 <th scope="row"><a class="rv-control-link" href="/clients/{{ client_id }}/controls/{{ item.row.control_id }}" data-drawer>{{ item.row.title }}</a><span class="rv-cell-note">{{ item.row.control_id }}{% if item.row.gate %}, gate control{% endif %}</span></th>
 <td data-label="Status">{{ s.status(item.row.label) }}</td>
 <td data-label="Coverage" class="rv-coverage">{{ item.coverage }}</td>
 <td data-label="Evidence dated" class="rv-coverage">{{ s.day(item.row.evidence_at) }}</td>
-<td data-label="Owner">{{ item.owner }}</td>
-<td data-label="Why it needs a look">{% if item.changed or item.reasons %}<ul class="rv-flags">{% if item.changed %}<li class="rv-flag-changed">Changed since the last report: it was {{ item.changed_from.text }}.</li>{% endif %}{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>{% endif %}</td>
+{% if has_owners %}<td data-label="Owner">{% if item.owner != not_assigned %}{{ item.owner }}{% endif %}</td>
+{% endif %}{#- The status is in its own column, so only what it does not say is listed -#}
+{% set extra = item.reasons|reject("equalto", item.row.label.text)|list %}
+<td data-label="Also needs a look">{% if item.changed or extra %}<ul class="rv-flags">{% if item.changed %}<li class="rv-flag-changed">Changed since the last report: it was {{ item.changed_from.text }}.</li>{% endif %}{% for reason in extra %}<li>{{ reason }}</li>{% endfor %}</ul>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>

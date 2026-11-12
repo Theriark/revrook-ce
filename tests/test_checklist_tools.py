@@ -343,7 +343,7 @@ async def test_the_checklist_searches_filters_and_orders_its_rows(
 
 
 GROUP_ROW = re.compile(
-    r'<tr class="rv-group-row"><th scope="rowgroup" colspan="6">([^<]+) '
+    r'<tr class="rv-group-row"><th scope="rowgroup" colspan="5">([^<]+) '
     r'<span class="rv-group-count">(\d+) controls?</span></th></tr>'
 )
 

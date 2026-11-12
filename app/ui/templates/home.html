@@ -9,7 +9,7 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>Home</h1><p class="rv-page-purpose">Signed in as {{ user.username }}. Where every client stands today, what to fix first, and what changed.</p></div>
+<div><h1>Home</h1><p class="rv-page-purpose">Signed in as {{ user.username }}. What to fix first and where every client stands.</p></div>
 {% if clients or unread %}<div class="rv-page-actions"><a role="button" href="/clients">Add a client</a></div>{% endif %}
 </div>
 {% if unread %}
@@ -55,10 +55,47 @@
 </div>
 </section>
 
+<div class="rv-dash-row rv-dash-row-trend">
+<section id="needs-attention" aria-labelledby="attention-title">
+<div class="rv-section-head">
+<h2 id="attention-title">Needs attention</h2>
+<p class="rv-section-note">Gate controls first, then by weight. {{ attention_total }} across all clients.</p>
+</div>
+{% if attention %}
+<ol class="rv-attention">
+{% for item in attention %}
+<li class="rv-attention-row">
+<span class="rv-attention-status">{{ s.status(item.label) }}</span>
+<span class="rv-attention-what"><a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{{ item.client_name }}{% if item.gate %}, gate control{% endif %}{% if item.why %}, {{ item.why }}{% endif %}</span></span>
+<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}" data-drawer>Open</a>
+</li>
+{% endfor %}
+</ol>
+{% if attention_total > attention|length %}
+<p class="rv-text-secondary" id="attention-more"><a href="/clients?show=needs-work">{{ attention_total - attention|length }} more</a> on the checklists of the clients.</p>
+{% endif %}
+{% else %}
+<div class="rv-empty" id="attention-empty">
+{{ i.icon("check", "xl") }}
+<p class="rv-empty-title">Nothing needs attention</p>
+<p class="rv-empty-text">{% if with_evidence %}Every checked control is protected. Controls that were not checked are counted by domain below.{% else %}Import the first export: the controls it shows as not protected appear here, most urgent first.{% endif %}</p>
+</div>
+{% endif %}
+</section>
+<section class="rv-card" id="trend" aria-labelledby="trend-title">
+<h2 id="trend-title" class="rv-card-title">Score over time</h2>
+{#- The body of the card (_trend_chart.html) is what the chart script swaps when a
+    range is chosen; app/ui/fragments.py renders it alone for that. -#}
+<div id="trend-body">
+{% include "_trend_chart.html" %}
+</div>
+</section>
+</div>
+
 <section id="rookery" aria-labelledby="rookery-title">
 <div class="rv-section-head">
 <h2 id="rookery-title">What moves the score</h2>
-<p class="rv-section-note">Every score is out of 100. Each bar shows the points a client earns from its evidence as it is today, and what costs it the rest.</p>
+<p class="rv-section-note">Points out of 100 per client, and what costs the rest.</p>
 </div>
 {#- The keep panel (THE-1313): the gauge of every client with evidence beside the
     rookery skyline, on the charcoal of the band. The ring is drawn for the eye
@@ -95,11 +132,12 @@
 {# A client whose evidence is too thin has a lower bound for a score, so a mean
    that counts one is a lower bound as well, and says so. #}
 {% set thin = clients|selectattr("evidence")|selectattr("drivers")|selectattr("insufficient")|list|length %}
-<div class="rv-drv-summary" id="drivers-summary">
+<details class="rv-drv-summary" id="drivers-summary">
+<summary>How the score works</summary>
 <p class="rv-drv-headline">{% if portfolio.clients == 1 %}The client with evidence scores <strong>{{ mean.earned_text }}</strong> of 100.{% if thin %} Its evidence is too thin for a score, so this is a lower bound.{% endif %}{% else %}Across the {{ portfolio.clients }} clients with evidence, the mean score is <strong>{{ mean.earned_text }}</strong> of 100.{% if thin %} {{ thin }} of them {% if thin == 1 %}has{% else %}have{% endif %} evidence too thin for a score, so the mean is a lower bound.{% endif %}{% endif %}{% if biggest %} The most points go to <strong>{{ biggest.driver.text|lower }}</strong>: {{ biggest.text }} {% if portfolio.clients == 1 %}points{% else %}points on average{% endif %}.{% else %} No points are lost.{% endif %}</p>
 {{ d.bar(mean, ("Every client with evidence" if portfolio.clients > 1 else "The client with evidence") ~ ": " ~ mean.label, "large") }}
 {{ d.legend(drivers) }}
-</div>
+</details>
 {% else %}
 <div class="rv-empty rv-empty-small" id="drivers-empty">
 {{ i.icon("info", "lg") }}
@@ -150,47 +188,10 @@
 {% endif %}
 </section>
 
-<div class="rv-dash-row rv-dash-row-trend">
-<section id="needs-attention" aria-labelledby="attention-title">
-<div class="rv-section-head">
-<h2 id="attention-title">Needs attention</h2>
-<p class="rv-section-note">Gate controls first, then what is not protected, by weight. {{ attention_total }} across all clients.</p>
-</div>
-{% if attention %}
-<ol class="rv-attention">
-{% for item in attention %}
-<li class="rv-attention-row">
-<span class="rv-attention-status">{{ s.status(item.label) }}</span>
-<span class="rv-attention-what"><a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{{ item.client_name }}{% if item.gate %}, gate control{% endif %}{% if item.why %}, {{ item.why }}{% endif %}</span></span>
-<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}" data-drawer>Open</a>
-</li>
-{% endfor %}
-</ol>
-{% if attention_total > attention|length %}
-<p class="rv-text-secondary">{{ attention_total - attention|length }} more on the checklists of the clients.</p>
-{% endif %}
-{% else %}
-<div class="rv-empty" id="attention-empty">
-{{ i.icon("check", "xl") }}
-<p class="rv-empty-title">Nothing needs attention</p>
-<p class="rv-empty-text">{% if with_evidence %}Every checked control is protected. Controls that were not checked are counted by domain below.{% else %}Import the first export: the controls it shows as not protected appear here, most urgent first.{% endif %}</p>
-</div>
-{% endif %}
-</section>
-<section class="rv-card" id="trend" aria-labelledby="trend-title">
-<h2 id="trend-title" class="rv-card-title">Score over time</h2>
-{#- The body of the card (_trend_chart.html) is what the chart script swaps when a
-    range is chosen; app/ui/fragments.py renders it alone for that. -#}
-<div id="trend-body">
-{% include "_trend_chart.html" %}
-</div>
-</section>
-</div>
-
 <div class="rv-dash-row">
 <section class="rv-card" id="domains" aria-labelledby="domains-title">
 <h2 id="domains-title" class="rv-card-title">Controls by domain</h2>
-<p class="rv-card-subtitle">Every control of every client, by the status it has today. Each bar is one domain; a segment opens its numbers under the bars.</p>
+<p class="rv-card-subtitle">Every control of every client, by its status today.</p>
 <ul class="rv-domains">
 {% for bar in domains %}
 <li class="rv-domain">
@@ -228,7 +229,7 @@
 <section id="recent-changes" aria-labelledby="changes-title">
 <div class="rv-section-head">
 <h2 id="changes-title">Recent changes</h2>
-<p class="rv-section-note">The newest entries of the audit trail that changed a client, its evidence or its reports.</p>
+<p class="rv-section-note">The newest changes to clients, evidence and reports.</p>
 </div>
 {% if changes %}
 <ol class="rv-timeline">

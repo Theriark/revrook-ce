@@ -419,7 +419,6 @@ The charts and what feeds each:
 | Home, stat cards | Sparkline of the last twelve weeks (`.rv-spark`) | The stored reports and the clients that existed at the end of each week | The page the number leads to |
 | Home | Score over time (`#trend`) | Every stored report of every active client in the last 7, 30 or 90 days (`Snapshot` rows) | The report behind each mark |
 | Home | Controls by domain (`#domains`) | The live view of every client, controls by status | The row of the domain under "Show the numbers" |
-| Clients | Clients by band (`#bands`) | The newest stored report of every client, by the band of the scoring model | The list narrowed to that band (`?band=`) |
 | Client overview | Controls by status (`.rv-mix-bar`) | The live view of the client | The checklist narrowed to that status (`?status=`) |
 | Client overview | Coverage by domain (`#domains`) | The live view of the client | The checklist narrowed to that domain and status (`?domain=`, `?status=`) |
 | Evidence and imports | How old is each export (`#ages`) | The newest export of every source and the date it goes stale (`SourceRow`) | The row of the source in the Sources table |
@@ -618,12 +617,12 @@ yet" pill.
 
 Above the table a toolbar carries the search (by name, case-insensitive), the filter
 chips with their counts (all, needs work, no report yet, no evidence yet), and the
-density (comfortable or compact, `table.rv-table-compact`). Under it the card
-"Clients by band" (`#bands`, `band_counts` in `app/ui/charts.py`): one bar per band
-of the scoring model, in the accent, with the count beside it, for the clients the
-search and the filter leave, each a link that narrows the list to that band
-(`?band=strong` ... `?band=none` for the clients without a report; the chosen one
-carries `aria-current` and a link shows every band again). The column headings of
+density (comfortable or compact, `table.rv-table-compact`), and the band chips
+(`#bands`, `band_counts` in `app/ui/charts.py`): one chip per band of the scoring
+model that holds a client, with its count, for the clients the search and the filter
+leave, each a link that narrows the list to that band (`?band=strong` ...
+`?band=none` for the clients without a report; the chosen one carries `aria-current`
+and its chip under "Filtered by" takes it away). The column headings of
 the name, the last report and the newest evidence are sort links with `aria-sort`;
 the first click on the score sorts the lowest first and on the evidence the newest
 first, and a client without the value a column sorts by comes last whichever the

@@ -19,22 +19,24 @@ From top to bottom:
 1. Four stat cards in one ledger standing on the foot of the band: clients, controls
    protected, controls that need work and exports to refresh, each with the change
    since the last reports and a sparkline of its weeks.
-2. **What moves the score**: a keep panel with the gauge of the mean score of every
-   client with evidence (in the quiet colour, and called a lower bound, when it counts
-   a client whose evidence is too thin) beside the stage of the rookery skyline, one
-   rook per client as tall as its score, which opens with **Show the 3D view** and is
-   drawn only once you press it ([8. Scenes, the folded rail and the Evidence
-   Explorer](08-scenes-rail-and-explorer.md)); then the score drivers described below.
-   The pictures of this guide show the 3D view switched on.
-3. **Needs attention**: the gate controls first, then what is not protected, by weight,
+2. **Needs attention**: the gate controls first, then what is not protected, by weight,
    across all clients. **Open** shows the control in a drawer over the page
    ([4. The checklist](04-checklist-and-control-notes.md#the-drawer-and-the-page-of-a-control)).
-   A client with an open exception for that control says so on the row.
-4. **Score over time** from the stored reports of the last 7, 30 or 90 days, beside
+   A client with an open exception for that control says so on the row. The five most
+   urgent are listed; the link under them leads to the clients that need work.
+3. **Score over time** from the stored reports of the last 7, 30 or 90 days, beside
    Needs attention from 1280 px. **Show the numbers** opens the table behind the chart.
    Point at a mark, or reach it with Tab and the arrow keys, for its exact values; a
    mark opens that report. The name of each client stands at the end of its line, tied
    to it by a short leader when names are moved apart so they do not overlap.
+4. **What moves the score**: a keep panel with the gauge of the mean score of every
+   client with evidence (in the quiet colour, and called a lower bound, when it counts
+   a client whose evidence is too thin) beside the stage of the rookery skyline, one
+   rook per client as tall as its score, which opens with **Show the 3D view** and is
+   drawn only once you press it ([8. Scenes, the folded rail and the Evidence
+   Explorer](08-scenes-rail-and-explorer.md)); then the score drivers described
+   below. **How the score works** opens the mean of every client and the colour key.
+   The pictures of this guide show the 3D view switched on.
 5. **Controls by domain** as one bar per domain, beside **Recent changes** from 1280 px:
    the newest entries of the audit trail that changed a client, its evidence or its
    reports, with who made each change. A deleted client is named by its number. This
@@ -105,8 +107,8 @@ the links **Open**, **Checklist**, **Evidence** and **Reports**.
 
 ![The clients list at 1440 px](../images/clients-1440.png)
 
-- **Clients by band** counts the clients in each band of their last report; a band
-  narrows the list to those clients.
+- A chip per band (**Strong** to **No report yet**) counts the clients in that band of
+  their last report and narrows the list to them; a band with no client has no chip.
 - **Search by name** and the chips **All clients**, **Needs work**, **No report yet** and
   **No evidence yet** filter the list; the headings sort it; **Comfortable** and
   **Compact** change the density. Fifty clients make a page.
