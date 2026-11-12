@@ -434,7 +434,7 @@ function buildScene(THREE, root, options) {
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap; // r186 dropped PCFSoftShadowMap (it warned and fell back)
   const ground = groundOf(root);
   renderer.setClearColor(ground, 1);
   const scene = new THREE.Scene();
