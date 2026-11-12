@@ -1,5 +1,12 @@
-"""The Evidence Explorer preview (Development only): one client's evidence sources
-and the controls they feed, drawn as a scene and listed as tables.
+"""The Evidence Explorer preview (Development only): every client and every control
+at once (the companies ring, the page without `?client_id=`), or one client's
+evidence sources and the controls they feed (the evidence wall, `?client_id=N`),
+drawn as a scene and listed as tables.
+
+The companies ring reads every active client the way Home does
+(`app.ui.home.read_clients`, one live evaluation per client) and hands the rows to
+`build_portfolio`. Its scene draws from the page itself, the rows of its tables and
+the card templates, so nothing is read twice and it has no JSON.
 
 The page reads a client exactly as its checklist does (`load_live`, `view_of`) and as
 its evidence page does (`list_evidence`, `source_rows`), then hands both to the view
@@ -30,10 +37,12 @@ from app.ui.common import FormError, guarded, last_quarter, library_of, page
 from app.ui.explorer_view import (
     ExplorerView,
     build_explorer,
+    build_portfolio,
     explorer_json,
     source_names,
     verdict_text,
 )
+from app.ui.home import company_sizes, read_clients
 from app.web import clock_of, session_factory
 
 router = APIRouter()
@@ -52,6 +61,7 @@ EXPLORER_ASSETS = (
     "css/evidence-explorer.css",
     "js/evidence-explorer.js",
     "js/office.js",
+    "js/scene-card.js",
 )
 NO_CLIENTS = "There are no clients yet."
 NOT_A_NUMBER = "The client id must be a whole number."
@@ -83,7 +93,8 @@ async def active_clients(session: AsyncSession) -> list[tuple[int, str]]:
 
 
 def chosen_client(request: Request, clients: list[tuple[int, str]]) -> int:
-    """The client of `?client_id=`, or the first by name when none is asked for.
+    """The client of `?client_id=`, or the first by name when none is asked for
+    (the data of the scene; the page without one is the companies ring).
 
     A value that is not a whole number is refused with 422; a number that is not an
     active client with 404. `clients` is not empty here.
@@ -122,19 +133,44 @@ async def load_explorer(
     return build_explorer(library, client_id, live.name, now, rows, sources)
 
 
+async def load_companies(request: Request, user: AppUser) -> dict[str, Any]:
+    """The companies ring today: every active client read once, as Home reads it."""
+    now = clock_of(request)()
+    async with session_factory(request)() as session:
+        today = await read_clients(request, user, session, now)
+        sizes = await company_sizes(session)
+    clients = [(posture, today.rows[posture.client_id]) for posture in today.postures]
+    return {
+        "portfolio": build_portfolio(library_of(request), clients, sizes, now),
+        "unread": today.unread,
+        "card_focus": today.focus,
+        "card_refresh": today.refresh,
+    }
+
+
 def page_context(
-    clients: list[tuple[int, str]], view: ExplorerView | None
+    clients: list[tuple[int, str]],
+    view: ExplorerView | None,
+    companies: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """The page: the companies ring when `companies` is given, else the evidence
+    wall of `view` (or the empty state when there is no client)."""
     context: dict[str, Any] = {
         "title": TITLE,
         "nav": NAV,
         "clients": clients,
         "view": view,
+        "portfolio": None,
+        "unread": [],
+        "card_focus": {},
+        "card_refresh": {},
         "explorer_version": EXPLORER_VERSION,
         "data_url": None,
         "verdict": "",
         "names": {},
     }
+    if companies:
+        context.update(companies)
     if view is not None:
         context["data_url"] = f"{DATA_PATH}?client_id={view.client_id}"
         context["verdict"] = verdict_text(view)
@@ -149,6 +185,11 @@ async def explorer_page(request: Request) -> Response:
             clients = await active_clients(session)
         if not clients:
             return page(request, TEMPLATE, user, page_context(clients, None))
+        # Without a client the page is the companies ring; ?client_id=N (the link
+        # of a client's evidence page) is that client's evidence wall.
+        if not request.query_params.get("client_id", "").strip():
+            companies = await load_companies(request, user)
+            return page(request, TEMPLATE, user, page_context(clients, None, companies))
         client_id = chosen_client(request, clients)
         view = await load_explorer(request, user, client_id)
         return page(request, TEMPLATE, user, page_context(clients, view))

@@ -205,13 +205,14 @@ the theme switch beside the panel (which still carries the whole lockup). Withou
 mark file the wordmark alone is the brand, as before.
 
 A page marks where it is with `nav` in its context: `home`, `clients`, `imports`,
-`profile-editor`, `integrity`, `settings` or `system` (the rail), or `explorer`,
+`profile-editor`, `integrity`, `explorer`, `settings` or `system` (the rail), or
 `glossary` or `account` (not in the rail). The link of that page carries
-`aria-current="page"` and the violet-blue mark. The rail holds seven links in three
-groups: Work (Home, Clients), Evidence (Import evidence, the profile editor and the
-integrity check) and Administration (Settings, System). The Glossary is a link of the
-account menu; the Evidence Explorer preview is a quiet link in the head of a client's
-evidence page ("Open in Evidence Explorer (preview)", `?client_id=`).
+`aria-current="page"` and the violet-blue mark. The rail holds eight links in three
+groups: Work (Home, Clients), Evidence (Import evidence, the profile editor, the
+integrity check and the Evidence Explorer, its icon the cube) and Administration
+(Settings, System). The Glossary is a link of the account menu; the head of a client's
+evidence page also links that client's evidence wall in the Evidence Explorer ("Open in
+Evidence Explorer (preview)", `?client_id=`).
 
 The rail fold (`_rail.html`). From 1024 px one button at the top of the rail folds it
 to its icons: a 72 px rail with the mark, one icon per link, the stacked icons of the
@@ -527,7 +528,8 @@ How a chart answers:
 ## Scenes
 
 Three pages carry a scene drawn in the browser: the client street of Home, the
-domain keep of a client overview and the evidence wall of the Evidence Explorer
+domain keep of a client overview and the Evidence Explorer, its companies ring and
+the evidence wall of one client
 ([evidence-explorer-preview.md](evidence-explorer-preview.md)). Depth means the same
 thing in every one of them: height is a measure, footprint is weight, status is shape
 and colour together, and every word stays in the DOM. A scene adds a way of looking
@@ -582,9 +584,11 @@ own empty state.
 The company card. Choosing an office (a press, or Left and Right on the canvas) opens a
 card beside it in the stage: the top of the office is projected to the stage with the
 camera and the card stands to its right, or to its left when there is no room, kept
-inside the stage; below 600px of stage width it docks across the foot of the stage and
-scrolls inside it. The server draws one `<template id="client-card-{id}">` per client
-in `home.html` and the module clones it, so no markup is built from strings: the name
+inside the stage; below 600px of stage width it stands under the stage, full width.
+The server draws one `<template id="client-card-{id}">` per client with the macro of
+`_company_card.html` (Home and the companies ring of the Evidence Explorer share it), and
+`app/static/js/scene-card.js`, imported by both scripts with their own version like
+`office.js`, clones it, so no markup is built from strings: the name
 (a link to the client), the score and band with the status and score styles of the
 driver cards (`at least` and "Insufficient evidence" when the evidence is too thin),
 **Needs work** (the client's three most urgent controls by the order of **Needs
@@ -595,26 +599,25 @@ popover, `role="dialog" aria-modal="false"` labelled by its heading, on the keep
 surface (the card carries `.rv-keep`) so it reads in both themes. Chosen from the
 keyboard, the focus moves to its heading, where Left, Right and Enter still answer;
 Escape closes it and gives the canvas the focus back, as its Close button does; a press
-outside it, Reset view and Hide the 3D view close it; the aria-live detail line keeps
-naming the choice.
+outside it (but not in the control drawer it opened), Reset view and Hide the 3D view
+close it; the aria-live detail line keeps naming the choice. Home keeps the street.
 
-The ring (Home only). A Street / Ring switch in the tool row (`aria-pressed`, a group
-labelled "View"; the stage macro draws it when it is given the `links` list, and the
-choice is kept in `localStorage` under `rv-rookery-view`) redraws the rookery as the
-portfolio: the clients as smaller offices evenly on an inner ring, every control that
-at least one client fails on an outer ring as a tile in the worst status colour among
-those clients (red when one has it not protected, else amber), and a beam (a faint
-line, opacity 0.12) from each client to each control it fails. Its facts come from the
-page: the hidden `<ul id="portfolio-links">`, one item per failing (client, control)
-pair of every client (`data-client`, `data-control`, `data-label`, `data-title`,
-`data-href`), and one `<template id="control-card-{control_id}">` per failing control.
-Choosing a node lights its beams and the nodes at their ends and dims the rest (the
-same `paint` as the street); a client opens its company card, a tile its control card
-(the control and title, and each client that fails it with its status, linking to that
-control of that client). Left and Right step through the clients and then the controls;
-Enter opens the client, or the first link of the control card. The ring is fitted with
-`framingDistance` like every scene, and a switch disposes the scene whole (geometries,
-materials, maps) before the other view is built.
+The companies ring (Evidence Explorer, the page without a client). Every active client
+is an office on an inner ring, built as on the street, and every control of the library
+a tile on an outer ring by domain in the worst status any client has for it, in the
+tile shapes of the evidence wall; a `THREE.Line` joins every client to every control in
+the status colour of that pair (none for not applicable), faint (0.22) until a node is
+chosen, then lit on the chosen node and dimmed elsewhere. Four `aria-pressed` filter
+buttons in the tool row (a group labelled "Links shown", each with its words and its
+number of links) hide or show a status; not protected and needs attention start
+pressed. The facts are read from the page, as on Home: the rows of the Companies and
+Controls tables (`data-node` and the attributes of the street) and the client lists of
+the `<template id="control-card-{control_id}">` cards. A client opens its company card
+(the same macro), a tile its control card: every client with its status, worst first,
+each a `data-drawer` link to that control of that client, so the page carries
+`_drawer.html`. A press on the tool row leaves the card open, so a filter changes what a
+chosen client shows. Left and Right step through the clients and then the controls,
+Enter opens the client or the first control link, Escape closes the card.
 
 The domain keep (client overview, `#keep-scene`, in the Coverage by domain card). One
 block per domain of the control library, as wide as its weight in the score, built of

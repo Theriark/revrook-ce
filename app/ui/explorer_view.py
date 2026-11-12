@@ -9,6 +9,10 @@ data/controls.yaml); a manual-only control reads no export and has no link.
 Nothing here touches the database or a clock. `app.ui.explorer` loads the rows and
 serves the result twice from the same object: as the tables of the page and as the
 JSON the scene draws, so the two can never disagree.
+
+The companies ring (`build_portfolio`) is every active client at once: each client
+with its label for every control, as Home reads them. Its page carries the facts
+the scene draws (the tables and the card templates), so it has no JSON.
 """
 
 from collections.abc import Mapping, Sequence
@@ -18,6 +22,8 @@ from typing import Any
 
 from app.checks.library import Library
 from app.reports.status import (
+    COUNTED_LABELS,
+    LABELS,
     NEEDS_ATTENTION,
     NOT_APPLICABLE,
     NOT_CHECKED,
@@ -26,6 +32,7 @@ from app.reports.status import (
     StatusLabel,
 )
 from app.reports.view import ControlRow
+from app.ui.dashboard import ClientPosture
 from app.ui.viewmodels import CURRENT, SourceRow, control_sources
 
 MANUAL_ONLY = "Manual evidence (no export)"
@@ -238,3 +245,117 @@ def source_names(view: ExplorerView) -> dict[str, str]:
 def explorer_json(view: ExplorerView) -> dict[str, Any]:
     """The view as plain data for the scene (JSON-serialisable)."""
     return asdict(view)
+
+
+# --- the companies ring: every active client at once ----------------------------------
+
+# The worst status first: what a control tile of the ring shows, and the order of
+# the clients on its card. A control that is not applicable everywhere is the last.
+WORST_FIRST = (NOT_PROTECTED, NEEDS_ATTENTION, NOT_CHECKED, PROTECTED, NOT_APPLICABLE)
+
+
+@dataclass(frozen=True)
+class PortfolioPair:
+    """One client and its label for one control: a link of the ring (none when the
+    control is not applicable there), a line of the control card."""
+
+    client_id: int
+    client_name: str
+    label: StatusLabel
+
+
+@dataclass(frozen=True)
+class PortfolioClient:
+    """One client: an office on the inner ring, a row of the Companies table.
+    `counts` are its controls per status, in the order of LABELS."""
+
+    posture: ClientPosture
+    size: int
+    counts: tuple[int, ...]
+
+
+@dataclass(frozen=True)
+class PortfolioControl:
+    """One control of the library: a tile on the outer ring, a row of the Controls
+    table. `counts` are its clients per status, in the order of LABELS."""
+
+    control_id: str
+    title: str
+    domain: str
+    worst: StatusLabel
+    counts: tuple[int, ...]
+    pairs: tuple[PortfolioPair, ...]
+
+
+@dataclass(frozen=True)
+class PortfolioView:
+    """Everything the companies ring and its tables show."""
+
+    as_of: str
+    ruleset: str
+    labels: tuple[StatusLabel, ...]
+    clients: tuple[PortfolioClient, ...]
+    controls: tuple[PortfolioControl, ...]
+    # The links of the ring per status they can be filtered by (COUNTED_LABELS).
+    links: tuple[tuple[StatusLabel, int], ...]
+
+
+def build_portfolio(
+    library: Library,
+    clients: Sequence[tuple[ClientPosture, Sequence[ControlRow]]],
+    sizes: Mapping[int, int],
+    as_of: datetime,
+) -> PortfolioView:
+    """The companies ring from each client's posture and its control rows (the
+    rows Home reads, `app.ui.home.read_clients`). Every control of the library is
+    a tile, whether or not a client was read; a tile takes the worst label among
+    its clients, and with no client at all it is not checked."""
+    per_control: dict[str, list[PortfolioPair]] = {c.id: [] for c in library.controls}
+    built: list[PortfolioClient] = []
+    for posture, rows in clients:
+        counts = _label_counts(rows)
+        built.append(
+            PortfolioClient(
+                posture=posture,
+                size=sizes.get(posture.client_id, 0),
+                counts=tuple(counts.get(label.key, 0) for label in LABELS),
+            )
+        )
+        for row in rows:
+            per_control.setdefault(row.control_id, []).append(
+                PortfolioPair(posture.client_id, posture.name, row.label)
+            )
+    controls: list[PortfolioControl] = []
+    for control in library.controls:
+        pairs = sorted(
+            per_control[control.id],
+            key=lambda pair: (
+                WORST_FIRST.index(pair.label),
+                pair.client_name,
+                pair.client_id,
+            ),
+        )
+        controls.append(
+            PortfolioControl(
+                control_id=control.id,
+                title=control.title,
+                domain=control.domain,
+                worst=pairs[0].label if pairs else NOT_CHECKED,
+                counts=tuple(
+                    sum(1 for pair in pairs if pair.label == label) for label in LABELS
+                ),
+                pairs=tuple(pairs),
+            )
+        )
+    links = tuple(
+        (label, sum(control.counts[LABELS.index(label)] for control in controls))
+        for label in COUNTED_LABELS
+    )
+    return PortfolioView(
+        as_of=as_of.isoformat(),
+        ruleset=f"{library.ruleset_id} {library.version}",
+        labels=LABELS,
+        clients=tuple(built),
+        controls=tuple(controls),
+        links=links,
+    )

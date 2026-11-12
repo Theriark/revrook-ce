@@ -152,8 +152,11 @@ def test_every_stylesheet_and_script_link_carries_the_asset_version() -> None:
     # address without the digest could serve an old stylesheet with a new page.
     html = render_login(frozenset(BRAND_FILES))
     linked = re.findall(r'(?:href|src)="(/static/(?:css|js|vendor)/[^"]+)"', html)
-    # js/office.js is imported by scenes.js, not linked; it is in the digest only
-    shell_links = [name for name in ASSET_FILES if name != "js/office.js"]
+    # office.js and scene-card.js are imported by scenes.js, not linked; they are
+    # in the digest only
+    shell_links = [
+        n for n in ASSET_FILES if n not in ("js/office.js", "js/scene-card.js")
+    ]
     assert len(linked) == len(shell_links)
     expected = [f"/static/{name}?v={VERSION}" for name in shell_links]
     assert sorted(linked) == sorted(expected)

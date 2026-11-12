@@ -208,32 +208,11 @@
   background-color: var(--rv-primary);
 }
 
-/* The Street / Ring switch of Home's stage: two buttons, the pressed one is the
-   view drawn, told by its fill and by aria-pressed. Pico draws every
-   role="group" as a joined bar the full width of its row; this one keeps the
-   size of its two buttons */
-.rv-scene-tools .rv-scene-views {
-  display: flex;
-  width: auto;
-  gap: 4px;
-  margin: 0;
-}
-
-.rv-scene-tools .rv-scene-views > button {
-  flex: 0 0 auto;
-  border-radius: var(--pico-border-radius);
-}
-
-main .rv-scene-views button[aria-pressed="true"] {
-  border-color: var(--rv-ink);
-  color: var(--rv-white);
-  background-color: var(--rv-ink);
-}
-
-/* The card of a chosen building or tile (Home): a popover over the stage, on the
-   dark surface of the keep band (the card carries .rv-keep, so its tokens are the
-   keep's in both themes). The script sets its left and top beside the node;
-   docked, it spans the foot of a narrow stage. Long content scrolls inside it */
+/* The card of a chosen node (Home's street, the Explorer's companies ring,
+   scene-card.js): a popover over the stage, on the dark surface of the keep band
+   (the card carries .rv-keep, so its tokens are the keep's in both themes). The
+   script sets its left and top beside the node; docked, it spans the foot of a
+   narrow stage. Long content scrolls inside it */
 .rv-scene-card {
   position: absolute;
   top: 8px;

@@ -1,5 +1,6 @@
 """The Evidence Explorer preview (docs/evidence-explorer-preview.md): the view model,
-the page, the JSON it serves, the vendored three.js build and the fallbacks.
+the page (the companies ring without a client, a client's evidence wall with one),
+the JSON the wall reads, the vendored three.js build and the fallbacks.
 
 The view model tests use the worked clients of the report tests and need no
 database. The page tests need PostgreSQL (DATABASE_URL) and are skipped without it.
@@ -27,6 +28,8 @@ from app.evidence.service import EvidenceContext
 from app.importers.registry import build_default_registry
 from app.main import create_app
 from app.reports.status import (
+    COUNTED_LABELS,
+    LABELS,
     NEEDS_ATTENTION,
     NOT_APPLICABLE,
     NOT_CHECKED,
@@ -39,6 +42,7 @@ from app.settings import Settings
 from app.sources import SOURCE_NAMES
 from app.ui.auth import templates
 from app.ui.brand import BRAND_FILES, STATIC_DIR
+from app.ui.dashboard import posture_of
 from app.ui.explorer import (
     DATA_PATH,
     EXPLORER_ASSETS,
@@ -48,9 +52,11 @@ from app.ui.explorer import (
     page_context,
 )
 from app.ui.explorer_view import (
+    WORST_FIRST,
     ExplorerCounts,
     adapters_of,
     build_explorer,
+    build_portfolio,
     explorer_json,
     verdict_text,
 )
@@ -65,6 +71,7 @@ LIBRARY = load_library()
 VENDOR = STATIC_DIR / "vendor/three"
 PINNED = json.loads((VENDOR / "PINNED.json").read_text(encoding="utf-8"))
 SCRIPT = (STATIC_DIR / "js/evidence-explorer.js").read_text(encoding="utf-8")
+CARD_SCRIPT = (STATIC_DIR / "js/scene-card.js").read_text(encoding="utf-8")
 CSS = (STATIC_DIR / "css/evidence-explorer.css").read_text(encoding="utf-8")
 TEMPLATE = (ROOT / "app/ui/templates/evidence_explorer.html").read_text(
     encoding="utf-8"
@@ -73,6 +80,12 @@ UNREACHABLE = "postgresql+asyncpg://revrook:unused@127.0.0.1:1/revrook"
 HEX_LITERAL = re.compile(r"#[0-9a-fA-F]{3,8}\b")
 DIGEST = re.compile(r"[0-9a-f]{12}")
 NODE_ROW = re.compile(r'<tr data-node="(source|control):([^"]+)"')
+CLIENT_ROW = re.compile(r'<tr data-node="client:(\d+)"')
+CONTROL_CARD = re.compile(r'<template id="control-card-([^"]+)">(.*?)</template>', re.S)
+CARD_PAIR = re.compile(r'<li data-client="(\d+)" data-label="([a-z-]+)">')
+FILTER = re.compile(
+    r'data-status="([a-z-]+)" aria-pressed="(true|false)">[^<]+ \((\d+)\)</button>'
+)
 # What every fallback of the scene script needs, and what it must never do.
 REQUIRED_IN_SCRIPT = (
     '"/static/vendor/three/three.module.js"',
@@ -141,8 +154,22 @@ def explorer_for(name: str = "A"):
     return build_explorer(LIBRARY, 7, name_of, as_of, rows, sources_for(rows))
 
 
-def render_page(view, clients) -> str:
-    context = page_context(clients, view)
+def portfolio_for(*names: str):
+    """The companies ring of worked clients, ids 7, 8, ... in the order given."""
+    clients = []
+    for index, name in enumerate(names):
+        view = build_view(
+            report_clients.snapshot_bytes(LIBRARY, name),
+            LIBRARY,
+            report_clients.context_for(name),
+        )
+        posture = posture_of(7 + index, report_clients.NAMES[name], view, None, 3)
+        clients.append((posture, view.rows))
+    return build_portfolio(LIBRARY, clients, {7: 40}, NOW)
+
+
+def render_page(view, clients, companies=None) -> str:
+    context = page_context(clients, view, companies)
     return templates.get_template("evidence_explorer.html").render(
         **context,
         user=SimpleNamespace(username="admin"),
@@ -254,6 +281,32 @@ def test_the_verdict_names_the_worst_thing_first() -> None:
     assert isinstance(view.verdict, StatusLabel)
 
 
+def test_the_companies_ring_has_every_control_and_every_pair() -> None:
+    ring = portfolio_for("A", "B")
+    assert len(ring.controls) == len(LIBRARY.controls) == 51
+    assert [client.posture.client_id for client in ring.clients] == [7, 8]
+    assert [client.size for client in ring.clients] == [40, 0]
+    for client in ring.clients:
+        assert sum(client.counts) == 51 and len(client.counts) == len(LABELS)
+    pairs = 0
+    for control in ring.controls:
+        assert {pair.client_id for pair in control.pairs} == {7, 8}
+        assert sum(control.counts) == len(control.pairs) == 2
+        # The tile takes the worst label, and the card lists the worst first.
+        ranks = [WORST_FIRST.index(pair.label) for pair in control.pairs]
+        assert ranks == sorted(ranks) and control.worst == control.pairs[0].label
+        pairs += len(control.pairs)
+    # A link per pair except the not applicable ones, counted per status.
+    assert [label for label, _ in ring.links] == list(COUNTED_LABELS)
+    not_applicable = sum(c.counts[LABELS.index(NOT_APPLICABLE)] for c in ring.controls)
+    assert sum(count for _, count in ring.links) == pairs - not_applicable
+    # Without a client read, every control is still a tile, not checked.
+    empty = build_portfolio(LIBRARY, [], {}, NOW)
+    assert len(empty.controls) == 51 and not empty.clients
+    assert {control.worst for control in empty.controls} == {NOT_CHECKED}
+    assert all(count == 0 for _, count in empty.links)
+
+
 def test_the_assets_of_the_preview_have_their_own_version(tmp_path: Path) -> None:
     assert DIGEST.fullmatch(EXPLORER_VERSION)
     assert explorer_version(STATIC_DIR) == EXPLORER_VERSION
@@ -337,6 +390,38 @@ def test_the_scene_script_has_every_fallback_and_nothing_from_outside() -> None:
     assert SCRIPT.index("supportsWebGL2()") < SCRIPT.index("await import(THREE_URL)")
 
 
+def test_the_companies_ring_is_read_from_the_page_and_its_card_cloned() -> None:
+    # Nothing fetched: the rows of the tables and the lists of the card templates.
+    for needed in (
+        "function readCompanies(page)",
+        'page.querySelectorAll("#explorer-companies tr[data-node]")',
+        'page.querySelectorAll("#explorer-controls tr[data-node]")',
+        'template.content.querySelectorAll("[data-client]")',
+        "data = companies ? readCompanies(document) : await loadData(url);",
+        'const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;',
+        "({ sceneCard } = await import(CARD_URL));",
+        "card.open(entry.card, entry.top, camera, keyed);",
+        # A link per pair in its status, hidden by its filter, faint until chosen.
+        "link.userData.label = pair.label;",
+        "beam.visible = shown.has(beam.userData.label);",
+        "beam.material = !focus ? look.faint : on ? look.lit : look.dim;",
+        "if (beam.visible && beam.userData.ends.indexOf(id) >= 0) {",
+        'button.getAttribute("aria-pressed") === "true" ? "false" : "true"',
+        # The keys of the ring: step, open, close, and the brackets turn it.
+        "ArrowLeft: () => step(-1),",
+        "Enter: () => open(),",
+        "Escape: () => leave(),",
+        '"[": () => turnBy(-TURN_STEP),',
+        "window.location.assign(entry.href)",
+        "material.dispose()));",
+    ):
+        assert needed in SCRIPT, needed
+    for forbidden in FORBIDDEN_IN_SCRIPT:
+        assert forbidden not in CARD_SCRIPT, forbidden
+    assert "source.cloneNode(true)" in CARD_SCRIPT
+    assert "keep && keep.contains(target)" in CARD_SCRIPT
+
+
 def test_the_scene_reaches_the_tables_and_follows_the_motion_setting() -> None:
     # The tables sit below the card, so their rows and buttons are found on the page.
     assert 'page.querySelectorAll(".rv-explorer-pick")' in SCRIPT
@@ -386,9 +471,11 @@ def test_the_page_renders_with_every_status_as_an_icon_and_its_words() -> None:
     assert 'id="explorer-no-clients"' not in html
     assert "Manual evidence (no export)" in html
     assert f"?v={EXPLORER_VERSION}" in html
-    # The preview left the rail (a link of the evidence page): the breadcrumb only
-    assert html.count('aria-current="page"') == 1
-    assert "Evidence Explorer</span></a>" not in html
+    assert html.count('aria-current="page"') == 2  # the rail and the breadcrumb
+    assert "Evidence Explorer</span></a>" in html
+    # The view chooser offers the companies ring first; the wall is not it.
+    assert '<option value="">All companies</option>' in html
+    assert 'data-explorer-view="companies"' not in html
 
     empty = render_page(None, [])
     assert structure_problems(empty) == []
@@ -401,14 +488,59 @@ def test_the_page_renders_with_every_status_as_an_icon_and_its_words() -> None:
 # --- the routes (PostgreSQL) ----------------------------------------------------------
 
 
+def test_the_companies_ring_page_has_its_tables_cards_and_filters() -> None:
+    ring = portfolio_for("A", "B")
+    companies = {
+        "portfolio": ring,
+        "unread": [],
+        "card_focus": {},
+        "card_refresh": {7: 2, 8: 0},
+    }
+    html = render_page(None, [(7, "Alpha"), (8, "Beta")], companies)
+    assert structure_problems(html) == []
+    assert 'data-explorer-view="companies"' in html and "data-explorer-url" not in html
+    assert '<option value="" selected>All companies</option>' in html
+    assert html.count('aria-current="page"') == 2  # the rail and the breadcrumb
+    # The record: a row per client and per control, each with its Show in scene.
+    assert CLIENT_ROW.findall(html) == ["7", "8"]
+    assert len(NODE_ROW.findall(html)) == 51
+    assert html.count('class="rv-button-quiet rv-button-small rv-explorer-pick"') == 53
+    assert 'id="explorer-sources"' not in html and 'id="explorer-status"' not in html
+    # The company card of each client, as on Home, and a card per control listing
+    # every client with its status; their links open in the drawer of the page.
+    for client_id in (7, 8):
+        assert html.count(f'<template id="client-card-{client_id}">') == 1
+    assert 'href="/clients/7/evidence">Exports to refresh: 2</a>' in html
+    cards = CONTROL_CARD.findall(html)
+    assert len(cards) == 51
+    for control_id, body in cards:
+        assert [client for client, _ in CARD_PAIR.findall(body)] != []
+        for client in ("7", "8"):
+            link = f'href="/clients/{client}/controls/{control_id}" data-drawer>'
+            assert link in body, (control_id, client)
+    assert 'id="control-drawer"' in html
+    # One filter per linked status, its count the links of the cards; at first the
+    # not protected and the needs attention links show.
+    pairs = [label for _, body in cards for _, label in CARD_PAIR.findall(body)]
+    filters = FILTER.findall(html)
+    assert [key for key, _, _ in filters] == [label.key for label in COUNTED_LABELS]
+    for key, pressed, count in filters:
+        assert int(count) == pairs.count(key), key
+        assert (pressed == "true") == (key in ("not-protected", "needs-attention"))
+    assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
+    assert "<style" not in html.split("<main", 1)[1] and " style=" not in html
+
+
 async def test_the_page_and_its_data_show_the_same_client(
     ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
 ) -> None:
     await sign_in(ui_browser, db_engine)
     client_id = await seed_client(db_engine, ui_ctx)
-    page = await ui_browser.get(PATH)
+    # The link of the evidence page opens that client's wall, as before.
+    page = await ui_browser.get(f"{PATH}?client_id={client_id}")
     html = page.text
     assert page.status_code == 200 and structure_problems(html) == []
+    assert 'data-explorer-view="companies"' not in html
     assert f'data-explorer-url="{DATA_PATH}?client_id={client_id}"' in html
     assert html.count('<tr data-node="control:') == 51
     assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
@@ -433,6 +565,31 @@ async def test_the_page_and_its_data_show_the_same_client(
     assert rows == {("source", s["code"]) for s in body["sources"]} | {
         ("control", c["control_id"]) for c in body["controls"]
     }
+
+
+async def test_without_a_client_the_page_is_the_companies_ring(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    await sign_in(ui_browser, db_engine)
+    first = await seed_client(db_engine, ui_ctx)
+    second = await seed_client(db_engine, ui_ctx, "Second Client Ltd")
+    for path in (PATH, f"{PATH}?client_id="):
+        page = await ui_browser.get(path)
+        html = page.text
+        assert page.status_code == 200 and structure_problems(html) == [], path
+        assert 'data-explorer-view="companies"' in html
+        assert "data-explorer-url" not in html
+        assert sorted(int(found) for found in CLIENT_ROW.findall(html)) == sorted(
+            [first, second]
+        )
+        assert len(NODE_ROW.findall(html)) == 51
+        assert len(CONTROL_CARD.findall(html)) == 51
+        for client_id in (first, second):
+            assert f'<template id="client-card-{client_id}">' in html
+        assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
+    # The seeded clients fail some controls: the default filters have links to show.
+    shown = [int(n) for _, pressed, n in FILTER.findall(html) if pressed == "true"]
+    assert sum(shown) > 0
 
 
 async def test_a_bad_or_unknown_client_is_refused_as_a_page_and_as_json(

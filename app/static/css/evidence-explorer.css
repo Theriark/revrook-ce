@@ -9,13 +9,14 @@
  * inside the scene.
  */
 
-/* The client chooser in the page header: a label, a select and a quiet button in
-   one line, wrapping on a phone */
+/* The view chooser at the top of the scene card (All companies, or one client): a
+   label, a select and a quiet button in one line, wrapping on a phone */
 .rv-explorer-choose {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
+  margin: 0 0 12px;
 }
 
 .rv-explorer-choose label {
@@ -45,9 +46,11 @@
 }
 
 /* The stage: a 16 to 9 box on wide screens, 4 to 3 on a phone, never less than
-   240px high; the canvas fills it and the state note sits over it */
+   240px high; the canvas fills it and the state note sits over it. Its width is
+   the card's: the least height must not widen it past the card on a phone */
 .rv-explorer-stage {
   position: relative;
+  width: 100%;
   aspect-ratio: 16 / 9;
   min-height: 240px;
   margin: 0 0 12px;
@@ -110,6 +113,12 @@
   display: none;
 }
 
+/* On a phone the card of a chosen node stands under the stage (scene-card.js),
+   with the gap the stage keeps above the buttons */
+.rv-explorer .rv-scene-card.is-docked {
+  margin: 0 0 12px;
+}
+
 /* The buttons under the stage and the hover line beside them */
 .rv-explorer-tools {
   display: flex;
@@ -121,6 +130,22 @@
 
 .rv-explorer-tools[hidden] {
   display: none;
+}
+
+/* The status filters of the companies ring: a pressed button shows the links of
+   its status. Pico draws every role="group" as a joined bar the full width of its
+   row; this one keeps the size of its buttons and wraps */
+.rv-explorer-tools .rv-explorer-filters {
+  display: flex;
+  flex-wrap: wrap;
+  width: auto;
+  gap: 8px;
+  margin: 0;
+}
+
+.rv-explorer-tools .rv-explorer-filters > button {
+  flex: 0 0 auto;
+  border-radius: var(--pico-border-radius);
 }
 
 .rv-explorer-tools button[aria-pressed="true"] {

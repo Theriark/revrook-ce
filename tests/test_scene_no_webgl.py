@@ -107,8 +107,6 @@ function stageOf(closed) {
     }
     return parts[s] || null;
   };
-  // No Street / Ring switch: this stage names no list of links.
-  root.querySelectorAll = () => [];
   // The scenes start hidden; "on" is a browser where a person showed them before.
   if (closed) {
     delete store["rv-scenes"];
