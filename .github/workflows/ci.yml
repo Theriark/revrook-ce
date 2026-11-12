@@ -160,7 +160,7 @@ jobs:
         shard: [1, 2, 3, 4]
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657 # 16, pinned (2026-11-07)
         env:
           POSTGRES_USER: revrook
           POSTGRES_PASSWORD: ci-only-not-a-secret
@@ -267,7 +267,7 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657 # 16, pinned (2026-11-07)
         env:
           POSTGRES_USER: revrook
           POSTGRES_PASSWORD: ci-only-not-a-secret
