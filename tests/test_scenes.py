@@ -9,7 +9,9 @@ the rail fold is a real form with a cookie behind it. The route tests need
 PostgreSQL (DATABASE_URL) and are skipped without it.
 """
 
+import json
 import re
+import struct
 from pathlib import Path
 
 import httpx
@@ -19,7 +21,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from app.evidence.service import EvidenceContext
 from app.theme import DEFAULT_RAIL, RAIL_COOKIE, RAILS, normalise_rail
 from app.ui.auth import templates
-from app.ui.brand import ASSET_FILES, BRAND_FILES, STATIC_DIR
+from app.ui.brand import ASSET_FILES, BRAND_FILES, CITY_FILES, STATIC_DIR
+from app.ui.explorer import EXPLORER_ASSETS
 from helpers import get_csrf
 from html_structure import structure_problems
 from ui_helpers import seed_client, sign_in
@@ -28,6 +31,8 @@ ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = ROOT / "app/ui/templates"
 SCRIPT = (STATIC_DIR / "js/scenes.js").read_text(encoding="utf-8")
 CARD_SCRIPT = (STATIC_DIR / "js/scene-card.js").read_text(encoding="utf-8")
+OFFICE_SCRIPT = (STATIC_DIR / "js/office.js").read_text(encoding="utf-8")
+MODELS = STATIC_DIR / "models/kenney"
 CSS = (STATIC_DIR / "css/scenes.css").read_text(encoding="utf-8")
 SHELL_CSS = (STATIC_DIR / "css/revrook-retest.css").read_text(encoding="utf-8")
 PICO = (STATIC_DIR / "vendor/pico/pico.min.css").read_text(encoding="utf-8")
@@ -168,6 +173,120 @@ def test_the_scene_card_is_cloned_from_the_page_by_the_shared_module() -> None:
         assert gone not in SCRIPT, gone
     assert ".rv-scene-card {" in CSS and ".rv-scene-card.is-docked {" in CSS
     assert "rv-scene-views" not in CSS
+
+
+# What office.js reads of a glTF binary: the component types and element sizes of
+# its accessors, and the attributes it gives a geometry (TANGENT, also in the kit's
+# files, is left unread).
+GLB_COMPONENTS = {5121: 1, 5123: 2, 5125: 4, 5126: 4}
+GLB_SIZES = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
+GLB_READ = {"POSITION", "NORMAL", "TEXCOORD_0"}
+
+
+def glb_parts(path: Path) -> tuple[dict, int]:
+    """The JSON of a GLB file and the length of its binary chunk."""
+    data = path.read_bytes()
+    magic, version, length = struct.unpack_from("<4sII", data, 0)
+    size, kind = struct.unpack_from("<I4s", data, 12)
+    assert (magic, version, length, kind) == (b"glTF", 2, len(data), b"JSON"), path
+    bin_size, bin_kind = struct.unpack_from("<I4s", data, 20 + size)
+    assert bin_kind == b"BIN\x00", path
+    return json.loads(data[20 : 20 + size]), bin_size
+
+
+def test_the_kenney_models_are_the_listed_files_in_both_digests() -> None:
+    present = {
+        path.relative_to(STATIC_DIR).as_posix()
+        for path in MODELS.rglob("*")
+        if path.is_file() and path.name != "License.txt"
+    }
+    assert present == set(CITY_FILES) and len(CITY_FILES) == 15
+    # A changed model is a new address on Home and in the Explorer alike.
+    assert set(CITY_FILES) <= set(ASSET_FILES) and set(CITY_FILES) <= set(
+        EXPLORER_ASSETS
+    )
+    for kit in ("commercial", "roads", "suburban"):
+        assert (MODELS / kit / "License.txt").is_file(), kit
+        # each office.js name is a file of its kit
+        for name in re.findall(rf'"([a-z-]+)": "{kit}",', OFFICE_SCRIPT):
+            assert f"models/kenney/{kit}/{name}.glb" in CITY_FILES, name
+
+
+@pytest.mark.parametrize("name", [n for n in CITY_FILES if n.endswith(".glb")])
+def test_every_kenney_model_uses_only_what_the_reader_reads(name: str) -> None:
+    path = STATIC_DIR / name
+    gltf, bin_size = glb_parts(path)
+    assert gltf["asset"]["version"] == "2.0"
+    assert not gltf.get("extensionsRequired")
+    # One node holding the one mesh, without a transform or children.
+    (node,) = gltf["nodes"]
+    assert node["mesh"] == 0 and set(node) <= {"mesh", "name"}
+    (mesh,) = gltf["meshes"]
+    (primitive,) = mesh["primitives"]
+    assert primitive.get("mode", 4) == 4
+    assert GLB_READ <= set(primitive["attributes"])
+    for index in [
+        *(primitive["attributes"][k] for k in GLB_READ),
+        primitive["indices"],
+    ]:
+        accessor = gltf["accessors"][index]
+        view = gltf["bufferViews"][accessor["bufferView"]]
+        width = GLB_COMPONENTS[accessor["componentType"]] * GLB_SIZES[accessor["type"]]
+        assert "sparse" not in accessor
+        assert view.get("byteStride", width) == width
+        start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+        assert start + accessor["count"] * width <= bin_size
+    # One material whose colour is the kit's colormap beside the model.
+    material = gltf["materials"][primitive["material"]]
+    texture = gltf["textures"][
+        material["pbrMetallicRoughness"]["baseColorTexture"]["index"]
+    ]
+    assert gltf["images"][texture["source"]]["uri"] == "Textures/colormap.png"
+    assert (path.parent / "Textures/colormap.png").is_file()
+
+
+def test_the_office_module_reads_the_models_and_keeps_the_built_office() -> None:
+    for forbidden in FORBIDDEN_IN_SCRIPT:
+        if forbidden != "fetch(":
+            assert forbidden not in OFFICE_SCRIPT, forbidden
+    for needed in (
+        # read from this site with the version of the scripts, once per page
+        "const VERSION = new URL(import.meta.url).search;",
+        "url.search = VERSION;",
+        'fetch(url, { credentials: "same-origin" })',
+        "files.set(url.href, read(url.href));",
+        # the reader refuses what it does not read, and the model is then missing
+        'refuse(url, "a model this reader does not read");',
+        "// The code-built office stands in; the scene is whole either way.",
+        # a missing model or an empty lot is the office built in code
+        "return model ? modelOffice(THREE, model, spec) : officeBuilding(THREE, spec);",
+        "|| code().tree(x, z, scale)",
+        "|| code().streetLamp(x, z)",
+        # the band of a score picks the model
+        '[25, ["building-c"]]',
+        '[50, ["building-a", "building-h"]]',
+        '[75, ["building-f"]]',
+        '[90, ["building-skyscraper-a"]]',
+        '[Infinity, ["building-skyscraper-c", "building-skyscraper-e"]]',
+        # the meaning of a client's office is kept on the model
+        'if (spec.state === "frame") {',
+        "const red = Math.min(spec.red || 0, 12);",
+        "roofLight(THREE, plot, materials, spec.strip, width, depth, 0.04 + height);",
+    ):
+        assert needed in OFFICE_SCRIPT, needed
+    # The street loads the models only once a stage is shown, and builds every
+    # office and its street through office.js.
+    assert SCRIPT.index("await import(THREE_URL)") < SCRIPT.index(
+        "city = await loadModels("
+    )
+    for needed in (
+        "city = await loadModels(THREE, names.concat(STREET));",
+        "const built = office(THREE, city, {",
+        "const kit = streetKit(THREE, city);",
+        "if (laid.every(Boolean)) {",
+    ):
+        assert needed in SCRIPT, needed
+    assert "officeBuilding" not in SCRIPT
 
 
 def test_the_scene_stylesheet_draws_with_tokens_only() -> None:

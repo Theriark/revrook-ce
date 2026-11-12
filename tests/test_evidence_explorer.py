@@ -433,6 +433,27 @@ def body_of(name: str) -> str:
     return SCRIPT[start : SCRIPT.index(f"\n{indent}}}\n", start)]
 
 
+def test_the_offices_of_the_ring_are_the_kenney_models_with_the_built_fallback() -> (
+    None
+):
+    # The ring reads the model of every client's office once it is shown (the seed
+    # is the client's id, as on Home's street); office.js builds an office in code
+    # when its model failed. The blocks of a client's wall stay built in code.
+    for needed in (
+        "({ officeBuilding, office, loadModels, officeModel } = await import(",
+        'officeModel(client.score, clientSeed(client, index)) : ""',
+        'return Number(client.id.replace(/^client:/, "")) || index + 7;',
+        "const built = office(THREE, city, {",
+        "score: client.score,",
+        "seed: clientSeed(client, index),",
+        "const built = officeBuilding(THREE, {\n      width: 0.5,",
+    ):
+        assert needed in SCRIPT, needed
+    assert SCRIPT.index("await import(THREE_URL)") < SCRIPT.index(
+        "city = await loadModels("
+    )
+
+
 def test_the_links_of_the_ring_are_tubes_bundled_per_domain() -> None:
     # Thin tubes, few segments, one merged mesh per status (one draw each), each
     # through the hub above its control's domain.

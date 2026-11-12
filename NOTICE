@@ -31,3 +31,11 @@ three.js 0.186.1 (r186)
           are present in the image)
   Licence: MIT, Copyright 2010-2026 Three.js Authors
   Licence file: app/static/vendor/three/LICENSE
+
+Kenney City Kit Commercial 2.1, City Kit Roads 2.2, City Kit Suburban 2.0
+  Files: app/static/models/kenney/<kit>/*.glb and Textures/colormap.png (the
+         offices, road tiles, street lamps and trees of the scenes)
+  Source: Kenney (www.kenney.nl), Models/GLB format of each kit, unmodified;
+          the SHA-256 of each file is in LICENSES-CONTENT.md
+  Licence: CC0 1.0 (Creative Commons Zero); credit given though not required
+  Licence files: app/static/models/kenney/<kit>/License.txt (line endings made LF)

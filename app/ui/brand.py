@@ -33,6 +33,30 @@ BRAND_FILES = (
     "wordmark-1200x300.png",
     "wordmark-dark-1200x300.png",
 )
+# The Kenney City Kit models (CC0, LICENSES-CONTENT.md) office.js reads for the
+# scenes, each kit with its colormap. They are fetched with the version of the
+# scripts that import office.js, so they are in both digests (ASSET_FILES here and
+# EXPLORER_ASSETS of app/ui/explorer.py): a new model is a new address.
+CITY_FILES = tuple(
+    f"models/kenney/{kit}/{name}"
+    for kit, names in (
+        (
+            "commercial",
+            (
+                "building-c.glb",
+                "building-a.glb",
+                "building-h.glb",
+                "building-f.glb",
+                "building-skyscraper-a.glb",
+                "building-skyscraper-c.glb",
+                "building-skyscraper-e.glb",
+            ),
+        ),
+        ("roads", ("road-straight.glb", "road-crossroad.glb", "light-square.glb")),
+        ("suburban", ("tree-large.glb", "tree-small.glb")),
+    )
+    for name in (*names, "Textures/colormap.png")
+)
 # The stylesheets and scripts base.html links, under app/static. Their addresses
 # carry asset_version() as the `v` query, so a changed file has a new address.
 ASSET_FILES = (
@@ -50,6 +74,7 @@ ASSET_FILES = (
     "js/office.js",
     # imported by scenes.js and the Explorer: the card of a chosen node
     "js/scene-card.js",
+    *CITY_FILES,
 )
 # The stylesheet and the script of the filter chips of the clients list. They are
 # not in the shell: clients.html links them itself, with their own digest

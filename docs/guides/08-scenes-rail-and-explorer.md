@@ -22,13 +22,17 @@ move is immediate.
 
 Under **What moves the score**, a keep panel holds the gauge of the mean score on its
 left and the stage on its right. On the stage the clients stand as offices along a
-street, with a road, a pavement, trees and street lamps. Each office is as tall as its
-score (2 to 12 floors) and as wide as the company (its people in the newest Entra
-export, else its devices). The light round its roof is its band: green for strong or
-good, amber for fair, red for weak or critical. A building in scaffolding means the
-evidence is too thin for a score (its height is then a lower bound); an empty,
-fenced lot means nothing is imported yet; and every red window is a control that needs
-work.
+street, with a road, a pavement, trees and street lamps (models of Kenney's City Kits,
+www.kenney.nl, CC0). Each office is as tall as its score: a low building below 25, a
+three-storey one from 25, a taller one from 50, a tower from 75 and the tallest towers
+from 90. It is as wide as the company (its people in the newest Entra export, else its
+devices). The light round its roof is its band: green for strong or good, amber for
+fair, red for weak or critical. A building in scaffolding means the evidence is too thin
+for a score (its height is then a lower bound); an empty, fenced lot means nothing is
+imported yet; and every small red lit window on the street side is a control that needs
+work. The models are fetched only when the 3D view is shown; if one cannot be loaded,
+that office is drawn as a plain office built in code (2 to 12 floors for the score)
+and the scene still works.
 
 ![The rookery on Home at 1440 px, dark theme](../images/home-1440-dark.png)
 
@@ -146,7 +150,8 @@ client's wall directly ([evidence-explorer-preview.md](../evidence-explorer-prev
 ### The companies ring
 
 1. Press **Show the 3D view** in the head of the card (the same choice as the other
-   scenes). Every client stands as an office on an inner ring, as on Home's street, and
+   scenes). Every client stands as an office on an inner ring, the same building as on
+   Home's street, and
    every control is a tile on an outer ring, grouped by domain, in the worst status any
    client has for it. A link runs from every client to every control, in the colour of
    that client's status for it (none where the control is not applicable).
