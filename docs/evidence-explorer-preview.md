@@ -194,8 +194,8 @@ same dark surface as the rail; the colours on it are the dark-theme status value
 ## Limits
 
 The scene has been checked in a headless browser with a software renderer
-(SwiftShader) on the Development site; no hardware GPU, WebGPU, phone or touch
-screen has been measured. The 51 controls and up to 13 sources of a client are a
+(SwiftShader) on the Development site, and in headless Chrome on a desktop GPU for
+the pictures of 2026-11-12; no WebGPU, phone or touch screen has been measured. The 51 controls and up to 13 sources of a client are a
 small scene. The companies ring merges its links per status, so a portfolio of
 hundreds of clients adds vertices, not draw calls; it was checked with four clients,
 where a frame took about 2 ms of script, in the Claude desktop browser on Windows

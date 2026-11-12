@@ -132,9 +132,9 @@ shown.
 
 ## Light, dark or the choice of the system
 
-The three buttons under your name in the rail (in the bar on a tablet or a phone, as
-icons) choose the theme: **Light**, **Dark**, or **System** to follow the setting of the
-device. The choice is kept with your account (and in a cookie for the sign-in page),
+The sun or moon button in the top bar, beside the account menu, switches between
+**Light** and **Dark** at once; **Account** in the account menu also offers **System**,
+to follow the setting of the device. The choice is kept with your account (and in a cookie for the sign-in page),
 so it follows you to another browser. The ground of every scene is the
 same charcoal in both themes; the pictures of this guide show both.
 
@@ -171,6 +171,10 @@ client's wall directly ([evidence-explorer-preview.md](../evidence-explorer-prev
    numbers as text: each client's score and its controls per status, each control's
    clients per status. **Show in scene** on a row chooses that office or tile.
 
+![The companies ring of the Evidence Explorer as the page opens, at 1440 px, light theme](../images/evidence-explorer-1440.png)
+
+![The companies ring at 768 px (tablet view), light theme](../images/evidence-explorer-768.png)
+
 ### The evidence wall of one client
 
 1. Choose the client under **View** and press **Show**.
@@ -189,17 +193,14 @@ client's wall directly ([evidence-explorer-preview.md](../evidence-explorer-prev
 5. Under the scene, **Evidence sources** and the table of the controls carry the same
    facts as text; **Show in scene** on a row turns the wall to that source or control.
 
-![The Evidence Explorer at 1440 px, light theme](../images/evidence-explorer-1440.png)
-
-![The Evidence Explorer at 1440 px, dark theme](../images/evidence-explorer-1440-dark.png)
-
-![The Evidence Explorer at 768 px (tablet view), light theme](../images/evidence-explorer-768.png)
+![The evidence wall of one client at 1440 px, dark theme](../images/evidence-explorer-1440-dark.png)
 
 ![The evidence wall on a phone at 390 px, light theme](../images/evidence-explorer-390.png)
 
 ## Known limits
 
 - The scenes were checked in a headless Chrome with a software renderer on the
-  Development site; no hardware GPU, phone or touch screen has been measured.
+  Development site, and the pictures of this guide were taken in a headless Chrome with
+  a hardware GPU on a local build; no phone or touch screen has been measured.
 
 Back to the [guides](README.md).

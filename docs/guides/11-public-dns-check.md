@@ -24,7 +24,7 @@ ran and its result is stored as evidence**. In the **Sources** table, **Public D
 check** is now current with today's date; in **Everything imported** the run is one
 more item of the source `dns-check`, in the hash chain of the client.
 
-![The card after the run at 1440 px: the message that the result is stored, and the Public DNS check row current today](../images/evidence-1440-dns-check-done.png)
+![The card after the run at 1440 px: the message that the result is stored](../images/evidence-1440-dns-check-done.png)
 
 Only DNS questions about the entered names leave revrook: the domain, `_dmarc.` and
 the `_domainkey` names of the selectors, and the `include:` and `redirect=` targets the

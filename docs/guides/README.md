@@ -1,15 +1,12 @@
 # Guides
 
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
-in the order a new installation meets them. Every picture is a live capture of the
-Development site (`https://ce-dev-revrook.theriark.dev`) taken on 2026-11-11 from the
-application build documented and captured (commit `99aaf21b26a93a54b6db1aa5534e602c6e2e8541`, the merge of pull request
-#90, image `sha256:6bd4e84cbbabccfd8b96ad5f44e9ed714262412bb81cceb61fdedb9c75967e6c`), with the synthetic test data of that site (see the
-[capture manifest](../images/README.md)). Pictures at 1440 px are the desktop view;
-pictures at 768 px and 390 px are labelled as tablet and phone views in their
-captions. Later documentation-only commits are deployed on top with the same
-application code; the deployed head is read from the deployment receipt and the
-package manifest. The pictures
+in the order a new installation meets them. Every picture is a live capture, taken on
+2026-11-12, of a local build of commit `6ee1bba09be2c2a705a9347fa136ea9ff7c63d97` (the
+merge of pull request #108, the build Development runs) with the synthetic data of the
+Development seed (see the [capture manifest](../images/README.md)); it is not a
+capture of a deployment. Pictures at 1440 px are the desktop view; pictures at 768 px
+and 390 px are labelled as tablet and phone views in their captions. The pictures
 are in [docs/images](../images/README.md) with a capture manifest (file, SHA-256, page,
 viewport, theme, capture time and the guide that uses each). What the output is, and is
 not, is in the [README](../../README.md): a configuration evidence summary, not a
@@ -29,13 +26,14 @@ certification.
 | [10. Export Microsoft 365 with the script](10-microsoft-365-export.md) | Run the read-only PowerShell script that writes the six Microsoft 365 files of a tenant, and drop them on Import evidence |
 | [11. The public DNS check](11-public-dns-check.md) | Run the SPF, DKIM and DMARC check of a client's mail domains from its evidence page, once or every Monday, and read its result |
 
-Every guide uses the same test installation and its administrator account. The clients
-("Seed Gaps Ltd (synthetic)", "Seed Tidy Ltd (synthetic)" and the others), "Sample MSP"
-(the business name of the test installation), the leavers file and the exception in the
-pictures are synthetic test data; nothing in them is a real customer, a real address or
-a credential. The files imported for guide 3 are invented too (two leavers at
+Every guide uses the same test installation and its administrator account
+(`local-admin`). The clients ("Seed Gaps Ltd (synthetic)", "Seed Tidy Ltd (synthetic)"
+and the others) and the leavers file in the pictures are synthetic test data; the
+installation pictured has no business name set, so the report pictures show none.
+Nothing in them is a real customer, a real address or a credential. The files imported for guide 3 are invented too (two leavers at
 `seed.example.invalid`, a Conditional Access and an Intune export made by the
 Development seed's own builders, and a help-desk file that matches no source). Two parts
-of the live pages are kept out of every picture because they name a seeded sign-in
-account of the Development installation: **Recent changes** on Home and on a client
-overview, and **Users and mappings** in Settings (see the capture manifest).
+of the pages stay out of the main pictures, as in the earlier sets, because on the shared
+Development installation they name a seeded sign-in account: **Recent changes** on Home
+and on a client overview, and **Users and mappings** in Settings (see the capture
+manifest).

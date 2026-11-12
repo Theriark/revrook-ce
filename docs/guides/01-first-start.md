@@ -15,8 +15,8 @@ second role.
    to the sign-in page. Whoever reaches a new installation first can claim it, so do
    this before the installation is reachable by others ([security](../security.md)).
 
-The first-run page is not pictured: the Development site already has its account, so
-the page cannot be shown there without re-installing it.
+The first-run page is not pictured: the installation pictured already has its account,
+so the page cannot be shown there without re-installing it.
 
 ## Sign in
 
