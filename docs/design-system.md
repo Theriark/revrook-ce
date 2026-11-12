@@ -43,7 +43,7 @@ themes, `tests/test_theme.py` the recorded values and the switch.
 | `--rv-canvas` | `#f4f3ef` | `#272a34` | Table headers, code, the footer, the import area, toolbars and bands |
 | `--rv-line` | `#e4e2db` | `#3a3e4b` | Borders and dividers |
 | `--rv-line-strong` | stone | `#4d5261` | Decoration only: dashed borders, the underline of a link, the track of the busy indicator; never the boundary of a control or a graphic that carries meaning (2.09 to 1 on the dark surface) |
-| `--rv-mark-tile` | `#fffef5` | same | The tile behind the rook mark of the brand lockup: the cream of the approved logo files |
+| `--rv-mark-edge` | `rgba(255, 254, 245, 0.7)` | same | The thin edge round the rook mark of the brand lockup (no tile): the cream of the approved logo files, so the black head stays apart from a dark rail or the sign-in panel |
 | `--rv-rail` | charcoal | `#15161c` | The rail and the sign-in panel: the darkest surface in both themes |
 | `--rv-charcoal-deep` | `#22242d` | `#0e0f13` | The current page in the rail |
 | `--rv-charcoal-soft` | `#3a3d4b` | `#2a2d38` | Hover in the rail, the avatar, the pressed theme button |
@@ -171,16 +171,16 @@ lockup in a row, the badge, the form and the footer on the right. Below 768 px t
 panel becomes a short band above the form.
 
 The brand lockup (`_brand.html`, `{{ b.lockup(brand_files) }}` or
-`b.lockup(brand_files, "stack")`) is the rook mark in its cream tile beside, or above,
+`b.lockup(brand_files, "stack")`) is the rook mark, on no tile, beside, or above,
 the wordmark as text (rev and rook, bold Helvetica or Arial). The mark is the approved
-`logo-mark-512x512.png`, drawn on nothing, so the tile is the stylesheet's
-(`.rv-mark`, `--rv-mark-tile`) and the lockup sits on the rail, on the sign-in panel
+`logo-mark-512x512.png`, drawn on nothing and shown on nothing: a thin cream edge
+(`.rv-mark-img`, `--rv-mark-edge`) keeps the black head apart from a dark ground, and the lockup sits on the rail, on the sign-in panel
 and on the surface of either theme; the composed logo files carry a charcoal surround
 that showed as a lighter box on the darker rail of the dark theme, so they are not
-drawn. The tile is 40 px in the bar, 48 px in the rail, 44 px in the signed-out header
+drawn. The mark is 40 px in the bar, 48 px in the rail, 44 px in the signed-out header
 and 72 px, then 128 px from 768 px, on the panel; the wordmark is 28 px in the rail
 and on the panel (stone and gray, large text), 24 px in the bar, and the text and
-link colours on the surface. Below 600 px the bar shows the tile alone, and the
+link colours on the surface. Below 600 px the bar shows the mark alone, and the
 signed-out header does so below 1024 px, where it shares its line with the badge and
 the theme switch beside the panel (which still carries the whole lockup). Without the
 mark file the wordmark alone is the brand, as before.

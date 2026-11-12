@@ -16,6 +16,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Changed
 
+- The rook mark of the brand lockup (rail, sign-in panel, signed-out header) no longer sits in a cream tile: it shows on the rail or panel itself, with a thin cream edge so the black head stays visible on a dark ground. The favicons were already transparent.
 - Faster CI: pytest runs as four parallel shards (`TEST_SHARD`), a `coverage` job combines their data and keeps both thresholds, and the docker build and compose smoke test start alongside the checks instead of after them. The gate and the Development deployment still wait for every check ([docs/ci-cd.md](docs/ci-cd.md)).
 - Expiry reminders measure an automatic export by the strictest control that reads its source, as the evidence pages and the checklist do: a device export is reminded about when it goes stale at 7 days, not at 35 ([docs/operations.md](docs/operations.md#expiry-reminders)).
 - A control whose rule counts problems (PC-ACC-02, PC-EML-06, PC-GOV-04, PC-NET-02) shows its coverage as "0 of 2 need work" instead of "0 of 2 (0%)", which read as no coverage next to Protected.

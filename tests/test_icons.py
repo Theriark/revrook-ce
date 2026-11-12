@@ -171,10 +171,10 @@ def test_the_lockup_is_the_mark_in_its_tile_beside_the_wordmark() -> None:
     assert "logo-horizontal" not in BRAND and "logo-stacked" not in BRAND
 
 
-def test_the_tile_and_the_mark_have_their_sizes_in_each_place() -> None:
+def test_the_mark_has_its_sizes_in_each_place_and_no_tile() -> None:
     assert block(".rv-mark")["width"] == "40px"
-    assert block(".rv-mark")["background-color"] == "var(--rv-mark-tile)"
-    assert block(".rv-mark-img")["transform"] == "translateX(13%)"
+    assert "background-color" not in block(".rv-mark")
+    assert "var(--rv-mark-edge)" in block(".rv-mark-img")["filter"]
     panel = [decl for sel, decl in RULES if sel == ".rv-auth-panel .rv-mark"]
     assert [rule["width"] for rule in panel] == ["72px", "128px"]  # then from 768px
     css = (ROOT / "app/static/css/revrook.css").read_text(encoding="utf-8")
