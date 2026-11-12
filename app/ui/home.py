@@ -64,6 +64,8 @@ from app.web import clock_of, current_session, session_factory
 router = APIRouter()
 # Home lists the five most urgent controls; the rest are on the checklists
 HOME_ATTENTION = 5
+# The company card of the scene names the three most urgent controls of its client
+CARD_FOCUS = 3
 
 
 @dataclass(frozen=True)
@@ -224,6 +226,10 @@ async def load_board(
     sources: list[SourceRow] = []
     unread: list[Unread] = []
     created: list[datetime] = []
+    # Per client, for its company card in the scene: its most urgent controls and
+    # how many of its exports are due for a refresh.
+    focus: dict[int, list[AttentionItem]] = {}
+    refresh: dict[int, int] = {}
     async with session_factory(request)() as session:
         for client_id, name, created_at in await active_clients(session):
             created.append(created_at)
@@ -247,9 +253,13 @@ async def load_board(
                 posture_of(client_id, name, view, read_earlier(earlier), len(evidence))
             )
             excepted = {entry.control_id for entry in live.exceptions}
-            attention.extend(attention_items(client_id, name, view, excepted))
+            items = attention_items(client_id, name, view, excepted)
+            attention.extend(items)
+            focus[client_id] = prioritised(items)[:CARD_FOCUS]
             domain_rows.extend(view.domains)
-            sources.extend(source_rows(evidence, wanted, ages, now))
+            rows = source_rows(evidence, wanted, ages, now)
+            sources.extend(rows)
+            refresh[client_id] = evidence_summary(rows).to_refresh
         since = now - timedelta(days=HISTORY_DAYS)
         points = report_points(await recent_snapshots(session, since))
         # The trend keeps the range chosen: its reports and, per client, the one
@@ -262,6 +272,7 @@ async def load_board(
         users = await usernames(session)
         sizes = await company_sizes(session)
     weekly = weekly_series(points, created, now)
+    ranked = prioritised(attention)
     return {
         "clients": postures,
         "sizes": sizes,
@@ -272,8 +283,13 @@ async def load_board(
         "drivers": DRIVERS,
         "unread": unread,
         "stats": stat_cards(postures, weekly, evidence_summary(sources)),
-        "attention": prioritised(attention)[:HOME_ATTENTION],
+        "attention": ranked[:HOME_ATTENTION],
         "attention_total": len(attention),
+        # The ring view of the scene: every failing (client, control) pair, and the
+        # company card of each client (its focus controls and exports to refresh).
+        "links": ranked,
+        "card_focus": focus,
+        "card_refresh": refresh,
         "trend": trend_chart(trend_points, names, now, days=days),
         "trend_narrow": trend_chart(
             trend_points, names, now, days=days, size=NARROW_CHART

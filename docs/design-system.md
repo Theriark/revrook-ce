@@ -579,6 +579,43 @@ client. While every client is only a footprint the detail line says so and what 
 do (import its exports); with no client at all the stage is put away and Home keeps its
 own empty state.
 
+The company card. Choosing an office (a press, or Left and Right on the canvas) opens a
+card beside it in the stage: the top of the office is projected to the stage with the
+camera and the card stands to its right, or to its left when there is no room, kept
+inside the stage; below 600px of stage width it docks across the foot of the stage and
+scrolls inside it. The server draws one `<template id="client-card-{id}">` per client
+in `home.html` and the module clones it, so no markup is built from strings: the name
+(a link to the client), the score and band with the status and score styles of the
+driver cards (`at least` and "Insufficient evidence" when the evidence is too thin),
+**Needs work** (the client's three most urgent controls by the order of **Needs
+attention**, each a link to the control), **Exports to refresh: N** (its expired, stale
+and never-imported sources, counted as the stat card counts them for all clients; a
+link to its evidence page) and Open client, Checklist and Evidence. It is a non-modal
+popover, `role="dialog" aria-modal="false"` labelled by its heading, on the keep
+surface (the card carries `.rv-keep`) so it reads in both themes. Chosen from the
+keyboard, the focus moves to its heading, where Left, Right and Enter still answer;
+Escape closes it and gives the canvas the focus back, as its Close button does; a press
+outside it, Reset view and Hide the 3D view close it; the aria-live detail line keeps
+naming the choice.
+
+The ring (Home only). A Street / Ring switch in the tool row (`aria-pressed`, a group
+labelled "View"; the stage macro draws it when it is given the `links` list, and the
+choice is kept in `localStorage` under `rv-rookery-view`) redraws the rookery as the
+portfolio: the clients as smaller offices evenly on an inner ring, every control that
+at least one client fails on an outer ring as a tile in the worst status colour among
+those clients (red when one has it not protected, else amber), and a beam (a faint
+line, opacity 0.12) from each client to each control it fails. Its facts come from the
+page: the hidden `<ul id="portfolio-links">`, one item per failing (client, control)
+pair of every client (`data-client`, `data-control`, `data-label`, `data-title`,
+`data-href`), and one `<template id="control-card-{control_id}">` per failing control.
+Choosing a node lights its beams and the nodes at their ends and dims the rest (the
+same `paint` as the street); a client opens its company card, a tile its control card
+(the control and title, and each client that fails it with its status, linking to that
+control of that client). Left and Right step through the clients and then the controls;
+Enter opens the client, or the first link of the control card. The ring is fitted with
+`framingDistance` like every scene, and a switch disposes the scene whole (geometries,
+materials, maps) before the other view is built.
+
 The domain keep (client overview, `#keep-scene`, in the Coverage by domain card). One
 block per domain of the control library, as wide as its weight in the score, built of
 its controls in layers from the foot up: protected, needs attention, not protected,
