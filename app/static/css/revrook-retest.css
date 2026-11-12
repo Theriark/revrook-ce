@@ -723,20 +723,6 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
     border-bottom: 0;
   }
 
-  body[data-rail="compact"] .rv-user {
-    justify-content: center;
-    padding: 12px 0 0;
-  }
-
-  body[data-rail="compact"] .rv-user .rv-inline-form {
-    flex-basis: auto;
-  }
-
-  body[data-rail="compact"] .rv-user .rv-button-quiet {
-    width: auto;
-    padding: 7px;
-  }
-
   body[data-rail="compact"] .rv-theme {
     flex-direction: column;
     flex-basis: auto;

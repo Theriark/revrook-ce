@@ -18,7 +18,7 @@ SCENES = (STATIC_DIR / "js/scenes.js").read_text(encoding="utf-8")
 BODY_MINIMUM = 4.5
 HEX = re.compile(r"#[0-9a-fA-F]{6}\b")
 DECLARATION = re.compile(r"(--[a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;")
-BAND_SELECTOR = ".rv-keep,\n.rv-content > .rv-page-header,"
+BAND_SELECTOR = ".rv-keep {"
 
 
 def strip_comments(css: str) -> str:
@@ -131,27 +131,20 @@ def test_every_status_chip_reads_on_its_tint() -> None:
         assert f"span.rv-status-{key}" in CSS
 
 
-def test_the_band_carries_the_header_the_tabs_and_the_problem_page() -> None:
+def test_the_page_header_stands_on_the_page_without_a_band() -> None:
+    # 2026-11-12: one top bar, the title on the page; no charcoal band and no
+    # battlement edge on any page header, tab strip or problem page
     css = strip_comments(CSS)
-    head = BAND_SELECTOR + css.split(BAND_SELECTOR, 1)[1].split("{", 1)[0]
-    for selector in (
-        ".rv-content > .rv-page-header",
-        ".rv-content > .rv-tabs-strip",
-        ".rv-content > .rv-problem",
-    ):
-        assert selector in head, selector
-    # The battlement edge is the background of the band itself, no image
-    assert "repeating-linear-gradient(90deg, var(--rv-keep)" in css
+    assert "repeating-linear-gradient" not in css
+    assert ".rv-content > .rv-page-header {\n  margin: 0 0 24px;" in css
+    head = css.split(BAND_SELECTOR, 1)[0][-200:]
+    assert ".rv-page-header" not in head and ".rv-tabs-strip" not in head
 
 
-def test_the_band_runs_to_the_right_edge_of_the_window() -> None:
-    # THE-1347: the band stopped at the 1200px of the content on a wide window
+def test_the_page_column_clips_nothing_past_the_window() -> None:
     css = strip_comments(CSS)
     assert ".rv-main {\n  overflow-x: clip;\n}" in css
-    layer = css.split(".rv-content > .rv-page-header::before,", 1)[1].split("}")[0]
-    assert "inset: 0 -100vw 0 0;" in layer and "z-index: -1;" in layer
-    tabs = css.split(".rv-content > .rv-tabs-strip {", 1)[1].split("}")[0]
-    assert "fill 0 / 0 / 0 100vw" in tabs
+    assert "::before,\n.rv-content > .rv-problem::before" not in css
 
 
 def test_motion_stays_off_under_reduced_motion() -> None:

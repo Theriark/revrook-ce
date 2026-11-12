@@ -21,6 +21,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -75,6 +76,15 @@ class AppUser(Base):
     # The theme of the interface: light, dark or system (app/theme.py).
     theme: Mapped[str] = mapped_column(
         String(8), default="system", server_default=text("'system'")
+    )
+    # The profile (app/ui/account.py): the name shown instead of the login name,
+    # and the picture as uploaded with its media type; the version changes the
+    # picture's address on every change.
+    display_name: Mapped[str | None] = mapped_column(String(80))
+    avatar: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
+    avatar_type: Mapped[str | None] = mapped_column(String(16))
+    avatar_version: Mapped[int] = mapped_column(
+        Integer, default=0, server_default=text("0")
     )
     failed_login_count: Mapped[int] = mapped_column(
         Integer, default=0, server_default=text("0")

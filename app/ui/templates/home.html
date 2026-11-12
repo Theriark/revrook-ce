@@ -56,23 +56,21 @@
 </section>
 
 <div class="rv-dash-row rv-dash-row-trend">
-<section id="needs-attention" aria-labelledby="attention-title">
-<div class="rv-section-head">
-<h2 id="attention-title">Needs attention</h2>
-<p class="rv-section-note">Gate controls first, then by weight. {{ attention_total }} across all clients.</p>
-</div>
+<section class="rv-card" id="needs-attention" aria-labelledby="attention-title">
+<h2 id="attention-title" class="rv-card-title">Needs attention</h2>
+<p class="rv-card-subtitle">Gate controls first, then by weight. {{ attention_total }} across all clients.</p>
 {% if attention %}
 <ol class="rv-attention">
 {% for item in attention %}
 <li class="rv-attention-row">
 <span class="rv-attention-status">{{ s.status(item.label) }}</span>
 <span class="rv-attention-what"><a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a><span class="rv-attention-client">{{ item.client_name }}{% if item.gate %}, gate control{% endif %}{% if item.why %}, {{ item.why }}{% endif %}</span></span>
-<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}" data-drawer>Open</a>
+<a class="rv-button-quiet rv-button-small" role="button" href="/{{ item.path }}" data-drawer aria-label="Open {{ item.control_id }} for {{ item.client_name }}">Open</a>
 </li>
 {% endfor %}
 </ol>
 {% if attention_total > attention|length %}
-<p class="rv-text-secondary" id="attention-more"><a href="/clients?show=needs-work">{{ attention_total - attention|length }} more</a> on the checklists of the clients.</p>
+<p class="rv-text-secondary rv-attention-more" id="attention-more"><a href="/clients?show=needs-work">{{ attention_total - attention|length }} more</a> on the checklists of the clients.</p>
 {% endif %}
 {% else %}
 <div class="rv-empty" id="attention-empty">
@@ -120,11 +118,11 @@
 {% else %}
 <div class="rv-gauge-words">
 <p class="rv-gauge-title">No score yet</p>
-<p class="rv-gauge-line">Import the first export of a client and its rook rises here, as tall as its score.</p>
+<p class="rv-gauge-line">Import the first export of a client and its office rises here, as tall as its score.</p>
 </div>
 {% endif %}
 </div>
-{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The rookery skyline: one rook per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the yard, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Hover over or select a rook, or a bar below, to see its details here.", "A 3D view of the same scores: one rook per client, as tall as its score. A wire rook has too little evidence for a score, a footprint has nothing imported yet, and each notch at its foot is a control that needs work.") }}
+{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The client street: one office per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the street, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Choose a building, or a card below, to see its details here.", "One office per client: as tall as its score, as wide as the company, its roof light the band. A building under construction has too little evidence for a score, an empty lot has none; each red window is a control that needs work.") }}
 </div>
 {% if portfolio %}
 {% set mean = portfolio.drivers %}
@@ -148,12 +146,12 @@
 <ul class="rv-drivers" id="rookery-list">
 {% for client in clients %}
 {% set split = client.drivers %}
-<li class="rv-driver{% if client.insufficient %} rv-driver-insufficient{% endif %}" data-client="{{ client.client_id }}" data-name="{{ client.name }}" data-score="{{ client.score_share }}" data-score-text="{{ client.score_text }}" data-band="{{ client.band }}" data-insufficient="{{ 'true' if client.insufficient else 'false' }}" data-evidence="{{ client.evidence }}" data-needs-work="{{ client.needs_work }}" data-href="/clients/{{ client.client_id }}">
+<li class="rv-driver{% if client.insufficient %} rv-driver-insufficient{% endif %}" data-client="{{ client.client_id }}" data-name="{{ client.name }}" data-score="{{ client.score_share }}" data-score-text="{{ client.score_text }}" data-band="{{ client.band }}" data-insufficient="{{ 'true' if client.insufficient else 'false' }}" data-evidence="{{ client.evidence }}" data-needs-work="{{ client.needs_work }}" data-size="{{ sizes.get(client.client_id, 0) }}" data-href="/clients/{{ client.client_id }}">
 <p class="rv-driver-head"><a class="rv-driver-name" href="/clients/{{ client.client_id }}">{{ client.name }}</a>{% if client.evidence %}<span class="rv-driver-score">{% if client.insufficient %}at least {% endif %}{{ client.score_text }}</span>{% endif %}<span class="rv-driver-band">{% if client.evidence %}{{ client.band }}{% else %}No evidence yet{% endif %}</span></p>
 {% if client.evidence and split %}
 {{ d.bar(split, client.name ~ ": " ~ split.label) }}
 {% set worst = split.biggest %}
-<p class="rv-driver-why">{% if worst %}Most points lost to {{ worst.driver.text|lower }}: {{ worst.text }}.{% else %}Every counted control earns its full weight.{% endif %}{% if split.cap_control %} Held at {{ split.cap_limit }} by the gate control <a href="/clients/{{ client.client_id }}/controls/{{ split.cap_control }}" data-drawer>{{ split.cap_control }}</a>.{% endif %}{% if client.insufficient %} The evidence is too thin for a score, so this is a lower bound.{% endif %}</p>
+<p class="rv-driver-why">{% if worst %}Most points lost to {{ worst.driver.text|lower }}: {{ worst.text }}.{% else %}Every counted control earns its full weight.{% endif %}{% if split.cap_control %} Held at {{ split.cap_limit }} by the gate control <a href="/clients/{{ client.client_id }}/controls/{{ split.cap_control }}" data-drawer>{{ split.cap_control }}</a>.{% endif %}</p>
 {% if split.top %}
 <p class="rv-driver-top"><span class="rv-driver-top-label">Costs the most points:</span> {% for item in split.top %}<a href="/clients/{{ client.client_id }}/controls/{{ item.control_id }}" data-drawer{% if item.title %} title="{{ item.title }}"{% endif %}>{{ item.control_id }}</a> ({{ item.text }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
 {% endif %}
@@ -229,7 +227,7 @@
 <section id="recent-changes" aria-labelledby="changes-title">
 <div class="rv-section-head">
 <h2 id="changes-title">Recent changes</h2>
-<p class="rv-section-note">The newest changes to clients, evidence and reports.</p>
+<p class="rv-section-note">Clients, evidence and reports.</p>
 </div>
 {% if changes %}
 <ol class="rv-timeline">

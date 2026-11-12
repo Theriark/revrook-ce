@@ -143,8 +143,8 @@ def test_the_layout_links_the_stylesheets_script_and_footer() -> None:
     assert script_tag("/static/js/revrook.js") in html
     assert 'data-theme="system"' in html
     assert '<meta name="color-scheme" content="light dark">' in html
-    assert 'class="rv-footer"' in html
-    assert "not a certification, audit or attestation" in html
+    # The disclaimer is printed in the reports only (2026-11-12), not on every page
+    assert 'class="rv-footer"' not in html
 
 
 def test_every_stylesheet_and_script_link_carries_the_asset_version() -> None:
@@ -152,8 +152,10 @@ def test_every_stylesheet_and_script_link_carries_the_asset_version() -> None:
     # address without the digest could serve an old stylesheet with a new page.
     html = render_login(frozenset(BRAND_FILES))
     linked = re.findall(r'(?:href|src)="(/static/(?:css|js|vendor)/[^"]+)"', html)
-    assert len(linked) == len(ASSET_FILES)
-    expected = [f"/static/{name}?v={VERSION}" for name in ASSET_FILES]
+    # js/office.js is imported by scenes.js, not linked; it is in the digest only
+    shell_links = [name for name in ASSET_FILES if name != "js/office.js"]
+    assert len(linked) == len(shell_links)
+    expected = [f"/static/{name}?v={VERSION}" for name in shell_links]
     assert sorted(linked) == sorted(expected)
     # The brand files are the approved assets and never change: no version.
     for brand in re.findall(r'(?:href|src|srcset)="(/static/brand/[^" ]+)', html):

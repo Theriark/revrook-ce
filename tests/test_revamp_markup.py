@@ -85,7 +85,7 @@ async def test_the_pages_render_what_the_finding_rules_select(
     # .rv-footer stand in the middle; .rv-content > .rv-page-header is the band
     assert parents(home, "class", "rv-main") == ["rv-app"]
     assert parents(home, "class", "rv-content") == ["rv-main"]
-    assert parents(home, "class", "rv-footer") == ["rv-main"]
+    assert "rv-footer" not in home
     assert parents(home, "class", "rv-topbar-inner") == ["rv-topbar"]
     assert parents(home, "class", "rv-page-header") == ["rv-content"]
     # Without a scene: .rv-keep-panel:has(> .rv-scene[data-scene-state=...]) and,

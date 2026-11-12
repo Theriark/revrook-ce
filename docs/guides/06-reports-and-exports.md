@@ -44,8 +44,7 @@ report.
   exceptions, the data sources and the preparer. **Before you export** lists what
   stops an export, each line saying what is missing; the usual first one is the
   business name.
-- The paper sheet, white in both themes and set in the keep with the battlement for
-  its edge, shows the cover and the summary as the client receives them: the period,
+- The paper sheet, white in both themes and set in a charcoal frame, shows the cover and the summary as the client receives them: the period,
   the pack date, the summary sentence and the counts by status.
 - **The reports**: for each of the two, **Preview** opens the file as it would be sent,
   and **Export the quarterly security review** or **Export the cyber insurance

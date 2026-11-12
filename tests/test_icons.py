@@ -96,7 +96,8 @@ def test_the_rail_draws_navigation_beside_text_and_controls_small() -> None:
     nav = (TEMPLATES / "_nav.html").read_text(encoding="utf-8")
     links = re.findall(r'class="rv-nav-link"[^>]*>\{\{ i\.icon\("[a-z-]+"\) \}\}', nav)
     assert len(links) == 9
-    assert 'i.icon("signout", "sm")' in nav
+    topbar = (TEMPLATES / "_topbar.html").read_text(encoding="utf-8")
+    assert 'i.icon("signout", "sm")' in topbar and "signout" not in nav
     switch = (TEMPLATES / "_theme.html").read_text(encoding="utf-8")
     assert 'i.icon(glyph, "sm")' in switch
     assert block(".rv-header .rv-nav-link")["gap"] == "12px"

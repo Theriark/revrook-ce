@@ -145,7 +145,7 @@ async def test_the_integrity_page_starts_with_the_check_and_shows_its_verdict(
         csrf_token=PLACEHOLDER_TOKEN,
     )
     assert structure_problems(html) == []
-    assert '<span class="rv-user-name">admin</span>' in html
+    assert '<span class="rv-account-name">admin</span>' in html
     assert 'id="integrity-empty"' in html and ">Check again</button>" in html
     assert 'href="/imports">Import evidence</a>' in html
     assert 'id="integrity-start"' not in html and 'id="chains"' not in html

@@ -3,7 +3,7 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>Import evidence</h1><p class="rv-page-purpose">Drop every export of a client at once. revrook reads each file, recognises which source it is from its columns, and stores it as evidence. You do not pick a source.</p></div>
+<div><h1>Import evidence</h1><p class="rv-page-purpose">Drop all of a client's exports at once. Each file is recognised on its own.</p></div>
 </div>
 {% include "_errors.html" %}
 {% if not clients %}
@@ -60,7 +60,7 @@
 <div class="rv-field">
 <label for="captured_at">When the files were exported (UTC)</label>
 <input id="captured_at" name="captured_at" type="datetime-local" value="{{ captured_at }}" aria-describedby="captured_at-help">
-<small id="captured_at-help" class="rv-help">Used for the CSV files, which carry no time of their own. A Microsoft Graph file keeps the time it says it was made.</small>
+<small id="captured_at-help" class="rv-help">For CSV files only. Microsoft Graph files carry their own time.</small>
 </div>
 </div>
 <label class="rv-dropzone">
@@ -76,17 +76,17 @@
 </fieldset>
 </form>
 
-<section id="import-sources" class="rv-card" aria-labelledby="import-sources-title">
-<div class="rv-section-head">
-<div><h2 id="import-sources-title" class="rv-card-title">What revrook recognises</h2><p class="rv-section-note">A file is recognised by its columns or, for Microsoft Graph, its fields. For Microsoft 365, <a href="/static/scripts/export-m365.ps1" download>download the export script</a> and run it in PowerShell with your administrator account: it reads the tenant (read-only) and writes the six Microsoft files in one folder, ready to drop here.</p></div>
+<section id="import-sources" class="rv-card rv-import-supported" aria-labelledby="import-sources-title">
+<div class="rv-card-head">
+<h2 id="import-sources-title" class="rv-card-title">Supported exports</h2>
+<a role="button" class="rv-button-quiet rv-button-small" href="/static/scripts/export-m365.ps1" download>{{ i.icon("cloud", "sm") }}<span>Microsoft 365 export script</span></a>
 </div>
 <ul class="rv-import-sources">
 {% for code, name, kind in sources %}
-<li>{{ i.source_mark(code) }}<span><strong>{{ name }}</strong><span class="rv-cell-note">{{ kind }}</span></span></li>
+<li>{{ i.source_mark(code) }}<strong>{{ name|replace(" export", "") }}</strong><span class="rv-source-format">{% if "JSON" in kind and "CSV" in kind %}JSON or CSV{% elif "JSON" in kind %}JSON{% else %}CSV{% endif %}</span></li>
 {% endfor %}
-<li>{{ i.source_mark("dns-check") }}<span><strong>Public DNS check</strong><span class="rv-cell-note">Not a file: run it from the evidence page of the client, once or every week</span></span></li>
 </ul>
-<p class="rv-section-note">An export of another tool with other column names: map its columns once in the <a href="/imports/profile-editor?client_id={{ client_id or '' }}">profile editor</a>. The saved mapping is recognised here from then on.</p>
+<p class="rv-import-foot">Public DNS is checked from a client's evidence page. Another tool's export: map its columns once in the <a href="/imports/profile-editor?client_id={{ client_id or '' }}">profile editor</a>.</p>
 </section>
 {% endif %}
 {% endblock %}

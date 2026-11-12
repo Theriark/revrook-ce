@@ -27,6 +27,7 @@ from app.ratelimit import ConcurrencyGate
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
 from app.system import worker_banner
+from app.ui import account as ui_account
 from app.ui import auth as ui_auth
 from app.ui import clients as ui_clients
 from app.ui import evidence as ui_evidence
@@ -205,6 +206,7 @@ def create_app(
         return {"status": "ready", "database": "ok", "worker": worker}
 
     app.include_router(ui_auth.router)
+    app.include_router(ui_account.router)
     app.include_router(ui_home.router)
     app.include_router(ui_clients.router)
     app.include_router(ui_evidence.router)

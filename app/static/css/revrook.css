@@ -191,7 +191,6 @@
   }
 }
 
-
 /* ---------- Base type ---------- */
 
 html {
@@ -450,8 +449,7 @@ body.rv-app {
   background-color: var(--rv-rail);
 }
 
-/* On a narrow phone the bar has no room for the badge next to the sign-out
-   button (they overlapped at 390px); the footer still names the edition */
+/* On a narrow phone the bar has no room for the edition badge beside the mark */
 @media (max-width: 599px) {
   .rv-app .rv-edition {
     display: none;
@@ -581,15 +579,6 @@ body.rv-app {
   height: var(--rv-icon-xl);
 }
 
-/* Who is signed in, and the way out */
-.rv-user {
-  grid-area: user;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
 .rv-avatar {
   display: none;
   flex: none;
@@ -602,30 +591,6 @@ body.rv-app {
   text-align: center;
   color: var(--rv-white);
   background-color: var(--rv-charcoal-soft);
-}
-
-.rv-user-text {
-  display: none;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.3;
-}
-
-.rv-user-name {
-  overflow: hidden;
-  font-size: 14px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--rv-white);
-  background-color: var(--rv-rail);
-}
-
-.rv-user-note {
-  font-size: 12px;
-  white-space: nowrap;
-  color: var(--rv-stone);
-  background-color: var(--rv-rail);
 }
 
 .rv-inline-form {
@@ -741,28 +706,6 @@ body.rv-app {
 
   .rv-nav-group-label:first-child {
     margin-top: 0;
-  }
-
-  /* In the rail the name gets the whole width and the sign-out button its own
-     line, so a long user name is not cut short next to the button */
-  .rv-user {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 14px 6px 0;
-    border-top: 1px solid var(--rv-charcoal-soft);
-  }
-
-  .rv-user-text {
-    flex: 1;
-  }
-
-  .rv-user .rv-inline-form {
-    flex-basis: 100%;
-  }
-
-  .rv-user .rv-button-quiet {
-    width: 100%;
-    justify-content: center;
   }
 }
 
@@ -1679,44 +1622,6 @@ dialog.rv-dialog::backdrop {
   column-gap: 1.5rem;
 }
 
-/* ---------- Footer ---------- */
-
-.rv-footer {
-  margin-top: auto;
-  padding: 16px;
-  border-top: 1px solid var(--rv-line);
-  font-size: 13px;
-  color: var(--rv-text);
-  background-color: var(--rv-canvas);
-}
-
-.rv-footer p {
-  margin-bottom: 4px;
-  color: var(--rv-text);
-  background-color: var(--rv-canvas);
-}
-
-.rv-footer p:last-child {
-  margin-bottom: 0;
-}
-
-.rv-footer .rv-disclaimer {
-  max-width: 64rem;
-  font-size: 13px;
-  color: var(--rv-text);
-  background-color: var(--rv-canvas);
-}
-
-.rv-footer-product {
-  font-weight: 600;
-}
-
-@media (min-width: 768px) {
-  .rv-footer {
-    padding: 16px 32px;
-  }
-}
-
 /* ---------- Signed-out pages: the rook panel and the form ---------- */
 
 body.rv-signed-out {
@@ -2500,20 +2405,6 @@ main .rv-attention-what a:hover {
   margin-bottom: 4px;
   padding-bottom: 0;
   border-bottom: 0;
-}
-
-.rv-client-kicker {
-  margin: 0 0 2px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-main .rv-client-kicker a {
-  text-decoration: none;
-}
-
-main .rv-client-kicker a:hover {
-  text-decoration: underline;
 }
 
 /* Toolbar: the controls of a list, or of a period, on one canvas band. Every

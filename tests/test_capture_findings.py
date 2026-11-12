@@ -78,7 +78,7 @@ def test_the_block_draws_with_tokens_only_and_every_rule_is_read() -> None:
     block = CSS.split(SECTION, 1)[1]
     assert not re.search(r"#[0-9a-fA-F]{3,6}\b|rgb\(", block)
     rules = new_rules()
-    assert len(rules) == 14, [selector for _, selector, _ in rules]
+    assert len(rules) == 10, [selector for _, selector, _ in rules]
 
 
 def test_f2_beside_the_folded_rail_the_content_stands_in_the_middle() -> None:
@@ -89,19 +89,14 @@ def test_f2_beside_the_folded_rail_the_content_stands_in_the_middle() -> None:
     found = rules_of(FOLDED_RAIL)
     for part in (".rv-content", ".rv-topbar-inner"):
         assert "margin-inline: auto;" in found[f'body[data-rail="compact"] {part}']
-    footer = found['body[data-rail="compact"] .rv-footer']
-    assert "padding-inline: calc((100% - 1200px) / 2 + 32px);" in footer
-    # The band and the tabs reach the left edge of the column too
-    for part in (".rv-page-header::before", ".rv-problem::before"):
-        band = found[f'body[data-rail="compact"] .rv-content > {part}']
-        assert "left: -100vw;" in band
-    tabs = found['body[data-rail="compact"] .rv-content > .rv-tabs-strip']
-    assert "border-image-outset: 0 100vw;" in tabs
+    # No footer and no band since 2026-11-12: nothing else reaches the edges
+    assert not any(
+        ".rv-footer" in selector or "::before" in selector for selector in found
+    )
     # The same answer the wide window has: the rules beyond 1448px are unchanged
     wide = CSS.split("@media (min-width: 1449px) {", 1)[1].split("\n}", 1)[0]
     centred = ".rv-app .rv-topbar-inner {\n    margin-inline: auto;"
     assert ".rv-app .rv-content,\n  " + centred in wide
-    assert "padding-inline: calc((100% - 1200px) / 2 + 32px);" in wide
 
 
 def test_f2_the_shell_renders_the_folded_rail_the_rules_select() -> None:

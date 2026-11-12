@@ -46,6 +46,8 @@ ASSET_FILES = (
     "js/revrook.js",
     "js/charts.js",
     "js/scenes.js",
+    # imported by scenes.js (and the Explorer): a new office is a new address
+    "js/office.js",
 )
 # The stylesheet and the script of the filter chips of the clients list. They are
 # not in the shell: clients.html links them itself, with their own digest

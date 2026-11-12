@@ -7,12 +7,12 @@ as the client pages; nothing on it is a check run on the fly.
 
 ![Home at 1440 px, light theme](../images/home-1440.png)
 
-Every signed-in page opens with the top bar: the breadcrumb of the page on the left and
-**Search clients** on the right, which the **/** key reaches from anywhere outside a
-field ([9. The top bar, the filters in use and bulk actions](09-top-bar-filters-and-bulk-actions.md#the-top-bar)).
-Under it the keep, a charcoal band whose top edge is the battlement of the revrook mark,
-carries the title of the page, its purpose and its one primary action (on Home, **Add a
-client**); on a client page it also carries the tabs of the client.
+Every signed-in page opens with the top bar: the breadcrumb of the page on the left;
+**Search clients** (the **/** key reaches it from anywhere outside a field), the theme
+switch and the account menu on the right
+([9. The top bar, the filters in use and bulk actions](09-top-bar-filters-and-bulk-actions.md#the-top-bar)).
+Under it the title of the page, one line on what it is for and its one primary action
+(on Home, **Add a client**); on a client page the tabs of the client follow.
 
 From top to bottom:
 
@@ -31,8 +31,8 @@ From top to bottom:
    to it by a short leader when names are moved apart so they do not overlap.
 4. **What moves the score**: a keep panel with the gauge of the mean score of every
    client with evidence (in the quiet colour, and called a lower bound, when it counts
-   a client whose evidence is too thin) beside the stage of the rookery skyline, one
-   rook per client as tall as its score, which opens with **Show the 3D view** and is
+   a client whose evidence is too thin) beside the stage of the client street, one
+   office per client as tall as its score, which opens with **Show the 3D view** and is
    drawn only once you press it ([8. Scenes, the folded rail and the Evidence
    Explorer](08-scenes-rail-and-explorer.md)); then the score drivers described
    below. **How the score works** opens the mean of every client and the colour key.

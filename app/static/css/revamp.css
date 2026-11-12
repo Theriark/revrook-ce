@@ -19,9 +19,6 @@
   /* The keep band: the brand charcoal in the light theme */
   --rv-keep: #2d2f3a;
   --rv-keep-raised: #32343e;
-  /* The crest on top of each merlon: the band itself in the light theme */
-  --rv-keep-crest: #2d2f3a;
-  --rv-keep-edge: 14px;
   /* The rail in the light theme: stone, a white pill for the page in use */
   --rv-rail-ground: #f1efe9;
   --rv-rail-ink: #2d2f3a;
@@ -42,7 +39,6 @@
 :root[data-theme="dark"] {
   --rv-keep: #111218;
   --rv-keep-raised: #1b1c24;
-  --rv-keep-crest: #4d5261;
   --rv-rail-ground: #181920;
   --rv-rail-ink: #d9d6cf;
   --rv-rail-quiet: #a9a69e;
@@ -61,8 +57,7 @@
   :root[data-theme="system"] {
     --rv-keep: #111218;
     --rv-keep-raised: #1b1c24;
-    --rv-keep-crest: #4d5261;
-    --rv-rail-ground: #181920;
+      --rv-rail-ground: #181920;
     --rv-rail-ink: #d9d6cf;
     --rv-rail-quiet: #a9a69e;
     --rv-rail-hover: #262833;
@@ -120,10 +115,6 @@
   .rv-app .rv-header {
     border-bottom: 0;
   }
-
-  .rv-user {
-    border-top-color: var(--rv-rail-line);
-  }
 }
 
 /* The top bar sits on the page, a hairline under it */
@@ -131,14 +122,11 @@
   border-bottom: 1px solid var(--rv-line);
 }
 
-/* ---------- The keep: the band every page opens with ---------- */
+/* ---------- The keep: the dark panel of the scenes ---------- */
 
-/* Inside the band the roles take their dark values (as in the dark theme of
+/* Inside the keep panel the roles take their dark values (as in the dark theme of
    revrook.css), so every rule that reads text on surface draws on the charcoal */
-.rv-keep,
-.rv-content > .rv-page-header,
-.rv-content > .rv-tabs-strip,
-.rv-content > .rv-problem {
+.rv-keep {
   --rv-surface: var(--rv-keep);
   --rv-canvas: var(--rv-keep-raised);
   --rv-text: #e6e7ec;
@@ -171,48 +159,16 @@
   color: var(--rv-text);
 }
 
-/* The band spans the page column: it takes back the padding of the content and
-   gives it again inside. Its top edge is the battlement of the mark: a row of
-   merlons drawn as the first 14px of its background, the page showing through
-   the gaps (a decoration of the band; nothing is told by it).
-   The band is full-bleed (THE-1347): the content stops at 1200px, so on a wide
-   window the band ended short of the right edge. Its background is a layer
-   behind the words that carries on to the right of the window; the page column
-   clips what lies past the window without becoming a scroll box. */
+/* The page header (2026-11-12): the title on the page itself, no band and no
+   battlement; the content column clips nothing past the window */
 .rv-main {
   overflow-x: clip;
 }
 
-.rv-content > .rv-page-header,
-.rv-content > .rv-problem {
-  position: relative;
-  isolation: isolate;
-  margin: -24px -16px 24px;
-  padding: calc(var(--rv-keep-edge) + 20px) 16px 28px;
+.rv-content > .rv-page-header {
+  margin: 0 0 24px;
+  padding: 0;
   border-bottom: 0;
-  background-color: transparent;
-}
-
-.rv-content > .rv-page-header::before,
-.rv-content > .rv-problem::before {
-  content: "";
-  position: absolute;
-  inset: 0 -100vw 0 0;
-  z-index: -1;
-  background-image:
-    repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
-    linear-gradient(var(--rv-keep), var(--rv-keep));
-  background-size: 100% var(--rv-keep-edge), 100% calc(100% - var(--rv-keep-edge) + 1px);
-  background-position: 0 0, 0 calc(var(--rv-keep-edge) - 1px);
-  background-repeat: no-repeat;
-}
-
-@media (min-width: 768px) {
-  .rv-content > .rv-page-header,
-  .rv-content > .rv-problem {
-    margin: -32px -32px 28px;
-    padding: calc(var(--rv-keep-edge) + 28px) 32px 32px;
-  }
 }
 
 .rv-content > .rv-page-header h1 {
@@ -234,45 +190,14 @@
   font-size: 16px;
 }
 
-.rv-content > .rv-page-header .rv-client-kicker a {
-  color: var(--rv-link);
-  background-color: var(--rv-surface);
-}
-
-/* A quiet button in the band is outlined on the charcoal */
-.rv-content > .rv-page-header .rv-button-quiet {
-  border-color: var(--rv-line-strong);
-  color: var(--rv-text);
-  background-color: var(--rv-surface);
-}
-
-.rv-content > .rv-page-header .rv-button-quiet:hover {
-  border-color: var(--rv-text);
-  color: var(--rv-text);
-  background-color: var(--rv-keep-raised);
-}
-
-/* A client: the header and its tabs are one band; the tabs sit at its foot */
+/* A client: the tabs sit under the title on a hairline */
 .rv-content > .rv-page-header.rv-client-header {
-  margin-bottom: 0;
-  padding-bottom: 12px;
+  margin-bottom: 12px;
 }
 
-/* The tabs carry the band on to the right of the window too: the image of the
-   border fills the strip and reaches out past its right edge */
 .rv-content > .rv-tabs-strip {
-  margin: 0 -16px 28px;
-  padding: 0 16px;
-  background-color: var(--rv-keep);
-  border-image: linear-gradient(var(--rv-keep), var(--rv-keep)) fill 0 / 0 / 0 100vw
-    0 0;
-}
-
-@media (min-width: 768px) {
-  .rv-content > .rv-tabs-strip {
-    margin: 0 -32px 32px;
-    padding: 0 32px;
-  }
+  margin: 0 0 28px;
+  border-bottom: 1px solid var(--rv-line);
 }
 
 .rv-content > .rv-tabs-strip > nav {
@@ -399,16 +324,6 @@ span.rv-status-not-applicable {
 }
 
 /* ---------- Home: the gauge and the rookery in the keep ---------- */
-
-/* The ledger of Home stands on the foot of the band */
-.rv-content > .rv-page-header:has(+ #stats) {
-  padding-bottom: 76px;
-}
-
-.rv-content > .rv-page-header + #stats {
-  position: relative;
-  margin-top: -76px;
-}
 
 /* The keep panel of Home: the band again, as a card, with the gauge of every
    client on the left and the rookery skyline on the right */
@@ -1011,16 +926,10 @@ span.rv-status-not-applicable {
    top edge. Inside it the roles, and the Pico colours that read them, take
    their light values. */
 .rv-sheet-band {
-  padding: calc(var(--rv-keep-edge) + 24px) 24px 32px;
+  padding: 24px 24px 32px;
   border: 0;
   border-radius: var(--rv-radius-card);
-  background-image:
-    repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
-    linear-gradient(var(--rv-keep), var(--rv-keep));
-  background-size: 100% var(--rv-keep-edge), 100% calc(100% - var(--rv-keep-edge) + 1px);
-  background-position: 0 0, 0 calc(var(--rv-keep-edge) - 1px);
-  background-repeat: no-repeat;
-  background-color: transparent;
+  background-color: var(--rv-keep);
 }
 
 .rv-sheet-band .rv-sheet {
@@ -1332,21 +1241,455 @@ span.rv-status-not-applicable {
   border-top: 2px solid var(--rv-line-strong);
 }
 
-/* ---------- Findings of the deployed check of 11e716e0 (THE-1313 for THE-1360) ---------- */
-
-/* The battlement in the dark theme: the merlons are a shade darker than the page
-   there, so the edge read faint. Each merlon gets a crest, a 2px line of a lighter
-   shade on its top; in the light theme the crest is the band itself */
-.rv-content > .rv-page-header::before,
-.rv-content > .rv-problem::before,
-.rv-sheet-band {
-  background-image:
-    repeating-linear-gradient(90deg, var(--rv-keep-crest) 0 40px, transparent 40px 60px),
-    repeating-linear-gradient(90deg, var(--rv-keep) 0 40px, transparent 40px 60px),
-    linear-gradient(var(--rv-keep), var(--rv-keep));
-  background-size: 100% 2px, 100% var(--rv-keep-edge), 100% calc(100% - var(--rv-keep-edge) + 1px);
-  background-position: 0 0, 0 0, 0 calc(var(--rv-keep-edge) - 1px);
+/* ---------- The shell of 2026-11-12: one top bar, the account menu ----------
+   One bar over the page: the breadcrumb on the left; the search, the theme switch
+   and the account menu on the right. The account (picture, name, Account,
+   Settings, Sign out) left the rail for the menu, as in the other Theriark apps. */
+.rv-topbar-inner {
+  min-height: 56px;
+  padding-block: 8px;
 }
+
+.rv-topbar-tools {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rv-topbar-tools .rv-topbar-search {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 768px) {
+  .rv-topbar-tools {
+    flex: 0 1 auto;
+  }
+
+  .rv-topbar-tools .rv-topbar-search {
+    flex: 0 1 16rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rv-topbar-tools .rv-topbar-search {
+    flex-basis: 20rem;
+  }
+}
+
+/* An icon button: a square target of 40px, quiet until pointed at */
+.rv-icon-button,
+.rv-icon-button:not(:hover) {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--rv-text-secondary);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.rv-icon-button:hover {
+  border-color: var(--rv-line);
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-icon-button:focus-visible {
+  outline: 2px solid var(--rv-focus);
+  outline-offset: 2px;
+}
+
+/* The theme switch shows what a press gives: the sun in the dark theme, the moon
+   in the light one (the system decides under "system") */
+.rv-theme-toggle {
+  margin: 0;
+}
+
+.rv-theme-to-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .rv-theme-to-light {
+  display: contents;
+}
+
+:root[data-theme="dark"] .rv-theme-to-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .rv-theme-to-light {
+    display: contents;
+  }
+
+  :root[data-theme="system"] .rv-theme-to-dark {
+    display: none;
+  }
+}
+
+/* A person: the picture in a circle, or the first letter of the name */
+.rv-app .rv-avatar,
+.rv-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--rv-accent-deep);
+  background-color: var(--rv-accent-tint);
+  box-shadow: inset 0 0 0 1px var(--rv-line);
+}
+
+.rv-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rv-app .rv-avatar-md,
+.rv-avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.rv-app .rv-avatar-lg,
+.rv-avatar-lg {
+  width: 72px;
+  height: 72px;
+  font-size: 28px;
+}
+
+/* The account menu: a details element, so it opens without script */
+.rv-account {
+  position: relative;
+  flex: none;
+  margin: 0;
+}
+
+.rv-account > summary.rv-account-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 6px 0 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rv-text);
+  cursor: pointer;
+}
+
+.rv-account > summary.rv-account-button::-webkit-details-marker,
+.rv-account > summary.rv-account-button::after {
+  display: none;
+}
+
+.rv-account > summary.rv-account-button:hover,
+.rv-account[open] > summary.rv-account-button {
+  border-color: var(--rv-line);
+  background-color: var(--rv-canvas);
+}
+
+.rv-account > summary.rv-account-button:focus-visible {
+  outline: 2px solid var(--rv-focus);
+  outline-offset: 2px;
+}
+
+.rv-account-button > .rv-icon {
+  color: var(--rv-text-secondary);
+}
+
+.rv-account[open] .rv-account-button > .rv-icon {
+  transform: rotate(180deg);
+}
+
+.rv-account-name {
+  display: none;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .rv-account-name {
+    display: inline;
+  }
+}
+
+.rv-account-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 16rem;
+  padding: 8px;
+  border: 1px solid var(--rv-line);
+  border-radius: 12px;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  box-shadow: var(--rv-shadow-2);
+}
+
+.rv-account-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 12px;
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-account-who p {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.rv-account-who p strong,
+.rv-account-who p span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-account-who p span {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-account-links,
+.rv-account-links:first-of-type {
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-account-links li {
+  margin: 0;
+  list-style: none;
+}
+
+.rv-account-links a,
+.rv-account-signout button,
+.rv-account-signout button:not(:hover) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  color: var(--rv-text);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.rv-account-links a:hover,
+.rv-account-signout button:hover {
+  color: var(--rv-text);
+  background-color: var(--rv-canvas);
+}
+
+.rv-account-links a[aria-current="page"] {
+  font-weight: 700;
+}
+
+.rv-account-links .rv-icon,
+.rv-account-signout .rv-icon {
+  color: var(--rv-text-secondary);
+}
+
+.rv-account-signout {
+  margin: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--rv-line);
+}
+
+/* ---------- The Account page ---------- */
+.rv-account-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .rv-account-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rv-account-grid > #profile {
+    grid-row: span 2;
+  }
+}
+
+.rv-account-card {
+  margin: 0;
+}
+
+.rv-account-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.rv-account-identity p {
+  margin: 0;
+}
+
+.rv-account-shown {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rv-account-form {
+  margin: 0 0 20px;
+}
+
+.rv-account-form .rv-field {
+  margin-bottom: 12px;
+}
+
+.rv-account-theme fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+.rv-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 14px 8px 10px;
+  border: 1px solid var(--rv-line);
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.rv-choice:has(input:checked) {
+  border-color: var(--rv-primary);
+  background-color: var(--rv-accent-tint);
+}
+
+.rv-choice input {
+  margin: 0;
+}
+
+.rv-account-done {
+  margin-bottom: 16px;
+}
+
+/* ---------- Home: the two cards of the first row share their top and bottom ---------- */
+@media (min-width: 1280px) {
+  .rv-dash-row.rv-dash-row-trend {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    align-items: stretch;
+  }
+
+  .rv-dash-row.rv-dash-row-trend > .rv-card {
+    margin-top: 0;
+  }
+}
+
+.rv-dash-row-trend {
+  margin-bottom: 32px;
+}
+
+.rv-dash-row-trend > .rv-card {
+  margin-bottom: 16px;
+}
+
+/* Inside the card the list is the card's own rows: no second border */
+.rv-card > .rv-attention {
+  margin: 8px -24px 0;
+  border: 0;
+  border-top: 1px solid var(--rv-line);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.rv-card > .rv-attention .rv-attention-row {
+  padding-inline: 24px;
+}
+
+.rv-card .rv-attention-more {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+/* ---------- Import evidence: the supported exports as one compact list ---------- */
+.rv-import-supported .rv-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rv-import-supported .rv-card-title {
+  margin: 0;
+}
+
+.rv-import-sources {
+  gap: 4px 16px;
+}
+
+.rv-import-sources > li {
+  align-items: center;
+  min-height: 36px;
+}
+
+.rv-import-sources .rv-source-format {
+  margin-left: auto;
+  padding: 1px 8px;
+  border: 1px solid var(--rv-line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-import-supported .rv-import-foot {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+/* ---------- Findings of the deployed check of 11e716e0 (THE-1313 for THE-1360) ---------- */
 
 /* The page column on a wide window: the content stops at 1200px, so beyond 1448px
    of window it stood at the left with a void at its right. From there the content,
@@ -1358,18 +1701,6 @@ span.rv-status-not-applicable {
     margin-inline: auto;
   }
 
-  .rv-app .rv-footer {
-    padding-inline: calc((100% - 1200px) / 2 + 32px);
-  }
-
-  .rv-content > .rv-page-header::before,
-  .rv-content > .rv-problem::before {
-    left: -100vw;
-  }
-
-  .rv-content > .rv-tabs-strip {
-    border-image-outset: 0 100vw;
-  }
 }
 
 /* A folded rule shows that it opens: Pico draws the marker of a summary as an
@@ -1638,18 +1969,6 @@ span.rv-status-not-applicable {
     margin-inline: auto;
   }
 
-  body[data-rail="compact"] .rv-footer {
-    padding-inline: calc((100% - 1200px) / 2 + 32px);
-  }
-
-  body[data-rail="compact"] .rv-content > .rv-page-header::before,
-  body[data-rail="compact"] .rv-content > .rv-problem::before {
-    left: -100vw;
-  }
-
-  body[data-rail="compact"] .rv-content > .rv-tabs-strip {
-    border-image-outset: 0 100vw;
-  }
 }
 
 /* F3: the control drawer is a sheet of 38rem, and from 1024px the verdict in it

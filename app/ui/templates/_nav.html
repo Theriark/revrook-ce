@@ -1,8 +1,8 @@
-{#- The navigation of the app shell and the signed-in user. The page sets `nav` to mark
+{#- The navigation of the app shell. The account (name, picture, theme, sign out) is
+    in the top bar (_topbar.html). The page sets `nav` to mark
     where it is: home, clients, imports, profile-editor, integrity, explorer, settings, system,
     glossary. The rail form (_rail.html) folds the rail to its icons from 1024px; folded
-    (`rail` is compact), each link and the sign-out button carry their words as a
-    title, the tooltip of the icon, and revrook.js does the same the moment the rail is
+    (`rail` is compact), each link carries its words as a title, the tooltip of the icon, and revrook.js does the same the moment the rail is
     folded or opened with script. -#}
 {% import "_icons.html" as i %}
 {% set folded = rail|default('expanded') == 'compact' %}
@@ -28,13 +28,4 @@
 <li><a class="rv-nav-link" href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}{% if folded %} title="Glossary"{% endif %}>{{ i.icon("glossary") }}<span class="rv-nav-text">Glossary</span></a></li>
 </ul>
 </nav>
-</div>
-<div class="rv-user">
-<span class="rv-avatar" aria-hidden="true">{{ user.username[:1]|upper }}</span>
-<span class="rv-user-text"><span class="rv-user-name">{{ user.username }}</span><span class="rv-user-note">Signed in</span></span>
-{% include "_theme.html" %}
-<form class="rv-inline-form" method="post" action="/logout">
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<button type="submit" class="rv-button-quiet"{% if folded %} title="Sign out"{% endif %}>{{ i.icon("signout", "sm") }}<span>Sign out</span></button>
-</form>
 </div>

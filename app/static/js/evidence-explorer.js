@@ -26,6 +26,8 @@
  * mount and info so a test can cycle the scene and read the renderer's counts.
  */
 
+import { officeBuilding } from "./office.js";
+
 const THREE_URL = "/static/vendor/three/three.module.js";
 
 // The stage colours: the brand charcoal of the stylesheet as the ground, the
@@ -60,7 +62,7 @@ const MIN_DISTANCE = 7;
 const MAX_DISTANCE = 21;
 const HOME = { yaw: -Math.PI / 4, pitch: 0.72, distance: 15 };
 const DIM = 0.18;
-const BEAM_OPACITY = 0.5;
+const BEAM_OPACITY = 0.12;
 
 const WORDS = {
   loading: "Preparing the scene.",
@@ -217,7 +219,12 @@ function disposeObject(object) {
   }
   if (object.material) {
     const materials = Array.isArray(object.material) ? object.material : [object.material];
-    materials.forEach((material) => material.dispose());
+    materials.forEach((material) => {
+      if (material.map) {
+        material.map.dispose();
+      }
+      material.dispose();
+    });
   }
 }
 
@@ -276,15 +283,30 @@ function buildWall(THREE, root, data, options) {
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setClearColor(GROUND, 1);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 16 / 9, 0.1, 60);
   const target = new THREE.Vector3(0, 0.4, 0);
   const view = { yaw: HOME.yaw, pitch: HOME.pitch, distance: HOME.distance };
 
-  scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.6));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.8);
-  sun.position.set(5, 9, 4);
+  scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.4));
+  const sun = new THREE.DirectionalLight(0xfff4e6, 2.2);
+  sun.position.set(5, 11, 4);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.radius = 4;
+  sun.shadow.bias = -0.0008;
+  sun.shadow.camera.left = -FLOOR_RADIUS;
+  sun.shadow.camera.right = FLOOR_RADIUS;
+  sun.shadow.camera.top = FLOOR_RADIUS;
+  sun.shadow.camera.bottom = -FLOOR_RADIUS;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 40;
   scene.add(sun);
+  const rim = new THREE.DirectionalLight(BEAM, 0.7);
+  rim.position.set(-6, 5, -8);
+  scene.add(rim);
 
   // The ground: a disc, the sector of each domain a step lighter or darker than the
   // next, a band for the sources, and two thin rings as the edges of the wall.
@@ -294,6 +316,7 @@ function buildWall(THREE, root, data, options) {
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.02;
+  floor.receiveShadow = true;
   scene.add(floor);
   plan.sectors.forEach((sector) => {
     if (sector.length <= 0) {
@@ -305,6 +328,7 @@ function buildWall(THREE, root, data, options) {
     );
     band.rotation.x = -Math.PI / 2;
     band.position.y = -0.01;
+    band.receiveShadow = true;
     scene.add(band);
   });
   const inner = new THREE.Mesh(
@@ -324,32 +348,30 @@ function buildWall(THREE, root, data, options) {
     scene.add(ring);
   });
 
-  // The pillars: a box as tall as the controls it feeds, crenellated like a rook,
-  // full for a current export, low for a stale or expired one, a wire footprint for
-  // a source never imported. One material per node, so it can be dimmed alone.
+  // The pillars: an office block per export (office.js), as many floors as the
+  // controls it feeds, full for a current export, low for a stale or expired one,
+  // its roof light the state of the export; a source never imported is an empty
+  // lot. Every material of a node is dimmed together.
   const pickables = [];
   const groups = new Map();
-  plan.sources.forEach((entry) => {
-    const color = entry.source.state === "protected" ? STONE : STATUS_COLOR[entry.source.state] || STONE;
-    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.05, transparent: true, wireframe: entry.missing });
-    const group = new THREE.Group();
+  plan.sources.forEach((entry, index) => {
+    const strip = entry.source.state === "protected" ? STATUS_COLOR.protected : STATUS_COLOR[entry.source.state] || STONE;
+    const built = officeBuilding(THREE, {
+      width: 0.5,
+      depth: 0.5,
+      floors: Math.max(1, Math.round((entry.height - 0.24) / 0.2)),
+      state: entry.missing ? "lot" : "built",
+      strip,
+      red: 0,
+      seed: index + 7,
+    });
+    const group = built.group;
     group.userData.node = entry.id;
-    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.5, entry.height, 0.5), material);
-    shaft.position.y = entry.height / 2;
-    group.add(shaft);
-    if (!entry.missing) {
-      [-1, 1].forEach((dx) => {
-        [-1, 1].forEach((dz) => {
-          const crenel = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.14, 0.15), material);
-          crenel.position.set(dx * 0.175, entry.height + 0.07, dz * 0.175);
-          group.add(crenel);
-        });
-      });
-    }
     group.position.set(SOURCE_RADIUS * Math.cos(entry.angle), 0, SOURCE_RADIUS * Math.sin(entry.angle));
+    group.rotation.y = -entry.angle - Math.PI / 2;
     entry.group = group;
-    entry.material = material;
-    entry.top = new THREE.Vector3(group.position.x, entry.height + (entry.missing ? 0.05 : 0.16), group.position.z);
+    entry.materials = built.materials;
+    entry.top = new THREE.Vector3(group.position.x, built.top, group.position.z);
     scene.add(group);
     pickables.push(group);
     groups.set(entry.id, group);
@@ -361,7 +383,16 @@ function buildWall(THREE, root, data, options) {
   plan.controls.forEach((entry) => {
     const label = entry.control.label;
     const color = STATUS_COLOR[label] || STATUS_COLOR["not-checked"];
-    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.05, transparent: true, wireframe: label === "not-checked" });
+    const glass = label === "not-checked";
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: glass ? 0.2 : 0.5,
+      metalness: 0.05,
+      transparent: true,
+      opacity: glass ? 0.35 : 1,
+      depthWrite: !glass,
+    });
+    material.userData.base = material.opacity;
     const group = new THREE.Group();
     group.userData.node = entry.id;
     if (label === "not-applicable") {
@@ -369,9 +400,20 @@ function buildWall(THREE, root, data, options) {
       disc.position.y = 0.025;
       group.add(disc);
     } else {
-      const tile = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.12, 0.46), material);
+      const shape = new THREE.BoxGeometry(0.46, 0.12, 0.46);
+      const tile = new THREE.Mesh(shape, material);
       tile.position.y = 0.06;
+      tile.castShadow = label !== "not-checked";
+      tile.receiveShadow = true;
       group.add(tile);
+      if (label === "not-checked") {
+        const outline = new THREE.LineSegments(
+          new THREE.EdgesGeometry(shape),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 })
+        );
+        outline.position.y = 0.06;
+        group.add(outline);
+      }
     }
     if (label === "needs-attention") {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 10, 32), material);
@@ -390,7 +432,7 @@ function buildWall(THREE, root, data, options) {
     group.position.set(CONTROL_RADIUS * Math.cos(entry.angle), 0, CONTROL_RADIUS * Math.sin(entry.angle));
     group.rotation.y = -entry.angle;
     entry.group = group;
-    entry.material = material;
+    entry.materials = [material];
     entry.top = new THREE.Vector3(group.position.x, 0.14, group.position.z);
     scene.add(group);
     pickables.push(group);
@@ -510,11 +552,15 @@ function buildWall(THREE, root, data, options) {
     const focus = selected || hovered;
     const keep = focus ? related(focus) : null;
     entries.forEach((entry, id) => {
-      const material = entry.material;
       const own = focus === id;
-      material.opacity = !keep || keep.has(id) ? 1 : DIM;
-      material.emissive.setHex(own ? PICKED : 0x000000);
-      material.emissiveIntensity = own ? 0.35 : 0;
+      entry.materials.forEach((material) => {
+        const base = material.userData.base === undefined ? 1 : material.userData.base;
+        material.opacity = !keep || keep.has(id) ? base : base * DIM;
+        if (material.emissive) {
+          material.emissive.setHex(own ? PICKED : material.userData.emissive || 0x000000);
+          material.emissiveIntensity = own ? 0.35 : material.userData.emissiveIntensity || 0;
+        }
+      });
     });
     beams.forEach((beam) => {
       const on = focus && beam.userData.ends.indexOf(focus) >= 0;
@@ -536,7 +582,7 @@ function buildWall(THREE, root, data, options) {
   function select(id, face) {
     selected = entries.has(id) ? id : null;
     const entry = selected ? entries.get(selected) : null;
-    words(detail, entry ? describe(entry, data) : "Nothing selected. Hover over or select a pillar or a tile, or use Show in scene on a row below.");
+    words(detail, entry ? describe(entry, data) : "Nothing selected. Choose a block or a tile, or Show in scene on a row below.");
     markRows();
     if (entry && face) {
       turnTo(Math.PI / 2 - entry.angle);

@@ -303,7 +303,7 @@ def test_the_overview_template_has_every_part_and_the_client_header() -> None:
     assert "Period {{ period_start }} to {{ period_end }}" in OVERVIEW
     assert "<details" in OVERVIEW and "Show the numbers" in OVERVIEW
     assert 'class="rv-page-header rv-client-header"' in CLIENT_NAV
-    assert 'href="/clients">Clients</a>' in CLIENT_NAV
+    assert 'href="/clients">Clients</a>' not in CLIENT_NAV  # the breadcrumb has it
     assert "client_actions is defined" in CLIENT_NAV
     assert 'href="/{{ action.path }}"' in CLIENT_NAV
 
