@@ -25,8 +25,8 @@ left and the stage on its right. On the stage the clients stand as offices along
 street, with a road, a pavement, trees and street lamps. Each office is as tall as its
 score (2 to 12 floors) and as wide as the company (its people in the newest Entra
 export, else its devices). The light round its roof is its band: green for strong or
-good, amber for fair, red for weak or critical. A building still under construction
-(bare floor slabs behind glass) means the evidence is too thin for a score; an empty,
+good, amber for fair, red for weak or critical. A building in scaffolding means the
+evidence is too thin for a score (its height is then a lower bound); an empty,
 fenced lot means nothing is imported yet; and every red window is a control that needs
 work.
 

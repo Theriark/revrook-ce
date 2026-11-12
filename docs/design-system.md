@@ -555,8 +555,9 @@ a parapet, a plant room and a light strip round the roof in the band's status co
 (green for strong or good, amber for fair, red for weak or critical). Its width is the
 size of the company on a log scale (`data-size`: the people of its newest Entra export,
 else the devices of its newest device export, `company_sizes` in `app/ui/home.py`). A
-client whose evidence is too thin for a score is a building under construction (floor
-slabs and columns behind glass); a client with nothing imported is an empty lot fenced
+client whose evidence is too thin for a score is the same finished building in
+scaffolding (steel poles, a ledger and an amber board at every floor on its street and
+right-hand sides), so its red windows still show; a client with nothing imported is an empty lot fenced
 in posts; each control that needs work is a red window (up to twelve). The street has a
 road with its centre line, a pavement, a lawn behind the offices, trees and street
 lamps between them, a sun that casts soft shadows. Pointing at
