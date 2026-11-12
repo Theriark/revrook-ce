@@ -4,6 +4,7 @@ These do not replace running the stack (merge gate checks 8 and 9); they catch
 drift in the settings the plan fixes: port 8080, uid 10001, hashed installs.
 """
 
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -46,7 +47,7 @@ def test_dockerfile_never_touches_the_development_lock() -> None:
 def test_compose_has_web_worker_and_db_on_postgres_16() -> None:
     services = COMPOSE["services"]
     assert set(services) == {"web", "worker", "db"}
-    assert services["db"]["image"] == "postgres:16"
+    assert services["db"]["image"].startswith("postgres:16@sha256:")
     assert services["web"]["ports"] == ["8080:8080"]
     assert services["web"]["environment"]["ROLE"] == "web"
     assert services["worker"]["environment"]["ROLE"] == "worker"
@@ -109,3 +110,25 @@ def test_shell_scripts_parse(script: str) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_compose_database_password_comes_from_the_env_file() -> None:
+    # Datadog IaC "hardcoded credential": the password is never written in the
+    # compose file, and web, worker and db read the same variable.
+    text = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    assert "local-dev-only-not-a-secret" not in text
+    services = COMPOSE["services"]
+    required = "${POSTGRES_PASSWORD:?copy .env.example to .env}"
+    assert services["db"]["environment"]["POSTGRES_PASSWORD"] == required
+    for service in ("web", "worker"):
+        url = services[service]["environment"]["DATABASE_URL"]
+        assert required + "@db:5432/" in url
+    example = (ROOT / ".env.example").read_text(encoding="utf-8")
+    assert any(line.startswith("POSTGRES_PASSWORD=") for line in example.splitlines())
+
+
+def test_ci_postgres_services_use_the_compose_digest() -> None:
+    digest = COMPOSE["services"]["db"]["image"]
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    images = re.findall(r"image: (postgres:\S+)", workflow)
+    assert images and all(image == digest for image in images)

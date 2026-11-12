@@ -36,7 +36,7 @@ The tests need a PostgreSQL 16 database. Start one and point `DATABASE_URL` at i
 
 ```bash
 docker compose up -d db
-export DATABASE_URL=postgresql+asyncpg://revrook:local-dev-only-not-a-secret@localhost:5432/revrook
+export DATABASE_URL=postgresql+asyncpg://revrook:local-dev-only-not-a-secret@localhost:5432/revrook  # the POSTGRES_PASSWORD of .env
 ```
 
 Compose does not publish the database port; add a `ports` entry to the `db`
