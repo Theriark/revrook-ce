@@ -45,8 +45,8 @@ From top to bottom:
 
 The picture above is the page at 1440 px wide down to Needs attention and Score over
 time. On a tablet the navigation wraps on two rows at the top and the cards stand two to
-a row; on a phone they stand one to a row and the navigation is a strip that scrolls
-sideways, with a chevron at its edge while more links lie beyond it.
+a row; on a phone they stand one to a row and the navigation wraps too, its links
+without their icons, in two or three rows.
 
 ![Home at 768 px (tablet view), light theme](../images/home-768.png)
 
@@ -103,13 +103,15 @@ empty plot:
 
 Open **Clients** in the Work group. Every client shows the posture of its last report,
 the controls at that report as pills with counts, the newest evidence with its age, and
-the links **Open**, **Checklist**, **Evidence** and **Reports**.
+under **Go to** the links **Checklist**, **Evidence** and **Reports**; the name of the
+client opens its overview.
 
 ![The clients list at 1440 px](../images/clients-1440.png)
 
 - A chip per band (**Strong** to **No report yet**) counts the clients in that band of
   their last report and narrows the list to them; a band with no client has no chip.
-- **Search by name** and the chips **All clients**, **Needs work**, **No report yet** and
+- **Search by name** (the list has its own search, so the top bar shows none here; the
+  / key goes to it) and the chips **All clients**, **Needs work**, **No report yet** and
   **No evidence yet** filter the list; the headings sort it; **Comfortable** and
   **Compact** change the density. Fifty clients make a page.
 - Every filter in use is a chip under **Filtered by**; press its cross to remove it, or
@@ -153,9 +155,8 @@ strip that scrolls sideways, with a chevron at its edge while more tabs lie beyo
   built of its controls in layers by status, above one bar per domain with its weight
   and score. A segment of a bar opens the checklist narrowed to
   that domain and status ([8. Scenes](08-scenes-rail-and-explorer.md#the-domain-keep-on-a-client-overview)).
-- **How fresh is the evidence?** names the sources that need a fresh export and lists
-  every source with its newest export and the date it goes stale for the strictest
-  control that reads it, the way the checklist measures it.
+- **How fresh is the evidence?** says how many sources need a fresh export, with a link
+  to the evidence page, which lists every source with its age.
 - **Recent changes** is the audit trail of this client (not pictured, for the reason
   given under Home).
 

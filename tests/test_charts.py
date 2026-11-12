@@ -408,10 +408,13 @@ def test_the_sparklines_and_the_bars_carry_their_words_and_their_links() -> None
     both = 'checklist?domain={{ bar.code }}&amp;status={{ seg.label.key }}"'
     assert both in OVERVIEW and OVERVIEW.count("data-roving") == 2
     assert 'aria-hidden="true" focusable="false">{% for seg' not in OVERVIEW
-    # The evidence page: one bar per source on one scale, the stale mark, a row.
-    assert 'id="ages"' in EVIDENCE and '<ul class="rv-ages">' in EVIDENCE
-    assert 'href="#source-{{ bar.code }}" data-tip="{{ bar.tip }}"' in EVIDENCE
+    # The evidence page: the age of each source is a column of the sources
+    # table, matched by its code; one scale, the stale mark, no link to itself.
+    assert 'id="ages"' not in EVIDENCE and "rv-ages" not in EVIDENCE
+    assert "{% set bar = ages[row.code] %}" in EVIDENCE
+    assert '<td data-label="Age" class="rv-age-cell">' in EVIDENCE
     assert '<rect class="rv-age-mark" x="{{ bar.mark }}"' in EVIDENCE
+    assert "#source-{{ bar.code }}" not in EVIDENCE
     assert '<tr id="source-{{ row.code }}" tabindex="-1">' in EVIDENCE
     assert "s.status(state)" in EVIDENCE
     # The clients list: a band is a link that narrows the list.
@@ -454,7 +457,7 @@ def test_the_chart_rules_use_role_tokens_and_short_motion() -> None:
     for forbidden in ("url(", "@import", "http"):
         assert forbidden not in plain, forbidden
     sizes = set(re.findall(r"(?<![-\w])font-size:\s*([^;]+);", plain))
-    assert sizes <= {"12px", "13px", "14px"}, sizes
+    assert sizes <= {"var(--rv-fs-xs)", "var(--rv-fs-sm)"}, sizes
 
 
 @pytest.mark.parametrize("theme", ("light", "dark"))
@@ -490,9 +493,33 @@ def test_the_tooltip_and_the_new_marks_reach_their_contrast(theme: str) -> None:
     rail = resolve("var(--rv-rail)", variables)
     assert words and rail and contrast_ratio(words, rail) >= 4.5
     surface = resolve("var(--rv-surface)", variables)
-    for token in ("--rv-text-secondary", "--rv-primary"):
+    for token in ("--rv-text-secondary", "--rv-primary", "--rv-score"):
         mark = resolve(f"var({token})", variables)
         assert mark and surface and contrast_ratio(mark, surface) >= 3.0, token
+
+
+def test_every_score_graphic_takes_the_score_colour_not_the_link_colour() -> None:
+    # One colour per meaning: indigo is a link or a button; a score, its ring,
+    # gauge, earned share and active sparkline mark are --rv-score.
+    sheets = {
+        name: re.sub(
+            r"/\*.*?\*/",
+            "",
+            (STATIC / "css" / name).read_text("utf-8"),
+            flags=re.DOTALL,
+        )
+        for name in ("revrook.css", "revamp.css", "drivers.css", "charts.css")
+    }
+    for name, selector, prop in (
+        ("revrook.css", ".rv-ring-arc", "stroke"),
+        ("revamp.css", ".rv-gauge-arc", "stroke"),
+        ("drivers.css", ".rv-drv-earned", "fill"),
+        ("drivers.css", ".rv-drv-evidence-type", "fill"),
+        ("charts.css", ".rv-spark-mark.is-active", "fill"),
+    ):
+        found = re.search(rf"\n{re.escape(selector)} \{{([^}}]*)\}}", sheets[name])
+        assert found is not None, selector
+        assert f"{prop}: var(--rv-score);" in found.group(1), selector
 
 
 # --- the routes --------------------------------------------------------------------
@@ -634,12 +661,19 @@ async def test_the_evidence_page_draws_the_age_of_every_export(
     client_id = await seed_client(db_engine, ui_ctx)
     page = await ui_browser.get(f"/clients/{client_id}/evidence")
     assert page.status_code == 200 and structure_problems(page.text) == []
-    assert 'id="ages"' in page.text and '<ul class="rv-ages">' in page.text
-    # The backup export of the seeded client is 100 days old and expired.
-    assert 'id="age-backup-export"' in page.text
-    assert "100 days old, stale after " in page.text
-    assert 'href="#source-backup-export"' in page.text
-    assert '<tr id="source-backup-export" tabindex="-1">' in page.text
+    assert 'id="ages"' not in page.text and "rv-ages" not in page.text
+    # The backup export of the seeded client is 100 days old and expired, in
+    # its own row of the sources table.
+    row = page.text.split('<tr id="source-backup-export" tabindex="-1">', 1)[1]
+    row = row.split("</tr>", 1)[0]
+    assert "100 days old, stale after " in row
+    assert 'class="rv-seg-not-protected" x="0" y="0" width="' in row
+    assert 'href="#source-backup-export"' not in page.text
+    # Everything imported is folded, and the explorer preview opens on this client.
+    assert '<details class="rv-items-fold" id="items-fold">' in page.text
+    assert "<summary>Everything imported (" in page.text
+    explorer = f'href="/experiments/evidence-explorer?client_id={client_id}"'
+    assert explorer in page.text
     assert 'class="rv-seg-not-protected" x="0" y="0" width="' in page.text
     assert '<rect class="rv-age-mark" x="' in page.text
     assert page.text.count(NEVER_IMPORTED) >= 1

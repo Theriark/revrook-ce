@@ -15,13 +15,13 @@
 <input id="period_end" name="period_end" type="date" value="{{ period_end }}">
 </div>
 <button type="submit" class="rv-button-quiet">Show this period</button>
-<p class="rv-toolbar-note">Period {{ period_start }} to {{ period_end }}. Pack date {{ s.day(view.snapshot.as_of) }}: the evidence is read as it is today.</p>
+<p class="rv-toolbar-note">Period {{ period_start }} to {{ period_end }}. Evidence as of {{ s.day(view.snapshot.as_of) }}.</p>
 </form>
 
 <div class="rv-two rv-overview-top">
 <section class="rv-card rv-posture-card{% if posture.insufficient %} rv-posture-insufficient{% endif %}" id="posture" aria-labelledby="posture-title">
 <h2 id="posture-title" class="rv-card-title">Where the client stands</h2>
-<p class="rv-card-subtitle">The newest export of every source, scored as a report made today would score it.</p>
+<p class="rv-card-subtitle">Scored on today's evidence.</p>
 <div class="rv-posture-hero">
 <svg class="rv-ring rv-ring-large" viewBox="0 0 72 72" width="144" height="144" role="img" aria-labelledby="posture-ring-title">
 <title id="posture-ring-title">{% if posture.insufficient %}Insufficient evidence, lower bound {{ posture.score_text }}{% else %}Score {{ posture.score_text }} out of 100, {{ posture.band }}{% endif %}</title>
@@ -62,7 +62,7 @@
 <section id="needs-attention" aria-labelledby="attention-title">
 <div class="rv-section-head">
 <h2 id="attention-title">Needs attention</h2>
-<p class="rv-section-note">Gate controls first, then what is not protected, by weight. {{ attention_total }} for this client.</p>
+<p class="rv-section-note">Gate controls first, then by weight. {{ attention_total }} in all.</p>
 </div>
 {% if attention %}
 <ol class="rv-attention">
@@ -90,7 +90,7 @@
 <div class="rv-two rv-two-even">
 <section class="rv-card" id="domains" aria-labelledby="domains-title">
 <h2 id="domains-title" class="rv-card-title">Coverage by domain</h2>
-<p class="rv-card-subtitle">Each bar is one domain of the control library: its controls by status, with the weight of the domain and its score. A segment opens those controls on the checklist.</p>
+<p class="rv-card-subtitle">Controls by status in each domain. A segment opens them on the checklist.</p>
 {{ sc.stage("keep-scene", "keep", "domains-list", "The domain keep: one block per domain, as wide as its weight, its layers the controls by status. Left and Right choose a domain, Enter opens its controls on the checklist, the brackets turn the keep, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Hover over or select a block, or a bar below, to see its details here.", "A 3D view of the same domains: one block per domain, as wide as its weight in the score, its controls stacked by status with protected at the bottom and not checked drawn as glass.") }}
 <ul class="rv-domains" id="domains-list">
 {% for bar in domains %}
@@ -131,42 +131,19 @@
 
 <section class="rv-card" id="freshness-card" aria-labelledby="freshness-title">
 <h2 id="freshness-title" class="rv-card-title">How fresh is the evidence?</h2>
-<p class="rv-card-subtitle">The newest export of every source this client's controls read, and when it goes stale.</p>
+<p class="rv-card-subtitle">Whether the newest export of every source is still current.</p>
 {% if refresh %}
 <p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>{{ refresh|length }} source{% if refresh|length != 1 %}s need{% else %} needs{% endif %} a fresh export. <a href="/clients/{{ client_id }}/evidence">See which export to refresh</a>.</span></p>
 {% else %}
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Every source is current.</span></p>
 {% endif %}
-<div class="rv-table-scroll">
-<table id="freshness">
-<caption>Sources by name</caption>
-<thead>
-<tr>
-<th scope="col">Source</th>
-<th scope="col">State</th>
-<th scope="col">Newest export</th>
-<th scope="col">Stale after</th>
-</tr>
-</thead>
-<tbody>
-{% for row in sources %}
-<tr>
-<th scope="row">{{ row.name }}</th>
-<td>{{ s.status(row.state) }}</td>
-<td class="rv-date">{{ s.day(row.captured_at) }}</td>
-<td class="rv-date">{{ s.day(row.expires_at) }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
 </section>
 </div>
 
 <section id="recent-changes" aria-labelledby="changes-title">
 <div class="rv-section-head">
 <h2 id="changes-title">Recent changes</h2>
-<p class="rv-section-note">The newest entries of the audit trail for this client: evidence, reports and exceptions, with who did it and when.</p>
+<p class="rv-section-note">Newest audit entries for this client.</p>
 </div>
 {% if changes %}
 <ol class="rv-timeline">

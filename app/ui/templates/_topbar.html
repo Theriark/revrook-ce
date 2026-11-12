@@ -3,7 +3,8 @@
     and the account menu. The trail comes from the page's own context
     (app/ui/breadcrumbs.py); its last step is the page itself, aria-current and not a
     link. The search is a plain GET form to the clients list, so it works without
-    script; revrook.js lets the / key move focus to it. The theme switch is one button
+    script; revrook.js lets the / key move focus to it. The clients list itself has
+    its own search (#q), so the bar leaves this one out there and / goes to that. The theme switch is one button
     that posts the other theme to /theme; revrook.js applies it at once and works out
     the other theme when the system decides. The account menu is a details element,
     so it opens without script; revrook.js closes it on Escape or a click outside.
@@ -22,6 +23,7 @@
 </ol>
 </nav>
 <div class="rv-topbar-tools">
+{% if not (nav|default("") == "clients" and client_id|default(none) is none) %}
 <search class="rv-topbar-search" aria-label="Clients">
 <form class="rv-topbar-form" method="get" action="/clients">
 <label for="topbar-q" class="rv-sr-only">Search clients by name</label>
@@ -32,6 +34,7 @@
 </span>
 </form>
 </search>
+{% endif %}
 {% set other = 'light' if theme == 'dark' else 'dark' %}
 <form class="rv-theme-toggle" method="post" action="/theme" hx-post="/theme" hx-swap="none">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -45,6 +48,7 @@
 <ul class="rv-account-links">
 <li><a href="/account"{% if nav == "account" %} aria-current="page"{% endif %}>{{ i.icon("user", "sm") }}<span>Account</span></a></li>
 <li><a href="/settings"{% if nav == "settings" %} aria-current="page"{% endif %}>{{ i.icon("settings", "sm") }}<span>Settings</span></a></li>
+<li><a href="/glossary"{% if nav == "glossary" %} aria-current="page"{% endif %}>{{ i.icon("glossary", "sm") }}<span>Glossary</span></a></li>
 </ul>
 <form class="rv-account-signout" method="post" action="/logout">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

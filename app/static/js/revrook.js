@@ -4,10 +4,11 @@
  * - the drag-and-drop import area: the file input covers the whole area, so
  *   dropping and choosing a file work without this script; it adds the drag-over
  *   state and shows the names of the chosen files;
- * - the strips that scroll sideways (the main navigation below 1024px, the client
- *   tabs): it marks a strip data-scroll-end="true" while nothing lies to the right
- *   of what is in view, so the stylesheet hides the fade at its edge; without the
- *   script the fade stays;
+ * - the strips that scroll sideways (the client tabs below 600px; the main
+ *   navigation wraps instead, so it always reads as at its end): it marks a
+ *   strip data-scroll-end="true" while nothing lies to the right of what is in
+ *   view, so the stylesheet hides the fade at its edge; without the script the
+ *   fade stays;
  * - the message a form leaves after its redirect (?done=added, ?saved=1): it
  *   moves focus to the message, so a screen reader reads it, and takes the query
  *   out of the address, so a reload does not repeat it; without the script the
@@ -482,7 +483,8 @@
     }
   }
 
-  // The / key: focus the search of the top bar, unless a person is typing in a
+  // The / key: focus the search of the top bar, or the page's own search where
+  // the top bar has none (the clients list), unless a person is typing in a
   // field (where / is a character) or a dialog is open (the drawer).
   function focusSearch(event) {
     if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) {
@@ -495,7 +497,7 @@
     if (document.querySelector("dialog[open]")) {
       return;
     }
-    var search = document.getElementById("topbar-q");
+    var search = document.getElementById("topbar-q") || document.getElementById("q");
     if (!search) {
       return;
     }

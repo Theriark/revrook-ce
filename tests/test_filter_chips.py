@@ -149,7 +149,7 @@ def test_the_stylesheet_uses_tokens_and_respects_reduced_motion() -> None:
     assert HEX_LITERAL.search(CSS) is None
     assert "url(" not in CSS and "@import" not in CSS
     assert "@media (prefers-reduced-motion: reduce)" in CSS
-    assert set(FONT_SIZE.findall(CSS)) <= {"13px", "14px"}
+    assert set(FONT_SIZE.findall(CSS)) <= {"var(--rv-fs-sm)"}
     assert "flex: 1 1 100%;" in CSS
     assert "background-color: var(--rv-canvas);" in CSS
 

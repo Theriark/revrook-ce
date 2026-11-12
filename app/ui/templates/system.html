@@ -4,7 +4,7 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>System</h1><p class="rv-page-purpose">The worker that runs the schedules, what this installation is connected to, the full data export and the deletion of a client. revrook {{ version }}{% if revision %}, build {{ revision }}{% endif %}, role {{ role }}.</p></div>
+<div><h1>System</h1><p class="rv-page-purpose">Worker, connections, data export and client deletion. revrook {{ version }}{% if revision %}, build {{ revision }}{% endif %}, role {{ role }}.</p></div>
 </div>
 {% if deleted %}
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>The client and everything of it was deleted. Only the audit entry remains.</span></p>
@@ -21,7 +21,7 @@
 <div><dt>Role of this process</dt><dd>{{ role }}</dd></div>
 </dl>
 </section>
-<p class="rv-section-note rv-worker-note">The worker runs the schedules below, sends the expiry reminders and removes what has passed its retention time. When no worker has reported for {{ stale_seconds }} seconds, every page shows a banner.</p>
+<p class="rv-section-note rv-worker-note">Runs schedules, expiry reminders and retention clean-up. After {{ stale_seconds }} silent seconds, every page shows a banner.</p>
 
 <section id="schedules-section" aria-labelledby="schedules-title">
 <div class="rv-section-head">
@@ -67,7 +67,7 @@
 <div class="rv-two rv-system-grid">
 <section class="rv-card" id="services" aria-labelledby="services-title">
 <h2 id="services-title" class="rv-card-title">Reminders and outside services</h2>
-<p class="rv-card-subtitle">What this installation is connected to. Each is a setting of the installation, except the reminder address.</p>
+<p class="rv-card-subtitle">Installation settings, except the reminder address.</p>
 <ul class="rv-services">
 <li>{% if mail_relay %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Set</span><span>A mail relay is set (SMTP_HOST).</span>{% else %}<span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Not set</span><span>No mail relay is set, so no reminder is sent (SMTP_HOST and SMTP_FROM).</span>{% endif %}</li>
 <li>{% if reminder_set %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Set</span><span>A reminder address is set in <a href="/settings">Settings</a>.</span>{% else %}<span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Not set</span><span>No reminder address is set in <a href="/settings">Settings</a>.</span>{% endif %}</li>
@@ -78,7 +78,7 @@
 
 <section class="rv-card" id="your-data" aria-labelledby="your-data-title">
 <h2 id="your-data-title" class="rv-card-title">Your data</h2>
-<p class="rv-card-subtitle">One zip of CSV files with everything revrook holds, without user accounts, names typed by people or the kept files.</p>
+<p class="rv-card-subtitle">A zip of CSV files: everything revrook holds except user accounts, typed names and kept files.</p>
 <p class="rv-card-text">For a full backup that can be restored, copy the database and the evidence folder as described in the backup guide.</p>
 <form id="export-form" method="post" action="/system/export">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

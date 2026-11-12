@@ -27,7 +27,7 @@
 <div class="rv-toolbar-search">
 <label for="q" class="rv-sr-only">Search clients by name</label>
 {{ i.icon("search", "sm") }}
-<input id="q" name="q" type="search" value="{{ query.q }}" placeholder="Search by name" maxlength="200" autocomplete="off">
+<input id="q" name="q" type="search" value="{{ query.q }}" placeholder="Search by name" maxlength="200" autocomplete="off" aria-keyshortcuts="/">
 <button type="submit" class="rv-button-quiet rv-button-small">Search</button>
 </div>
 <ul class="rv-chips" aria-label="Show">
@@ -80,7 +80,7 @@
 <th scope="col"{% if query.aria_sort('score') %} aria-sort="{{ query.aria_sort('score') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='score', order=query.next_order('score'), page=1) }}">Last report{% if query.sort == "score" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
 <th scope="col">Controls at last report</th>
 <th scope="col"{% if query.aria_sort('evidence') %} aria-sort="{{ query.aria_sort('evidence') }}"{% endif %}><a class="rv-sort" href="/clients{{ query.params(sort='evidence', order=query.next_order('evidence'), page=1) }}">Newest evidence{% if query.sort == "evidence" %} <span class="rv-sort-mark" aria-hidden="true">{% if query.order == "asc" %}&#9650;{% else %}&#9660;{% endif %}</span>{% endif %}</a></th>
-<th scope="col">Open</th>
+<th scope="col">Go to</th>
 </tr>
 </thead>
 <tbody>
@@ -118,7 +118,9 @@
 {{ s.status(no_evidence) }}
 {% endif %}
 </td>
-<td data-label="Open" class="rv-row-actions"><a class="rv-button-quiet rv-button-small" role="button" href="/clients/{{ row.id }}">Open</a> <a href="/clients/{{ row.id }}/checklist">Checklist</a> <a href="/clients/{{ row.id }}/evidence">Evidence</a> <a href="/clients/{{ row.id }}/reports">Reports</a></td>
+{#- The name of the client already opens its page; each link names the client for a
+    screen reader, so no two links of the list share a name. -#}
+<td data-label="Go to" class="rv-row-actions"><a href="/clients/{{ row.id }}/checklist">Checklist<span class="rv-sr-only"> of {{ row.name }}</span></a> <a href="/clients/{{ row.id }}/evidence">Evidence<span class="rv-sr-only"> of {{ row.name }}</span></a> <a href="/clients/{{ row.id }}/reports">Reports<span class="rv-sr-only"> of {{ row.name }}</span></a></td>
 </tr>
 {% endfor %}
 </tbody>

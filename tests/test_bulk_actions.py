@@ -122,7 +122,7 @@ def test_the_stylesheet_uses_tokens_and_respects_reduced_motion() -> None:
     assert "@media (prefers-reduced-motion: reduce)" in CSS
     assert "position: sticky;" in CSS and "@media (max-width: 1023px)" in CSS
     sizes = set(re.findall(r"(?<![-\w])font-size:\s*([^;]+);", plain))
-    assert sizes <= {"13px", "14px"}, sizes
+    assert sizes <= {"var(--rv-fs-sm)"}, sizes
 
 
 @pytest.mark.parametrize("theme", ("light", "dark"))

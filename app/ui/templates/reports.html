@@ -4,7 +4,7 @@
 {% block content %}
 {% include "_client_nav.html" %}
 <div class="rv-section-head rv-under-tabs">
-<div><h2 id="builder-title">Report builder</h2><p class="rv-section-note">Three steps: choose the period, write the details, make the report. A report is made from the state of the client today, so it can be previewed and exported again exactly as it was.</p></div>
+<div><h2 id="builder-title">Report builder</h2><p class="rv-section-note">Choose the period, write the details, make the report.</p></div>
 </div>
 {% if message %}
 <p class="rv-status-protected" role="status" id="builder-message" tabindex="-1" data-clear-query="saved"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ message }}</span></p>
@@ -40,7 +40,7 @@
 
 <section class="rv-step" id="step-details" aria-labelledby="step-details-title">
 <h3 id="step-details-title" class="rv-step-title"><span class="rv-step-number">2</span>Write the details</h3>
-<p class="rv-step-lead">Everything here is saved as you type. Notes for each control are written on its own page, from the <a href="/clients/{{ client_id }}/checklist">checklist</a>.</p>
+<p class="rv-step-lead">Saved as you type. Notes for each control go on its own page, from the <a href="/clients/{{ client_id }}/checklist">checklist</a>.</p>
 <form id="details-form" method="post" action="/clients/{{ client_id }}/reports/details" hx-post="/clients/{{ client_id }}/reports/details" hx-trigger="input changed delay:1s, change" hx-target="#details-status" hx-swap="innerHTML">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <div class="rv-field rv-field-narrow">
@@ -65,11 +65,13 @@
 </div>
 {% endfor %}
 </fieldset>
+{#- htmx saves as the person types, so the button is only for a browser without
+    script, where the form posts and the page comes back. -#}
 <div class="rv-actions rv-notes-actions">
-<button type="submit" class="rv-button-quiet">Save the details</button>
+<noscript><button type="submit" class="rv-button-quiet">Save the details</button></noscript>
 <span class="rv-notes-saving" aria-hidden="true"><span class="rv-busy"></span> Saving</span>
 </div>
-<div id="details-status" class="rv-notes-status" aria-live="polite">{% if saved_at %}Last saved {{ saved_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% else %}Nothing saved yet.{% endif %}</div>
+<div id="details-status" class="rv-notes-status" aria-live="polite">{% if saved_at %}Last saved {{ saved_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% else %}Not edited yet.{% endif %}</div>
 </form>
 </section>
 
@@ -119,7 +121,7 @@
 
 <section class="rv-card rv-history" id="history" aria-labelledby="history-title">
 <h3 id="history-title" class="rv-card-title">Score over time</h3>
-<p class="rv-card-subtitle">The score of {{ client_name }} at every report made before, as each report scored it. A point opens that report.</p>
+<p class="rv-card-subtitle">The score of {{ client_name }} as each earlier report scored it. A point opens that report.</p>
 {#- The body of the card (_history_chart.html) is what the chart script swaps when a
     span is chosen; app/ui/fragments.py renders it alone for that. -#}
 <div id="history-body">

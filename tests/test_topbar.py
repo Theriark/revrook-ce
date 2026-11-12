@@ -61,8 +61,12 @@ def test_each_place_of_the_rail_is_home_then_the_place() -> None:
 
 def test_every_place_of_the_trail_is_a_place_of_the_rail() -> None:
     for nav, (text, path) in PLACES.items():
-        if nav == "account":
-            continue  # the Account page is in the account menu of the top bar
+        if nav in ("account", "glossary"):
+            # The account menu of the top bar holds these two pages.
+            assert f'href="/{path}"' in TOPBAR, path
+            continue
+        if nav == "explorer":
+            continue  # the preview is a link of the client evidence page
         assert f'href="/{path}"' in NAV, path
         assert f'<span class="rv-nav-text">{text}</span>' in NAV, text
 
@@ -206,7 +210,31 @@ def test_the_slash_key_focuses_the_search_outside_fields_and_dialogs() -> None:
     assert "isContentEditable" in handler and "INPUT|TEXTAREA|SELECT" in handler
     assert 'document.querySelector("dialog[open]")' in handler
     assert 'document.getElementById("topbar-q")' in handler
+    # The clients list has no search in the bar: / goes to the list's own (#q).
+    assert 'document.getElementById("topbar-q") || document.getElementById("q")' in (
+        handler
+    )
     assert "event.preventDefault();" in handler
+
+
+def test_the_clients_list_keeps_its_own_search_and_the_bar_leaves_its_out() -> None:
+    listing = render("glossary.html", title="Clients", nav="clients")
+    bar = listing.split('<div class="rv-topbar" id="topbar">', 1)[1].split("<main", 1)[
+        0
+    ]
+    assert 'id="topbar-q"' not in bar and "rv-topbar-search" not in bar
+    # A page of one client keeps the search of the bar.
+    client = render(
+        "glossary.html", title="Acme", nav="clients", client_id=4, client_name="Acme"
+    )
+    assert 'id="topbar-q"' in topbar_of(client)
+
+
+def test_the_glossary_is_in_the_account_menu_after_the_settings() -> None:
+    menu = TOPBAR.split('<ul class="rv-account-links">', 1)[1].split("</ul>", 1)[0]
+    assert menu.index('href="/settings"') < menu.index('href="/glossary"')
+    assert 'i.icon("glossary", "sm") }}<span>Glossary</span>' in menu
+    assert 'href="/glossary"' not in NAV
 
 
 # --- the routes ------------------------------------------------------------------

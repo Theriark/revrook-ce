@@ -58,6 +58,7 @@ DARK = {
     "--rv-ink": "#5563dc",
     "--rv-link": "#8b97f2",
     "--rv-primary": "#8b97f2",
+    "--rv-score": "#e6e7ec",
     "--rv-accent-deep": "#aeb7f6",
     "--rv-accent-tint": "#2b3050",
     "--rv-focus": "#ffffff",
@@ -76,6 +77,7 @@ LIGHT_ROLES = {
     "--rv-ink": "var(--rv-charcoal)",
     "--rv-link": "var(--rv-accent)",
     "--rv-primary": "var(--rv-accent)",
+    "--rv-score": "var(--rv-charcoal)",
     "--rv-focus": "var(--rv-charcoal)",
 }
 BUTTON = re.compile(

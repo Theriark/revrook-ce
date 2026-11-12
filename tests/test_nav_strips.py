@@ -1,11 +1,12 @@
-"""The navigation strips from 600px to 1023px and on a phone (THE-1414, F2).
+"""The navigation strips below 1024px and on a phone (THE-1414, F2).
 
 On Development at 768px (THE-1413) the main navigation was a strip that scrolled
 sideways: its eight links needed 1178px in 767px, and Settings, System and Glossary
 sat out of view with no cue, since the edge fell between two links and the fade
 had nothing to dim. The client tabs scrolled too, by the 48px kept after the last
-tab. Now from 600px to 1023px the main navigation wraps onto a second row and the
-client tabs wrap from 600px, and below 600px both strips keep scrolling with a
+tab. Now below 1024px the main navigation wraps onto more rows (at 390px the
+strip cut "Import evid...", so phones wrap too, with no icons and less padding)
+and the client tabs wrap from 600px; below 600px the tabs keep scrolling with a
 chevron beside the fade. These tests render the shell and the client tabs, check
 that each new rule reaches the markup it is written for, and that the links and
 their order (the tab order) are those of the wide rail.
@@ -27,10 +28,8 @@ MAIN_LINKS = [
     ("/imports", "Import evidence"),
     ("/imports/profile-editor", "Profile editor"),
     ("/evidence/integrity", "Evidence integrity"),
-    ("/experiments/evidence-explorer", "Evidence Explorer"),
     ("/settings", "Settings"),
     ("/system", "System"),
-    ("/glossary", "Glossary"),
 ]
 SECTION = "Findings of the deployed acceptance of 0b6372b1 (THE-1414)"
 
@@ -182,9 +181,9 @@ def test_the_links_and_their_order_stay_those_of_the_rail() -> None:
         assert "tabindex" not in element.attrs
 
 
-def test_from_600_to_1023_the_main_navigation_wraps_and_never_scrolls() -> None:
+def test_below_1024_the_main_navigation_wraps_and_never_scrolls() -> None:
     rules = new_rules()
-    band = "(min-width: 600px) and (max-width: 1023px)"
+    band = "(max-width: 1023px)"
     found = {selector: body for media, selector, body in rules if media == band}
     nav = found[".rv-app .rv-header .rv-nav"]
     assert "display: block;" in nav and "overflow-x: visible;" in nav
@@ -203,12 +202,16 @@ def test_the_client_tabs_wrap_from_600px_and_a_phone_gets_a_chevron() -> None:
     assert "overflow-x: visible;" in wide[".rv-tabs-strip > nav"]
     assert "display: none;" in wide[".rv-tabs-strip > nav > ul::after"]
     phone = {s: b for m, s, b in rules if m == "(max-width: 599px)"}
-    for strip in (".rv-nav-strip", ".rv-tabs-strip"):
-        chevron = phone[f"{strip}::before"]
-        assert 'content: "";' in chevron and "pointer-events: none;" in chevron
-        assert "border-top: 2px solid;" in chevron and "rotate(45deg)" in chevron
-        # It goes with the fade once the last link is in view (revrook.js)
-        assert "display: none;" in phone[f'{strip}[data-scroll-end="true"]::before']
+    chevron = phone[".rv-tabs-strip::before"]
+    assert 'content: "";' in chevron and "pointer-events: none;" in chevron
+    assert "border-top: 2px solid;" in chevron and "rotate(45deg)" in chevron
+    # It goes with the fade once the last tab is in view (revrook.js)
+    assert "display: none;" in phone['.rv-tabs-strip[data-scroll-end="true"]::before']
+    # The main navigation wraps on a phone too: no chevron, no icons, and less
+    # padding, so its seven links fit in two or three rows at 390px.
+    assert not any(".rv-nav-strip" in selector for selector in phone)
+    assert "padding: 8px 10px;" in phone[".rv-app .rv-header .rv-nav-link"]
+    assert "display: none;" in phone[".rv-app .rv-header .rv-nav-link .rv-icon"]
     # Tokens only: no colour literal in the block
     block = CSS.split(SECTION, 1)[1]
     assert not re.search(r"#[0-9a-fA-F]{3,6}\b|rgb\(", block)

@@ -96,7 +96,7 @@
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     font-weight: 600;
     color: var(--rv-text-secondary);
     background-color: var(--rv-surface);
@@ -176,7 +176,7 @@
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     font-weight: 600;
     color: var(--rv-text-secondary);
     background-color: var(--rv-surface);
@@ -321,7 +321,7 @@ details.rv-confirm[open] > summary:not([role]):not(:focus) {
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     font-weight: 600;
     color: var(--rv-text-secondary);
     background-color: var(--rv-surface);
@@ -457,7 +457,7 @@ dialog.rv-drawer::backdrop {
 
 .rv-drawer-eyebrow {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-canvas);
@@ -513,7 +513,7 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
 }
 
 .rv-drawer .rv-control-title {
-  font-size: 20px;
+  font-size: var(--rv-fs-lg);
 }
 
 .rv-drawer .rv-control-grid {
@@ -779,7 +779,7 @@ dialog.rv-drawer[aria-busy="true"] .rv-drawer-body {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 20px;
 }
 
@@ -856,7 +856,7 @@ search {
   height: 36px;
   margin: 0;
   padding: 0 12px 0 40px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-topbar-key {
@@ -895,7 +895,7 @@ search {
     border: 1px solid var(--rv-line-strong);
     border-radius: 4px;
     font-family: inherit;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     line-height: 20px;
     text-align: center;
     color: var(--rv-text-secondary);

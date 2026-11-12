@@ -386,8 +386,9 @@ def test_the_page_renders_with_every_status_as_an_icon_and_its_words() -> None:
     assert 'id="explorer-no-clients"' not in html
     assert "Manual evidence (no export)" in html
     assert f"?v={EXPLORER_VERSION}" in html
-    assert html.count('aria-current="page"') == 2  # the rail and the breadcrumb
-    assert "Evidence Explorer</span></a>" in html
+    # The preview left the rail (a link of the evidence page): the breadcrumb only
+    assert html.count('aria-current="page"') == 1
+    assert "Evidence Explorer</span></a>" not in html
 
     empty = render_page(None, [])
     assert structure_problems(empty) == []

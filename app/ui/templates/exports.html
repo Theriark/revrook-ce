@@ -4,7 +4,7 @@
 {% block content %}
 {% include "_client_nav.html" %}
 <div class="rv-section-head rv-under-tabs">
-<div><h2 id="exports-title">Export history</h2><p class="rv-section-note">Every file that was exported is kept as it was sent, with its SHA-256. A download is the kept copy, checked against that hash, and is never made again.</p></div>
+<div><h2 id="exports-title">Export history</h2><p class="rv-section-note">Every exported file, kept as sent with its SHA-256. A download is that kept copy.</p></div>
 </div>
 {% if exported %}
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Export {{ exported }} was made and an unchangeable copy was kept.</span></p>

@@ -25,7 +25,7 @@
  *   one polite live region, since focus stays on the pressed button;
  * - the sparklines (data-spark): one tab stop each; the marks on them show
  *   their week and value under the pointer and under the arrow keys;
- * - a link to a row of a folded table (#domain-row-..., #source-...) opens the
+ * - a link to a row of a folded table (#domain-row-...) opens the
  *   fold and focuses the row;
  * - the labels at the ends of the lines: the server fits each line of a label to
  *   the room right of the plot by the widths of the widest face system-ui gives

@@ -114,6 +114,13 @@ def test_every_word_in_the_band_reads_on_the_keep_in_both_themes() -> None:
                 assert ratio >= BODY_MINIMUM, (word, ground, round(ratio, 2))
 
 
+def test_the_score_arc_of_the_band_reads_on_its_track() -> None:
+    # The Home gauge sits in the keep, dark in both themes: its arc takes the
+    # band's own score colour, never the charcoal of the light page.
+    assert contrast(BAND["--rv-score"], BAND["--rv-line"]) >= 3.0
+    assert contrast(BAND["--rv-score"], LIGHT["--rv-keep"]) >= 3.0
+
+
 def test_every_status_chip_reads_on_its_tint() -> None:
     light_status = {
         "protected": "#1b6e3c",

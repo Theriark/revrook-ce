@@ -18,7 +18,7 @@ main .rv-bulk-all {
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-canvas);
@@ -79,7 +79,7 @@ main .rv-clients tr.is-chosen > th {
 
 .rv-bulk-count {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-surface);
@@ -103,7 +103,7 @@ main .rv-clients tr.is-chosen > th {
   border: 1px solid var(--rv-line-strong);
   border-radius: 12px;
   box-shadow: var(--rv-shadow-2);
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text);
   background-color: var(--rv-surface);
 }
@@ -209,7 +209,7 @@ dialog.rv-bulk-dialog[open] {
 .rv-bulk-dialog-list label {
   display: block;
   margin-bottom: 4px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-surface);
@@ -221,7 +221,7 @@ dialog.rv-bulk-dialog[open] {
 
 .rv-bulk-dialog-note {
   margin: 8px 0 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-status-not-protected);
   background-color: var(--rv-surface);

@@ -54,8 +54,26 @@ PICO_ICONS = (
     "valid",
     "invalid",
 )
-# The type scale (px); 1.75rem is the 28px text wordmark.
-TYPE_SCALE = {"12px", "13px", "14px", "15px", "16px", "20px", "24px", "28px", "1.75rem"}
+# The type scale: six tokens (revrook.css), the only font sizes of the stylesheets.
+TYPE_SCALE = {
+    "--rv-fs-xs": "12px",
+    "--rv-fs-sm": "14px",
+    "--rv-fs-md": "16px",
+    "--rv-fs-lg": "20px",
+    "--rv-fs-xl": "28px",
+    "--rv-fs-2xl": "40px",
+}
+# What may keep its own size: the base size of the body, the resets, and SVG
+# text, sized in the units of its viewBox (the rings, the charts, the horizon).
+OWN_SIZES = {
+    "body": {"15px"},
+    ".rv-ring-value": {"20px"},
+    ".rv-posture-ring .rv-ring-value": {"20px", "24px"},
+    ".rv-chart": {"12px"},
+    ".rv-horizon-month, .rv-horizon-label": {"11px"},
+    ".rv-horizon-month": {"26px"},
+}
+RESETS = {"0", "100%", "inherit"}
 # (href, text) of the navigation, in order.
 NAV_LINKS = (
     ("/", "Home"),
@@ -63,10 +81,8 @@ NAV_LINKS = (
     ("/imports", "Import evidence"),
     ("/imports/profile-editor", "Profile editor"),
     ("/evidence/integrity", "Evidence integrity"),
-    ("/experiments/evidence-explorer", "Evidence Explorer"),
     ("/settings", "Settings"),
     ("/system", "System"),
-    ("/glossary", "Glossary"),
 )
 # The sun, the moon and the monitor of the theme switch (_theme.html), drawn in
 # the rail and in the signed-out header (THE-808).
@@ -223,8 +239,16 @@ def test_the_components_of_the_design_system_exist(selector: str) -> None:
 
 
 def test_every_font_size_is_on_the_type_scale() -> None:
-    sizes = set(FONT_SIZE.findall(re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)))
-    assert sizes - TYPE_SCALE == set(), sizes - TYPE_SCALE
+    for token, value in TYPE_SCALE.items():
+        assert f"  {token}: {value};" in CSS, token
+    scale = {f"var({token})" for token in TYPE_SCALE}
+    for sheet in sorted((ROOT / "app/static/css").glob("*.css")):
+        plain = re.sub(r"/\*.*?\*/", "", sheet.read_text("utf-8"), flags=re.DOTALL)
+        for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", plain):
+            selector = " ".join(selector.split())
+            allowed = scale | RESETS | OWN_SIZES.get(selector, set())
+            for size in FONT_SIZE.findall(body):
+                assert size in allowed, (sheet.name, selector, size)
 
 
 def test_motion_is_short_and_respects_reduced_motion() -> None:
@@ -347,7 +371,7 @@ def test_the_verdict_band_and_the_suggestion_keep_every_text_on_the_canvas() -> 
     large = re.search(
         r"\n\.rv-verdict span\.rv-status-protected,([^{]*)\{([^}]*)\}", CSS
     )
-    assert large is not None and "font-size: 16px;" in large.group(2)
+    assert large is not None and "font-size: var(--rv-fs-md);" in large.group(2)
     assert large.group(1).count("span.rv-status-") == 4
 
 
@@ -433,7 +457,7 @@ def test_the_report_sheet_is_white_paper_on_the_canvas_band() -> None:
     assert "background-color: var(--rv-surface);" in sheet.group(1)
     assert "box-shadow: var(--rv-shadow-2);" in sheet.group(1)
     title = re.search(r"\n\.rv-sheet-title \{([^}]*)\}", CSS)
-    assert title is not None and "font-size: 28px;" in title.group(1)
+    assert title is not None and "font-size: var(--rv-fs-xl);" in title.group(1)
     rule = re.search(r"\n\.rv-sheet-rule \{([^}]*)\}", CSS)
     assert rule is not None and "background-color: var(--rv-primary);" in rule.group(1)
     report = (ROOT / "app/ui/templates/report.html").read_text(encoding="utf-8")
@@ -503,7 +527,7 @@ def test_the_administration_pages_use_header_cards_and_confirmation() -> None:
     assert problem.count('role="button"') == 2
     code = re.search(r"\n\.rv-problem-code \{([^}]*)\}", CSS)
     assert code is not None and "color: var(--rv-link);" in code.group(1)
-    assert "font-size: 28px;" in code.group(1)
+    assert "font-size: var(--rv-fs-xl);" in code.group(1)
 
 
 # --- the shell --------------------------------------------------------------
@@ -555,7 +579,7 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
 ) -> None:
     await create_admin(db_engine)
     assert (await login(client)).status_code == 303
-    for path, current in (("/", "/"), ("/glossary", "/glossary")):
+    for path, current in (("/", "/"), ("/system", "/system")):
         page = await client.get(path)
         assert page.status_code == 200, path
         html = page.text
