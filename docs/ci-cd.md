@@ -94,6 +94,17 @@ Branch protection cannot be set from YAML and has NOT been verified or changed. 
 
 The lock commit therefore does not start CI. Request one CI run for the new head with the CI request broker (label `ci-go`, see "How CI is started"). The job summary says so.
 
+## Code security scanning (Datadog)
+
+Since 2026-11-12, Datadog Code Security (EU site) scans this repository for
+vulnerable libraries (SCA), code vulnerabilities (SAST), leaked secrets and
+infrastructure as code (IaC). Datadog runs the scans itself through its GitHub
+connection; nothing in the workflows runs them. Every push to a branch is
+scanned. The results per branch are under Code Security, Repositories,
+`theriark/revrook-ce`, using the branch selector. The default view shows `main`,
+which holds only the workflow definitions, so read `development` for the
+application. This adds to check 5 (`pip-audit`); it does not replace it.
+
 ## Known gaps
 
 - `Promote - Stage` and `Release candidate` follow publishing contract revision 2 but have never been executed; they are verified only by `tests/test_publishing_workflows.py` (inputs, run names, concurrency, order of verification, bash syntax). Accepted assumptions: `version` is the stable `27.<minor>.<patch>` (a leading `v` or an `-rc.<n>` suffix is accepted and stripped); `image` is `ghcr.io/theriark/revrook-ce@sha256:<digest>` or the bare digest.
