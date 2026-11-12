@@ -65,8 +65,6 @@ def test_every_place_of_the_trail_is_a_place_of_the_rail() -> None:
             # The account menu of the top bar holds these two pages.
             assert f'href="/{path}"' in TOPBAR, path
             continue
-        if nav == "explorer":
-            continue  # the preview is a link of the client evidence page
         assert f'href="/{path}"' in NAV, path
         assert f'<span class="rv-nav-text">{text}</span>' in NAV, text
 

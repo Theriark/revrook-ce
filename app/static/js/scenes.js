@@ -30,22 +30,21 @@
  * test can cycle a scene and read the renderer's counts. A person can hide the
  * scenes with the button under a stage; the choice is kept in this browser only.
  *
- * Home's street has a second view, the ring (the Street / Ring switch under it):
- * the clients on an inner ring, the controls they fail on an outer ring, a beam
- * between each pair. Choosing a building or a tile opens its card, a non-modal
- * popover the server drew into a <template> on the page and this module clones.
+ * Choosing an office on Home's street opens its company card, a non-modal popover
+ * the server drew into a <template> on the page (scene-card.js clones it).
  */
 
 // The office model is imported with the version of this script (the `v` query of
 // its own address): a cache in front of the site keeps a static file for hours,
 // so an unversioned import served the previous buildings after a deploy.
 const OFFICE_URL = "./office.js" + new URL(import.meta.url).search;
+const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;
 let officeBuilding = null;
 let streetKit = null;
+let sceneCard = null;
 
 const THREE_URL = "/static/vendor/three/three.module.js";
 const HIDE_KEY = "rv-scenes";
-const VIEW_KEY = "rv-rookery-view";
 
 // The stage colours: the brand charcoal of the stylesheet as the ground, the
 // dark-theme status values on it (each reaches 4.5 to 1 on that ground), the
@@ -77,12 +76,6 @@ const TWEEN_MS = 350;
 const MIN_PITCH = 0.12;
 const MAX_PITCH = 1.2;
 const DIM = 0.22;
-// The ring view of Home: a beam is faint until one of its ends is chosen.
-const BEAM = ACCENT;
-const BEAM_OPACITY = 0.12;
-// Below this stage width the company card docks under the scene instead of
-// standing beside its building.
-const DOCK_WIDTH = 600;
 
 const WORDS = {
   loading: "Preparing the scene.",
@@ -91,7 +84,6 @@ const WORDS = {
   closed: "The 3D view is off. The cards and the bars show the same facts.",
   noWebGL: "This browser could not start the 3D view: WebGL is switched off or unavailable. The cards and the bars show the same facts.",
   footprints: "Every client is an empty lot: nothing is imported yet. Import an export and its office rises here.",
-  ring: "The client ring: one office per client on the inner ring, a tile per control that needs work at a client on the outer ring, a beam from each client to each control it fails. Left and Right choose a client or a control, Enter opens it, the brackets turn the ring, plus and minus move closer and away, Home resets the view.",
 };
 
 // The ground of a stage: the colour the stylesheet gives it (--rv-scene-ground,
@@ -197,24 +189,6 @@ function disposeObject(object) {
   }
 }
 
-// The view of the rookery (Street or Ring) is kept in this browser only, like the
-// hide button.
-function storedView() {
-  try {
-    return window.localStorage.getItem(VIEW_KEY) === "ring" ? "ring" : "street";
-  } catch (error) {
-    return "street";
-  }
-}
-
-function rememberView(value) {
-  try {
-    window.localStorage.setItem(VIEW_KEY, value);
-  } catch (error) {
-    // A browser that refuses storage keeps the choice for this page only.
-  }
-}
-
 // --- the readers: what each scene is made of, read from the page -----------------
 
 // The rookery skyline: one rook per client card of Home. Its height is the score,
@@ -268,41 +242,6 @@ function readRookery(list) {
   });
 }
 
-// The controls of the ring: one tile per control that at least one client fails,
-// read from the hidden list of failing (client, control) pairs, in its order (the
-// most urgent first). The tile takes the worst status among its clients, and its
-// address is the first pair's, the first link of its card.
-function readControls(list) {
-  const found = new Map();
-  list.querySelectorAll("[data-control]").forEach((element) => {
-    const code = element.getAttribute("data-control") || "";
-    const label = element.getAttribute("data-label") || "";
-    let entry = found.get(code);
-    if (!entry) {
-      entry = {
-        id: "control:" + code,
-        element,
-        href: pathOf(element),
-        kind: "tile",
-        title: element.getAttribute("data-title") || "",
-        color: STATUS_COLOR["needs-attention"],
-        clients: [],
-        card: "control-card-" + code,
-      };
-      found.set(code, entry);
-    }
-    if (label === "not-protected") {
-      entry.color = STATUS_COLOR["not-protected"];
-    }
-    entry.clients.push("client:" + element.getAttribute("data-client"));
-  });
-  return Array.from(found.entries()).map(([code, entry]) => {
-    const count = entry.clients.length;
-    entry.label = code + " " + entry.title.replace(/\.$/, "") + ": needs work at " + count + (count === 1 ? " client." : " clients.");
-    return entry;
-  });
-}
-
 // The domain keep: one block per domain of the coverage card. Its footprint is
 // the weight of the domain in the score, its layers are the controls by status,
 // bottom up: protected, needs attention, not protected, and not checked as wire.
@@ -333,10 +272,10 @@ const READERS = { rookery: readRookery, keep: readKeep };
 
 // --- the builders: a group of meshes per node, one material per node ------------
 
-function buildOffice(THREE, entry, x, z, footprint = 1) {
+function buildOffice(THREE, entry, x, z) {
   const built = officeBuilding(THREE, {
-    width: entry.width * footprint,
-    depth: 0.62 * footprint,
+    width: entry.width,
+    depth: 0.62,
     floors: entry.floors,
     state: entry.state,
     strip: entry.strip,
@@ -395,32 +334,6 @@ function buildBlock(THREE, entry, x, z) {
   });
   group.position.set(x, 0, z);
   return { group, materials, top: y + 0.2 };
-}
-
-// A control of the ring: a flat tile in the worst status colour of its clients.
-function buildTile(THREE, entry, x, z) {
-  const group = new THREE.Group();
-  group.userData.node = entry.id;
-  const material = new THREE.MeshStandardMaterial({ color: entry.color, roughness: 0.5, metalness: 0.05, transparent: true });
-  material.userData.base = 1;
-  const tile = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.4), material);
-  tile.position.y = 0.06;
-  tile.castShadow = true;
-  tile.receiveShadow = true;
-  group.add(tile);
-  group.position.set(x, 0, z);
-  return { group, materials: [material], top: 0.14 };
-}
-
-// Where every node of the ring stands: `count` nodes evenly on a circle of
-// `radius`, the first at the front.
-function ringSpots(count, radius) {
-  const spots = [];
-  for (let k = 0; k < count; k += 1) {
-    const angle = Math.PI / 2 + (k * 2 * Math.PI) / Math.max(count, 1);
-    spots.push({ x: radius * Math.cos(angle), z: radius * Math.sin(angle) });
-  }
-  return spots;
 }
 
 // Where every node stands: a row along a shallow arc, two rows when there are many
@@ -498,13 +411,7 @@ function buildScene(THREE, root, options) {
   const hover = root.querySelector(".rv-scene-hover");
   const kind = root.getAttribute("data-scene");
   const list = page.getElementById(root.getAttribute("data-scene-for") || "");
-  // The ring view of Home: the clients on an inner ring, the controls they fail on
-  // an outer one, read from the hidden list of failing pairs the stage names.
-  const links = page.getElementById(root.getAttribute("data-scene-links") || "");
-  const ring = Boolean(links) && options.view === "ring";
-  const clients = list ? READERS[kind](list) : [];
-  const controls = ring ? readControls(links) : [];
-  const entries = clients.concat(controls);
+  const entries = list ? READERS[kind](list) : [];
   // What the detail line says while nothing is chosen: the hint of the page, or,
   // when every client is only a footprint, what to do so a rook stands here.
   const idle = entries.length && entries.every((entry) => entry.footprint) ? WORDS.footprints : root.getAttribute("data-scene-hint") || "";
@@ -515,7 +422,7 @@ function buildScene(THREE, root, options) {
   canvas.tabIndex = 0;
   canvas.setAttribute("role", "application");
   canvas.setAttribute("aria-roledescription", "scene");
-  canvas.setAttribute("aria-label", ring ? WORDS.ring : root.getAttribute("data-scene-label") || "Scene");
+  canvas.setAttribute("aria-label", root.getAttribute("data-scene-label") || "Scene");
   canvas.setAttribute("aria-describedby", detail ? detail.id : "");
   stage.insertBefore(canvas, stage.firstChild);
 
@@ -534,19 +441,14 @@ function buildScene(THREE, root, options) {
   const camera = new THREE.PerspectiveCamera(32, 21 / 9, 0.1, 80);
   const spacing = kind === "keep" ? 1.7 : 1.35;
   const limit = kind === "keep" ? 6 : 8;
-  // The ring: the clients a step apart on the inner ring, the tiles on an outer
-  // ring at least 1.6 further out.
-  const inner = Math.max(1.2, clients.length / (2 * Math.PI));
-  const outer = Math.max(inner + 1.6, (controls.length * 0.6) / (2 * Math.PI));
-  const spots = ring ? ringSpots(clients.length, inner).concat(ringSpots(controls.length, outer)) : place(entries.length, spacing, limit);
-  const rows = !ring && entries.length > limit ? 2 : 1;
-  const span = ring ? outer + 1 : Math.max(3, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 2);
+  const spots = place(entries.length, spacing, limit);
+  const rows = entries.length > limit ? 2 : 1;
+  const span = Math.max(3, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 2);
   const tallest = entries.reduce((top, entry) => {
-    const own = entry.kind === "rook" ? 0.28 + entry.floors * 0.2 : entry.layers ? entry.layers.reduce((sum, layer) => sum + layer.count * 0.16, 0) : 0.12;
+    const own = entry.kind === "rook" ? 0.28 + entry.floors * 0.2 : entry.layers.reduce((sum, layer) => sum + layer.count * 0.16, 0);
     return Math.max(top, own);
   }, 0.5);
-  // The ring is seen from higher up, so its far side shows over the near offices.
-  const home = { yaw: 0.35, pitch: ring ? 0.9 : 0.55, distance: span * 1.15 + 3 };
+  const home = { yaw: 0.35, pitch: 0.55, distance: span * 1.15 + 3 };
   const target = new THREE.Vector3(0, Math.min(0.6, 0.25 + tallest / 2), rows > 1 ? -0.9 : 0);
   const view = { yaw: home.yaw, pitch: home.pitch, distance: home.distance };
 
@@ -593,7 +495,7 @@ function buildScene(THREE, root, options) {
   // The rookery is a street: a road in front of the offices, a pavement, trees
   // and street lamps between the buildings, and a second street behind when the
   // clients take two rows.
-  if (kind === "rookery" && !ring) {
+  if (kind === "rookery") {
     const kit = streetKit(THREE);
     const long = Math.max(5, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 3.4);
     const road = new THREE.MeshStandardMaterial({ color: 0x24262d, roughness: 0.95 });
@@ -636,40 +538,10 @@ function buildScene(THREE, root, options) {
   const nodes = new Map();
   entries.forEach((entry, index) => {
     const spot = spots[index];
-    let built;
-    if (entry.kind === "rook") {
-      built = buildOffice(THREE, entry, spot.x, spot.z, ring ? 0.7 : 1);
-    } else if (entry.kind === "tile") {
-      built = buildTile(THREE, entry, spot.x, spot.z);
-    } else {
-      built = buildBlock(THREE, entry, spot.x, spot.z);
-    }
+    const built = entry.kind === "rook" ? buildOffice(THREE, entry, spot.x, spot.z) : buildBlock(THREE, entry, spot.x, spot.z);
     scene.add(built.group);
     pickables.push(built.group);
     nodes.set(entry.id, { entry, group: built.group, materials: built.materials, top: built.top });
-  });
-  // The beams of the ring: a low arc from the roof of a client to each control it
-  // fails, faint until one of its ends is chosen.
-  const beams = [];
-  const topOf = (node) => new THREE.Vector3(node.group.position.x, node.top, node.group.position.z);
-  controls.forEach((entry) => {
-    const tile = nodes.get(entry.id);
-    entry.clients.forEach((clientId) => {
-      const office = nodes.get(clientId);
-      if (!office) {
-        return;
-      }
-      const from = topOf(office);
-      const to = topOf(tile);
-      const middle = from.clone().add(to).multiplyScalar(0.5);
-      middle.y = Math.max(from.y, to.y) + 0.4;
-      const curve = new THREE.QuadraticBezierCurve3(from, middle, to);
-      const material = new THREE.LineBasicMaterial({ color: BEAM, transparent: true, opacity: BEAM_OPACITY });
-      const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(20)), material);
-      beam.userData.ends = [clientId, entry.id];
-      scene.add(beam);
-      beams.push(beam);
-    });
   });
   const bounds = new THREE.Box3();
   nodes.forEach((node) => {
@@ -698,7 +570,7 @@ function buildScene(THREE, root, options) {
   function render() {
     placeCamera();
     renderer.render(scene, camera);
-    placeCard();
+    card.place(camera);
   }
 
   function frame(now) {
@@ -749,37 +621,20 @@ function buildScene(THREE, root, options) {
     invalidate();
   }
 
-  // Selection and hover: the chosen node comes forward and the rest step back
-  // (in the ring, its beams and the nodes at their other ends come forward too);
+  // Selection and hover: the chosen node comes forward and the rest step back;
   // the card or the bar of the node on the page is marked the same way.
-  function related(id) {
-    const found = new Set([id]);
-    beams.forEach((beam) => {
-      if (beam.userData.ends.indexOf(id) >= 0) {
-        beam.userData.ends.forEach((end) => found.add(end));
-      }
-    });
-    return found;
-  }
-
   function paint() {
     const focus = selected || hovered;
-    const keep = focus ? related(focus) : null;
     nodes.forEach((node, id) => {
       const own = focus === id;
       node.materials.forEach((material) => {
         const base = material.userData.base === undefined ? 1 : material.userData.base;
-        material.opacity = !keep || keep.has(id) ? base : base * DIM;
+        material.opacity = !focus || own ? base : base * DIM;
         if (material.emissive) {
           material.emissive.setHex(own ? PICKED : material.userData.emissive || 0x000000);
           material.emissiveIntensity = own ? 0.22 : material.userData.emissiveIntensity || 0;
         }
       });
-    });
-    beams.forEach((beam) => {
-      const on = focus && beam.userData.ends.indexOf(focus) >= 0;
-      beam.material.color.setHex(on ? PICKED : BEAM);
-      beam.material.opacity = !focus ? BEAM_OPACITY : on ? 0.95 : 0.06;
     });
     invalidate();
   }
@@ -790,83 +645,16 @@ function buildScene(THREE, root, options) {
     });
   }
 
-  // The card of the chosen node: a non-modal popover the server drew into a
-  // template (client-card-<id>, control-card-<id>), cloned into the stage beside
-  // the node, or docked at the foot of a narrow stage. A node without a template
-  // (a domain of the keep) has no card.
-  let card = null;
-
-  function closeCard() {
-    if (card) {
-      card.element.remove();
-      card = null;
-    }
-  }
-
-  function openCard(node, keyed) {
-    closeCard();
-    const template = node.entry.card ? page.getElementById(node.entry.card) : null;
-    const source = template && template.content ? template.content.firstElementChild : null;
-    if (!source) {
-      return;
-    }
-    const element = source.cloneNode(true);
-    const heading = element.querySelector(".rv-scene-card-title");
-    const close = element.querySelector(".rv-scene-card-close");
-    if (close) {
-      close.addEventListener("click", () => leave(), { signal });
-    }
-    // Escape closes the card from anywhere in it; on the heading (where the
-    // keyboard lands) the keys of the scene keep choosing.
-    element.addEventListener(
-      "keydown",
-      (event) => {
-        if (event.key === "Escape" || event.target === heading) {
-          onKey(event);
-        }
-      },
-      { signal }
-    );
-    stage.appendChild(element);
-    card = { element, anchor: topOf(node) };
-    placeCard();
-    if (keyed && heading) {
-      heading.focus();
-    }
-  }
-
-  // Beside the top of its node, on the side with room, inside the stage. On a
-  // narrow stage (a phone) the card stands under the stage, full width, so it
-  // never covers the scene it describes.
-  function placeCard() {
-    if (!card) {
-      return;
-    }
-    const width = stage.clientWidth;
-    const height = stage.clientHeight;
-    const docked = width < DOCK_WIDTH;
-    card.element.classList.toggle("is-docked", docked);
-    if (docked) {
-      card.element.style.left = "";
-      card.element.style.top = "";
-      if (card.element.parentNode !== stage.parentNode) {
-        stage.after(card.element);
-      }
-      return;
-    }
-    if (card.element.parentNode !== stage) {
-      stage.appendChild(card.element);
-    }
-    const point = card.anchor.clone().project(camera);
-    const x = ((point.x + 1) / 2) * width;
-    const y = ((1 - point.y) / 2) * height;
-    const wide = card.element.offsetWidth;
-    const high = card.element.offsetHeight;
-    const gap = 16;
-    const left = x + gap + wide > width - 8 ? x - gap - wide : x + gap;
-    card.element.style.left = clamp(left, 8, Math.max(8, width - wide - 8)) + "px";
-    card.element.style.top = clamp(y - high / 2, 8, Math.max(8, height - high - 8)) + "px";
-  }
+  // The company card of the chosen office (client-card-<id>, scene-card.js); a
+  // node without a template (a domain of the keep) has no card.
+  const card = sceneCard({
+    page,
+    stage,
+    canvas,
+    signal,
+    onKey,
+    onClose: (refocus) => (refocus ? leave() : select(null, false)),
+  });
 
   // Closing the card with Escape or its button gives the canvas the focus back.
   function leave() {
@@ -880,9 +668,10 @@ function buildScene(THREE, root, options) {
     words(detail, node ? node.entry.label + (node.entry.href ? " Press Enter to open it." : "") : idle);
     markPage();
     if (node) {
-      openCard(node, keyed);
+      const top = new THREE.Vector3(node.group.position.x, node.top, node.group.position.z);
+      card.open(node.entry.card, top, camera, keyed);
     } else {
-      closeCard();
+      card.close();
     }
     if (node && face) {
       // The yard leans a little towards the chosen node and no further: a turn to
@@ -1029,17 +818,6 @@ function buildScene(THREE, root, options) {
     }
   }
   canvas.addEventListener("keydown", onKey, { signal });
-  // A press outside the card closes it; a press on the canvas picks instead
-  // (another building moves the card, the ground closes it).
-  page.addEventListener(
-    "pointerdown",
-    (event) => {
-      if (card && event.target !== canvas && !card.element.contains(event.target)) {
-        select(null, false);
-      }
-    },
-    { signal }
-  );
 
   // The buttons under the stage.
   const buttons = {
@@ -1143,7 +921,7 @@ function buildScene(THREE, root, options) {
       window.cancelAnimationFrame(rafId);
       rafId = 0;
     }
-    closeCard();
+    card.close();
     scene.traverse(disposeObject);
     scene.clear();
     renderer.dispose();
@@ -1156,7 +934,6 @@ function buildScene(THREE, root, options) {
   function info() {
     return {
       nodes: nodes.size,
-      beams: beams.length,
       geometries: renderer.info.memory.geometries,
       textures: renderer.info.memory.textures,
       programs: renderer.info.programs ? renderer.info.programs.length : 0,
@@ -1257,33 +1034,6 @@ export async function prepare(root, THREE, motionQuery) {
       syncToggle();
     }
   }
-
-  // The Street / Ring switch of Home: the pressed button is the view drawn; a
-  // switch disposes the scene whole and builds the other one.
-  const views = Array.from(root.querySelectorAll(".rv-scene-view"));
-  options.view = storedView();
-  function syncViews() {
-    views.forEach((button) => {
-      button.setAttribute("aria-pressed", button.getAttribute("data-view") === options.view ? "true" : "false");
-    });
-  }
-  views.forEach((button) => {
-    button.addEventListener("click", () => {
-      const value = button.getAttribute("data-view") === "ring" ? "ring" : "street";
-      if (value === options.view) {
-        return;
-      }
-      options.view = value;
-      rememberView(value);
-      syncViews();
-      if (built) {
-        built.dispose();
-        built = null;
-        mount();
-      }
-    });
-  });
-  syncViews();
 
   if (motionQuery) {
     motionQuery.addEventListener("change", (event) => {
@@ -1410,6 +1160,7 @@ async function openStages(roots) {
   try {
     THREE = await import(THREE_URL);
     ({ officeBuilding, streetKit } = await import(OFFICE_URL));
+    ({ sceneCard } = await import(CARD_URL));
   } catch (error) {
     roots.forEach((root) => {
       root.setAttribute("data-scene-state", "error");

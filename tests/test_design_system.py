@@ -81,6 +81,7 @@ NAV_LINKS = (
     ("/imports", "Import evidence"),
     ("/imports/profile-editor", "Profile editor"),
     ("/evidence/integrity", "Evidence integrity"),
+    ("/experiments/evidence-explorer", "Evidence Explorer"),
     ("/settings", "Settings"),
     ("/system", "System"),
 )

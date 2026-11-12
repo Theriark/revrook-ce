@@ -1,33 +1,39 @@
 {% extends "base.html" %}
 {% import "_icons.html" as i %}
 {% import "_status.html" as s %}
-{#- The Evidence Explorer (docs/evidence-explorer-preview.md). The tables are
-    the page: the scene above them is drawn by evidence-explorer.js from the same view
-    model, served as JSON at data_url, only when the browser offers WebGL 2. Without
-    script the stage keeps the note rendered here. No inline style or script. -#}
+{% import "_company_card.html" as cc %}
+{#- The Evidence Explorer (docs/evidence-explorer-preview.md). Two views on one
+    page: without a client the companies ring (`portfolio`: every active client and
+    every control, the scene drawn from the rows of the tables and the card
+    templates below), with ?client_id=N the evidence wall of that client (`view`:
+    the scene drawn from the same view model served as JSON at data_url). The tables
+    are the page; the scene is drawn by evidence-explorer.js only when the browser
+    offers WebGL 2. Without script the stage keeps the note rendered here. No inline
+    style or script. -#}
 {% block head %}<link rel="stylesheet" href="/static/css/evidence-explorer.css?v={{ explorer_version }}">{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>Evidence Explorer</h1><p class="rv-page-purpose">Which exports feed which controls for one client, and where the evidence behind a status is stale or missing. An optional way of looking at the evidence: the scene can be turned, the tables below carry the same facts, and nothing is stored.</p></div>
-{% if clients %}
-<form class="rv-explorer-choose rv-inline-form" method="get" action="/experiments/evidence-explorer">
-<label for="client_id">Client</label>
-<select id="client_id" name="client_id">
-{% for client_id, name in clients %}
-<option value="{{ client_id }}"{% if view and client_id == view.client_id %} selected{% endif %}>{{ name }}</option>
-{% endfor %}
-</select>
-<button type="submit" class="rv-button-quiet">Show</button>
-</form>
-{% endif %}
+<div><h1>Evidence Explorer</h1><p class="rv-page-purpose">Every client against every control, or for one client which exports feed which controls and where the evidence behind a status is stale or missing. An optional way of looking at the evidence: the scene can be turned, the tables below carry the same facts, and nothing is stored.</p></div>
 </div>
 {% if not clients %}
 <div class="rv-empty" id="explorer-no-clients">
 {{ i.icon("inbox", "xl") }}
 <p class="rv-empty-title">No clients yet</p>
-<p class="rv-empty-text">The explorer draws the evidence of one client. Add a client and import an export, then come back.</p>
+<p class="rv-empty-text">The explorer draws the evidence of your clients. Add a client and import an export, then come back.</p>
 <a role="button" href="/clients">Add a client</a>
 </div>
+{% else %}
+{% if portfolio %}
+{% if unread %}
+<div class="rv-alert rv-alert-warning" role="alert" id="explorer-unread">
+<p class="rv-alert-title">{{ unread|length }} client{% if unread|length != 1 %}s{% endif %} could not be read today</p>
+<ul>
+{% for item in unread %}
+<li><a href="/clients/{{ item.client_id }}">{{ item.name }}</a>: {{ item.reason }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
 {% else %}
 <section class="rv-verdict" id="explorer-status" aria-labelledby="explorer-status-title">
 <h2 id="explorer-status-title" class="rv-sr-only">Where {{ view.client_name }} stands</h2>
@@ -39,12 +45,27 @@
 <div><dt>Links</dt><dd>{{ view.counts.links }}</dd></div>
 </dl>
 </section>
-<section class="rv-card rv-explorer" id="explorer" aria-labelledby="explorer-title" data-explorer-url="{{ data_url }}" data-client="{{ view.client_name }}">
+{% endif %}
+<section class="rv-card rv-explorer" id="explorer" aria-labelledby="explorer-title"{% if portfolio %} data-explorer-view="companies"{% else %} data-explorer-url="{{ data_url }}" data-client="{{ view.client_name }}"{% endif %}>
+<form class="rv-explorer-choose rv-inline-form" id="explorer-choose" method="get" action="/experiments/evidence-explorer">
+<label for="client_id">View</label>
+<select id="client_id" name="client_id">
+<option value=""{% if portfolio %} selected{% endif %}>All companies</option>
+{% for client_id, name in clients %}
+<option value="{{ client_id }}"{% if view and client_id == view.client_id %} selected{% endif %}>{{ name }}</option>
+{% endfor %}
+</select>
+<button type="submit" class="rv-button-quiet">Show</button>
+</form>
 <div class="rv-scene-bar">
-<h2 id="explorer-title" class="rv-card-title">The evidence wall of {{ view.client_name }}</h2>
+<h2 id="explorer-title" class="rv-card-title">{% if portfolio %}Every company and every control{% else %}The evidence wall of {{ view.client_name }}{% endif %}</h2>
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-toggle" hidden>Show the 3D view</button>
 </div>
+{% if portfolio %}
+<p class="rv-card-subtitle">Each office is a client, each tile a control in the worst status it has at any client; a link joins every client to every control, in the status of that pair. Choose an office or a tile to light its links.</p>
+{% else %}
 <p class="rv-card-subtitle">Each office block is an export, as tall as the controls it feeds; each tile is a control. Choose one to light its links.</p>
+{% endif %}
 <div class="rv-explorer-stage" id="explorer-stage">
 <div class="rv-explorer-state" id="explorer-state" role="status">
 <p class="rv-explorer-state-text">The scene needs script and WebGL 2 in the browser. The tables below show the same facts.</p>
@@ -55,9 +76,99 @@
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-turn-right">Turn right</button>
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-reset">Reset view</button>
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-motion" aria-pressed="false" hidden>Turn by itself</button>
+{% if portfolio %}
+<div class="rv-explorer-filters" id="explorer-filters" role="group" aria-label="Links shown">
+{% for label, count in portfolio.links %}<button type="button" class="rv-button-quiet rv-button-small rv-explorer-filter" data-status="{{ label.key }}" aria-pressed="{{ 'true' if label.key in ('not-protected', 'needs-attention') else 'false' }}">{{ label.text }} ({{ count }})</button>
+{% endfor %}</div>
+{% endif %}
 <p class="rv-explorer-hover" id="explorer-hover" aria-hidden="true"></p>
 </div>
-<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">Choose a block or a tile, or Show in scene on a row below.</p>
+<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">{% if portfolio %}Choose an office or a tile{% else %}Choose a block or a tile{% endif %}, or Show in scene on a row below.</p>
+{% if portfolio %}
+<ul class="rv-legend rv-explorer-legend" aria-label="What the shapes mean">
+<li><span>Each office is a client: as tall as its score, as wide as the company, its roof light the band; in scaffolding with too little evidence for a score, an empty lot with none.</span></li>
+<li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Protected</span> <span class="rv-text-secondary">flat tile, green link</span></li>
+<li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Needs attention</span> <span class="rv-text-secondary">tile with a ring, amber link</span></li>
+<li><span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">&#10007;</span> Not protected</span> <span class="rv-text-secondary">tile cut through, red link</span></li>
+<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not checked</span> <span class="rv-text-secondary">glass tile, grey link</span></li>
+<li><span class="rv-status-not-applicable"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Not applicable</span> <span class="rv-text-secondary">small disc, no link</span></li>
+</ul>
+</section>
+<h2 id="explorer-companies-title">Companies</h2>
+<p class="rv-text-secondary">One row per active client: its score today and how many of the {{ portfolio.controls|length }} controls stand at each status.</p>
+<table id="explorer-companies" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-companies-title">
+<caption>Every active client, its score and its controls per status today</caption>
+<thead>
+<tr>
+<th scope="col">Company</th>
+<th scope="col">Score</th>
+{% for label in portfolio.labels %}<th scope="col" class="rv-numeric">{{ label.text }}</th>
+{% endfor %}<th scope="col"><span class="rv-sr-only">Scene</span></th>
+</tr>
+</thead>
+<tbody>
+{% for item in portfolio.clients %}
+{% set client = item.posture %}
+<tr data-node="client:{{ client.client_id }}" data-name="{{ client.name }}" data-score="{{ client.score_share }}" data-score-text="{{ client.score_text }}" data-band="{{ client.band }}" data-insufficient="{{ 'true' if client.insufficient else 'false' }}" data-evidence="{{ client.evidence }}" data-needs-work="{{ client.needs_work }}" data-size="{{ item.size }}" data-href="/clients/{{ client.client_id }}">
+<th scope="row"><a href="/clients/{{ client.client_id }}">{{ client.name }}</a></th>
+<td data-label="Score">{% if client.evidence %}{% if client.insufficient %}at least {% endif %}{{ client.score_text }}, {% if client.insufficient %}insufficient evidence{% else %}{{ client.band }}{% endif %}{% else %}<span class="rv-text-secondary">No evidence yet</span>{% endif %}</td>
+{% for label in portfolio.labels %}<td data-label="{{ label.text }}" class="rv-numeric">{{ item.counts[loop.index0] }}</td>
+{% endfor %}<td data-label="Scene"><button type="button" class="rv-button-quiet rv-button-small rv-explorer-pick" data-node="client:{{ client.client_id }}" aria-pressed="false" hidden>Show in scene</button></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<h2 id="explorer-controls-title">Controls across the companies</h2>
+<p class="rv-text-secondary">Every control of {{ portfolio.ruleset }} with how many clients stand at each status for it today. A tile of the scene takes the worst of them.</p>
+<table id="explorer-controls" class="rv-table-cards rv-explorer-table" aria-labelledby="explorer-controls-title">
+<caption>Every control and its clients per status today</caption>
+<thead>
+<tr>
+<th scope="col">Control</th>
+<th scope="col">Domain</th>
+{% for label in portfolio.labels %}<th scope="col" class="rv-numeric">{{ label.text }}</th>
+{% endfor %}<th scope="col"><span class="rv-sr-only">Scene</span></th>
+</tr>
+</thead>
+<tbody>
+{% for control in portfolio.controls %}
+<tr data-node="control:{{ control.control_id }}" data-domain="{{ control.domain }}" data-label="{{ control.worst.key }}" data-title="{{ control.title }}"{% if control.pairs %} data-href="/clients/{{ control.pairs[0].client_id }}/controls/{{ control.control_id }}"{% endif %}>
+<th scope="row"><span class="rv-explorer-id">{{ control.control_id }}</span> {{ control.title }}</th>
+<td data-label="Domain">{{ control.domain }}</td>
+{% for label in portfolio.labels %}<td data-label="{{ label.text }}" class="rv-numeric">{{ control.counts[loop.index0] }}</td>
+{% endfor %}<td data-label="Scene"><button type="button" class="rv-button-quiet rv-button-small rv-explorer-pick" data-node="control:{{ control.control_id }}" aria-pressed="false" hidden>Show in scene</button></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if portfolio.controls|length > 12 %}<p class="rv-table-more"><a href="#explorer-controls">Show all {{ portfolio.controls|length }} controls</a></p>{% endif %}
+{#- What the scene shows beside an office or a tile it chooses (evidence-explorer.js
+    clones these through scene-card.js, never builds them): the company card of
+    each client, as on Home, and a card per control listing every client with its
+    status, worst first. The scene reads its links from these lists. -#}
+{% for item in portfolio.clients %}
+{{ cc.card(item.posture, card_focus.get(item.posture.client_id, []), card_refresh.get(item.posture.client_id, 0)) }}
+{% endfor %}
+{% for control in portfolio.controls %}
+<template id="control-card-{{ control.control_id }}">
+<div class="rv-scene-card rv-keep" role="dialog" aria-modal="false" aria-labelledby="control-card-{{ control.control_id }}-title">
+<div class="rv-scene-card-head">
+<h3 class="rv-scene-card-title" id="control-card-{{ control.control_id }}-title" tabindex="-1">{{ control.control_id }} {{ control.title }}</h3>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-card-close" aria-label="Close"><span aria-hidden="true">&#215;</span></button>
+</div>
+<p class="rv-scene-card-label">{% if control.pairs %}At {{ control.pairs|length }} client{% if control.pairs|length != 1 %}s{% endif %}, worst first{% else %}No client could be read today{% endif %}</p>
+<ul class="rv-scene-card-list">
+{% for pair in control.pairs %}<li data-client="{{ pair.client_id }}" data-label="{{ pair.label.key }}"><a href="/clients/{{ pair.client_id }}/controls/{{ control.control_id }}" data-drawer>{{ pair.client_name }}</a> {{ s.status(pair.label) }}</li>
+{% endfor %}</ul>
+</div>
+</template>
+{% endfor %}
+<div class="rv-alert" id="explorer-note">
+<p class="rv-alert-title">What this view is</p>
+<p>A scene drawn in the browser from the same checks as Home at {{ portfolio.as_of[:16].replace("T", " ") }} UTC. It stores nothing, loads nothing from outside this installation, and is not part of any report. The tables are the record; the scene is a way of looking at them, like the client street of Home.</p>
+</div>
+{% include "_drawer.html" %}
+{% else %}
 <ul class="rv-legend rv-explorer-legend" aria-label="What the shapes mean">
 <li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Protected</span> <span class="rv-text-secondary">flat tile</span></li>
 <li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Needs attention</span> <span class="rv-text-secondary">tile with a ring</span></li>
@@ -128,6 +239,7 @@
 <p class="rv-alert-title">What this view is</p>
 <p>A scene drawn in the browser from the same checks as the checklist of {{ view.client_name }} at {{ view.as_of[:16].replace("T", " ") }} UTC. It stores nothing, loads nothing from outside this installation, and is not part of any report. The tables are the record; the scene is a way of looking at them, like the rookery skyline of Home and the domain keep of a client overview.</p>
 </div>
+{% endif %}
 <script type="module" src="/static/js/evidence-explorer.js?v={{ explorer_version }}"></script>
 {% endif %}
 {% endblock %}

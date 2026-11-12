@@ -27,6 +27,7 @@ from ui_helpers import seed_client, sign_in
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = ROOT / "app/ui/templates"
 SCRIPT = (STATIC_DIR / "js/scenes.js").read_text(encoding="utf-8")
+CARD_SCRIPT = (STATIC_DIR / "js/scene-card.js").read_text(encoding="utf-8")
 CSS = (STATIC_DIR / "css/scenes.css").read_text(encoding="utf-8")
 SHELL_CSS = (STATIC_DIR / "css/revrook-retest.css").read_text(encoding="utf-8")
 PICO = (STATIC_DIR / "vendor/pico/pico.min.css").read_text(encoding="utf-8")
@@ -107,11 +108,8 @@ def test_the_scene_module_has_every_fallback_and_nothing_from_outside() -> None:
     assert SCRIPT.index("supportsWebGL2()") < SCRIPT.index("await import(THREE_URL)")
     assert SCRIPT.index("root.hidden = false") < SCRIPT.index("await import(THREE_URL)")
     assert "if (!supportsWebGL2()) {\n    putAway(every);\n    return;\n  }" in SCRIPT
-    # The hide button names the action it offers next and carries no pressed state;
-    # only the Street / Ring switch is pressed.
-    toggle = SCRIPT.split("function syncToggle() {", 1)[1].split("\n  }\n", 1)[0]
-    assert "aria-pressed" not in toggle
-    assert SCRIPT.count('"aria-pressed"') == 1
+    # The hide button names the action it offers next and carries no pressed state.
+    assert "aria-pressed" not in SCRIPT
     assert '"Hide the 3D view" : "Show the 3D view"' in SCRIPT
     # The scenes start hidden, and nothing is imported until a person asks.
     assert 'getItem(HIDE_KEY) !== "on"' in SCRIPT
@@ -135,8 +133,9 @@ def test_the_scene_module_has_every_fallback_and_nothing_from_outside() -> None:
     assert "window.location.assign(node.entry.href)" in SCRIPT
 
 
-def test_the_scene_card_and_the_ring_are_built_from_the_page() -> None:
-    # The card is cloned from a template the server drew, never built from strings.
+def test_the_scene_card_is_cloned_from_the_page_by_the_shared_module() -> None:
+    # The card is cloned from a template the server drew, never built from strings;
+    # the street and the companies ring of the Explorer share the module.
     for needed in (
         "template.content.firstElementChild",
         "source.cloneNode(true)",
@@ -144,31 +143,31 @@ def test_the_scene_card_and_the_ring_are_built_from_the_page() -> None:
         "const DOCK_WIDTH = 600;",
         'card.element.classList.toggle("is-docked", docked);',
         "heading.focus();",
-        "canvas.focus();",
-        'close.addEventListener("click", () => leave(), { signal });',
+        'button.addEventListener("click", () => onClose(true), { signal });',
         'page.addEventListener(\n    "pointerdown",',
-        "closeCard();\n    scene.traverse(disposeObject);",
-        # The ring: its own reader, tiles, the two rings and the faint beams.
-        'const VIEW_KEY = "rv-rookery-view";',
-        "function storedView()",
-        "function rememberView(value)",
-        "function readControls(list)",
-        "function buildTile(",
-        "function ringSpots(count, radius)",
-        "new THREE.Line(",
-        "const BEAM_OPACITY = 0.12;",
-        'const ring = Boolean(links) && options.view === "ring";',
-        "keep.has(id) ? base : base * DIM",
-        # A switch disposes the scene whole and builds the other view.
-        "built.dispose();\n        built = null;\n        mount();",
+        'target.closest("dialog[open]")',
+        "export function sceneCard(",
+    ):
+        assert needed in CARD_SCRIPT, needed
+    for forbidden in FORBIDDEN_IN_SCRIPT:
+        assert forbidden not in CARD_SCRIPT, forbidden
+    # The street imports it with its own version, as it does the office model.
+    assert 'const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;' in (
+        SCRIPT
+    )
+    assert "({ sceneCard } = await import(CARD_URL));" in SCRIPT
+    for needed in (
+        'card: "client-card-" + element.getAttribute("data-client"),',
+        "card.open(node.entry.card, top, camera, keyed);",
+        "card.close();\n    scene.traverse(disposeObject);",
+        "canvas.focus();",
     ):
         assert needed in SCRIPT, needed
-    # Storage is read and written inside try, as the hide choice is.
-    for name in ("storedView", "rememberView"):
-        body = SCRIPT.split(f"function {name}(", 1)[1].split("\n}\n", 1)[0]
-        assert "try {" in body and "catch (error)" in body, name
+    # Home's street has no second view any more: the ring is the Explorer's.
+    for gone in ("rv-rookery-view", "readControls", "ringSpots", "new THREE.Line("):
+        assert gone not in SCRIPT, gone
     assert ".rv-scene-card {" in CSS and ".rv-scene-card.is-docked {" in CSS
-    assert 'main .rv-scene-views button[aria-pressed="true"] {' in CSS
+    assert "rv-scene-views" not in CSS
 
 
 def test_the_scene_stylesheet_draws_with_tokens_only() -> None:
@@ -203,7 +202,7 @@ def test_the_scene_stylesheet_draws_with_tokens_only() -> None:
     assert "position: absolute;" in chosen and "padding" not in chosen
     assert "padding-left: 10px" not in CSS
     assert ".rv-scene.is-closed .rv-scene-toggle {" in CSS
-    assert "rv-scene-toggle[aria-pressed" not in CSS
+    assert "aria-pressed" not in CSS
     # Every rule that colours text declares its background, as revrook.css does.
     body = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
     for selector, declarations in re.findall(r"([^{}]+)\{([^{}]*)\}", body):
@@ -212,7 +211,7 @@ def test_the_scene_stylesheet_draws_with_tokens_only() -> None:
 
 
 def test_the_stage_macro_is_hidden_until_the_browser_can_draw() -> None:
-    assert '{% macro stage(id, kind, for_id, label, hint, lead, links="") -%}' in STAGE
+    assert "{% macro stage(id, kind, for_id, label, hint, lead) -%}" in STAGE
     assert 'data-scene="{{ kind }}" data-scene-for="{{ for_id }}"' in STAGE
     assert 'data-scene-hint="{{ hint }}" hidden>' in STAGE
     assert '<div class="rv-scene-state" role="status">' in STAGE
@@ -220,10 +219,7 @@ def test_the_stage_macro_is_hidden_until_the_browser_can_draw() -> None:
     assert "<style" not in STAGE and " style=" not in STAGE
     # The hide button is a plain button whose words say what it offers next.
     assert 'class="rv-button-quiet rv-button-small rv-scene-toggle" hidden>' in STAGE
-    # Only the Street / Ring switch is pressed, and only a stage with links has it.
-    switch = STAGE.split("{% if links %}<div", 1)[1].split("{% endif %}", 1)[0]
-    assert STAGE.count("aria-pressed") == switch.count("aria-pressed") == 2
-    assert 'class="rv-scene-views" role="group" aria-label="View">' in switch
+    assert "aria-pressed" not in STAGE
     for button in ("rv-scene-turn-left", "rv-scene-turn-right", "rv-scene-reset"):
         assert f'class="rv-button-quiet rv-button-small {button}"' in STAGE, button
 
@@ -264,9 +260,12 @@ def test_the_explorer_is_an_evidence_page_and_no_longer_an_experiment() -> None:
     groups = re.findall(r'<p class="rv-nav-group-label">([^<]+)</p>', NAV)
     assert groups == ["Work", "Evidence", "Administration"]
     evidence = NAV.split("Evidence</p>", 1)[1].split("Administration</p>", 1)[0]
-    # The preview left the rail: the evidence page of a client links it.
-    assert "Evidence integrity" in evidence
-    assert 'href="/experiments/evidence-explorer"' not in NAV
+    # In the rail after Evidence integrity, and linked from the evidence page of a
+    # client, which opens on that client's wall.
+    assert "Evidence integrity" in evidence and "Evidence Explorer" in evidence
+    assert evidence.index("Evidence integrity") < evidence.index("Evidence Explorer")
+    assert 'href="/experiments/evidence-explorer"' in evidence
+    assert '{{ i.icon("cube") }}<span class="rv-nav-text">Evidence Explorer' in NAV
     page = (TEMPLATES / "evidence_imports.html").read_text(encoding="utf-8")
     assert 'href="/experiments/evidence-explorer?client_id={{ client_id }}"' in page
     assert "Development-only" not in EXPLORER and "preview on this" not in EXPLORER
@@ -387,9 +386,8 @@ async def test_the_pages_carry_their_scenes_and_the_rail_state(
     assert home.status_code == 200 and structure_problems(html) == []
     assert '<body class="rv-app" data-rail="expanded">' in html
     assert 'data-scene="rookery" data-scene-for="rookery-list"' in html
-    # The Street / Ring switch is on Home's stage only.
-    switch = '<div class="rv-scene-views" role="group" aria-label="View">'
-    assert html.count(switch) == 1
+    # Home's street has no view switch: the ring of every company is the Explorer's.
+    assert "rv-scene-views" not in html and "data-scene-links" not in html
     rooks = ROOK.findall(html)
     assert [int(found) for found, _ in rooks] == [client_id]
     assert 'data-insufficient="' in html and 'data-needs-work="' in html
@@ -411,7 +409,6 @@ async def test_the_pages_carry_their_scenes_and_the_rail_state(
     page = overview.text
     assert overview.status_code == 200 and structure_problems(page) == []
     assert 'data-scene="keep" data-scene-for="domains-list"' in page
-    assert "rv-scene-views" not in page and "data-scene-links" not in page
     blocks = BLOCK.findall(page)
     assert len(blocks) == page.count('class="rv-domain"') > 0
     for code, _ in blocks:

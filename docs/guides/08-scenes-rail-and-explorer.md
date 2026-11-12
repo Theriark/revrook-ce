@@ -1,8 +1,8 @@
 # 8. Scenes, the folded rail and the Evidence Explorer
 
 Three pages carry a scene drawn in the browser: the client street on **Home**, the
-domain keep on the overview of a client, and the evidence wall of the **Evidence
-Explorer**. Each scene draws facts the page already shows: the cards, the bars and the
+domain keep on the overview of a client, and the **Evidence Explorer** (the ring of
+every company, or the evidence wall of one client). Each scene draws facts the page already shows: the cards, the bars and the
 tables under it stay the record, and a scene adds nothing to a report. The scenes
 start hidden: a page opens on its cards and bars, with the button **Show the 3D
 view** above the stage, and nothing is drawn (and no scene library loaded) until you
@@ -56,21 +56,8 @@ button, **Escape**, a press anywhere outside it, **Reset view** or **Hide the 3D
 When you choose with the keyboard the focus moves to the name on the card: **Left**,
 **Right** and **Enter** still work from there, Tab reaches its links, and **Escape**
 gives the focus back to the stage. On a stage narrower than 600 px (a phone) the card
-sits across the foot of the stage and scrolls inside it.
-
-### The ring view
-
-**Street** and **Ring** under the stage switch between the street and a ring of the
-whole portfolio; the browser remembers the choice. In the ring the clients stand as
-smaller offices on an inner circle, and every control that at least one client fails
-(not protected or needs attention) is a tile on an outer circle: red when a client has
-it not protected, amber when it only needs attention. A faint beam runs from each client
-to each control it fails. Choosing an office opens its company card and lights its
-beams and the controls at their ends; the rest steps back. Choosing a tile opens its
-control card: the control and its title, and every client that fails it with its
-status, each a link to that control of that client. **Left** and **Right** step
-through the clients and then the controls, and **Enter** opens the client, or the
-control of the first client on the tile's card.
+stands under the stage. The ring of every client against every control is in the
+[Evidence Explorer](#the-evidence-explorer).
 
 ![A client chosen with the keyboard at 1440 px, dark theme](../images/home-1440-rook-chosen-dark.png)
 
@@ -149,12 +136,39 @@ same charcoal in both themes; the pictures of this guide show both.
 
 ## The Evidence Explorer
 
-Open the **Evidence and imports** tab of a client and press **Open in Evidence
-Explorer (preview)** at the top; the preview is no longer in the rail. It shows, for one client, which
-evidence exports feed which controls, and where the evidence behind a status is stale
-or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
+Press **Evidence Explorer** in the rail (under Evidence). The page opens on the ring
+of every company; **View** at the top of the scene card chooses **All companies** or
+one client, whose evidence wall shows which evidence exports feed which controls and
+where the evidence behind a status is stale or missing. **Open in Evidence Explorer
+(preview)** at the top of the **Evidence and imports** tab of a client opens that
+client's wall directly ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 
-1. Choose the **Client** and press **Show**.
+### The companies ring
+
+1. Press **Show the 3D view** in the head of the card (the same choice as the other
+   scenes). Every client stands as an office on an inner ring, as on Home's street, and
+   every control is a tile on an outer ring, grouped by domain, in the worst status any
+   client has for it. A link runs from every client to every control, in the colour of
+   that client's status for it (none where the control is not applicable).
+2. The buttons **Protected**, **Needs attention**, **Not protected** and **Not
+   checked** under the stage, each with its number of links, show or hide those links.
+   At first only not protected and needs attention show.
+3. Press an office to light its links and open its company card (the card of Home);
+   press a tile to light its links and open a card listing every client with its status
+   for that control, worst first. Each client on it opens that control of that client in
+   the control drawer, without leaving the page.
+4. From the keyboard: Tab to the stage, then **Left** and **Right** step through the
+   clients and then the controls, **Enter** opens the chosen one, **Escape** closes the
+   card, **[** and **]** turn the ring, **+** and **-** move closer and away, **Home**
+   resets the view. **Turn left**, **Turn right**, **Reset view** and **Turn by itself**
+   work as on the wall. On a phone the card stands under the stage.
+5. Under the scene, **Companies** and **Controls across the companies** carry the same
+   numbers as text: each client's score and its controls per status, each control's
+   clients per status. **Show in scene** on a row chooses that office or tile.
+
+### The evidence wall of one client
+
+1. Choose the client under **View** and press **Show**.
 2. The verdict band gives the status that needs the most work, with the sources, the
    current exports, the exports to refresh and the links between sources and controls.
 3. **The evidence wall** opens with **Show the 3D view** in the head of its card (the

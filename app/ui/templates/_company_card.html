@@ -1,0 +1,27 @@
+{#- The company card of a client (docs/design-system.md, Scenes): what a scene shows
+    beside the office of a client it chooses, on Home's street and on the companies
+    ring of the Evidence Explorer. The server draws it into a <template>; the scene
+    clones it (app/static/js/scene-card.js), never builds it. `client` is the
+    client's posture (app/ui/dashboard.py), `top` its most urgent controls (they open
+    in the control drawer, so the page carries _drawer.html) and `refresh` how many
+    of its exports are due. -#}
+{% import "_status.html" as s %}
+{% macro card(client, top, refresh) -%}
+<template id="client-card-{{ client.client_id }}">
+<div class="rv-scene-card rv-keep" role="dialog" aria-modal="false" aria-labelledby="client-card-{{ client.client_id }}-title">
+<div class="rv-scene-card-head">
+<h3 class="rv-scene-card-title" id="client-card-{{ client.client_id }}-title" tabindex="-1"><a href="/clients/{{ client.client_id }}">{{ client.name }}</a></h3>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-card-close" aria-label="Close"><span aria-hidden="true">&#215;</span></button>
+</div>
+<p class="rv-scene-card-score">{% if client.evidence %}<span class="rv-driver-score">{% if client.insufficient %}at least {% endif %}{{ client.score_text }}</span> <span class="rv-driver-band">{% if client.insufficient %}Insufficient evidence{% else %}{{ client.band }}{% endif %}</span>{% else %}<span class="rv-driver-band">No evidence yet</span>{% endif %}</p>
+{% if top %}
+<p class="rv-scene-card-label">Needs work</p>
+<ul class="rv-scene-card-list">
+{% for item in top %}<li>{{ s.status(item.label) }} <a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a></li>
+{% endfor %}</ul>
+{% endif %}
+<p class="rv-scene-card-meta"><a href="/clients/{{ client.client_id }}/evidence">Exports to refresh: {{ refresh }}</a></p>
+<p class="rv-scene-card-actions"><a role="button" class="rv-button-small" href="/clients/{{ client.client_id }}">Open client</a><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client.client_id }}/checklist">Checklist</a><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client.client_id }}/evidence">Evidence</a></p>
+</div>
+</template>
+{%- endmacro %}

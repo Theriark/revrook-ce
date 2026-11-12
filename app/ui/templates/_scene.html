@@ -4,11 +4,9 @@
     hidden: without script the page is the rings and the bars as before; with script
     the stylesheet reserves its room before the module runs (so nothing below it
     moves), and the module keeps it or puts it away once it knows whether the browser
-    offers WebGL 2 and the list has something to draw. No inline style or script.
-    `links` names the hidden list of failing (client, control) pairs of Home: with
-    it the stage offers the Street / Ring switch and draws the ring from that list. -#}
-{% macro stage(id, kind, for_id, label, hint, lead, links="") -%}
-<div class="rv-scene" id="{{ id }}" data-scene="{{ kind }}" data-scene-for="{{ for_id }}"{% if links %} data-scene-links="{{ links }}"{% endif %} data-scene-label="{{ label }}" data-scene-hint="{{ hint }}" hidden>
+    offers WebGL 2 and the list has something to draw. No inline style or script. -#}
+{% macro stage(id, kind, for_id, label, hint, lead) -%}
+<div class="rv-scene" id="{{ id }}" data-scene="{{ kind }}" data-scene-for="{{ for_id }}" data-scene-label="{{ label }}" data-scene-hint="{{ hint }}" hidden>
 <div class="rv-scene-bar">
 <p class="rv-scene-lead">{{ lead }}</p>
 <button type="button" class="rv-button-quiet rv-button-small rv-scene-toggle" hidden><span class="rv-scene-toggle-text">Show the 3D view</span></button>
@@ -20,10 +18,6 @@
 <button type="button" class="rv-button-quiet rv-button-small rv-scene-turn-left">Turn left</button>
 <button type="button" class="rv-button-quiet rv-button-small rv-scene-turn-right">Turn right</button>
 <button type="button" class="rv-button-quiet rv-button-small rv-scene-reset">Reset view</button>
-{% if links %}<div class="rv-scene-views" role="group" aria-label="View">
-<button type="button" class="rv-button-quiet rv-button-small rv-scene-view" data-view="street" aria-pressed="true">Street</button>
-<button type="button" class="rv-button-quiet rv-button-small rv-scene-view" data-view="ring" aria-pressed="false">Ring</button>
-</div>{% endif %}
 <p class="rv-scene-hover" aria-hidden="true"></p>
 </div>
 <p class="rv-scene-detail" id="{{ id }}-detail" aria-live="polite">{{ hint }}</p>

@@ -7,7 +7,7 @@ client whose evidence cannot be read today is listed under a warning instead of
 stopping the page.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -20,7 +20,7 @@ from app.evidence.errors import EvidenceError
 from app.evidence.service import list_evidence
 from app.models import AppUser, AuditEvent, Client, Fact, Snapshot
 from app.posture import load_live, view_of
-from app.reports.view import DomainRow, ReportContext, ReportError
+from app.reports.view import ControlRow, DomainRow, ReportContext, ReportError
 from app.snapshots import earlier_bytes
 from app.ui.auth import redirect, render
 from app.ui.charts import RANGE_DAYS, RANGE_WORDS, read_days
@@ -211,55 +211,76 @@ async def recent_events(session: AsyncSession) -> list[AuditEvent]:
     return list(found.scalars())
 
 
+@dataclass(frozen=True)
+class ClientsToday:
+    """Every active client read today, the way its overview reads it: what Home
+    shows, and what the companies ring of the Evidence Explorer draws."""
+
+    postures: list[ClientPosture] = field(default_factory=list)
+    attention: list[AttentionItem] = field(default_factory=list)
+    domain_rows: list[DomainRow] = field(default_factory=list)
+    sources: list[SourceRow] = field(default_factory=list)
+    unread: list[Unread] = field(default_factory=list)
+    created: list[datetime] = field(default_factory=list)
+    # Per client, for its company card in a scene: its most urgent controls and
+    # how many of its exports are due for a refresh.
+    focus: dict[int, list[AttentionItem]] = field(default_factory=dict)
+    refresh: dict[int, int] = field(default_factory=dict)
+    # Per client, every control of the library with its label today.
+    rows: dict[int, tuple[ControlRow, ...]] = field(default_factory=dict)
+
+
+async def read_clients(
+    request: Request, user: AppUser, session: AsyncSession, now: datetime
+) -> ClientsToday:
+    """Every active client read once (one live evaluation each, `load_live` then
+    `view_of` against its last stored report). A client whose evidence cannot be
+    read today is listed in `unread` instead of stopping the page."""
+    library = library_of(request)
+    wanted = needed_sources(request)
+    ages = source_max_ages(library)
+    start, end = read_period("", "", now.date())
+    today = ClientsToday()
+    for client_id, name, created_at in await active_clients(session):
+        today.created.append(created_at)
+        try:
+            live = await load_live(session, library, client_id, now)
+            earlier = await earlier_bytes(session, client_id)
+            evidence = await list_evidence(session, client_id, now)
+            context = ReportContext(
+                msp_name="",
+                client_name=name,
+                period_start=start,
+                period_end=end,
+                prepared_by=user.username,
+                generated_on=now.date(),
+            )
+            view = view_of(live, library, context, earlier)
+        except (EvidenceError, ReportError) as error:
+            today.unread.append(Unread(client_id, name, str(error)))
+            continue
+        today.postures.append(
+            posture_of(client_id, name, view, read_earlier(earlier), len(evidence))
+        )
+        excepted = {entry.control_id for entry in live.exceptions}
+        items = attention_items(client_id, name, view, excepted)
+        today.attention.extend(items)
+        today.focus[client_id] = prioritised(items)[:CARD_FOCUS]
+        today.domain_rows.extend(view.domains)
+        rows = source_rows(evidence, wanted, ages, now)
+        today.sources.extend(rows)
+        today.refresh[client_id] = evidence_summary(rows).to_refresh
+        today.rows[client_id] = tuple(view.rows)
+    return today
+
+
 async def load_board(
     request: Request, user: AppUser, now: datetime, days: int = HISTORY_DAYS
 ) -> dict[str, Any]:
     """Everything the dashboard shows, read in one database session. `days` is
     the range of the trend chart; the sparklines keep their twelve weeks."""
-    library = library_of(request)
-    wanted = needed_sources(request)
-    ages = source_max_ages(library)
-    start, end = read_period("", "", now.date())
-    postures: list[ClientPosture] = []
-    attention: list[AttentionItem] = []
-    domain_rows: list[DomainRow] = []
-    sources: list[SourceRow] = []
-    unread: list[Unread] = []
-    created: list[datetime] = []
-    # Per client, for its company card in the scene: its most urgent controls and
-    # how many of its exports are due for a refresh.
-    focus: dict[int, list[AttentionItem]] = {}
-    refresh: dict[int, int] = {}
     async with session_factory(request)() as session:
-        for client_id, name, created_at in await active_clients(session):
-            created.append(created_at)
-            try:
-                live = await load_live(session, library, client_id, now)
-                earlier = await earlier_bytes(session, client_id)
-                evidence = await list_evidence(session, client_id, now)
-                context = ReportContext(
-                    msp_name="",
-                    client_name=name,
-                    period_start=start,
-                    period_end=end,
-                    prepared_by=user.username,
-                    generated_on=now.date(),
-                )
-                view = view_of(live, library, context, earlier)
-            except (EvidenceError, ReportError) as error:
-                unread.append(Unread(client_id, name, str(error)))
-                continue
-            postures.append(
-                posture_of(client_id, name, view, read_earlier(earlier), len(evidence))
-            )
-            excepted = {entry.control_id for entry in live.exceptions}
-            items = attention_items(client_id, name, view, excepted)
-            attention.extend(items)
-            focus[client_id] = prioritised(items)[:CARD_FOCUS]
-            domain_rows.extend(view.domains)
-            rows = source_rows(evidence, wanted, ages, now)
-            sources.extend(rows)
-            refresh[client_id] = evidence_summary(rows).to_refresh
+        today = await read_clients(request, user, session, now)
         since = now - timedelta(days=HISTORY_DAYS)
         points = report_points(await recent_snapshots(session, since))
         # The trend keeps the range chosen: its reports and, per client, the one
@@ -271,8 +292,9 @@ async def load_board(
         events = await recent_events(session)
         users = await usernames(session)
         sizes = await company_sizes(session)
-    weekly = weekly_series(points, created, now)
-    ranked = prioritised(attention)
+    postures = today.postures
+    weekly = weekly_series(points, today.created, now)
+    ranked = prioritised(today.attention)
     return {
         "clients": postures,
         "sizes": sizes,
@@ -281,20 +303,18 @@ async def load_board(
         # any is all "not checked" and would only say that nothing is imported.
         "portfolio": portfolio_of(item.drivers for item in postures if item.evidence),
         "drivers": DRIVERS,
-        "unread": unread,
-        "stats": stat_cards(postures, weekly, evidence_summary(sources)),
+        "unread": today.unread,
+        "stats": stat_cards(postures, weekly, evidence_summary(today.sources)),
         "attention": ranked[:HOME_ATTENTION],
-        "attention_total": len(attention),
-        # The ring view of the scene: every failing (client, control) pair, and the
-        # company card of each client (its focus controls and exports to refresh).
-        "links": ranked,
-        "card_focus": focus,
-        "card_refresh": refresh,
+        "attention_total": len(today.attention),
+        # The company card of each client in the scene.
+        "card_focus": today.focus,
+        "card_refresh": today.refresh,
         "trend": trend_chart(trend_points, names, now, days=days),
         "trend_narrow": trend_chart(
             trend_points, names, now, days=days, size=NARROW_CHART
         ),
-        "domains": domain_bars(domain_rows),
+        "domains": domain_bars(today.domain_rows),
         "changes": change_lines(events, names, users, now),
         "days": days,
         "ranges": [(value, RANGE_WORDS[value]) for value in RANGE_DAYS],

@@ -48,6 +48,8 @@ ASSET_FILES = (
     "js/scenes.js",
     # imported by scenes.js (and the Explorer): a new office is a new address
     "js/office.js",
+    # imported by scenes.js and the Explorer: the card of a chosen node
+    "js/scene-card.js",
 )
 # The stylesheet and the script of the filter chips of the clients list. They are
 # not in the shell: clients.html links them itself, with their own digest

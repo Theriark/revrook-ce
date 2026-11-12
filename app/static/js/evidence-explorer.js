@@ -6,10 +6,18 @@
  * it never downloads the library.
  *
  * The tables of the page are the record. This script adds one way of looking at
- * them, the evidence wall: an office block per evidence source on an inner ring, a tile per
- * control on an outer ring grouped by domain, a beam from a source to each control
- * that reads it. Status is shape and colour together, never colour alone, and every
- * word is in the DOM (the detail line, the legend, the tables): nothing is written
+ * them, in one of two views:
+ * - the evidence wall of one client (?client_id=N, its data read as JSON): an office
+ *   block per evidence source on an inner ring, a tile per control on an outer ring
+ *   grouped by domain, a beam from a source to each control that reads it;
+ * - the companies ring (the page without a client, read from the page itself: the
+ *   rows of its tables and the lists of its card templates): an office per client
+ *   on the inner ring, every control on the outer ring in the worst status it has
+ *   at any client, and a link from every client to every control in the status of
+ *   that pair, shown or hidden per status by the filter buttons. Choosing an office
+ *   or a tile opens its card (scene-card.js), a template the server drew.
+ * Status is shape and colour together, never colour alone, and every word is in the
+ * DOM (the detail line, the legend, the tables, the cards): nothing is written
  * inside the scene.
  *
  * Each of these leaves the tables intact and says so in the stage:
@@ -29,7 +37,9 @@
 // The office model is imported with the version of this script (the `v` query of
 // its own address), so a cache in front of the site never serves an older one.
 const OFFICE_URL = "./office.js" + new URL(import.meta.url).search;
+const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;
 let officeBuilding = null;
+let sceneCard = null;
 
 const THREE_URL = "/static/vendor/three/three.module.js";
 
@@ -51,6 +61,25 @@ const STATUS_COLOR = {
   "not-applicable": 0x8a8f98,
 };
 const PILLAR_SCALE = { protected: 1, "needs-attention": 0.55, "not-protected": 0.35 };
+// The roof light of a client's office says its band, as on Home's street.
+const BAND_LIGHT = {
+  strong: STATUS_COLOR.protected,
+  good: STATUS_COLOR.protected,
+  fair: STATUS_COLOR["needs-attention"],
+  weak: STATUS_COLOR["not-protected"],
+  critical: STATUS_COLOR["not-protected"],
+};
+// The links of the companies ring, per status: faint until a node is chosen, lit
+// when one of their ends is, dimmed when another node is. Not applicable has none.
+const LINK_OPACITY = { faint: 0.22, lit: 0.95, dim: 0.05 };
+const LINKED = ["protected", "needs-attention", "not-protected", "not-checked"];
+const LABEL_WORDS = {
+  "not-protected": "not protected",
+  "needs-attention": "needs attention",
+  "not-checked": "not checked",
+  protected: "protected",
+  "not-applicable": "not applicable",
+};
 
 const SOURCE_RADIUS = 2.4;
 const CONTROL_RADIUS = 5.3;
@@ -64,6 +93,9 @@ const MAX_PITCH = 1.25;
 const MIN_DISTANCE = 7;
 const MAX_DISTANCE = 21;
 const HOME = { yaw: -Math.PI / 4, pitch: 0.72, distance: 15 };
+// The edge the home view keeps inside the stage: the outer corners of the tiles.
+const FIT_RADIUS = CONTROL_RADIUS + 0.35;
+const FIT_EDGE = 0.94;
 const DIM = 0.18;
 const BEAM_OPACITY = 0.12;
 
@@ -163,8 +195,42 @@ async function loadData(url) {
   return body;
 }
 
-// Where every pillar and tile stands: the sources evenly on the inner ring, the
-// controls on the outer ring in the order of the tables, each domain its own arc.
+// The companies ring, read from the page: the rows of its two tables and the
+// clients listed on each control card (the server drew them all, so nothing is
+// fetched and no client is read twice).
+function readCompanies(page) {
+  const number = (row, name) => Number(row.getAttribute("data-" + name)) || 0;
+  const clients = Array.from(page.querySelectorAll("#explorer-companies tr[data-node]")).map((row) => ({
+    id: row.getAttribute("data-node") || "",
+    name: row.getAttribute("data-name") || "",
+    band: row.getAttribute("data-band") || "",
+    scoreText: row.getAttribute("data-score-text") || "",
+    score: clamp(number(row, "score"), 0, 100),
+    evidence: number(row, "evidence") > 0,
+    insufficient: row.getAttribute("data-insufficient") === "true",
+    needsWork: number(row, "needs-work"),
+    size: Math.max(0, number(row, "size")),
+    href: row.getAttribute("data-href") || "",
+  }));
+  const controls = Array.from(page.querySelectorAll("#explorer-controls tr[data-node]")).map((row) => {
+    const id = (row.getAttribute("data-node") || "").replace(/^control:/, "");
+    const template = page.getElementById("control-card-" + id);
+    const items = template && template.content ? Array.from(template.content.querySelectorAll("[data-client]")) : [];
+    return {
+      control_id: id,
+      title: row.getAttribute("data-title") || "",
+      domain: row.getAttribute("data-domain") || "",
+      label: row.getAttribute("data-label") || "not-checked",
+      href: row.getAttribute("data-href") || "",
+      pairs: items.map((item) => ({ client: "client:" + item.getAttribute("data-client"), label: item.getAttribute("data-label") || "" })),
+    };
+  });
+  return { companies: true, clients, controls, domains: [], sources: [] };
+}
+
+// Where every pillar, office and tile stands: the sources (or the clients) evenly
+// on the inner ring, the controls on the outer ring in the order of the tables,
+// each domain its own arc.
 function layout(data) {
   const sources = data.sources.map((source, index) => {
     const angle = -Math.PI / 2 + (index * 2 * Math.PI) / Math.max(data.sources.length, 1);
@@ -174,6 +240,13 @@ function layout(data) {
     const height = missing ? 0.06 : Math.min(0.5 + 0.22 * fed, 2.6) * scale;
     return { id: "source:" + source.code, source, angle, height, missing };
   });
+  const clients = (data.clients || []).map((client, index) => ({
+    id: client.id,
+    client,
+    href: client.href,
+    card: "client-card-" + client.id.replace(/^client:/, ""),
+    angle: -Math.PI / 2 + (index * 2 * Math.PI) / Math.max(data.clients.length, 1),
+  }));
   const codes = data.domains.map((domain) => domain.code);
   const byDomain = new Map(codes.map((code) => [code, []]));
   for (const control of data.controls) {
@@ -195,6 +268,8 @@ function layout(data) {
       controls.push({
         id: "control:" + control.control_id,
         control,
+        href: control.href,
+        card: data.companies ? "control-card-" + control.control_id : "",
         angle: start + (position + 0.5) * per,
       });
     });
@@ -202,7 +277,7 @@ function layout(data) {
     sectors.push({ code, start, length: members.length * per, index });
     angle += SECTOR_GAP;
   });
-  return { sources, controls, sectors };
+  return { sources, clients, controls, sectors };
 }
 
 function nodeOf(object) {
@@ -232,6 +307,25 @@ function disposeObject(object) {
 }
 
 function describe(entry, data) {
+  if (entry.client) {
+    const client = entry.client;
+    let said = client.name + ": ";
+    if (!client.evidence) {
+      return said + "no evidence imported yet.";
+    }
+    said += client.insufficient ? "insufficient evidence, lower bound " + client.scoreText + "." : "score " + client.scoreText + ", " + client.band + ".";
+    return said + " " + client.needsWork + (client.needsWork === 1 ? " control needs" : " controls need") + " work.";
+  }
+  if (data.companies) {
+    const control = entry.control;
+    const counts = new Map();
+    control.pairs.forEach((pair) => counts.set(pair.label, (counts.get(pair.label) || 0) + 1));
+    const parts = Object.keys(LABEL_WORDS)
+      .filter((key) => counts.get(key))
+      .map((key) => LABEL_WORDS[key] + " at " + counts.get(key));
+    const where = parts.length ? parts.join(", ") + " of " + control.pairs.length + (control.pairs.length === 1 ? " client" : " clients") : "no client read today";
+    return control.control_id + " " + control.title.replace(/\.$/, "") + ", " + control.domain + ": " + where + ".";
+  }
   if (entry.source) {
     const source = entry.source;
     const fed = source.controls.length;
@@ -261,10 +355,20 @@ function buildWall(THREE, root, data, options) {
   const motionButton = root.querySelector("#explorer-motion");
   const controller = new AbortController();
   const signal = controller.signal;
+  const companies = Boolean(data.companies);
   const plan = layout(data);
+  // The order Left and Right step through in the companies ring: clients, then
+  // controls.
   const entries = new Map();
   plan.sources.forEach((entry) => entries.set(entry.id, entry));
+  plan.clients.forEach((entry) => entries.set(entry.id, entry));
   plan.controls.forEach((entry) => entries.set(entry.id, entry));
+  // The inner ring of the companies grows with the clients (a step of 0.8 each),
+  // never past the edge of the outer ring.
+  const innerRadius = companies ? clamp((plan.clients.length * 0.8) / (2 * Math.PI), SOURCE_RADIUS, CONTROL_RADIUS - 1.3) : SOURCE_RADIUS;
+  const idle = companies
+    ? "Nothing selected. Choose an office or a tile, or Show in scene on a row below."
+    : "Nothing selected. Choose a block or a tile, or Show in scene on a row below.";
 
   const canvas = document.createElement("canvas");
   // A focusable stage that answers keys is an application, not a still image.
@@ -273,7 +377,9 @@ function buildWall(THREE, root, data, options) {
   canvas.setAttribute("aria-roledescription", "scene");
   canvas.setAttribute(
     "aria-label",
-    "The evidence wall of " + data.client_name + ": " + data.sources.length + " evidence sources and " + data.controls.length + " controls. Left and Right turn it, plus and minus move closer and away, Home resets the view. The tables below carry the same facts."
+    companies
+      ? "The companies ring: " + plan.clients.length + " clients and " + plan.controls.length + " controls. Left and Right choose a client or a control, Enter opens it, Escape closes its card, the brackets turn the ring, plus and minus move closer and away, Home resets the view. The tables below carry the same facts."
+      : "The evidence wall of " + data.client_name + ": " + data.sources.length + " evidence sources and " + data.controls.length + " controls. Left and Right turn it, plus and minus move closer and away, Home resets the view. The tables below carry the same facts."
   );
   canvas.setAttribute("aria-describedby", "explorer-detail");
   stage.insertBefore(canvas, stage.firstChild);
@@ -291,7 +397,8 @@ function buildWall(THREE, root, data, options) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 16 / 9, 0.1, 60);
   const target = new THREE.Vector3(0, 0.4, 0);
-  const view = { yaw: HOME.yaw, pitch: HOME.pitch, distance: HOME.distance };
+  const home = { yaw: HOME.yaw, pitch: HOME.pitch, distance: HOME.distance };
+  const view = { yaw: home.yaw, pitch: home.pitch, distance: home.distance };
 
   scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.4));
   const sun = new THREE.DirectionalLight(0xfff4e6, 2.2);
@@ -335,13 +442,13 @@ function buildWall(THREE, root, data, options) {
     scene.add(band);
   });
   const inner = new THREE.Mesh(
-    new THREE.RingGeometry(SOURCE_RADIUS - 0.5, SOURCE_RADIUS + 0.5, 64),
+    new THREE.RingGeometry(innerRadius - 0.5, innerRadius + 0.5, 64),
     new THREE.MeshStandardMaterial({ color: SECTOR_EVEN, roughness: 1 })
   );
   inner.rotation.x = -Math.PI / 2;
   inner.position.y = -0.01;
   scene.add(inner);
-  [SOURCE_RADIUS + 0.55, CONTROL_RADIUS - 0.62].forEach((radius) => {
+  [innerRadius + 0.55, CONTROL_RADIUS - 0.62].forEach((radius) => {
     const points = [];
     for (let step = 0; step < 96; step += 1) {
       const a = (step / 96) * 2 * Math.PI;
@@ -371,6 +478,36 @@ function buildWall(THREE, root, data, options) {
     const group = built.group;
     group.userData.node = entry.id;
     group.position.set(SOURCE_RADIUS * Math.cos(entry.angle), 0, SOURCE_RADIUS * Math.sin(entry.angle));
+    group.rotation.y = -entry.angle - Math.PI / 2;
+    entry.group = group;
+    entry.materials = built.materials;
+    entry.top = new THREE.Vector3(group.position.x, built.top, group.position.z);
+    scene.add(group);
+    pickables.push(group);
+    groups.set(entry.id, group);
+  });
+
+  // The offices of the companies ring: one per client, as on Home's street: as
+  // many floors as its score allows, as wide as the company, its roof light the
+  // band; in scaffolding with too little evidence for a score, an empty lot with
+  // none, a red window per control that needs work. A crowded ring narrows every
+  // office alike.
+  const room = Math.min(1, ((2 * Math.PI * innerRadius) / Math.max(plan.clients.length, 1)) * 0.8 / 0.95);
+  plan.clients.forEach((entry, index) => {
+    const client = entry.client;
+    const wide = 0.45 + 0.5 * clamp(Math.log10(client.size + 1) / Math.log10(501), 0, 1);
+    const built = officeBuilding(THREE, {
+      width: wide * room,
+      depth: 0.62 * room,
+      floors: client.evidence ? 2 + Math.round((client.score / 100) * 10) : 0,
+      state: !client.evidence ? "lot" : client.insufficient ? "frame" : "built",
+      strip: client.evidence ? BAND_LIGHT[client.band.toLowerCase()] || STATUS_COLOR["not-checked"] : LINE,
+      red: Math.min(client.needsWork, 12),
+      seed: index + 7,
+    });
+    const group = built.group;
+    group.userData.node = entry.id;
+    group.position.set(innerRadius * Math.cos(entry.angle), 0, innerRadius * Math.sin(entry.angle));
     group.rotation.y = -entry.angle - Math.PI / 2;
     entry.group = group;
     entry.materials = built.materials;
@@ -461,6 +598,43 @@ function buildWall(THREE, root, data, options) {
     });
   });
 
+  // The links of the companies ring: a low arc from the roof of every client to
+  // every control, in the status of that pair. Three materials per status are
+  // shared by all its links (faint, lit, dimmed); a status filtered out is hidden.
+  // shortcut: one Line per pair (51 per client); merge them per status if a
+  // portfolio of hundreds of clients ever makes the ring slow.
+  const looks = {};
+  (companies ? LINKED : []).forEach((key) => {
+    const made = (opacity) => new THREE.LineBasicMaterial({ color: STATUS_COLOR[key], transparent: true, opacity });
+    looks[key] = { faint: made(LINK_OPACITY.faint), lit: made(LINK_OPACITY.lit), dim: made(LINK_OPACITY.dim) };
+  });
+  plan.controls.forEach((entry) => {
+    (entry.control.pairs || []).forEach((pair) => {
+      const office = entries.get(pair.client);
+      if (!looks[pair.label] || !office) {
+        return;
+      }
+      const middle = office.top.clone().add(entry.top).multiplyScalar(0.5);
+      middle.y = Math.max(office.top.y, 1) + 0.5;
+      const curve = new THREE.QuadraticBezierCurve3(office.top, middle, entry.top);
+      const link = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(16)), looks[pair.label].faint);
+      link.userData.ends = [office.id, entry.id];
+      link.userData.label = pair.label;
+      scene.add(link);
+      beams.push(link);
+    });
+  });
+  const filters = Array.from(page.querySelectorAll(".rv-explorer-filter"));
+
+  function applyFilters() {
+    const shown = new Set(filters.filter((button) => button.getAttribute("aria-pressed") === "true").map((button) => button.getAttribute("data-status")));
+    beams.forEach((beam) => {
+      if (beam.userData.label) {
+        beam.visible = shown.has(beam.userData.label);
+      }
+    });
+  }
+
   // Drawing on demand.
   let rafId = 0;
   let needsRender = true;
@@ -486,6 +660,9 @@ function buildWall(THREE, root, data, options) {
   function render() {
     placeCamera();
     renderer.render(scene, camera);
+    if (card) {
+      card.place(camera);
+    }
   }
 
   function turning() {
@@ -530,21 +707,59 @@ function buildWall(THREE, root, data, options) {
     schedule();
   }
 
+  // The home distance that fits the whole ring to the stage as it is shaped now:
+  // the outer corners of the tiles and the roofs of the inner ring stay inside the
+  // view with a little air, whichever way the ring has turned (it is round, so the
+  // turn does not matter). A view a person moved closer or away keeps its own.
+  const tallest = Math.max(0.5, ...plan.sources.concat(plan.clients).map((entry) => entry.top.y));
+  const probes = [];
+  for (let k = 0; k < 32; k += 1) {
+    const a = (k / 32) * 2 * Math.PI;
+    probes.push(new THREE.Vector3(FIT_RADIUS * Math.cos(a), 0, FIT_RADIUS * Math.sin(a)));
+    probes.push(new THREE.Vector3(innerRadius * Math.cos(a), tallest, innerRadius * Math.sin(a)));
+  }
+
+  function fitDistance() {
+    const kept = { yaw: view.yaw, pitch: view.pitch, distance: view.distance };
+    const point = new THREE.Vector3();
+    let distance = MIN_DISTANCE;
+    for (; distance < MAX_DISTANCE * 2; distance *= 1.03) {
+      Object.assign(view, { yaw: home.yaw, pitch: home.pitch, distance });
+      placeCamera();
+      camera.updateMatrixWorld();
+      const inside = probes.every((probe) => {
+        point.copy(probe).project(camera);
+        return Math.abs(point.x) <= FIT_EDGE && Math.abs(point.y) <= FIT_EDGE;
+      });
+      if (inside) {
+        break;
+      }
+    }
+    Object.assign(view, kept);
+    return distance;
+  }
+
   function resize() {
     const width = Math.max(stage.clientWidth, 1);
     const height = Math.max(stage.clientHeight, 1);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    const atHome = Math.abs(view.distance - home.distance) < 0.001;
+    home.distance = fitDistance();
+    if (atHome) {
+      view.distance = home.distance;
+    }
     invalidate();
   }
 
   // Selection and hover: the materials of the chosen node and its beams come
-  // forward, everything else steps back; the tables mirror the choice.
+  // forward, everything else steps back; the tables mirror the choice. A link a
+  // filter hides brings nothing forward.
   function related(id) {
     const found = new Set([id]);
     beams.forEach((beam) => {
-      if (beam.userData.ends.indexOf(id) >= 0) {
+      if (beam.visible && beam.userData.ends.indexOf(id) >= 0) {
         beam.userData.ends.forEach((end) => found.add(end));
       }
     });
@@ -567,6 +782,11 @@ function buildWall(THREE, root, data, options) {
     });
     beams.forEach((beam) => {
       const on = focus && beam.userData.ends.indexOf(focus) >= 0;
+      if (beam.userData.label) {
+        const look = looks[beam.userData.label];
+        beam.material = !focus ? look.faint : on ? look.lit : look.dim;
+        return;
+      }
       beam.material.color.setHex(on ? PICKED : BEAM);
       beam.material.opacity = !focus ? BEAM_OPACITY : on ? 0.95 : 0.08;
     });
@@ -582,11 +802,37 @@ function buildWall(THREE, root, data, options) {
     });
   }
 
-  function select(id, face) {
+  // The card of the chosen office or tile of the companies ring (scene-card.js);
+  // the evidence wall has none. A press on the buttons under the stage (a filter,
+  // a turn) leaves it open.
+  const card = companies
+    ? sceneCard({
+        page,
+        stage,
+        canvas,
+        signal,
+        keep: tools,
+        onKey,
+        onClose: (refocus) => (refocus ? leave() : select(null, false)),
+      })
+    : null;
+
+  // Closing the card with Escape or its button gives the canvas the focus back.
+  function leave() {
+    select(null, false);
+    canvas.focus();
+  }
+
+  function select(id, face, keyed = false) {
     selected = entries.has(id) ? id : null;
     const entry = selected ? entries.get(selected) : null;
-    words(detail, entry ? describe(entry, data) : "Nothing selected. Choose a block or a tile, or Show in scene on a row below.");
+    words(detail, entry ? describe(entry, data) + (companies && entry.href ? " Press Enter to open it." : "") : idle);
     markRows();
+    if (card && entry && entry.card) {
+      card.open(entry.card, entry.top, camera, keyed);
+    } else if (card) {
+      card.close();
+    }
     if (entry && face) {
       turnTo(Math.PI / 2 - entry.angle);
     }
@@ -617,19 +863,37 @@ function buildWall(THREE, root, data, options) {
   }
 
   function zoomBy(factor) {
-    view.distance = clamp(view.distance * factor, MIN_DISTANCE, MAX_DISTANCE);
+    view.distance = clamp(view.distance * factor, MIN_DISTANCE, Math.max(MAX_DISTANCE, home.distance * 1.3));
     invalidate();
   }
 
   function reset() {
     tween = null;
-    view.yaw = HOME.yaw;
-    view.pitch = HOME.pitch;
-    view.distance = HOME.distance;
+    view.yaw = home.yaw;
+    view.pitch = home.pitch;
+    view.distance = home.distance;
     autoTurn = !options.reducedMotion;
     syncMotionButton();
     select(null, false);
     invalidate();
+  }
+
+  // Left and Right of the companies ring: the next client, then the next control.
+  function step(delta) {
+    const ids = Array.from(entries.keys());
+    if (!ids.length) {
+      return;
+    }
+    const at = selected ? ids.indexOf(selected) : -1;
+    const next = at < 0 ? (delta > 0 ? 0 : ids.length - 1) : (at + delta + ids.length) % ids.length;
+    select(ids[next], true, true);
+  }
+
+  function open() {
+    const entry = selected ? entries.get(selected) : null;
+    if (entry && entry.href) {
+      window.location.assign(entry.href);
+    }
   }
 
   function syncMotionButton() {
@@ -714,26 +978,35 @@ function buildWall(THREE, root, data, options) {
     },
     { signal }
   );
-  canvas.addEventListener(
-    "keydown",
-    (event) => {
-      const keys = {
-        ArrowLeft: () => turnBy(-TURN_STEP),
-        ArrowRight: () => turnBy(TURN_STEP),
-        "+": () => zoomBy(0.85),
-        "=": () => zoomBy(0.85),
-        "-": () => zoomBy(1.18),
-        Home: () => reset(),
-        Escape: () => select(null, false),
-      };
-      const action = keys[event.key];
-      if (action) {
-        event.preventDefault();
-        action();
-      }
-    },
-    { signal }
-  );
+  // The wall turns with Left and Right; the companies ring chooses with them, opens
+  // the choice with Enter and turns with the brackets.
+  function onKey(event) {
+    const keys = {
+      ArrowLeft: () => turnBy(-TURN_STEP),
+      ArrowRight: () => turnBy(TURN_STEP),
+      "+": () => zoomBy(0.85),
+      "=": () => zoomBy(0.85),
+      "-": () => zoomBy(1.18),
+      Home: () => reset(),
+      Escape: () => select(null, false),
+    };
+    if (companies) {
+      Object.assign(keys, {
+        ArrowLeft: () => step(-1),
+        ArrowRight: () => step(1),
+        "[": () => turnBy(-TURN_STEP),
+        "]": () => turnBy(TURN_STEP),
+        Enter: () => open(),
+        Escape: () => leave(),
+      });
+    }
+    const action = keys[event.key];
+    if (action) {
+      event.preventDefault();
+      action();
+    }
+  }
+  canvas.addEventListener("keydown", onKey, { signal });
 
   // The buttons under the stage and the rows of the tables.
   const buttons = {
@@ -746,6 +1019,17 @@ function buildWall(THREE, root, data, options) {
     if (button) {
       button.addEventListener("click", buttons[selector], { signal });
     }
+  });
+  filters.forEach((button) => {
+    button.addEventListener(
+      "click",
+      () => {
+        button.setAttribute("aria-pressed", button.getAttribute("aria-pressed") === "true" ? "false" : "true");
+        applyFilters();
+        paint();
+      },
+      { signal }
+    );
   });
   if (motionButton) {
     motionButton.addEventListener(
@@ -841,6 +1125,11 @@ function buildWall(THREE, root, data, options) {
       window.cancelAnimationFrame(rafId);
       rafId = 0;
     }
+    if (card) {
+      card.close();
+    }
+    // A link material that no link wears right now is not in the scene.
+    Object.values(looks).forEach((look) => Object.values(look).forEach((material) => material.dispose()));
     scene.traverse(disposeObject);
     scene.clear();
     renderer.dispose();
@@ -872,6 +1161,7 @@ function buildWall(THREE, root, data, options) {
     tools.hidden = false;
   }
   applyMotion();
+  applyFilters();
   resize();
   paint();
   return { dispose, info, select, reset, applyMotion };
@@ -885,6 +1175,7 @@ async function main() {
   const state = root.querySelector("#explorer-state");
   const stateText = state ? state.querySelector(".rv-explorer-state-text") : null;
   const url = root.getAttribute("data-explorer-url");
+  const companies = root.getAttribute("data-explorer-view") === "companies";
   const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 
   function setState(kind, message) {
@@ -905,7 +1196,7 @@ async function main() {
     }
   }
 
-  if (!url || !supportsWebGL2()) {
+  if ((!url && !companies) || !supportsWebGL2()) {
     setState("note", WORDS.noWebgl);
     root.setAttribute("data-explorer", "no-webgl");
     return;
@@ -952,7 +1243,7 @@ async function main() {
   let data;
   let THREE;
   try {
-    data = await loadData(url);
+    data = companies ? readCompanies(document) : await loadData(url);
   } catch (error) {
     setState("error", error && error.message ? error.message : WORDS.session);
     root.setAttribute("data-explorer", "error");
@@ -966,6 +1257,9 @@ async function main() {
   try {
     THREE = await import(THREE_URL);
     ({ officeBuilding } = await import(OFFICE_URL));
+    if (companies) {
+      ({ sceneCard } = await import(CARD_URL));
+    }
   } catch (error) {
     setState("error", WORDS.noModule);
     root.setAttribute("data-explorer", "error");

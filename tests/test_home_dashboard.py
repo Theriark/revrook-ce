@@ -64,11 +64,7 @@ DRIVER = re.compile(
 POLYLINE = re.compile(r'<polyline points="([^"]+)"')
 STAT_VALUE = re.compile(r'id="stat-evidence">\s*<a class="rv-stat-value"[^>]*>(\d+)<')
 DOMAIN_SUM = re.compile(r'<span class="rv-domain-sum">(\d+) of (\d+) protected</span>')
-# The scene cards and the ring of Home: a pair of the hidden list, and the body of
-# a company or a control card template.
-PAIR = re.compile(
-    r'<li data-client="(\d+)" data-control="([^"]+)" data-label="([a-z-]+)"'
-)
+# The body of a company card template of the scene.
 CARD_BODY = re.compile(r"^>(.*?)</template>", re.DOTALL)
 SCROLLED_TABLE = '<div class="rv-table-scroll">\n<table>'
 TREND_TABLE = (
@@ -453,11 +449,12 @@ async def test_the_dashboard_shows_every_part_for_a_client_with_evidence(
     assert POLYLINE.search(html) is not None  # the sparklines of the stat cards
 
 
-async def test_the_scene_cards_and_the_ring_are_drawn_by_the_server(
+async def test_the_company_cards_of_the_street_are_drawn_by_the_server(
     ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
 ) -> None:
-    # Two clients with evidence: a company card each, the failing pairs of both in
-    # the hidden list of the ring and a control card per control that one fails.
+    # Two clients with evidence: a company card each. The ring of every company is
+    # the Evidence Explorer's (tests/test_evidence_explorer.py); Home keeps the
+    # street, with no view switch, no control cards and no hidden list of pairs.
     await sign_in(ui_browser, db_engine)
     first = await seed_client(db_engine, ui_ctx)
     second = await seed_client(db_engine, ui_ctx, "Second Client Ltd")
@@ -465,12 +462,9 @@ async def test_the_scene_cards_and_the_ring_are_drawn_by_the_server(
     assert page.status_code == 200
     html = page.text
     assert structure_problems(html) == []
-    assert 'data-scene-links="portfolio-links"' in html
-    assert '<div class="rv-scene-views" role="group" aria-label="View">' in html
-    pairs = PAIR.findall(html)
-    total = re.search(r"(\d+) across all clients", html)
-    assert total is not None and len(pairs) == int(total.group(1)) > 0
-    assert {int(client) for client, _, _ in pairs} == {first, second}
+    for gone in ("data-scene-links", "rv-scene-views", "portfolio-links"):
+        assert gone not in html, gone
+    assert "control-card-" not in html
     refresh = 0
     for client_id in (first, second):
         card = CARD_BODY.search(html.split(f'id="client-card-{client_id}"', 1)[1])
@@ -482,11 +476,11 @@ async def test_the_scene_cards_and_the_ring_are_drawn_by_the_server(
         assert 'aria-label="Close"' in body
         for path in ("", "/checklist", "/evidence"):
             assert f'href="/clients/{client_id}{path}"' in body, path
-        # The three most urgent controls of this client, in the order of Home's
-        # Needs attention (the hidden list is that order across all clients).
-        own = [control for client, control, _ in pairs if int(client) == client_id]
-        shown = re.findall(rf'href="/clients/{client_id}/controls/([^"]+)"', body)
-        assert shown == own[:3]
+        # The three most urgent controls of this client open in the drawer.
+        shown = re.findall(
+            rf'href="/clients/{client_id}/controls/([^"]+)" data-drawer>', body
+        )
+        assert 0 < len(shown) <= 3
         due = re.search(r">Exports to refresh: (\d+)</a>", body)
         assert due is not None
         refresh += int(due.group(1))
@@ -494,15 +488,7 @@ async def test_the_scene_cards_and_the_ring_are_drawn_by_the_server(
     # old, so each client has one due at least.
     stat = STAT_VALUE.search(html)
     assert stat is not None and refresh == int(stat.group(1)) >= 2
-    controls = {control for _, control, _ in pairs}
-    assert set(re.findall(r'<template id="control-card-([^"]+)">', html)) == controls
-    for control in controls:
-        body = CARD_BODY.search(html.split(f'id="control-card-{control}"', 1)[1])
-        assert body is not None
-        for client, found, _ in pairs:
-            if found == control:
-                assert f'href="/clients/{client}/controls/{control}"' in body.group(1)
-    assert {label for _, _, label in pairs} <= {"not-protected", "needs-attention"}
+    assert 'id="control-drawer"' in html
 
 
 async def test_the_home_page_lists_a_client_whose_evidence_cannot_be_read(
