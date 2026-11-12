@@ -9,8 +9,9 @@
  * officeBuilding(THREE, spec) returns { group, materials, top }. spec:
  *   width, depth  the footprint, in scene units
  *   floors        how many floors stand above the lobby (1 or more)
- *   state         "built" (a finished building), "frame" (under construction:
- *                 slabs and columns behind glass) or "lot" (an empty plot)
+ *   state         "built" (a finished building), "frame" (the same building in
+ *                 scaffolding: too little evidence for a score) or "lot" (an
+ *                 empty plot)
  *   strip         the colour of the roof light (a number, 0xRRGGBB)
  *   red           how many windows of the front are lit red (0 to 12)
  *   seed          a whole number: the same seed lights the same windows
@@ -143,78 +144,93 @@ export function officeBuilding(THREE, spec) {
   lobby.castShadow = true;
   group.add(lobby);
 
-  if (spec.state === "frame") {
-    // Under construction: the floor slabs and four columns behind glass.
-    const concrete = remember(new THREE.MeshStandardMaterial({ color: 0xb9bcc6, roughness: 0.8, transparent: true }), materials);
-    const slab = new THREE.BoxGeometry(width, 0.035, depth);
-    for (let k = 0; k <= floors; k += 1) {
-      const mesh = new THREE.Mesh(slab, concrete);
-      mesh.position.y = 0.04 + LOBBY + k * FLOOR;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      group.add(mesh);
-    }
-    const column = new THREE.BoxGeometry(0.05, body, 0.05);
-    [-1, 1].forEach((sx) => {
-      [-1, 1].forEach((sz) => {
-        const mesh = new THREE.Mesh(column, concrete);
-        mesh.position.set(sx * (width / 2 - 0.04), 0.04 + LOBBY + body / 2, sz * (depth / 2 - 0.04));
-        mesh.castShadow = true;
-        group.add(mesh);
-      });
-    });
-    const glass = remember(
+  // The building itself: the facade drawn on its four sides, plain on the roof.
+  // A client with too little evidence for a score is the same finished building
+  // (its red windows still count the controls that need work) in scaffolding.
+  const random = series(spec.seed || 1);
+  const front = facade(THREE, Math.max(2, Math.round(width / 0.11)), floors, random, Math.min(spec.red || 0, 12));
+  const side = facade(THREE, Math.max(2, Math.round(depth / 0.11)), floors, random, 0);
+  const plain = remember(new THREE.MeshStandardMaterial({ color: 0xb4b8c3, roughness: 0.8, transparent: true }), materials);
+  const wall = (map) =>
+    remember(
       new THREE.MeshStandardMaterial({
-        color: 0xbcd0f0,
-        roughness: 0.05,
+        map,
+        emissiveMap: map,
+        emissive: 0xffffff,
+        emissiveIntensity: 0.18,
+        roughness: 0.55,
         metalness: 0.1,
         transparent: true,
-        opacity: 0.22,
-        depthWrite: false,
       }),
       materials
     );
-    const shell = new THREE.Mesh(new THREE.BoxGeometry(width + 0.02, body, depth + 0.02), glass);
-    shell.position.y = 0.04 + LOBBY + body / 2;
-    group.add(shell);
-  } else {
-    // A finished building: the facade drawn on its four sides, plain on the roof.
-    const random = series(spec.seed || 1);
-    const front = facade(THREE, Math.max(2, Math.round(width / 0.11)), floors, random, Math.min(spec.red || 0, 12));
-    const side = facade(THREE, Math.max(2, Math.round(depth / 0.11)), floors, random, 0);
-    const plain = remember(new THREE.MeshStandardMaterial({ color: 0xb4b8c3, roughness: 0.8, transparent: true }), materials);
-    const wall = (map) =>
-      remember(
-        new THREE.MeshStandardMaterial({
-          map,
-          emissiveMap: map,
-          emissive: 0xffffff,
-          emissiveIntensity: 0.18,
-          roughness: 0.55,
-          metalness: 0.1,
-          transparent: true,
-        }),
-        materials
-      );
-    const frontWall = wall(front);
-    const sideWall = wall(side);
-    // keep the glow of the windows when the building is chosen and let go
-    [frontWall, sideWall].forEach((material) => {
-      material.userData.emissive = 0xffffff;
-      material.userData.emissiveIntensity = 0.18;
-    });
-    const tower = new THREE.Mesh(new THREE.BoxGeometry(width, body, depth), [
-      sideWall,
-      sideWall,
-      plain,
-      plain,
-      frontWall,
-      frontWall,
-    ]);
-    tower.position.y = 0.04 + LOBBY + body / 2;
-    tower.castShadow = true;
-    tower.receiveShadow = true;
-    group.add(tower);
+  const frontWall = wall(front);
+  const sideWall = wall(side);
+  // keep the glow of the windows when the building is chosen and let go
+  [frontWall, sideWall].forEach((material) => {
+    material.userData.emissive = 0xffffff;
+    material.userData.emissiveIntensity = 0.18;
+  });
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(width, body, depth), [
+    sideWall,
+    sideWall,
+    plain,
+    plain,
+    frontWall,
+    frontWall,
+  ]);
+  tower.position.y = 0.04 + LOBBY + body / 2;
+  tower.castShadow = true;
+  tower.receiveShadow = true;
+  group.add(tower);
+
+  if (spec.state === "frame") {
+    // Scaffolding on the street side and the right-hand side: steel poles, a
+    // ledger at every floor and an amber board on each lift.
+    const steel = remember(new THREE.MeshStandardMaterial({ color: 0xc9cdd6, roughness: 0.45, metalness: 0.6, transparent: true }), materials);
+    const board = remember(new THREE.MeshStandardMaterial({ color: 0xd99a3a, roughness: 0.7, transparent: true }), materials);
+    const out = 0.07;
+    const base = 0.04 + LOBBY;
+    const pole = new THREE.BoxGeometry(0.018, body + 0.12, 0.018);
+    const along = (length) => new THREE.BoxGeometry(length, 0.014, 0.014);
+    // the street face (+z)
+    const spanX = width + 2 * out;
+    const columns = Math.max(2, Math.round(spanX / 0.17));
+    for (let k = 0; k <= columns; k += 1) {
+      const x = -spanX / 2 + (k * spanX) / columns;
+      const mesh = new THREE.Mesh(pole, steel);
+      mesh.position.set(x, base + body / 2 + 0.06, depth / 2 + out);
+      mesh.castShadow = true;
+      group.add(mesh);
+    }
+    // the right-hand face (+x)
+    const spanZ = depth + out;
+    const rows = Math.max(2, Math.round(spanZ / 0.17));
+    for (let k = 0; k < rows; k += 1) {
+      const z = -depth / 2 + (k * spanZ) / rows;
+      const mesh = new THREE.Mesh(pole, steel);
+      mesh.position.set(width / 2 + out, base + body / 2 + 0.06, z);
+      mesh.castShadow = true;
+      group.add(mesh);
+    }
+    const ledgerX = along(spanX);
+    const ledgerZ = along(spanZ);
+    ledgerZ.rotateY(Math.PI / 2);
+    const plankX = new THREE.BoxGeometry(spanX, 0.012, 0.06);
+    const plankZ = new THREE.BoxGeometry(0.06, 0.012, spanZ);
+    for (let k = 1; k <= floors; k += 1) {
+      const y = base + k * FLOOR;
+      const front = new THREE.Mesh(ledgerX, steel);
+      front.position.set(0, y, depth / 2 + out);
+      const right = new THREE.Mesh(ledgerZ, steel);
+      right.position.set(width / 2 + out, y, depth / 2 + out / 2 - spanZ / 2);
+      const walk = new THREE.Mesh(plankX, board);
+      walk.position.set(0, y - 0.012, depth / 2 + out / 2 + 0.005);
+      walk.castShadow = true;
+      const walkSide = new THREE.Mesh(plankZ, board);
+      walkSide.position.set(width / 2 + out / 2 + 0.005, y - 0.012, depth / 2 + out / 2 - spanZ / 2);
+      group.add(front, right, walk, walkSide);
+    }
   }
 
   // The roof: a parapet, a plant room and the light strip of the building's colour.
@@ -232,12 +248,10 @@ export function officeBuilding(THREE, spec) {
     mesh.castShadow = true;
     group.add(mesh);
   });
-  if (spec.state !== "frame") {
-    const plant = new THREE.Mesh(new THREE.BoxGeometry(width * 0.35, 0.08, depth * 0.35), parapet);
-    plant.position.set(-width * 0.15, roofY + 0.04, -depth * 0.1);
-    plant.castShadow = true;
-    group.add(plant);
-  }
+  const plant = new THREE.Mesh(new THREE.BoxGeometry(width * 0.35, 0.08, depth * 0.35), parapet);
+  plant.position.set(-width * 0.15, roofY + 0.04, -depth * 0.1);
+  plant.castShadow = true;
+  group.add(plant);
   const light = new THREE.MeshStandardMaterial({
     color: strip,
     emissive: strip,
