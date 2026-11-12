@@ -47,6 +47,7 @@ from app.ui.clientlist import (
     NO_EVIDENCE,
     ClientCard,
     ListQuery,
+    days_between,
     filter_counts,
     last_reports,
     matches,
@@ -169,7 +170,7 @@ async def client_cards(request: Request, now: datetime) -> list[ClientCard]:
         reports = last_reports(await newest_snapshots(session))
     cards: list[ClientCard] = []
     for client_id, name, count, newest in lines:
-        days = None if newest is None else (now - newest).days
+        days = None if newest is None else days_between(newest, now)
         cards.append(
             ClientCard(client_id, name, count, newest, days, reports.get(client_id))
         )

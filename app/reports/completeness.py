@@ -53,7 +53,11 @@ def _text(label: str, value: str, limit: int, required: bool = False) -> list[st
 def _details(view: ReportView) -> list[str]:
     context = view.context
     problems: list[str] = []
-    problems += _text("the MSP name", context.msp_name, MAX_SHORT, True)
+    # The words of the report builder (reports.html) for the same missing setting.
+    if not context.msp_name.strip():
+        problems.append("the name of your business is not set")
+    else:
+        problems += _text("the name of your business", context.msp_name, MAX_SHORT)
     problems += _text("the client name", context.client_name, MAX_NAME, True)
     problems += _text("the preparer", context.prepared_by, MAX_SHORT, True)
     if context.period_end < context.period_start:

@@ -897,6 +897,12 @@ main .rv-nav-link[aria-current="page"] {
     color var(--rv-motion);
 }
 
+/* Pico's a[role="button"] { display: inline-block } outranks the :is() rule above,
+   so a link drawn as a button lost its flex gap and its icon touched its words */
+a[role="button"] {
+  display: inline-flex;
+}
+
 :is(button, [type="submit"], [type="button"], [role="button"]):hover {
   color: var(--rv-white);
   background-color: var(--rv-ink);
@@ -1184,6 +1190,16 @@ main table tbody th {
 main table tbody tr:last-child > th,
 main table tbody tr:last-child > td {
   border-bottom: 0;
+}
+
+/* The square corners of the last row covered the rounded corners of the table,
+   so its bottom border stopped short of both sides */
+main table tbody tr:last-child > :first-child {
+  border-bottom-left-radius: 12px;
+}
+
+main table tbody tr:last-child > :last-child {
+  border-bottom-right-radius: 12px;
 }
 
 main table tbody tr:hover > td,
@@ -1824,6 +1840,11 @@ body.rv-signed-out {
   justify-content: space-between;
   gap: 4px 24px;
   margin: 32px 0 12px;
+}
+
+/* At the head of a card (the Public DNS check) the card's padding is the space */
+.rv-card > .rv-section-head:first-child {
+  margin-top: 0;
 }
 
 .rv-section-head h2 {

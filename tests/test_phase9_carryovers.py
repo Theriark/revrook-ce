@@ -265,7 +265,7 @@ async def test_an_export_that_claims_too_much_is_a_422_with_every_problem(
     refused = await post_export(ui_browser, csrf, report, "qbr")
     assert refused.status_code == 422
     assert "cannot be exported yet" in refused.text
-    assert "the MSP name is empty" in refused.text
+    assert "the name of your business is not set" in refused.text
     history = await ui_browser.get(f"/clients/{client_id}/exports")
     assert "Nothing has been exported" in history.text
     assert files_of(ui_ctx.files.client_dir(client_id)) == before

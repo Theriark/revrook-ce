@@ -347,7 +347,10 @@ def test_report_details_that_are_missing_or_too_long_block_the_export() -> None:
     base = report_clients.context_for("A")
     blank = replace(base, msp_name=" ", prepared_by="")
     problems = completeness_problems(view_of("A", blank))
-    assert "the MSP name is empty" in problems and "the preparer is empty" in problems
+    assert (
+        "the name of your business is not set" in problems
+        and "the preparer is empty" in problems
+    )
     long_name = replace(base, client_name="x" * (MAX_NAME + 1))
     assert any(
         "client name is longer" in item
