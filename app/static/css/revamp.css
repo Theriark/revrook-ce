@@ -1378,12 +1378,17 @@ span.rv-status-not-applicable {
   margin: 0;
 }
 
-.rv-account > summary.rv-account-button {
+.rv-account > summary.rv-account-button,
+.rv-account[open] > summary.rv-account-button {
   display: flex;
   align-items: center;
   gap: 8px;
   height: 40px;
+  /* Pico gives an open summary a bottom margin: the bar grew by 16px and the
+     page moved down when the menu opened */
+  margin: 0;
   padding: 0 6px 0 4px;
+  user-select: none;
   border: 1px solid transparent;
   border-radius: 999px;
   list-style: none;
@@ -1492,6 +1497,7 @@ span.rv-status-not-applicable {
 .rv-account-signout button:not(:hover) {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
   width: 100%;
   margin: 0;

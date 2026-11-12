@@ -26,7 +26,10 @@
  * mount and info so a test can cycle the scene and read the renderer's counts.
  */
 
-import { officeBuilding } from "./office.js";
+// The office model is imported with the version of this script (the `v` query of
+// its own address), so a cache in front of the site never serves an older one.
+const OFFICE_URL = "./office.js" + new URL(import.meta.url).search;
+let officeBuilding = null;
 
 const THREE_URL = "/static/vendor/three/three.module.js";
 
@@ -962,6 +965,7 @@ async function main() {
   }
   try {
     THREE = await import(THREE_URL);
+    ({ officeBuilding } = await import(OFFICE_URL));
   } catch (error) {
     setState("error", WORDS.noModule);
     root.setAttribute("data-explorer", "error");
