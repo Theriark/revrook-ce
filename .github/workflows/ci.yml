@@ -146,11 +146,18 @@ jobs:
           mypy app
 
   test:
-    name: 3 - pytest with PostgreSQL 16 and coverage thresholds
+    name: 3 - pytest with PostgreSQL 16 (shard ${{ matrix.shard }} of 4)
+    # The suite runs as four shards in parallel, each with its own PostgreSQL
+    # (tests/conftest.py, TEST_SHARD); the coverage job combines their data and
+    # enforces the thresholds. One shard failing fails `test`.
     needs: detect
     if: needs.detect.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     services:
       postgres:
         image: postgres:16
@@ -168,6 +175,8 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://revrook:ci-only-not-a-secret@localhost:5432/revrook_test
       SECRET_KEY: ci-only-secret-key-not-for-deployment
+      TEST_SHARD: ${{ matrix.shard }}/4
+      COVERAGE_FILE: .coverage.shard${{ matrix.shard }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -187,12 +196,9 @@ jobs:
           FERNET_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
           echo "::add-mask::${FERNET_KEY}"
           export FERNET_KEY
-          # Overall 80 percent. 95 percent for the four core packages is enforced
-          # by the second report below. In coverage.py a single * does not cross a
-          # directory separator, so ** is needed to include nested subpackages.
-          # The 95 percent report is aggregate over those packages, nested ones
-          # included. A per-module floor for nested subpackages is not enforced yet.
-          pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80 \
+          # This shard's part of the suite; its coverage data is combined with the
+          # other shards' and the thresholds are enforced by the coverage job.
+          pytest -q --cov=app --cov-report= \
             --junitxml="${RUNNER_TEMP}/pytest-junit.xml"
           # Skip guard: the PostgreSQL tests skip when DATABASE_URL is unset, so a
           # lost variable must not turn them into a silent pass. No test may skip.
@@ -208,7 +214,48 @@ jobs:
           if skipped:
               print(f"::error::{skipped} test(s) were skipped; CI requires zero skips (is DATABASE_URL set?)")
               sys.exit(1)
+          if not tests:
+              print("::error::this shard ran no test")
+              sys.exit(1)
           PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .coverage.shard${{ matrix.shard }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  coverage:
+    name: 3 - coverage thresholds (all shards)
+    needs: [detect, test]
+    if: needs.detect.outputs.app == 'true' && needs.test.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          shards="$(ls .coverage.shard* | wc -l)"
+          [[ "${shards}" -eq 4 ]] || { echo "::error::expected the coverage of 4 shards, found ${shards}"; exit 1; }
+          coverage combine .coverage.shard*
+          # Overall 80 percent. 95 percent for the four core packages is enforced
+          # by the second report below. In coverage.py a single * does not cross a
+          # directory separator, so ** is needed to include nested subpackages.
+          # The 95 percent report is aggregate over those packages, nested ones
+          # included. A per-module floor for nested subpackages is not enforced yet.
+          coverage report --show-missing --fail-under=80
           coverage report --fail-under=95 \
             --include='app/checks/**,app/scoring/**,app/evidence/**,app/importers/**'
 
@@ -329,15 +376,11 @@ jobs:
 
   docker-build:
     name: 8 - docker build
-    # Tests precede the build. lint, typecheck, test and audit must have SUCCEEDED
-    # (a skip is not enough). With STRICT, every prerequisite must have succeeded.
-    needs: [detect, lint, typecheck, test, migrations, audit, licences, content-licences]
-    if: >-
-      always() && needs.detect.outputs.docker == 'true' &&
-      needs.lint.result == 'success' && needs.typecheck.result == 'success' &&
-      needs.test.result == 'success' && needs.audit.result == 'success' &&
-      !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') &&
-      (needs.detect.outputs.strict != 'true' || !contains(needs.*.result, 'skipped'))
+    # Runs in parallel with the checks: this image is only built and inspected,
+    # never pushed. Nothing is deployed before the gate, which needs every check
+    # and this job to have SUCCEEDED (a skip is not enough with STRICT).
+    needs: detect
+    if: needs.detect.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -412,6 +455,7 @@ jobs:
       - lint
       - typecheck
       - test
+      - coverage
       - migrations
       - audit
       - licences
