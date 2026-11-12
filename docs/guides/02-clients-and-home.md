@@ -43,9 +43,9 @@ From top to bottom:
    row is not pictured: on the shared Development installation Recent changes names a
    seeded sign-in account (see the [capture manifest](../images/README.md)).
 
-The picture above is the page at 1440 px wide down to Needs attention and Score over
-time. On a tablet the navigation wraps on two rows at the top and the cards stand two to
-a row; on a phone they stand one to a row and the navigation wraps too, its links
+The picture above is the page at 1440 px wide down to the score drivers, ending above
+Controls by domain and Recent changes. On a tablet the navigation wraps on two rows at
+the top and the cards stand two to a row; on a phone they stand one to a row and the navigation wraps too, its links
 without their icons, in two or three rows.
 
 ![Home at 768 px (tablet view), light theme](../images/home-768.png)
