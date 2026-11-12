@@ -28,10 +28,16 @@ The page without a client reads every active client the way Home does
 client, `load_live` then `view_of`, and nothing more), and `build_portfolio` in
 `app/ui/explorer_view.py` turns the control rows of every client into the ring:
 
-- an office per client on the inner ring, as on Home's street: as tall as its score,
-  as wide as the company, its roof light the band, in scaffolding when the evidence is
-  too thin, an empty lot with none. The ring grows with the clients and every office
-  narrows alike when it is crowded;
+- an office per client on the inner ring, as on Home's street: the Kenney City Kit
+  model of its score's band (CC0; the models, the mapping and the code-built fallback
+  are in [design-system.md](design-system.md#scenes)), the same building as on Home
+  (the client id is its seed), as wide as the company, its roof light the band, a red
+  panel on the side facing the middle per control that needs work, in scaffolding
+  when the evidence is too thin, an empty lot with none. The models of the clients'
+  bands are read once, only when the ring is shown (on four clients two offices and
+  one colormap, 223 KB). The ring grows with the clients and every office narrows
+  alike when it is crowded. The blocks of a client's evidence wall stay built in
+  code;
 - every control of the library (51) on the outer ring, grouped by domain like the
   wall, a tile in the worst status any client has for it (not protected, needs
   attention, not checked, protected; not applicable only when it is so everywhere),
@@ -178,8 +184,9 @@ same dark surface as the rail; the colours on it are the dark-theme status value
   second), never while the page is hidden or the stage is out of view. With the Not
   protected filter off and the turning stopped, an idle ring draws no frame at all.
 - Leaving the page disposes every geometry, material and texture (the merged links,
-  the flow, the glow sprites and their canvas texture), the environment map, the
-  name overlay and the renderer.
+  the flow, the glow sprites and their canvas texture, the offices' own materials and
+  the shared model geometries and colormap, which the next mount uploads again from
+  the copy read once), the environment map, the name overlay and the renderer.
   `document.getElementById("explorer").revrookExplorer` offers `dispose()`,
   `mount()` and `info()` so a test can cycle the scene ten times and read the
   renderer's geometry and program counts.
@@ -194,5 +201,5 @@ hundreds of clients adds vertices, not draw calls; it was checked with four clie
 where a frame took about 2 ms of script, in the Claude desktop browser on Windows
 with the page measured as a background page (no frame timing from a visible GPU
 compositor). The page keeps its own script (`evidence-explorer.js`) while the
-rookery skyline and the domain keep share `scenes.js`; they share the office model
-(`office.js`) and the card (`scene-card.js`).
+rookery skyline and the domain keep share `scenes.js`; they share the office models
+(`office.js`, with the Kenney models it reads) and the card (`scene-card.js`).

@@ -562,19 +562,49 @@ as a stage is shown (WebGL switched off or unavailable), the stage opens on a sh
 note that says so (`data-scene-state="error"`), with no empty canvas, and the button
 can try again (pull request #83).
 
-The client street (Home, `#rookery-scene`). One office per client along a street,
-modelled in code (`app/static/js/office.js`, shared with the Evidence Explorer): a lobby
+The client street (Home, `#rookery-scene`). One office per client along a street. The
+offices, road tiles, street lamps and trees are models of Kenney's City Kits
+(www.kenney.nl, CC0 1.0; credit given though not required): City Kit Commercial 2.1,
+City Kit Roads 2.2 and City Kit Suburban 2.0, twelve unmodified GLB files in
+`app/static/models/kenney/<kit>/` with each kit's `Textures/colormap.png` and
+`License.txt` (rows with their SHA-256 in `LICENSES-CONTENT.md`, listed in `CITY_FILES`
+of `app/ui/brand.py` so a changed model has a new address). `app/static/js/office.js`,
+shared with the Evidence Explorer, reads them with a small GLB reader of its own (no
+loader addon): one node holding one mesh, positions, normals, texture coordinates and
+indices, one material whose colour is the colormap; it refuses any other file
+(`tests/test_scenes.py` checks every model uses only that). Each file is fetched once
+per page, only when a street is shown, with the version of the scripts, and only the
+models the street needs. The score picks the model by band:
+
+| Score | Model |
+| --- | --- |
+| below 25 | `building-c` |
+| 25 to 50 | `building-a` or `building-h` (the client id picks one) |
+| 50 to 75 | `building-f` |
+| 75 to 90 | `building-skyscraper-a` |
+| 90 and over | `building-skyscraper-c` or `building-skyscraper-e` |
+
+Each stands three quarters of the kit's size, turned so its entrance faces the street,
+the colormap a step darker and cooler (`TINT`) so it sits calmly on the charcoal; its
+width is the size of the company on a log scale (`data-size`: the people of its newest
+Entra export, else the devices of its newest device export, `company_sizes` in
+`app/ui/home.py`), one scale for its width and depth within 0.6 to 1.3 of the model,
+never deeper than its plot. A light strip runs round the top of the model in the band's
+status colour (green for strong or good, amber for fair, red for weak or critical). A
+client whose evidence is too thin for a score is the same building in scaffolding round
+its bounding box (steel poles, a ledger and an amber board at every lift on its street
+and right-hand sides), so its red windows still show; each control that needs work is a
+small red lit panel on the street face, on a grid inside the facade (up to twelve); a
+client with nothing imported is an empty lot fenced in posts. When a model cannot be
+loaded, its offices are the office modelled in code instead (`officeBuilding`: a lobby
 of dark glass, 2 to 12 floors for the score, a window facade drawn into a small canvas,
-a parapet, a plant room and a light strip round the roof in the band's status colour
-(green for strong or good, amber for fair, red for weak or critical). Its width is the
-size of the company on a log scale (`data-size`: the people of its newest Entra export,
-else the devices of its newest device export, `company_sizes` in `app/ui/home.py`). A
-client whose evidence is too thin for a score is the same finished building in
-scaffolding (steel poles, a ledger and an amber board at every floor on its street and
-right-hand sides), so its red windows still show; a client with nothing imported is an empty lot fenced
-in posts; each control that needs work is a red window (up to twelve). The street has a
-road with its centre line, a pavement, a lawn behind the offices, trees and street
-lamps between them, a sun that casts soft shadows. Pointing at
+a parapet, a plant room and the light strip), and a street piece without its model is
+built in code too, so a scene is never broken. The street has a road of Kenney road
+tiles with a crossroad at each end of the block, a pavement, a lawn behind the offices,
+Kenney trees and square street lamps between them, and a sun that casts soft shadows.
+Disposing a scene frees every geometry, material and texture, the shared model
+geometries and colormaps included (their copies on the graphics card; the next mount
+uploads them again from the copy read once). Pointing at
 an office, or at its card, names it in the hover line; a press chooses it, marks its
 card with the violet rail and writes its facts in the detail line; Enter opens the
 client. While every client is only a footprint the detail line says so and what to
@@ -603,7 +633,8 @@ outside it (but not in the control drawer it opened), Reset view and Hide the 3D
 close it; the aria-live detail line keeps naming the choice. Home keeps the street.
 
 The companies ring (Evidence Explorer, the page without a client). Every active client
-is an office on an inner ring, built as on the street, and every control of the library
+is an office on an inner ring, the same Kenney model as on the street (the blocks of a
+client's evidence wall stay built in code), and every control of the library
 a tile on an outer ring by domain in the worst status any client has for it, in the
 tile shapes of the evidence wall, the domains a tile apart on ground bands of two quiet
 alternating tints (not status colours). A thin tube joins every client to every control

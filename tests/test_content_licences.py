@@ -1,13 +1,17 @@
-"""Merge gate check 7 as a test: every dataset under data/ has a licence row.
+"""Merge gate check 7 as a test: every dataset under data/ and every model of the
+scenes under app/static/models/ has a licence row.
 
-LICENSES-CONTENT.md must name each file under data/ with its source, licence, the
-date read and the SHA-256 of the file as committed. CI check 7 already fails a file
-without a row; this test also fails a row whose hash is not the file's.
+LICENSES-CONTENT.md must name each of those files with its source, licence, the date
+read and the SHA-256 of the file as committed. CI check 7 already fails a file under
+data/ without a row; this test also fails a row whose hash is not the file's, and a
+model file without a row.
 """
 
 import hashlib
 import re
 from pathlib import Path
+
+from app.ui.brand import CITY_FILES
 
 ROOT = Path(__file__).resolve().parent.parent
 DOC = ROOT / "LICENSES-CONTENT.md"
@@ -16,6 +20,11 @@ EXPECTED = {
     "data/controls.yaml",
     "data/nist/nist-csf-2.0-names.json",
     "data/nist/nist-sp800-171r3-names.json",
+}
+# The Kenney City Kit models of the scenes, their colormaps and each kit's licence.
+MODELS = {f"app/static/{name}" for name in CITY_FILES} | {
+    f"app/static/models/kenney/{kit}/License.txt"
+    for kit in ("commercial", "roads", "suburban")
 }
 
 
@@ -34,14 +43,27 @@ def table_rows() -> dict[str, list[str]]:
 def dataset_files() -> set[str]:
     return {
         path.relative_to(ROOT).as_posix()
-        for path in (ROOT / "data").rglob("*")
+        for folder in ("data", "app/static/models")
+        for path in (ROOT / folder).rglob("*")
         if path.is_file() and path.name != ".gitkeep"
     }
 
 
 def test_every_dataset_file_has_a_row_and_every_row_a_file() -> None:
     assert dataset_files() == set(table_rows())
-    assert set(table_rows()) == EXPECTED
+    assert set(table_rows()) == EXPECTED | MODELS
+
+
+def test_the_model_rows_credit_kenney_under_cc0_and_name_the_kit() -> None:
+    rows = table_rows()
+    for path in MODELS:
+        assert rows[path][1].startswith("Kenney (www.kenney.nl), City Kit "), path
+        assert rows[path][2] == "CC0-1.0", path
+    for kit in ("commercial", "roads", "suburban"):
+        licence = (ROOT / f"app/static/models/kenney/{kit}/License.txt").read_bytes()
+        assert b"Created/distributed by Kenney (www.kenney.nl)" in licence, kit
+        assert b"License: (Creative Commons Zero, CC0)" in licence, kit
+        assert 13 not in licence, kit  # no carriage return: LF endings
 
 
 def test_every_row_gives_the_hash_of_the_file_as_committed() -> None:

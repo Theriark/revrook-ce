@@ -47,7 +47,11 @@
 const OFFICE_URL = "./office.js" + new URL(import.meta.url).search;
 const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;
 let officeBuilding = null;
+let office = null;
 let sceneCard = null;
+// The Kenney models of the companies ring (office.js, loadModels), read once when
+// the ring is first shown; an office whose model failed is built in code.
+let city = new Map();
 
 const THREE_URL = "/static/vendor/three/three.module.js";
 
@@ -315,6 +319,12 @@ function layout(data) {
     angle += gap;
   });
   return { sources, clients, controls, sectors };
+}
+
+// The seed of a client's office: its id, as on Home's street, so a client stands in
+// the same building (and lights the same windows) on both pages.
+function clientSeed(client, index) {
+  return Number(client.id.replace(/^client:/, "")) || index + 7;
 }
 
 function nodeOf(object) {
@@ -616,8 +626,9 @@ function buildWall(THREE, root, data, options) {
     groups.set(entry.id, group);
   });
 
-  // The offices of the companies ring: one per client, as on Home's street: as
-  // many floors as its score allows, as wide as the company, its roof light the
+  // The offices of the companies ring: one per client, as on Home's street: the
+  // Kenney model of its score's band (or as many floors as its score allows, built
+  // in code, when the model failed), as wide as the company, its roof light the
   // band; in scaffolding with too little evidence for a score, an empty lot with
   // none, a red window per control that needs work. A crowded ring narrows every
   // office alike.
@@ -625,14 +636,15 @@ function buildWall(THREE, root, data, options) {
   plan.clients.forEach((entry, index) => {
     const client = entry.client;
     const wide = 0.45 + 0.5 * clamp(Math.log10(client.size + 1) / Math.log10(501), 0, 1);
-    const built = officeBuilding(THREE, {
+    const built = office(THREE, city, {
       width: wide * room,
       depth: 0.62 * room,
       floors: client.evidence ? 2 + Math.round((client.score / 100) * 10) : 0,
+      score: client.score,
       state: !client.evidence ? "lot" : client.insufficient ? "frame" : "built",
       strip: client.evidence ? BAND_LIGHT[client.band.toLowerCase()] || STATUS_COLOR["not-checked"] : LINE,
       red: Math.min(client.needsWork, 12),
-      seed: index + 7,
+      seed: clientSeed(client, index),
     });
     const group = built.group;
     group.userData.node = entry.id;
@@ -1798,9 +1810,16 @@ async function main() {
   }
   try {
     THREE = await import(THREE_URL);
-    ({ officeBuilding } = await import(OFFICE_URL));
+    let loadModels;
+    let officeModel;
+    ({ officeBuilding, office, loadModels, officeModel } = await import(OFFICE_URL));
     if (companies) {
       ({ sceneCard } = await import(CARD_URL));
+      // The model of every client's office, read now that the ring is shown.
+      city = await loadModels(
+        THREE,
+        data.clients.map((client, index) => (client.evidence ? officeModel(client.score, clientSeed(client, index)) : ""))
+      );
     }
   } catch (error) {
     setState("error", WORDS.noModule);

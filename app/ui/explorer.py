@@ -31,7 +31,7 @@ from app.limits import MAX_ID
 from app.models import AppUser, Client
 from app.posture import load_live, view_of
 from app.reports.view import ReportContext, ReportError
-from app.ui.brand import STATIC_DIR
+from app.ui.brand import CITY_FILES, STATIC_DIR
 from app.ui.clients import client_sources
 from app.ui.common import FormError, guarded, last_quarter, library_of, page
 from app.ui.explorer_view import (
@@ -62,6 +62,7 @@ EXPLORER_ASSETS = (
     "js/evidence-explorer.js",
     "js/office.js",
     "js/scene-card.js",
+    *CITY_FILES,
 )
 NO_CLIENTS = "There are no clients yet."
 NOT_A_NUMBER = "The client id must be a whole number."

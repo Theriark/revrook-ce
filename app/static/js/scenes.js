@@ -39,9 +39,15 @@
 // so an unversioned import served the previous buildings after a deploy.
 const OFFICE_URL = "./office.js" + new URL(import.meta.url).search;
 const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;
-let officeBuilding = null;
+let office = null;
+let officeModel = null;
+let loadModels = null;
 let streetKit = null;
+let STREET = [];
 let sceneCard = null;
+// The Kenney models of the street (office.js, loadModels), read once when a
+// street is first shown; a model missing here is built in code.
+let city = new Map();
 
 const THREE_URL = "/static/vendor/three/three.module.js";
 const HIDE_KEY = "rv-scenes";
@@ -71,6 +77,10 @@ const BAND_RING = {
 };
 const LAYERS = ["protected", "needs-attention", "not-protected", "not-checked"];
 
+// The width of a Kenney road tile on the street (the kit's tiles run along x), and
+// the turn of a lamp so its arm, which the kit points to -z, reaches over the road.
+const ROAD_TILE = 0.7;
+const LAMP_TURN = Math.PI;
 const TURN_STEP = Math.PI / 8;
 const TWEEN_MS = 350;
 const MIN_PITCH = 0.12;
@@ -231,6 +241,7 @@ function readRookery(list) {
       // wide as the company (one person is the narrowest, 500 or more the widest,
       // on a log scale so a big client does not hide the others).
       floors: evidence ? 2 + Math.round((score / 100) * 10) : 0,
+      score,
       width: 0.45 + 0.5 * clamp(Math.log10(size + 1) / Math.log10(501), 0, 1),
       strip: evidence ? BAND_RING[band] || STATUS_COLOR["not-checked"] : LINE,
       state: !evidence ? "lot" : insufficient ? "frame" : "built",
@@ -273,10 +284,11 @@ const READERS = { rookery: readRookery, keep: readKeep };
 // --- the builders: a group of meshes per node, one material per node ------------
 
 function buildOffice(THREE, entry, x, z) {
-  const built = officeBuilding(THREE, {
+  const built = office(THREE, city, {
     width: entry.width,
     depth: 0.62,
     floors: entry.floors,
+    score: entry.score,
     state: entry.state,
     strip: entry.strip,
     red: entry.notches,
@@ -444,12 +456,7 @@ function buildScene(THREE, root, options) {
   const spots = place(entries.length, spacing, limit);
   const rows = entries.length > limit ? 2 : 1;
   const span = Math.max(3, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 2);
-  const tallest = entries.reduce((top, entry) => {
-    const own = entry.kind === "rook" ? 0.28 + entry.floors * 0.2 : entry.layers.reduce((sum, layer) => sum + layer.count * 0.16, 0);
-    return Math.max(top, own);
-  }, 0.5);
   const home = { yaw: 0.35, pitch: 0.55, distance: span * 1.15 + 3 };
-  const target = new THREE.Vector3(0, Math.min(0.6, 0.25 + tallest / 2), rows > 1 ? -0.9 : 0);
   const view = { yaw: home.yaw, pitch: home.pitch, distance: home.distance };
 
   // The home distance fits every node to the stage at the home view: the nearest
@@ -494,9 +501,11 @@ function buildScene(THREE, root, options) {
   scene.add(floor);
   // The rookery is a street: a road in front of the offices, a pavement, trees
   // and street lamps between the buildings, and a second street behind when the
-  // clients take two rows.
+  // clients take two rows. The road is laid in Kenney's road tiles, a crossroad at
+  // each end of the block, and the trees and lamps are Kenney's too; a model that
+  // failed to load leaves its piece to the street built in code.
   if (kind === "rookery") {
-    const kit = streetKit(THREE);
+    const kit = streetKit(THREE, city);
     const long = Math.max(5, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 3.4);
     const road = new THREE.MeshStandardMaterial({ color: 0x24262d, roughness: 0.95 });
     const pavement = new THREE.MeshStandardMaterial({ color: 0x4c5160, roughness: 0.9 });
@@ -516,20 +525,30 @@ function buildScene(THREE, root, options) {
       walk.position.set(0, 0.015, front + 0.55);
       walk.receiveShadow = true;
       scene.add(walk);
-      const lane = new THREE.Mesh(new THREE.BoxGeometry(long, 0.01, 0.62), road);
-      lane.position.set(0, 0.005, front + 1.03);
-      lane.receiveShadow = true;
-      scene.add(lane);
-      for (let x = -long / 2 + 0.2; x < long / 2; x += 0.42) {
-        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.012, 0.025), paint);
-        dash.position.set(x + 0.1, 0.012, front + 1.03);
-        scene.add(dash);
+      const tiles = Math.ceil(long / ROAD_TILE);
+      const laid = [];
+      for (let k = 0; k < tiles; k += 1) {
+        const x = (k - (tiles - 1) / 2) * ROAD_TILE;
+        laid.push(kit.road(x, front + 1.03, ROAD_TILE, k === 0 || k === tiles - 1));
+      }
+      if (laid.every(Boolean)) {
+        laid.forEach((tile) => scene.add(tile));
+      } else {
+        const lane = new THREE.Mesh(new THREE.BoxGeometry(long, 0.01, 0.62), road);
+        lane.position.set(0, 0.005, front + 1.03);
+        lane.receiveShadow = true;
+        scene.add(lane);
+        for (let x = -long / 2 + 0.2; x < long / 2; x += 0.42) {
+          const dash = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.012, 0.025), paint);
+          dash.position.set(x + 0.1, 0.012, front + 1.03);
+          scene.add(dash);
+        }
       }
       // Trees and lamps stand between the offices, never in front of one.
       const row = spots.filter((spot) => Math.abs(spot.z - front) < 1).map((spot) => spot.x);
       const gaps = row.length ? [row[0] - spacing / 2, ...row.map((x) => x + spacing / 2)] : [0];
       gaps.forEach((x, k) => {
-        scene.add(k % 2 ? kit.streetLamp(x, front + 0.62) : kit.tree(x, front + 0.5, 0.9 + (k % 3) * 0.1));
+        scene.add(k % 2 ? kit.streetLamp(x, front + 0.62, LAMP_TURN) : kit.tree(x, front + 0.5, 0.9 + (k % 3) * 0.1));
       });
     });
   }
@@ -547,6 +566,10 @@ function buildScene(THREE, root, options) {
   nodes.forEach((node) => {
     cornersOf(bounds.setFromObject(node.group), corners);
   });
+  // The camera looks at the middle of the tallest node, read from what was built
+  // (an office's roof stands 0.12 under its top; a block's layers 0.28, with its plinth).
+  const tallest = Array.from(nodes.values()).reduce((top, node) => Math.max(top, node.top - (node.entry.kind === "rook" ? 0.12 : 0.28)), 0.5);
+  const target = new THREE.Vector3(0, Math.min(0.6, 0.25 + tallest / 2), rows > 1 ? -0.9 : 0);
 
   let rafId = 0;
   let needsRender = true;
@@ -1159,7 +1182,7 @@ async function openStages(roots) {
   let THREE;
   try {
     THREE = await import(THREE_URL);
-    ({ officeBuilding, streetKit } = await import(OFFICE_URL));
+    ({ office, officeModel, loadModels, streetKit, STREET } = await import(OFFICE_URL));
     ({ sceneCard } = await import(CARD_URL));
   } catch (error) {
     roots.forEach((root) => {
@@ -1167,6 +1190,17 @@ async function openStages(roots) {
       words(root.querySelector(".rv-scene-state-text"), WORDS.noModule);
     });
     return;
+  }
+  // The models of every office on a street of the page and of the street itself,
+  // read now that a street is shown; one that fails leaves its office to the code.
+  const streets = roots.filter((root) => root.getAttribute("data-scene") === "rookery");
+  if (streets.length) {
+    const names = streets.flatMap((root) =>
+      readRookery(document.getElementById(root.getAttribute("data-scene-for")))
+        .filter((entry) => entry.state !== "lot")
+        .map((entry) => officeModel(entry.score, entry.seed))
+    );
+    city = await loadModels(THREE, names.concat(STREET));
   }
   const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   for (const root of roots) {
