@@ -48,7 +48,11 @@ TEMPLATE = "evidence_explorer.html"
 # The stylesheet and the scene script of the preview, under app/static. They are not
 # in the shell (app/ui/brand.py, ASSET_FILES): the page links them itself with their
 # own digest as the `v` query, for the same reason the shell does.
-EXPLORER_ASSETS = ("css/evidence-explorer.css", "js/evidence-explorer.js")
+EXPLORER_ASSETS = (
+    "css/evidence-explorer.css",
+    "js/evidence-explorer.js",
+    "js/office.js",
+)
 NO_CLIENTS = "There are no clients yet."
 NOT_A_NUMBER = "The client id must be a whole number."
 NO_SUCH_CLIENT = "There is no such client."

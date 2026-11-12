@@ -117,7 +117,7 @@ def test_the_scene_module_has_every_fallback_and_nothing_from_outside() -> None:
     )
     # Only footprints: the detail line says what to do, not the hover hint.
     assert "entries.every((entry) => entry.footprint) ? WORDS.footprints" in SCRIPT
-    assert "Import an export and its rook rises here." in SCRIPT
+    assert "Import an export and its office rises here." in SCRIPT
     # The yard never turns to face a node squarely, which lined the row up behind it.
     assert "turnTo(Math.atan2(" not in SCRIPT
     # Nothing turns by itself: the only motion answers a person, and is immediate
@@ -126,7 +126,7 @@ def test_the_scene_module_has_every_fallback_and_nothing_from_outside() -> None:
     assert 'motionQuery.addEventListener("change"' in SCRIPT
     assert "built.applyMotion()" in SCRIPT
     # Both readers, both builders, and the page marks the chosen card or bar.
-    for name in ("readRookery", "readKeep", "buildRook", "buildBlock"):
+    for name in ("readRookery", "readKeep", "buildOffice", "buildBlock"):
         assert f"function {name}(" in SCRIPT, name
     assert 'setAttribute("data-selected"' in SCRIPT
     assert "window.location.assign(node.entry.href)" in SCRIPT
@@ -277,7 +277,7 @@ def test_the_rail_fold_is_a_real_form_in_the_rail() -> None:
     ):
         assert f' title="{word}">' in html, word
     assert 'aria-current="page" title="Glossary">' in html
-    assert '<button type="submit" class="rv-button-quiet" title="Sign out">' in html
+    assert 'title="Sign out"' not in html  # sign out is in the account menu
     open_rail = templates.get_template("glossary.html").render(
         title="Glossary",
         user=type("User", (), {"username": "admin"})(),

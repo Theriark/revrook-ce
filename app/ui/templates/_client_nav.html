@@ -2,7 +2,7 @@
     actions a page gives (`client_actions`: path without its leading slash, text,
     primary) and the tabs. -#}
 <div class="rv-page-header rv-client-header">
-<div><p class="rv-client-kicker"><a href="/clients">Clients</a></p><h1>{{ client_name }}</h1></div>
+<div><h1>{{ client_name }}</h1></div>
 {% if client_actions is defined and client_actions %}
 <div class="rv-page-actions">
 {% for action in client_actions %}

@@ -213,9 +213,10 @@ def test_the_switch_is_three_real_buttons_that_post_the_form() -> None:
         assert f'name == "{glyph}"' in ICONS, glyph
 
 
-def test_the_switch_is_in_the_rail_and_in_the_signed_out_header() -> None:
-    assert NAV.count('{% include "_theme.html" %}') == 1
-    assert NAV.index("_theme.html") < NAV.index('action="/logout"')
+def test_the_switch_is_in_the_top_bar_and_in_the_signed_out_header() -> None:
+    topbar = (ROOT / "app/ui/templates/_topbar.html").read_text(encoding="utf-8")
+    assert "_theme.html" not in NAV
+    assert '<form class="rv-theme-toggle" method="post" action="/theme"' in topbar
     assert BASE.count('{% include "_theme.html" %}') == 1
     assert '<div class="rv-header-tools">' in BASE
 
@@ -329,7 +330,8 @@ async def test_a_signed_in_user_keeps_the_choice_on_the_user_row(
     page = await ui_browser.get("/settings")
     assert 'data-theme="dark"' in page.text
     assert '<meta name="color-scheme" content="dark">' in page.text
-    assert 'value="dark" aria-pressed="true"' in page.text
+    # the switch of the top bar now offers the other theme
+    assert 'name="theme" value="light" aria-label="Use the light theme"' in page.text
 
     # htmx gets 204 and nothing to swap; the choice is still written.
     quiet = await ui_browser.post(

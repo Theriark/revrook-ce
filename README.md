@@ -37,15 +37,15 @@ documented and captured (commit `99aaf21b26a93a54b6db1aa5534e602c6e2e8541`, the 
 deployed on top with the same application code; the deployed head is read from the
 deployment receipt and the package manifest.
 
-**Home**: the keep, the charcoal band with the battlement of the mark, carries the title
-and the one primary action; the four stat cards stand on its foot as one ledger; under
-**What moves the score** the gauge of the mean score sits beside the rookery skyline,
-one rook per client as tall as its score. The 3D view opens hidden and is drawn once
+**Home**: the title and the one primary action on the page, the four stat cards as one
+ledger, **Needs attention** beside the score over time, and under **What moves the
+score** the gauge of the mean score beside the client street, one office per client as
+tall as its score and as wide as the company. The 3D view opens hidden and is drawn once
 **Show the 3D view** is pressed, as here
 ([guide 2](docs/guides/02-clients-and-home.md),
 [guide 8](docs/guides/08-scenes-rail-and-explorer.md)).
 
-![What moves the score on Home, the gauge beside the rookery skyline, at 1440 px, dark theme](docs/images/home-1440-dark.png)
+![What moves the score on Home, the gauge beside the client street, at 1440 px, dark theme](docs/images/home-1440-dark.png)
 
 **Import evidence**: every export of a client dropped on one page, each file recognised
 by its columns and stored on its own, so a refused file stops none of the others

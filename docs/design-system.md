@@ -122,14 +122,13 @@ line is decoration and is kept out of them.
 ## The shell
 
 `app/ui/templates/base.html` draws one of two shells. A page rendered with a `user` in
-its context gets the app shell: the charcoal rail (`header.rv-header`) with the brand
-lockup, the "Community Edition" badge, the grouped navigation of `_nav.html` and the
-signed-in user with the sign-out button; then the page column with the stale-worker
-banner, `main.rv-content` and the footer with the disclaimer. From 1024 px the rail is
-a 248 px sidebar that stays in view, with the sign-out button on its own line under the
-user name; below that it is a charcoal bar with the navigation as a scrolling strip, so
-no menu is ever hidden behind a button, and below 600 px the bar drops the edition
-badge (the footer still names the edition) so it never meets the sign-out button. The
+its context gets the app shell: the rail (`header.rv-header`) with the brand lockup, the
+"Community Edition" badge and the grouped navigation of `_nav.html`; then the page
+column with the top bar, the stale-worker banner and `main.rv-content`. No page carries
+a footer: the disclaimer is printed in the reports (2026-11-12). From 1024 px the rail
+is a 248 px sidebar that stays in view; below that it is a bar with the navigation as a
+scrolling strip, so no menu is ever hidden behind a button, and below 600 px the bar
+drops the edition badge. The
 strip (`div.rv-nav-strip`, like `div.rv-tabs-strip` around the tabs of a client) fades
 the last visible link into its background at the right edge, so a person sees that it
 goes on: the 48 px fade reaches its colour within 20 px, the strip ends in 48 px of
@@ -146,8 +145,19 @@ The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded a
 rewrite.
 
 The top bar (`_topbar.html`) opens the page column of every signed-in page,
-above the stale-worker banner: the breadcrumb of the page on the left and the search of
-the clients on the right, on the surface with a hairline under it. The trail is made by
+above the stale-worker banner: the breadcrumb of the page on the left; on the right the
+search of the clients, the theme switch and the account menu, on the surface with a
+hairline under it. The theme switch is one icon button (a sun in the dark theme, a moon
+in the light one) that posts the other theme to `/theme`; `revrook.js` applies it at
+once and, under "system", works out which theme is showing. The account menu is a
+`details` element (`#account-menu`), so it opens without script; its panel names the
+person (picture or initial in a circle, `_avatar.html`), links **Account** and
+**Settings**, and holds the sign-out form; `revrook.js` closes it on Escape or a click
+outside. The **Account** page (`app/ui/account.py`) sets the display name, the picture
+(PNG, JPEG or WebP up to 512 KB, recognised by its first bytes and served back only as
+one of those types from `/account/picture/<id>?v=<version>`), the password (the current
+one is checked first) and the theme. The page title stands on the page itself under the
+bar: there is no band behind it and no battlement edge. The trail is made by
 `breadcrumb_trail` (`app/ui/breadcrumbs.py`, a template global) from what the page
 already has in its context: Home alone on Home; Home and the place of the rail (`nav`)
 elsewhere; on a page of one client Home, Clients, the client, its tab (`section`) and,
@@ -504,8 +514,8 @@ How a chart answers:
 
 ## Scenes
 
-Three pages carry a scene drawn in the browser: the rookery skyline of Home, the
-domain keep of a client overview and the rookery wall of the Evidence Explorer
+Three pages carry a scene drawn in the browser: the client street of Home, the
+domain keep of a client overview and the evidence wall of the Evidence Explorer
 ([evidence-explorer-preview.md](evidence-explorer-preview.md)). Depth means the same
 thing in every one of them: height is a measure, footprint is weight, status is shape
 and colour together, and every word stays in the DOM. A scene adds a way of looking
@@ -523,7 +533,7 @@ r186 that the Evidence Explorer already vendors (`app/static/vendor/three`,
 `PINNED.json`, `tools/fetch_three.py`; nothing from a CDN). A scene reads its facts
 from the data attributes the template renders on the cards or the bars of the page
 (`data-client`, `data-score`, `data-band`, `data-insufficient`, `data-evidence`,
-`data-needs-work`; `data-code`, `data-weight`, `data-count-<status>`), from the same
+`data-needs-work`, `data-size`; `data-code`, `data-weight`, `data-count-<status>`), from the same
 view model as the ring or the bar beside them, so the two can never disagree and no
 request is made; the address a node opens (`data-href`) is accepted only as a path of
 this site, one leading slash and nothing else, or the node opens nothing and the card
@@ -538,12 +548,19 @@ as a stage is shown (WebGL switched off or unavailable), the stage opens on a sh
 note that says so (`data-scene-state="error"`), with no empty canvas, and the button
 can try again (pull request #83).
 
-The rookery skyline (Home, `#rookery-scene`). One rook per client on a charcoal
-yard, as tall as its score, crenellated like the mark: stone for a strong or a good
-band, amber for fair, red for weak or critical; a wire rook where the evidence is
-too thin for a score (the dashed outline of its bar), a footprint where nothing is
-imported yet, and a notch at its foot for every control that needs work. Pointing at
-a rook, or at its card, names it in the hover line; a press chooses it, marks its
+The client street (Home, `#rookery-scene`). One office per client along a street,
+modelled in code (`app/static/js/office.js`, shared with the Evidence Explorer): a lobby
+of dark glass, 2 to 12 floors for the score, a window facade drawn into a small canvas,
+a parapet, a plant room and a light strip round the roof in the band's status colour
+(green for strong or good, amber for fair, red for weak or critical). Its width is the
+size of the company on a log scale (`data-size`: the people of its newest Entra export,
+else the devices of its newest device export, `company_sizes` in `app/ui/home.py`). A
+client whose evidence is too thin for a score is a building under construction (floor
+slabs and columns behind glass); a client with nothing imported is an empty lot fenced
+in posts; each control that needs work is a red window (up to twelve). The street has a
+road with its centre line, a pavement, a lawn behind the offices, trees and street
+lamps between them, a sun that casts soft shadows. Pointing at
+an office, or at its card, names it in the hover line; a press chooses it, marks its
 card with the violet rail and writes its facts in the detail line; Enter opens the
 client. While every client is only a footprint the detail line says so and what to
 do (import its exports); with no client at all the stage is put away and Home keeps its
@@ -552,12 +569,14 @@ own empty state.
 The domain keep (client overview, `#keep-scene`, in the Coverage by domain card). One
 block per domain of the control library, as wide as its weight in the score, built of
 its controls in layers from the foot up: protected, needs attention, not protected,
-and not checked as wire, in the status colours of the bars. A heavy domain with red
+and not checked as glass with an outline, in the status colours of the bars. No scene
+draws a wireframe: three.js draws every triangle edge of one, which read as crossed
+diagonals. A heavy domain with red
 layers stands out at once, which the flat bars tell only one at a time. A press
 chooses a block and marks its bar with a line in the margin of the card (the row
 itself does not move); Enter opens the checklist narrowed to that domain, the link
 the bar already carries. More than six domains stand in two rows, more than eight
-rooks likewise, so a row never runs so wide that every node is small.
+offices likewise, so a row never runs so wide that every node is small.
 
 How a scene answers. The home view fits every node to the stage: `framingDistance`
 in `scenes.js` takes the eight corners of every node (its plinth, its layers, its

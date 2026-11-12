@@ -60,7 +60,9 @@ def test_each_place_of_the_rail_is_home_then_the_place() -> None:
 
 
 def test_every_place_of_the_trail_is_a_place_of_the_rail() -> None:
-    for text, path in PLACES.values():
+    for nav, (text, path) in PLACES.items():
+        if nav == "account":
+            continue  # the Account page is in the account menu of the top bar
         assert f'href="/{path}"' in NAV, path
         assert f'<span class="rv-nav-text">{text}</span>' in NAV, text
 
@@ -145,7 +147,8 @@ def test_a_signed_in_page_opens_its_column_with_the_top_bar() -> None:
     assert label in bar
     assert 'id="topbar-q" name="q" type="search"' in bar
     assert 'aria-keyshortcuts="/" aria-describedby="topbar-q-key"' in bar
-    assert '<button type="submit" class="rv-button-quiet rv-button-small">' in bar
+    # Enter searches: no second "Search" button beside the one of the clients list
+    assert '<button type="submit" class="rv-button-quiet rv-button-small">' not in bar
 
 
 def test_the_top_bar_draws_a_client_trail_from_the_page_context() -> None:

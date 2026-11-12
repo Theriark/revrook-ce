@@ -45,7 +45,15 @@ is not checked. The session is a signed cookie that lasts 12 hours and slides wi
 
 ## Sign out
 
-Press **Sign out** under your name at the bottom of the rail (at the right end of the
-bar on a narrow screen). Sign-out clears the cookie and issues a new CSRF token.
+Open the account menu (your picture or initial at the right of the top bar) and press
+**Sign out**. Sign-out clears the cookie and issues a new CSRF token.
+
+## Your account
+
+The account menu also opens **Account**: your display name (shown in the top bar
+instead of the username), a picture (PNG, JPEG or WebP, up to 512 KB), your password
+(the current one first, then a new one of at least 12 characters, twice) and the theme
+(light, dark, or the same as the system). The sun or moon button beside the menu
+switches between light and dark at once.
 
 Next: [2. Home and clients](02-clients-and-home.md).

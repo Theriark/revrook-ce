@@ -44,7 +44,7 @@
 <h2 id="explorer-title" class="rv-card-title">The rookery wall of {{ view.client_name }}</h2>
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-toggle" hidden>Show the 3D view</button>
 </div>
-<p class="rv-card-subtitle">A 3D view of the tables below. Each pillar is an export, as tall as the number of controls it feeds; each tile is a control; a beam joins an export to every control that reads it. A stale export is a low pillar, one never imported is a footprint, and a control that is not protected is a tile cut through.</p>
+<p class="rv-card-subtitle">Each office block is an export, as tall as the controls it feeds; each tile is a control. Choose one to light its links.</p>
 <div class="rv-explorer-stage" id="explorer-stage">
 <div class="rv-explorer-state" id="explorer-state" role="status">
 <p class="rv-explorer-state-text">The scene needs script and WebGL 2 in the browser. The tables below show the same facts.</p>
@@ -57,16 +57,16 @@
 <button type="button" class="rv-button-quiet rv-button-small" id="explorer-motion" aria-pressed="false" hidden>Turn by itself</button>
 <p class="rv-explorer-hover" id="explorer-hover" aria-hidden="true"></p>
 </div>
-<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">Hover over or select a pillar or a tile, or use Show in scene on a row below, to see its details here.</p>
+<p class="rv-explorer-detail" id="explorer-detail" aria-live="polite">Choose a block or a tile, or Show in scene on a row below.</p>
 <ul class="rv-legend rv-explorer-legend" aria-label="What the shapes mean">
 <li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Protected</span> <span class="rv-text-secondary">flat tile</span></li>
 <li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Needs attention</span> <span class="rv-text-secondary">tile with a ring</span></li>
 <li><span class="rv-status-not-protected"><span class="rv-status-icon" aria-hidden="true">&#10007;</span> Not protected</span> <span class="rv-text-secondary">tile cut through</span></li>
-<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not checked</span> <span class="rv-text-secondary">outlined tile</span></li>
+<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not checked</span> <span class="rv-text-secondary">glass tile</span></li>
 <li><span class="rv-status-not-applicable"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> Not applicable</span> <span class="rv-text-secondary">small disc</span></li>
-<li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Current export</span> <span class="rv-text-secondary">full pillar</span></li>
-<li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Stale or expired export</span> <span class="rv-text-secondary">low pillar</span></li>
-<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not imported</span> <span class="rv-text-secondary">footprint only</span></li>
+<li><span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Current export</span> <span class="rv-text-secondary">tall block</span></li>
+<li><span class="rv-status-needs-attention"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> Stale or expired export</span> <span class="rv-text-secondary">low block</span></li>
+<li><span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">?</span> Not imported</span> <span class="rv-text-secondary">empty lot</span></li>
 </ul>
 </section>
 <h2 id="explorer-sources-title">Evidence sources</h2>

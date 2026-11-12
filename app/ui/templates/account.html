@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% import "_icons.html" as i %}
+{% import "_avatar.html" as a %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+{% set shown_name = (user.display_name or '')|trim or user.username %}
+<div class="rv-page-header">
+<div><h1>Account</h1><p class="rv-page-purpose">Your name, picture, password and theme.</p></div>
+</div>
+{% if done_message %}
+<p class="rv-status-protected rv-account-done" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ done_message }}</span></p>
+{% endif %}
+<div class="rv-account-grid">
+<section class="rv-card rv-account-card" id="profile" aria-labelledby="profile-title">
+<h2 id="profile-title" class="rv-card-title">Profile</h2>
+<div class="rv-account-identity">
+{{ a.avatar(user, "lg") }}
+<div>
+<p class="rv-account-shown">{{ shown_name }}</p>
+<p class="rv-help">Signs in as <strong>{{ user.username }}</strong></p>
+</div>
+</div>
+<form method="post" action="/account/name" class="rv-account-form" id="name-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="rv-field">
+<label for="display_name">Display name</label>
+<input id="display_name" name="display_name" type="text" maxlength="80" autocomplete="name" value="{{ user.display_name or '' }}" aria-describedby="name-help{% if errors.name %} name-error{% endif %}"{% if errors.name %} aria-invalid="true"{% endif %}>
+<small id="name-help" class="rv-help">Shown in the top bar. Empty shows the username.</small>
+{% if errors.name %}<small id="name-error" class="rv-field-error">{{ errors.name|join(' ') }}</small>{% endif %}
+</div>
+<button type="submit">Save name</button>
+</form>
+<form method="post" action="/account/picture" enctype="multipart/form-data" class="rv-account-form" id="picture-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="rv-field">
+<label for="picture">Picture</label>
+<input id="picture" name="picture" type="file" accept="image/png,image/jpeg,image/webp" required aria-describedby="picture-help{% if errors.picture %} picture-error{% endif %}"{% if errors.picture %} aria-invalid="true"{% endif %}>
+<small id="picture-help" class="rv-help">PNG, JPEG or WebP, up to {{ max_avatar_kb }} KB. Shown in a circle.</small>
+{% if errors.picture %}<small id="picture-error" class="rv-field-error">{{ errors.picture|join(' ') }}</small>{% endif %}
+</div>
+<div class="rv-actions">
+<button type="submit">Upload picture</button>
+</div>
+</form>
+{% if user.avatar_type %}
+<form method="post" action="/account/picture/remove" class="rv-inline-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">Remove picture</button>
+</form>
+{% endif %}
+</section>
+<section class="rv-card rv-account-card" id="password" aria-labelledby="password-title">
+<h2 id="password-title" class="rv-card-title">Password</h2>
+<form method="post" action="/account/password" class="rv-account-form" id="password-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="text" name="username" value="{{ user.username }}" autocomplete="username" hidden>
+<div class="rv-field">
+<label for="current_password">Current password</label>
+<input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+</div>
+<div class="rv-field">
+<label for="new_password">New password</label>
+<input id="new_password" name="new_password" type="password" autocomplete="new-password" minlength="{{ min_password }}" maxlength="256" required aria-describedby="password-help{% if errors.password %} password-error{% endif %}"{% if errors.password %} aria-invalid="true"{% endif %}>
+<small id="password-help" class="rv-help">At least {{ min_password }} characters.</small>
+</div>
+<div class="rv-field">
+<label for="confirm_password">New password again</label>
+<input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="{{ min_password }}" maxlength="256" required>
+{% if errors.password %}<small id="password-error" class="rv-field-error">{{ errors.password|join(' ') }}</small>{% endif %}
+</div>
+<button type="submit">Change password</button>
+</form>
+</section>
+<section class="rv-card rv-account-card" id="appearance" aria-labelledby="appearance-title">
+<h2 id="appearance-title" class="rv-card-title">Theme</h2>
+<form method="post" action="/account/theme" class="rv-account-theme" id="theme-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<fieldset>
+<legend class="rv-sr-only">Theme</legend>
+{% for value, word, glyph in (("light", "Light", "sun"), ("dark", "Dark", "moon"), ("system", "Same as the system", "monitor")) %}
+<label class="rv-choice"><input type="radio" name="theme" value="{{ value }}"{% if theme == value %} checked{% endif %}>{{ i.icon(glyph, "sm") }}<span>{{ word }}</span></label>
+{% endfor %}
+</fieldset>
+{% if errors.theme %}<small class="rv-field-error">{{ errors.theme|join(' ') }}</small>{% endif %}
+<button type="submit" class="rv-button-quiet">Save theme</button>
+</form>
+</section>
+</div>
+{% endblock %}

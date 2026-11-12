@@ -1,7 +1,7 @@
 # 8. Scenes, the folded rail and the Evidence Explorer
 
-Three pages carry a scene drawn in the browser: the rookery skyline on **Home**, the
-domain keep on the overview of a client, and the rookery wall of the **Evidence
+Three pages carry a scene drawn in the browser: the client street on **Home**, the
+domain keep on the overview of a client, and the evidence wall of the **Evidence
 Explorer**. Each scene draws facts the page already shows: the cards, the bars and the
 tables under it stay the record, and a scene adds nothing to a report. The scenes
 start hidden: a page opens on its cards and bars, with the button **Show the 3D
@@ -21,16 +21,19 @@ move is immediate.
 ## The rookery on Home
 
 Under **What moves the score**, a keep panel holds the gauge of the mean score on its
-left and the stage on its right. On the stage one rook per client stands on a charcoal
-yard, as tall as its score and crenellated like the revrook mark. A strong or good band is stone, fair
-is amber, weak or critical is red. A wire rook means the evidence is too thin for a
-score (the dashed outline of its bar in the score drivers), a flat footprint means nothing is imported yet,
-and every notch at the foot of a rook is a control that needs work.
+left and the stage on its right. On the stage the clients stand as offices along a
+street, with a road, a pavement, trees and street lamps. Each office is as tall as its
+score (2 to 12 floors) and as wide as the company (its people in the newest Entra
+export, else its devices). The light round its roof is its band: green for strong or
+good, amber for fair, red for weak or critical. A building still under construction
+(bare floor slabs behind glass) means the evidence is too thin for a score; an empty,
+fenced lot means nothing is imported yet; and every red window is a control that needs
+work.
 
 ![The rookery on Home at 1440 px, dark theme](../images/home-1440-dark.png)
 
-1. Hover over a rook, or over its card, to read its name in the line under the stage.
-2. Press a rook to choose it: the others step back, its card in the score drivers gets
+1. Hover over an office, or over its card, to read its name in the line under the stage.
+2. Press an office to choose it: the others step back, its card in the score drivers gets
    the violet mark at its left edge, and the detail line under the buttons names the client, its score,
    its band and how many controls need work.
 3. Or work from the keyboard: press Tab until the stage has focus, then **Left** and
@@ -43,8 +46,8 @@ and every notch at the foot of a rook is a control that needs work.
 ![A client chosen with the keyboard at 1440 px, dark theme](../images/home-1440-rook-chosen-dark.png)
 
 On a tablet the gauge stands above the stage, which spans the panel, and the cards
-stand two to a row; on a phone the row of rooks is fitted to the width of the stage, so
-each rook is small.
+stand two to a row; on a phone the row of offices is fitted to the width of the stage, so
+each office is small.
 
 ![Home at 768 px (tablet view), dark theme](../images/home-768-dark.png)
 
@@ -124,13 +127,14 @@ or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 1. Choose the **Client** and press **Show**.
 2. The verdict band gives the status that needs the most work, with the sources, the
    current exports, the exports to refresh and the links between sources and controls.
-3. **The rookery wall** opens with **Show the 3D view** in the head of its card (the
-   same choice as the scenes of Home and the client overview): an inner ring of
-   pillars, one per evidence source, as tall as the number of controls it feeds; an
-   outer ring of tiles, one per control, grouped by domain; a beam from a source to
-   every control that reads it. The public DNS check is a pillar of its own, joined to
+3. **The evidence wall** opens with **Show the 3D view** in the head of its card (the
+   same choice as the scenes of Home and the client overview): an inner ring of office
+   blocks, one per evidence source, as tall as the number of controls it feeds, its roof
+   light the state of its newest export (an empty lot when it was never imported); an
+   outer ring of tiles, one per control, grouped by domain; a faint beam from a source to
+   every control that reads it. The public DNS check is a block of its own, joined to
    the three mail controls. The legend under the buttons names every shape.
-4. Hover over a pillar or a tile to name it; select it to bring its beams forward. A drag,
+4. Hover over a block or a tile to name it; select it to light its beams. A drag,
    **Turn left**, **Turn right** and **Reset view** turn the wall; **Turn by itself**
    lets it turn slowly until you touch it (not under reduced motion).
 5. Under the scene, **Evidence sources** and the table of the controls carry the same

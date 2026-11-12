@@ -151,10 +151,10 @@
 }
 
 /* One card per client: the name, the score and the band, the bar, the biggest
-   driver and the controls that cost the most */
+   driver and the controls that cost the most; four stand in a row at 1440px */
 .rv-drivers {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
   gap: 12px;
   margin: 0 0 8px;
   padding: 0;

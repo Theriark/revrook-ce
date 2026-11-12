@@ -1,0 +1,6 @@
+{#- The picture of a person, or the first letter of their name in a circle. The
+    picture's address carries its version, so a new one is never served from a
+    cache (app/ui/account.py). Decorative: the name is always written beside it. -#}
+{% macro avatar(user, size="sm") -%}
+<span class="rv-avatar rv-avatar-{{ size }}" aria-hidden="true">{% if user.avatar_type %}<img src="/account/picture/{{ user.id }}?v={{ user.avatar_version }}" alt="" width="40" height="40">{% else %}{{ ((user.display_name or '')|trim or user.username)[:1]|upper }}{% endif %}</span>
+{%- endmacro %}

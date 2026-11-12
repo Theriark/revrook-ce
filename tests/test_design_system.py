@@ -239,12 +239,8 @@ def test_the_narrow_bar_and_the_rail_make_room_for_the_sign_out_button() -> None
         r"@media \(max-width: 599px\) \{\n  \.rv-app \.rv-edition \{([^}]*)\}", CSS
     )
     assert narrow is not None and "display: none" in narrow.group(1)
-    rail = re.search(r"@media \(min-width: 1024px\) \{(.*?)\n\}\n", CSS, re.DOTALL)
-    assert rail is not None
-    block = rail.group(1)
-    assert re.search(r"\.rv-user \{[^}]*flex-wrap: wrap;", block)
-    assert re.search(r"\.rv-user \.rv-inline-form \{[^}]*flex-basis: 100%;", block)
-    assert re.search(r"\.rv-user \.rv-button-quiet \{[^}]*width: 100%;", block)
+    # The sign-out button left the rail for the account menu (2026-11-12)
+    assert ".rv-user {" not in CSS
 
 
 def test_a_submit_button_is_as_wide_as_its_words() -> None:
@@ -526,8 +522,13 @@ def test_the_navigation_names_every_page_once_and_only_real_routes() -> None:
 def test_every_icon_the_templates_use_is_drawn_without_a_namespace() -> None:
     assert "xmlns" not in ICONS and "http" not in ICONS
     assert 'aria-hidden="true"' in ICONS and 'focusable="false"' in ICONS
-    used = set(ICON_USE.findall(NAV)) | set(ICON_USE.findall(BASE))
-    assert used >= {"home", "clients", "mapping", "chain", "signout", "check"}
+    topbar = (ROOT / "app/ui/templates/_topbar.html").read_text(encoding="utf-8")
+    used = (
+        set(ICON_USE.findall(NAV))
+        | set(ICON_USE.findall(BASE))
+        | set(ICON_USE.findall(topbar))
+    )
+    assert used >= {"home", "clients", "mapping", "chain", "signout", "check", "user"}
     for name in used:
         assert f'name == "{name}"' in ICONS, name
 
@@ -567,15 +568,13 @@ async def test_signed_in_pages_share_the_rail_and_mark_the_current_page(
         assert [href for href, _ in links] == [href for href, _ in NAV_LINKS]
         assert [href for href, flag in links if flag] == [current]
         assert html.count('aria-current="page"') == 2  # the rail and the breadcrumb
-        # The rail draws one icon per link, one on the sign-out button, the
-        # three of the theme switch and the chevron of the fold; the page below
-        # it may draw its own (the Home empty state does).
+        # The rail draws one icon per link and the chevron of the fold; the
+        # account (name, theme, sign out) is in the top bar (2026-11-12).
         rail = html.split("</header>", 1)[0]
-        icons = len(NAV_LINKS) + 1 + THEME_ICONS + RAIL_ICONS
-        assert rail.count('<svg class="rv-icon ') == icons
-        assert '<span class="rv-user-name">admin</span>' in html
+        assert rail.count('<svg class="rv-icon ') == len(NAV_LINKS) + RAIL_ICONS
+        assert '<span class="rv-account-name">admin</span>' in html
         assert 'action="/logout"' in html and ">Sign out</span>" in html
-        assert 'class="rv-footer"' in html
+        assert 'class="rv-footer"' not in html
         assert 'class="rv-auth-panel"' not in html
 
 

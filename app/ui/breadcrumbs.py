@@ -24,6 +24,7 @@ PLACES = {
     "settings": ("Settings", "settings"),
     "system": ("System", "system"),
     "glossary": ("Glossary", "glossary"),
+    "account": ("Account", "account"),
 }
 # The tabs of one client (templates/_client_nav.html): the words and the path
 # after /clients/<id>. The overview is the client's own page.

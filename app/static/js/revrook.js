@@ -322,13 +322,38 @@
     for (var k = 0; k < buttons.length; k += 1) {
       buttons[k].setAttribute("aria-pressed", buttons[k].value === theme ? "true" : "false");
     }
+    // After the click is done: the form posts the value the button had when pressed
+    window.setTimeout(syncThemeToggle, 0);
+  }
+
+  // The one-button switch of the top bar asks for the theme the page is not in.
+  // Under "system" that depends on the system, which only the browser knows.
+  function shownTheme() {
+    var theme = document.documentElement.getAttribute("data-theme") || "system";
+    if (theme !== "system") {
+      return theme;
+    }
+    var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return dark ? "dark" : "light";
+  }
+
+  function syncThemeToggle() {
+    var toggles = document.querySelectorAll('.rv-theme-toggle button[name="theme"]');
+    var other = shownTheme() === "dark" ? "light" : "dark";
+    for (var k = 0; k < toggles.length; k += 1) {
+      toggles[k].value = other;
+      toggles[k].setAttribute("aria-label", "Use the " + other + " theme");
+      toggles[k].setAttribute("title", "Use the " + other + " theme");
+    }
   }
 
   function themeButtonOf(event) {
     var node = event.target;
     while (node && node !== document) {
       if (node.tagName === "BUTTON" && node.name === "theme") {
-        return node.form && node.form.classList.contains("rv-theme") ? node : null;
+        var form = node.form;
+        var known = form && (form.classList.contains("rv-theme") || form.classList.contains("rv-theme-toggle"));
+        return known ? node : null;
       }
       node = node.parentNode;
     }
@@ -353,7 +378,7 @@
   // and 422 as answers rather than errors, so htmx reports them as successful.
   function themePosted(event) {
     var form = event.target;
-    if (!form || !form.classList || !form.classList.contains("rv-theme")) {
+    if (!form || !form.classList || !(form.classList.contains("rv-theme") || form.classList.contains("rv-theme-toggle"))) {
       return;
     }
     var detail = event.detail || {};
@@ -378,7 +403,7 @@
   // the words are beside the icon and the tooltip would only repeat them.
   function setRailTitles(rail) {
     var named = document.querySelectorAll(
-      ".rv-header .rv-nav-link, .rv-header .rv-user .rv-inline-form button"
+      ".rv-header .rv-nav-link"
     );
     for (var k = 0; k < named.length; k += 1) {
       var text = named[k].querySelector(".rv-nav-text, span:last-child");
@@ -479,8 +504,30 @@
     search.select();
   }
 
+  // The account menu of the top bar is a details element: Escape or a click
+  // outside it closes it, as a menu would.
+  function closeAccountMenu(event) {
+    var menu = document.getElementById("account-menu");
+    if (!menu || !menu.open) {
+      return;
+    }
+    if (event.type === "keydown") {
+      if (event.key === "Escape") {
+        menu.open = false;
+        menu.querySelector("summary").focus();
+      }
+      return;
+    }
+    if (!menu.contains(event.target)) {
+      menu.open = false;
+    }
+  }
+
   function ready() {
     watchDrawer();
+    syncThemeToggle();
+    document.addEventListener("keydown", closeAccountMenu);
+    document.addEventListener("click", closeAccountMenu);
     document.addEventListener("keydown", focusSearch);
     document.addEventListener("click", applyTheme);
     document.addEventListener("click", applyRail);

@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import count_users
 from app.evidence.errors import EvidenceError
 from app.evidence.service import list_evidence
-from app.models import AppUser, AuditEvent, Client, Snapshot
+from app.models import AppUser, AuditEvent, Client, Fact, Snapshot
 from app.posture import load_live, view_of
 from app.reports.view import DomainRow, ReportContext, ReportError
 from app.snapshots import earlier_bytes
@@ -88,6 +88,39 @@ async def client_names(session: AsyncSession) -> dict[int, str]:
     """Every client, archived ones included, so an old event still names it."""
     found = await session.execute(select(Client.id, Client.name))
     return {client_id: name for client_id, name in found.all()}
+
+
+# The facts that say how big a client is: its people in Entra, else its devices
+SIZE_FACTS = {
+    "entra.summary": "users",
+    "intune.summary": "devices",
+    "inventory.summary": "devices",
+}
+
+
+async def company_sizes(session: AsyncSession) -> dict[int, int]:
+    """How big each client is, for the base of its rook on Home: the people of its
+    newest Entra export, else the devices of its newest device export; a client
+    with neither has no size (the scene draws it at the smallest base)."""
+    newest = await session.execute(
+        select(Fact.client_id, Fact.fact_key, Fact.value)
+        .where(Fact.fact_key.in_(list(SIZE_FACTS)))
+        .distinct(Fact.client_id, Fact.fact_key)
+        .order_by(
+            Fact.client_id, Fact.fact_key, Fact.captured_at.desc(), Fact.id.desc()
+        )
+    )
+    people: dict[int, int] = {}
+    devices: dict[int, int] = {}
+    for client_id, key, value in newest:
+        count = value.get(SIZE_FACTS[key]) if isinstance(value, dict) else None
+        if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+            continue
+        if key == "entra.summary":
+            people[client_id] = count
+        else:
+            devices[client_id] = max(devices.get(client_id, 0), count)
+    return {**devices, **people}
 
 
 async def usernames(session: AsyncSession) -> dict[int, str]:
@@ -227,9 +260,11 @@ async def load_board(
         names = await client_names(session)
         events = await recent_events(session)
         users = await usernames(session)
+        sizes = await company_sizes(session)
     weekly = weekly_series(points, created, now)
     return {
         "clients": postures,
+        "sizes": sizes,
         "with_evidence": sum(1 for item in postures if item.evidence),
         # What moves the score, over the clients with evidence: a client without
         # any is all "not checked" and would only say that nothing is imported.

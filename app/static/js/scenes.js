@@ -31,16 +31,17 @@
  * scenes with the button under a stage; the choice is kept in this browser only.
  */
 
+import { officeBuilding, streetKit } from "./office.js";
+
 const THREE_URL = "/static/vendor/three/three.module.js";
 const HIDE_KEY = "rv-scenes";
 
 // The stage colours: the brand charcoal of the stylesheet as the ground, the
-// dark-theme status values on it (each reaches 4.5 to 1 on that ground), the stone
-// of the brand for a sound rook, the dark-theme link colour for a mark.
+// dark-theme status values on it (each reaches 4.5 to 1 on that ground), the
+// dark-theme link colour for a mark.
 const GROUND = 0x2d2f3a;
 const GROUND_SOFT = 0x343746;
 const LINE = 0x4d5261;
-const STONE = 0xd9d6cf;
 const ACCENT = 0x8b97f2;
 const PICKED = 0xffffff;
 const STATUS_COLOR = {
@@ -49,11 +50,11 @@ const STATUS_COLOR = {
   "not-protected": 0xff8a80,
   "not-checked": 0xaab0bd,
 };
-// The band of a client gives its rook a colour beside its height: a strong or a
-// good client is stone, a fair one amber, a weak or a critical one red.
-const BAND_COLOR = {
-  strong: STONE,
-  good: STONE,
+// The roof light of an office says its band in the status colours: green for a
+// strong or a good client, amber for a fair one, red for a weak or a critical one.
+const BAND_RING = {
+  strong: STATUS_COLOR.protected,
+  good: STATUS_COLOR.protected,
   fair: STATUS_COLOR["needs-attention"],
   weak: STATUS_COLOR["not-protected"],
   critical: STATUS_COLOR["not-protected"],
@@ -72,7 +73,7 @@ const WORDS = {
   lost: "The browser paused its drawing (the graphics context was lost). It resumes by itself when it can; the page is unchanged.",
   closed: "The 3D view is off. The cards and the bars show the same facts.",
   noWebGL: "This browser could not start the 3D view: WebGL is switched off or unavailable. The cards and the bars show the same facts.",
-  footprints: "Every client is a footprint: nothing is imported yet. Import an export and its rook rises here.",
+  footprints: "Every client is an empty lot: nothing is imported yet. Import an export and its office rises here.",
 };
 
 // The ground of a stage: the colour the stylesheet gives it (--rv-scene-ground,
@@ -169,7 +170,12 @@ function disposeObject(object) {
   }
   if (object.material) {
     const materials = Array.isArray(object.material) ? object.material : [object.material];
-    materials.forEach((material) => material.dispose());
+    materials.forEach((material) => {
+      if (material.map) {
+        material.map.dispose();
+      }
+      material.dispose();
+    });
   }
 }
 
@@ -187,6 +193,7 @@ function readRookery(list) {
     const evidence = number(element, "evidence") > 0;
     const score = clamp(number(element, "score"), 0, 100);
     const needsWork = number(element, "needs-work");
+    const size = Math.max(0, number(element, "size"));
     const name = element.getAttribute("data-name") || "";
     const scoreText = element.getAttribute("data-score-text") || String(score);
     let said = name + ": ";
@@ -200,6 +207,9 @@ function readRookery(list) {
     if (evidence) {
       said += " " + needsWork + (needsWork === 1 ? " control needs" : " controls need") + " work.";
     }
+    if (size > 0) {
+      said += " " + size + (size === 1 ? " person or device." : " people or devices.");
+    }
     return {
       id: "client:" + element.getAttribute("data-client"),
       index,
@@ -207,11 +217,16 @@ function readRookery(list) {
       href: pathOf(element),
       label: said,
       kind: "rook",
-      height: evidence ? 0.35 + 2.6 * (score / 100) : 0,
-      color: evidence ? BAND_COLOR[band] || STATUS_COLOR["not-checked"] : LINE,
-      wire: insufficient,
+      // An office per client: as many floors as its score allows (2 to 12), as
+      // wide as the company (one person is the narrowest, 500 or more the widest,
+      // on a log scale so a big client does not hide the others).
+      floors: evidence ? 2 + Math.round((score / 100) * 10) : 0,
+      width: 0.45 + 0.5 * clamp(Math.log10(size + 1) / Math.log10(501), 0, 1),
+      strip: evidence ? BAND_RING[band] || STATUS_COLOR["not-checked"] : LINE,
+      state: !evidence ? "lot" : insufficient ? "frame" : "built",
       footprint: !evidence,
       notches: Math.min(needsWork, 12),
+      seed: number(element, "client") || index + 1,
     };
   });
 }
@@ -246,56 +261,19 @@ const READERS = { rookery: readRookery, keep: readKeep };
 
 // --- the builders: a group of meshes per node, one material per node ------------
 
-function buildRook(THREE, entry, x, z) {
-  const group = new THREE.Group();
-  group.userData.node = entry.id;
-  const material = new THREE.MeshStandardMaterial({
-    color: entry.color,
-    roughness: 0.75,
-    metalness: 0.05,
-    transparent: true,
-    wireframe: entry.wire,
+function buildOffice(THREE, entry, x, z) {
+  const built = officeBuilding(THREE, {
+    width: entry.width,
+    depth: 0.62,
+    floors: entry.floors,
+    state: entry.state,
+    strip: entry.strip,
+    red: entry.notches,
+    seed: entry.seed,
   });
-  const materials = [material];
-  const plinth = new THREE.Mesh(
-    new THREE.BoxGeometry(0.9, 0.08, 0.9),
-    new THREE.MeshStandardMaterial({ color: GROUND_SOFT, roughness: 1, transparent: true })
-  );
-  materials.push(plinth.material);
-  plinth.position.y = 0.04;
-  group.add(plinth);
-  if (entry.footprint) {
-    const print = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.5), material);
-    print.position.y = 0.095;
-    group.add(print);
-  } else {
-    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.5, entry.height, 0.5), material);
-    shaft.position.y = 0.08 + entry.height / 2;
-    group.add(shaft);
-    [-1, 1].forEach((dx) => {
-      [-1, 1].forEach((dz) => {
-        const crenel = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.14, 0.15), material);
-        crenel.position.set(dx * 0.175, 0.08 + entry.height + 0.07, dz * 0.175);
-        group.add(crenel);
-      });
-    });
-    if (entry.notches > 0) {
-      const notch = new THREE.MeshStandardMaterial({
-        color: STATUS_COLOR["not-protected"],
-        roughness: 0.6,
-        transparent: true,
-      });
-      materials.push(notch);
-      for (let k = 0; k < entry.notches; k += 1) {
-        const angle = (k / 12) * 2 * Math.PI;
-        const cube = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), notch);
-        cube.position.set(0.38 * Math.cos(angle), 0.13, 0.38 * Math.sin(angle));
-        group.add(cube);
-      }
-    }
-  }
-  group.position.set(x, 0, z);
-  return { group, materials, top: 0.08 + entry.height + 0.2 };
+  built.group.userData.node = entry.id;
+  built.group.position.set(x, 0, z);
+  return built;
 }
 
 function buildBlock(THREE, entry, x, z) {
@@ -316,17 +294,31 @@ function buildBlock(THREE, entry, x, z) {
       return;
     }
     const height = layer.count * step;
+    const glass = layer.key === "not-checked";
     const material = new THREE.MeshStandardMaterial({
       color: STATUS_COLOR[layer.key],
-      roughness: 0.7,
+      roughness: glass ? 0.2 : 0.55,
       metalness: 0.05,
       transparent: true,
-      wireframe: layer.key === "not-checked",
+      opacity: glass ? 0.32 : 1,
+      depthWrite: !glass,
     });
+    material.userData.base = material.opacity;
     materials.push(material);
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(entry.side, height - 0.02, entry.side), material);
+    const geometry = new THREE.BoxGeometry(entry.side, height - 0.02, entry.side);
+    const slab = new THREE.Mesh(geometry, material);
     slab.position.y = y + height / 2;
+    slab.castShadow = !glass;
+    slab.receiveShadow = true;
     group.add(slab);
+    if (glass) {
+      const edge = new THREE.LineBasicMaterial({ color: STATUS_COLOR[layer.key], transparent: true, opacity: 0.7 });
+      edge.userData.base = 0.7;
+      materials.push(edge);
+      const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), edge);
+      outline.position.copy(slab.position);
+      group.add(outline);
+    }
     y += height;
   });
   group.position.set(x, 0, z);
@@ -430,17 +422,19 @@ function buildScene(THREE, root, options) {
     powerPreference: "low-power",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const ground = groundOf(root);
   renderer.setClearColor(ground, 1);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 21 / 9, 0.1, 80);
-  const spacing = kind === "keep" ? 1.7 : 1.25;
+  const spacing = kind === "keep" ? 1.7 : 1.35;
   const limit = kind === "keep" ? 6 : 8;
   const spots = place(entries.length, spacing, limit);
   const rows = entries.length > limit ? 2 : 1;
   const span = Math.max(3, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 2);
   const tallest = entries.reduce((top, entry) => {
-    const own = entry.kind === "rook" ? entry.height : entry.layers.reduce((sum, layer) => sum + layer.count * 0.16, 0);
+    const own = entry.kind === "rook" ? 0.28 + entry.floors * 0.2 : entry.layers.reduce((sum, layer) => sum + layer.count * 0.16, 0);
     return Math.max(top, own);
   }, 0.5);
   const home = { yaw: 0.35, pitch: 0.55, distance: span * 1.15 + 3 };
@@ -457,8 +451,19 @@ function buildScene(THREE, root, options) {
 
   const sky = new THREE.HemisphereLight(0xffffff, ground, 1.5);
   scene.add(sky);
-  const sun = new THREE.DirectionalLight(0xffffff, 1.7);
+  const sun = new THREE.DirectionalLight(0xfff4e6, 2.1);
   sun.position.set(4, 9, 6);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.radius = 4;
+  sun.shadow.bias = -0.0008;
+  const reach = span * 0.9 + 2;
+  sun.shadow.camera.left = -reach;
+  sun.shadow.camera.right = reach;
+  sun.shadow.camera.top = reach;
+  sun.shadow.camera.bottom = -reach;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 30;
   scene.add(sun);
   // Depth: a cool rim light from behind the yard picks out the battlements, and
   // the far side of the yard fades into the ground colour.
@@ -474,19 +479,55 @@ function buildScene(THREE, root, options) {
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.02;
+  floor.receiveShadow = true;
   scene.add(floor);
-  const points = [];
-  for (let step = 0; step < 96; step += 1) {
-    const a = (step / 96) * 2 * Math.PI;
-    points.push(new THREE.Vector3((span * 0.9 + 1.2) * Math.cos(a), 0.005, (span * 0.9 + 1.2) * Math.sin(a)));
+  // The rookery is a street: a road in front of the offices, a pavement, trees
+  // and street lamps between the buildings, and a second street behind when the
+  // clients take two rows.
+  if (kind === "rookery") {
+    const kit = streetKit(THREE);
+    const long = Math.max(5, (Math.max(1, rowOf(entries.length, limit)) - 1) * spacing + 3.4);
+    const road = new THREE.MeshStandardMaterial({ color: 0x24262d, roughness: 0.95 });
+    const pavement = new THREE.MeshStandardMaterial({ color: 0x4c5160, roughness: 0.9 });
+    const paint = new THREE.MeshStandardMaterial({ color: 0xe8e2cf, roughness: 0.6 });
+    const fronts = rows > 1 ? [0, -1.9] : [0];
+    const grass = new THREE.MeshStandardMaterial({ color: 0x34473b, roughness: 1 });
+    fronts.forEach((front) => {
+      // The block the offices stand on: a lawn behind the pavement, with trees.
+      const block = new THREE.Mesh(new THREE.BoxGeometry(long, 0.02, 1.05), grass);
+      block.position.set(0, 0.01, front - 0.15);
+      block.receiveShadow = true;
+      scene.add(block);
+      for (let x = -long / 2 + 0.3; x < long / 2; x += 0.55) {
+        scene.add(kit.tree(x, front - 0.58, 0.75 + ((Math.round(x * 10) % 3) + 3) % 3 * 0.12));
+      }
+      const walk = new THREE.Mesh(new THREE.BoxGeometry(long, 0.03, 0.34), pavement);
+      walk.position.set(0, 0.015, front + 0.55);
+      walk.receiveShadow = true;
+      scene.add(walk);
+      const lane = new THREE.Mesh(new THREE.BoxGeometry(long, 0.01, 0.62), road);
+      lane.position.set(0, 0.005, front + 1.03);
+      lane.receiveShadow = true;
+      scene.add(lane);
+      for (let x = -long / 2 + 0.2; x < long / 2; x += 0.42) {
+        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.012, 0.025), paint);
+        dash.position.set(x + 0.1, 0.012, front + 1.03);
+        scene.add(dash);
+      }
+      // Trees and lamps stand between the offices, never in front of one.
+      const row = spots.filter((spot) => Math.abs(spot.z - front) < 1).map((spot) => spot.x);
+      const gaps = row.length ? [row[0] - spacing / 2, ...row.map((x) => x + spacing / 2)] : [0];
+      gaps.forEach((x, k) => {
+        scene.add(k % 2 ? kit.streetLamp(x, front + 0.62) : kit.tree(x, front + 0.5, 0.9 + (k % 3) * 0.1));
+      });
+    });
   }
-  scene.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: LINE })));
 
   const pickables = [];
   const nodes = new Map();
   entries.forEach((entry, index) => {
     const spot = spots[index];
-    const built = entry.kind === "rook" ? buildRook(THREE, entry, spot.x, spot.z) : buildBlock(THREE, entry, spot.x, spot.z);
+    const built = entry.kind === "rook" ? buildOffice(THREE, entry, spot.x, spot.z) : buildBlock(THREE, entry, spot.x, spot.z);
     scene.add(built.group);
     pickables.push(built.group);
     nodes.set(entry.id, { entry, group: built.group, materials: built.materials });
@@ -575,9 +616,12 @@ function buildScene(THREE, root, options) {
     nodes.forEach((node, id) => {
       const own = focus === id;
       node.materials.forEach((material) => {
-        material.opacity = !focus || own ? 1 : DIM;
-        material.emissive.setHex(own ? PICKED : 0x000000);
-        material.emissiveIntensity = own ? 0.3 : 0;
+        const base = material.userData.base === undefined ? 1 : material.userData.base;
+        material.opacity = !focus || own ? base : base * DIM;
+        if (material.emissive) {
+          material.emissive.setHex(own ? PICKED : material.userData.emissive || 0x000000);
+          material.emissiveIntensity = own ? 0.22 : material.userData.emissiveIntensity || 0;
+        }
       });
     });
     invalidate();

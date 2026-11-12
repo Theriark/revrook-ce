@@ -1,15 +1,17 @@
 {#- The top bar of the page column (docs/design-system.md, The shell): the breadcrumb
-    of the page and the search of the clients. The trail comes from the page's own
-    context (app/ui/breadcrumbs.py); the last step is the page itself, marked
-    aria-current and not a link. The search is a plain GET form to the clients list
-    (its `q`), so it works without script; revrook.js lets the / key move focus to
-    it from anywhere outside a field. The landmark is the search element, not
-    role="search" on the form: Pico draws every [role=search] as one joined pill,
-    which squeezed the field and stretched the button. Not a header element: the
-    rail is the banner of the page, and two banners would confuse a screen
-    reader's landmarks. -#}
+    of the page on the left; on the right the search of the clients, the theme switch
+    and the account menu. The trail comes from the page's own context
+    (app/ui/breadcrumbs.py); its last step is the page itself, aria-current and not a
+    link. The search is a plain GET form to the clients list, so it works without
+    script; revrook.js lets the / key move focus to it. The theme switch is one button
+    that posts the other theme to /theme; revrook.js applies it at once and works out
+    the other theme when the system decides. The account menu is a details element,
+    so it opens without script; revrook.js closes it on Escape or a click outside.
+    Not a header element: the rail is the banner of the page. -#}
 {% import "_icons.html" as i %}
+{% import "_avatar.html" as a %}
 {% set trail = breadcrumb_trail(nav=nav|default(""), title=title|default(""), client_id=client_id|default(none), client_name=client_name|default(""), section=section|default(""), leaf=crumb_leaf|default("")) %}
+{% set shown_name = (user.display_name or '')|trim or user.username %}
 <div class="rv-topbar" id="topbar">
 <div class="rv-topbar-inner">
 <nav class="rv-breadcrumb" aria-label="Breadcrumb">
@@ -19,6 +21,7 @@
 {% endfor %}
 </ol>
 </nav>
+<div class="rv-topbar-tools">
 <search class="rv-topbar-search" aria-label="Clients">
 <form class="rv-topbar-form" method="get" action="/clients">
 <label for="topbar-q" class="rv-sr-only">Search clients by name</label>
@@ -27,8 +30,28 @@
 <input id="topbar-q" name="q" type="search" placeholder="Search clients" maxlength="200" autocomplete="off" aria-keyshortcuts="/" aria-describedby="topbar-q-key">
 <kbd class="rv-topbar-key" id="topbar-q-key"><span class="rv-sr-only">Shortcut: </span>/</kbd>
 </span>
-<button type="submit" class="rv-button-quiet rv-button-small">Search</button>
 </form>
 </search>
+{% set other = 'light' if theme == 'dark' else 'dark' %}
+<form class="rv-theme-toggle" method="post" action="/theme" hx-post="/theme" hx-swap="none">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="next" value="{{ theme_next|default('/') }}">
+<button type="submit" class="rv-icon-button" name="theme" value="{{ other }}" aria-label="Use the {{ other }} theme" title="Use the {{ other }} theme"><span class="rv-theme-to-light">{{ i.icon("sun", "sm") }}</span><span class="rv-theme-to-dark">{{ i.icon("moon", "sm") }}</span></button>
+</form>
+<details class="rv-account" id="account-menu">
+<summary class="rv-account-button" aria-label="Account menu for {{ shown_name }}">{{ a.avatar(user) }}<span class="rv-account-name">{{ shown_name }}</span>{{ i.icon("chevron-down", "sm") }}</summary>
+<div class="rv-account-panel">
+<div class="rv-account-who">{{ a.avatar(user, "md") }}<p><strong>{{ shown_name }}</strong>{% if user.display_name %}<span>{{ user.username }}</span>{% endif %}</p></div>
+<ul class="rv-account-links">
+<li><a href="/account"{% if nav == "account" %} aria-current="page"{% endif %}>{{ i.icon("user", "sm") }}<span>Account</span></a></li>
+<li><a href="/settings"{% if nav == "settings" %} aria-current="page"{% endif %}>{{ i.icon("settings", "sm") }}<span>Settings</span></a></li>
+</ul>
+<form class="rv-account-signout" method="post" action="/logout">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">{{ i.icon("signout", "sm") }}<span>Sign out</span></button>
+</form>
+</div>
+</details>
+</div>
 </div>
 </div>
