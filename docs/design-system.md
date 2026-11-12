@@ -14,11 +14,12 @@ evidence a client, an insurer or a quarterly review asks for. The interface is c
 dense and readable: charcoal and white with one violet-blue accent, status always as
 an icon and its words, and nothing that moves unless the person did something.
 
-The one signature of revrook is the keep: every signed-in page opens with a charcoal
-band whose top edge is the battlement of the rook mark, carrying the title, the purpose
-and the one primary action (see The keep below). The rail on the left carries the brand
-lockup, the navigation and the signed-in user, with a 3 px violet-blue mark on the
-current page; it is stone in the light theme and the darkest surface in the dark one.
+Every signed-in page has a top bar with the breadcrumb trail, the search, the theme
+button and the account menu (see The shell below); the page title, its purpose and the
+one primary action stand on the page under it. The rail on the left carries the brand
+lockup and the navigation, with a 3 px violet-blue mark on the current page; it is
+stone in the light theme and the darkest surface in the dark one. The keep below
+describes the charcoal band of earlier versions, which the shell of 2026-11-12 removed.
 Signed-out pages show the charcoal as a panel with the stacked lockup next to the form.
 
 ## Tokens
@@ -186,7 +187,7 @@ are in `revrook-retest.css`.
 
 A page without a `user` (sign-in, first run) gets the signed-out shell: the charcoal
 panel with the stacked lockup and three lines about the product on the left, the
-lockup in a row, the badge, the form and the footer on the right. Below 768 px the
+lockup in a row, the badge and the form on the right. Below 768 px the
 panel becomes a short band above the form.
 
 The brand lockup (`_brand.html`, `{{ b.lockup(brand_files) }}` or
