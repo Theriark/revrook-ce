@@ -122,7 +122,7 @@
 </div>
 {% endif %}
 </div>
-{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The client street: one office per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the street, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Choose a building, or a card below, to see its details here.", "One office per client: as tall as its score, as wide as the company, its roof light the band. A building in scaffolding has too little evidence for a score, an empty lot has none; each red window is a control that needs work.") }}
+{{ sc.stage("rookery-scene", "rookery", "rookery-list", "The client street: one office per client, as tall as its score. Left and Right choose a client, Enter opens it, the brackets turn the street, plus and minus move closer and away, Home resets the view. The bars below carry the same facts.", "Choose a building, or a card below, to see its details here.", "One office per client: as tall as its score, as wide as the company, its roof light the band. A building in scaffolding has too little evidence for a score, an empty lot has none; each red window is a control that needs work.", "portfolio-links") }}
 </div>
 {% if portfolio %}
 {% set mean = portfolio.drivers %}
@@ -164,6 +164,47 @@
 </li>
 {% endfor %}
 </ul>
+{#- What the scene shows beside a building or a tile it chooses (scenes.js clones
+    these, never builds them): a company card per client, a control card per control
+    that at least one client fails, and the hidden list of every failing (client,
+    control) pair the ring view draws its beams from. -#}
+{% for client in clients %}
+{% set top = card_focus.get(client.client_id, []) %}
+<template id="client-card-{{ client.client_id }}">
+<div class="rv-scene-card rv-keep" role="dialog" aria-modal="false" aria-labelledby="client-card-{{ client.client_id }}-title">
+<div class="rv-scene-card-head">
+<h3 class="rv-scene-card-title" id="client-card-{{ client.client_id }}-title" tabindex="-1"><a href="/clients/{{ client.client_id }}">{{ client.name }}</a></h3>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-card-close" aria-label="Close"><span aria-hidden="true">&#215;</span></button>
+</div>
+<p class="rv-scene-card-score">{% if client.evidence %}<span class="rv-driver-score">{% if client.insufficient %}at least {% endif %}{{ client.score_text }}</span> <span class="rv-driver-band">{% if client.insufficient %}Insufficient evidence{% else %}{{ client.band }}{% endif %}</span>{% else %}<span class="rv-driver-band">No evidence yet</span>{% endif %}</p>
+{% if top %}
+<p class="rv-scene-card-label">Needs work</p>
+<ul class="rv-scene-card-list">
+{% for item in top %}<li>{{ s.status(item.label) }} <a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a></li>
+{% endfor %}</ul>
+{% endif %}
+<p class="rv-scene-card-meta"><a href="/clients/{{ client.client_id }}/evidence">Exports to refresh: {{ card_refresh.get(client.client_id, 0) }}</a></p>
+<p class="rv-scene-card-actions"><a role="button" class="rv-button-small" href="/clients/{{ client.client_id }}">Open client</a><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client.client_id }}/checklist">Checklist</a><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client.client_id }}/evidence">Evidence</a></p>
+</div>
+</template>
+{% endfor %}
+{% for control_id, items in links|groupby("control_id") %}
+<template id="control-card-{{ control_id }}">
+<div class="rv-scene-card rv-keep" role="dialog" aria-modal="false" aria-labelledby="control-card-{{ control_id }}-title">
+<div class="rv-scene-card-head">
+<h3 class="rv-scene-card-title" id="control-card-{{ control_id }}-title" tabindex="-1">{{ control_id }} {{ items[0].title }}</h3>
+<button type="button" class="rv-button-quiet rv-button-small rv-scene-card-close" aria-label="Close"><span aria-hidden="true">&#215;</span></button>
+</div>
+<p class="rv-scene-card-label">Needs work at {{ items|length }} client{% if items|length != 1 %}s{% endif %}</p>
+<ul class="rv-scene-card-list">
+{% for item in items %}<li><a href="/{{ item.path }}" data-drawer>{{ item.client_name }}</a> {{ s.status(item.label) }}</li>
+{% endfor %}</ul>
+</div>
+</template>
+{% endfor %}
+<ul id="portfolio-links" hidden>
+{% for item in links %}<li data-client="{{ item.client_id }}" data-control="{{ item.control_id }}" data-label="{{ item.label.key }}" data-title="{{ item.title }}" data-href="/{{ item.path }}">{{ item.client_name }}: {{ item.control_id }}</li>
+{% endfor %}</ul>
 {% if portfolio %}
 <details class="rv-chart-data" id="drivers-data">
 <summary>Show the numbers</summary>

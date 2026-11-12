@@ -43,6 +43,35 @@ work.
 4. **Turn left**, **Turn right** and **Reset view** under the stage do the same with the
    mouse or a touch; a drag turns and tilts the yard.
 
+### The company card
+
+Choosing an office opens its company card beside it, inside the stage: the client's
+name (a link to the client), its score and band (**at least** and **Insufficient
+evidence** when the evidence is too thin), **Needs work** with its three most urgent
+controls in the order of Home's **Needs attention**, each a link to the control,
+**Exports to refresh** with the number of its exports that are expired, stale or never
+imported (a link to its evidence page), and the buttons **Open client**, **Checklist**
+and **Evidence**. Choosing another office moves the card. Close it with its **x**
+button, **Escape**, a press anywhere outside it, **Reset view** or **Hide the 3D view**.
+When you choose with the keyboard the focus moves to the name on the card: **Left**,
+**Right** and **Enter** still work from there, Tab reaches its links, and **Escape**
+gives the focus back to the stage. On a stage narrower than 600 px (a phone) the card
+sits across the foot of the stage and scrolls inside it.
+
+### The ring view
+
+**Street** and **Ring** under the stage switch between the street and a ring of the
+whole portfolio; the browser remembers the choice. In the ring the clients stand as
+smaller offices on an inner circle, and every control that at least one client fails
+(not protected or needs attention) is a tile on an outer circle: red when a client has
+it not protected, amber when it only needs attention. A faint beam runs from each client
+to each control it fails. Choosing an office opens its company card and lights its
+beams and the controls at their ends; the rest steps back. Choosing a tile opens its
+control card: the control and its title, and every client that fails it with its
+status, each a link to that control of that client. **Left** and **Right** step
+through the clients and then the controls, and **Enter** opens the client, or the
+control of the first client on the tile's card.
+
 ![A client chosen with the keyboard at 1440 px, dark theme](../images/home-1440-rook-chosen-dark.png)
 
 On a tablet the gauge stands above the stage, which spans the panel, and the cards

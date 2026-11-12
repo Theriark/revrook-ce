@@ -208,6 +208,109 @@
   background-color: var(--rv-primary);
 }
 
+/* The Street / Ring switch of Home's stage: two buttons, the pressed one is the
+   view drawn, told by its fill and by aria-pressed. Pico draws every
+   role="group" as a joined bar the full width of its row; this one keeps the
+   size of its two buttons */
+.rv-scene-tools .rv-scene-views {
+  display: flex;
+  width: auto;
+  gap: 4px;
+  margin: 0;
+}
+
+.rv-scene-tools .rv-scene-views > button {
+  flex: 0 0 auto;
+  border-radius: var(--pico-border-radius);
+}
+
+main .rv-scene-views button[aria-pressed="true"] {
+  border-color: var(--rv-ink);
+  color: var(--rv-white);
+  background-color: var(--rv-ink);
+}
+
+/* The card of a chosen building or tile (Home): a popover over the stage, on the
+   dark surface of the keep band (the card carries .rv-keep, so its tokens are the
+   keep's in both themes). The script sets its left and top beside the node;
+   docked, it spans the foot of a narrow stage. Long content scrolls inside it */
+.rv-scene-card {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  width: min(20rem, calc(100% - 16px));
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--rv-line-strong);
+  border-radius: 10px;
+  font-size: var(--rv-fs-sm);
+  line-height: 1.5;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  box-shadow: var(--rv-shadow-2);
+}
+
+/* On a phone the card follows the stage instead of covering it */
+.rv-scene-card.is-docked {
+  position: static;
+  width: auto;
+  max-height: none;
+  margin-top: 8px;
+}
+
+.rv-scene-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rv-scene-card-title {
+  margin: 0 0 4px;
+  font-size: var(--rv-fs-md);
+  line-height: 1.3;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+.rv-scene-card-title:focus-visible {
+  outline: 2px solid var(--rv-focus);
+  outline-offset: 2px;
+}
+
+.rv-scene-card p,
+.rv-scene-card ul {
+  margin: 0 0 8px;
+}
+
+.rv-scene-card-label {
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-surface);
+}
+
+.rv-scene-card-list {
+  padding: 0;
+}
+
+/* Pico gives every list item a square marker */
+.rv-scene-card-list li {
+  margin: 0 0 4px;
+  list-style: none;
+}
+
+.rv-scene-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rv-scene-card .rv-scene-card-actions {
+  margin: 0;
+}
+
 @media (max-width: 599px) {
   .rv-scene-stage {
     aspect-ratio: 16 / 10;
