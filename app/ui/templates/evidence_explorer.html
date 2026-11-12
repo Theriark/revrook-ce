@@ -132,7 +132,7 @@
 </thead>
 <tbody>
 {% for control in portfolio.controls %}
-<tr data-node="control:{{ control.control_id }}" data-domain="{{ control.domain }}" data-label="{{ control.worst.key }}" data-title="{{ control.title }}"{% if control.pairs %} data-href="/clients/{{ control.pairs[0].client_id }}/controls/{{ control.control_id }}"{% endif %}>
+<tr data-node="control:{{ control.control_id }}" data-domain="{{ control.domain }}" data-domain-name="{{ control.domain_name }}" data-label="{{ control.worst.key }}" data-title="{{ control.title }}"{% if control.pairs %} data-href="/clients/{{ control.pairs[0].client_id }}/controls/{{ control.control_id }}"{% endif %}>
 <th scope="row"><span class="rv-explorer-id">{{ control.control_id }}</span> {{ control.title }}</th>
 <td data-label="Domain">{{ control.domain }}</td>
 {% for label in portfolio.labels %}<td data-label="{{ label.text }}" class="rv-numeric">{{ control.counts[loop.index0] }}</td>

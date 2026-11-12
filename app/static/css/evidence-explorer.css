@@ -5,8 +5,8 @@
  * its own in both themes: the brand charcoal, the same dark ground as the rail,
  * because the scene draws its own light and status colours on it (the dark-theme
  * status values, which reach 4.5 to 1 on that ground). Every word on the page sits
- * on the surface or the canvas with the roles of revrook.css; nothing is written
- * inside the scene.
+ * on the surface or the canvas with the roles of revrook.css, except the names over
+ * the companies ring: white on a dark chip, an aria-hidden overlay the tables repeat.
  */
 
 /* The view chooser at the top of the scene card (All companies, or one client): a
@@ -76,6 +76,80 @@
 .rv-explorer-stage canvas:focus-visible {
   outline: 3px solid var(--rv-white);
   outline-offset: -3px;
+}
+
+/* The names over the companies ring (evidence-explorer.js): an aria-hidden layer
+   over the canvas, under the state note and the card, that the script fills with
+   a chip per client (its name and score over its roof) and a name per domain on
+   the floor of its sector, moved on every frame and hidden when behind the camera
+   or crowded. Its background darkens the rim of the stage a little: the vignette */
+.rv-explorer-labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  pointer-events: none;
+  background-image: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 62%,
+    color-mix(in srgb, var(--rv-charcoal-deep) 55%, transparent) 100%
+  );
+}
+
+.rv-explorer-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 14rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: var(--rv-fs-xs);
+  line-height: 1.35;
+  white-space: nowrap;
+  color: var(--rv-white);
+  background-color: color-mix(in srgb, var(--rv-charcoal-deep) 80%, transparent);
+  transition: opacity 0.2s ease;
+}
+
+.rv-explorer-label-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.rv-explorer-label-extra {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+/* A domain's name lies on its sector: no chip, spaced capitals, a shadow to keep
+   it apart from the links over it */
+.rv-explorer-label.is-domain {
+  padding: 0 2px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background-color: transparent;
+  text-shadow: 0 1px 2px var(--rv-charcoal-deep), 0 0 6px var(--rv-charcoal-deep);
+}
+
+.rv-explorer-label.is-domain .rv-explorer-label-name {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.rv-explorer-label.is-chosen {
+  outline: 2px solid var(--rv-white);
+}
+
+.rv-explorer-label.is-faded {
+  opacity: 0.3;
+}
+
+.rv-explorer-label.is-hidden {
+  visibility: hidden;
 }
 
 /* The note over the stage: before the script runs (and without WebGL 2) it says
@@ -232,5 +306,9 @@ main .rv-explorer-table tbody tr[data-selected="true"] > th {
 @media (prefers-reduced-motion: reduce) {
   .rv-explorer-state.is-loading .rv-explorer-state-text {
     animation: none;
+  }
+
+  .rv-explorer-label {
+    transition: none;
   }
 }

@@ -282,6 +282,8 @@ class PortfolioControl:
     control_id: str
     title: str
     domain: str
+    # The name of its domain, written on the floor of its sector in the scene.
+    domain_name: str
     worst: StatusLabel
     counts: tuple[int, ...]
     pairs: tuple[PortfolioPair, ...]
@@ -311,6 +313,7 @@ def build_portfolio(
     a tile, whether or not a client was read; a tile takes the worst label among
     its clients, and with no client at all it is not checked."""
     per_control: dict[str, list[PortfolioPair]] = {c.id: [] for c in library.controls}
+    domain_names = {domain.code: domain.name for domain in library.domains}
     built: list[PortfolioClient] = []
     for posture, rows in clients:
         counts = _label_counts(rows)
@@ -340,6 +343,7 @@ def build_portfolio(
                 control_id=control.id,
                 title=control.title,
                 domain=control.domain,
+                domain_name=domain_names.get(control.domain, control.domain),
                 worst=pairs[0].label if pairs else NOT_CHECKED,
                 counts=tuple(
                     sum(1 for pair in pairs if pair.label == label) for label in LABELS

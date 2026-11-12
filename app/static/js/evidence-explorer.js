@@ -15,10 +15,16 @@
  *   on the inner ring, every control on the outer ring in the worst status it has
  *   at any client, and a link from every client to every control in the status of
  *   that pair, shown or hidden per status by the filter buttons. Choosing an office
- *   or a tile opens its card (scene-card.js), a template the server drew.
+ *   or a tile opens its card (scene-card.js), a template the server drew, and
+ *   frames it with its links while everything else fades.
+ *   The links are thin tubes bundled per domain (each rises from its office to a
+ *   point above its domain's sector, then falls to its tile), the domains stand
+ *   apart on tinted ground, and small dots flow along the not protected links
+ *   unless motion is reduced. The names of the clients and the domains stand over
+ *   the scene in an aria-hidden overlay: the tables carry the same facts.
  * Status is shape and colour together, never colour alone, and every word is in the
- * DOM (the detail line, the legend, the tables, the cards): nothing is written
- * inside the scene.
+ * DOM (the detail line, the legend, the tables, the cards, the name overlay):
+ * nothing is drawn as text inside the canvas.
  *
  * Each of these leaves the tables intact and says so in the stage:
  * - no WebGL 2: the note the server rendered stays, no import happens;
@@ -28,9 +34,11 @@
  *   the browser restores the context;
  * - prefers-reduced-motion: the wall never turns by itself and every move is
  *   immediate; otherwise it turns slowly until the person touches it.
- * Frames are drawn only when something changed or the wall is turning, and never
- * while the page is hidden or the stage is out of view. Leaving the page disposes
- * every geometry, material and the renderer; root.revrookExplorer exposes dispose,
+ * Frames are drawn only when something changed, the wall is turning or dots flow
+ * (at most about 30 a second for the flow alone), and never while the page is
+ * hidden or the stage is out of view. Leaving the page disposes every geometry,
+ * material, texture, the environment map, the name overlay and the renderer;
+ * root.revrookExplorer exposes dispose,
  * mount and info so a test can cycle the scene and read the renderer's counts.
  */
 
@@ -81,10 +89,28 @@ const LABEL_WORDS = {
   "not-applicable": "not applicable",
 };
 
+// The finish of the companies ring: domain sectors a step apart on two quiet tints
+// (never a status colour), links as thin tubes, dots and a glow in the not
+// protected red.
+const SECTOR_TINT = [0x323856, 0x2b3c46];
+const TUBE_RADIUS = 0.016;
+const TUBE_SEGMENTS = 20;
+const TUBE_SIDES = 4;
+const FLOW_DOTS = 2; // per not protected link
+const FLOW_SPEED = 0.3; // of a link per second
+const FLOW_FRAME_MS = 30; // the flow alone draws about 30 frames a second
+const FLOW_COLOR = 0xffd6d1;
+const FOCUS_MS = 600;
+const FOCUS_PITCH = 0.82;
+const FOCUS_EDGE = 0.8;
+// A label hides when it covers this share of a label already placed.
+const LABEL_OVERLAP = 0.1;
+
 const SOURCE_RADIUS = 2.4;
 const CONTROL_RADIUS = 5.3;
 const FLOOR_RADIUS = 6.6;
 const SECTOR_GAP = 0.07;
+const COMPANY_GAP = 0.14;
 const TURN_STEP = Math.PI / 6;
 const AUTO_TURN = 0.08; // radians per second
 const TWEEN_MS = 350;
@@ -220,12 +246,20 @@ function readCompanies(page) {
       control_id: id,
       title: row.getAttribute("data-title") || "",
       domain: row.getAttribute("data-domain") || "",
+      domainName: row.getAttribute("data-domain-name") || "",
       label: row.getAttribute("data-label") || "not-checked",
       href: row.getAttribute("data-href") || "",
       pairs: items.map((item) => ({ client: "client:" + item.getAttribute("data-client"), label: item.getAttribute("data-label") || "" })),
     };
   });
-  return { companies: true, clients, controls, domains: [], sources: [] };
+  // The domains in the order of the table, each with the name its sector shows.
+  const domains = [];
+  controls.forEach((control) => {
+    if (!domains.some((domain) => domain.code === control.domain)) {
+      domains.push({ code: control.domain, name: control.domainName || control.domain });
+    }
+  });
+  return { companies: true, clients, controls, domains, sources: [] };
 }
 
 // Where every pillar, office and tile stands: the sources (or the clients) evenly
@@ -248,6 +282,9 @@ function layout(data) {
     angle: -Math.PI / 2 + (index * 2 * Math.PI) / Math.max(data.clients.length, 1),
   }));
   const codes = data.domains.map((domain) => domain.code);
+  const names = new Map(data.domains.map((domain) => [domain.code, domain.name]));
+  // The companies ring sets its domains clearly apart; the wall keeps its own gap.
+  const gap = data.companies ? COMPANY_GAP : SECTOR_GAP;
   const byDomain = new Map(codes.map((code) => [code, []]));
   for (const control of data.controls) {
     if (!byDomain.has(control.domain)) {
@@ -257,7 +294,7 @@ function layout(data) {
     byDomain.get(control.domain).push(control);
   }
   const total = data.controls.length;
-  const per = total ? (2 * Math.PI - SECTOR_GAP * codes.length) / total : 0;
+  const per = total ? (2 * Math.PI - gap * codes.length) / total : 0;
   const controls = [];
   const sectors = [];
   let angle = -Math.PI / 2;
@@ -274,8 +311,8 @@ function layout(data) {
       });
     });
     angle = start + members.length * per;
-    sectors.push({ code, start, length: members.length * per, index });
-    angle += SECTOR_GAP;
+    sectors.push({ code, name: names.get(code) || code, start, length: members.length * per, index });
+    angle += gap;
   });
   return { sources, clients, controls, sectors };
 }
@@ -304,6 +341,80 @@ function disposeObject(object) {
       material.dispose();
     });
   }
+}
+
+// A soft white spot drawn into a small canvas: the glow of a not protected tile and
+// the flowing dots, tinted by their materials and added to the light behind them.
+function glowTexture(THREE) {
+  const art = document.createElement("canvas");
+  art.width = 64;
+  art.height = 64;
+  const pen = art.getContext("2d");
+  const fill = pen.createRadialGradient(32, 32, 0, 32, 32, 32);
+  fill.addColorStop(0, "rgba(255, 255, 255, 1)");
+  fill.addColorStop(0.3, "rgba(255, 255, 255, 0.5)");
+  fill.addColorStop(1, "rgba(255, 255, 255, 0)");
+  pen.fillStyle = fill;
+  pen.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(art);
+}
+
+// The light the materials reflect, built in code instead of read from a file: a
+// dim room with a few bright panels, blurred once into a small environment map.
+// The room is freed at once; the caller disposes the map it returns.
+function environmentMap(THREE, renderer) {
+  const room = new THREE.Scene();
+  const box = new THREE.BoxGeometry(1, 1, 1);
+  const made = [];
+  const add = (color, strength, position, scale, side = THREE.FrontSide) => {
+    const material = new THREE.MeshBasicMaterial({ color, side });
+    material.color.multiplyScalar(strength);
+    made.push(material);
+    const mesh = new THREE.Mesh(box, material);
+    mesh.position.set(...position);
+    mesh.scale.set(...scale);
+    room.add(mesh);
+  };
+  add(GROUND, 1, [0, 0, 0], [24, 24, 24], THREE.BackSide);
+  add(0xffffff, 3, [0, 10, 0], [10, 0.2, 10]);
+  add(0xfff1dc, 2.2, [-10, 4, 3], [0.2, 5, 9]);
+  add(BEAM, 1.6, [9, 3, -7], [0.2, 4, 7]);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const target = pmrem.fromScene(room, 0.04);
+  pmrem.dispose();
+  box.dispose();
+  made.forEach((material) => material.dispose());
+  return target;
+}
+
+// Many tubes as one geometry: their positions and indices joined, and a colour per
+// vertex whose alpha is the opacity of the link it belongs to (set by paint()).
+// Each tube is freed once copied.
+function mergeTubes(THREE, tubes) {
+  let vertices = 0;
+  let indices = 0;
+  tubes.forEach((tube) => {
+    vertices += tube.attributes.position.count;
+    indices += tube.index.count;
+  });
+  const position = new Float32Array(vertices * 3);
+  const index = new Uint32Array(indices);
+  let v = 0;
+  let i = 0;
+  tubes.forEach((tube) => {
+    position.set(tube.attributes.position.array, v * 3);
+    tube.index.array.forEach((value, k) => {
+      index[i + k] = value + v;
+    });
+    v += tube.attributes.position.count;
+    i += tube.index.count;
+    tube.dispose();
+  });
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(position, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(vertices * 4).fill(1), 4));
+  geometry.setIndex(new THREE.BufferAttribute(index, 1));
+  return geometry;
 }
 
 function describe(entry, data) {
@@ -393,20 +504,35 @@ function buildWall(THREE, root, data, options) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setClearColor(GROUND, 1);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // r186 draws soft shadows with PCF and the shadow radius (PCFSoftShadowMap is
+  // gone). Nothing in the scene moves, so the shadow map is drawn once, not on
+  // every frame; a restored context draws it again.
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 16 / 9, 0.1, 60);
-  const target = new THREE.Vector3(0, 0.4, 0);
+  const center = new THREE.Vector3(0, 0.4, 0);
+  const target = center.clone();
   const home = { yaw: HOME.yaw, pitch: HOME.pitch, distance: HOME.distance };
   const view = { yaw: home.yaw, pitch: home.pitch, distance: home.distance };
 
-  scene.add(new THREE.HemisphereLight(0xffffff, GROUND, 1.4));
+  // The companies ring reflects a room built in code and fades into the ground at
+  // its far rim; the wall keeps its plain light.
+  let environment = companies ? environmentMap(THREE, renderer) : null;
+  if (environment) {
+    scene.environment = environment.texture;
+    scene.environmentIntensity = 0.55;
+    scene.fog = new THREE.Fog(GROUND, 14, 34);
+  }
+  scene.add(new THREE.HemisphereLight(0xffffff, GROUND, companies ? 1 : 1.4));
   const sun = new THREE.DirectionalLight(0xfff4e6, 2.2);
   sun.position.set(5, 11, 4);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
-  sun.shadow.radius = 4;
-  sun.shadow.bias = -0.0008;
+  sun.shadow.radius = 3;
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.02;
   sun.shadow.camera.left = -FLOOR_RADIUS;
   sun.shadow.camera.right = FLOOR_RADIUS;
   sun.shadow.camera.top = FLOOR_RADIUS;
@@ -428,13 +554,16 @@ function buildWall(THREE, root, data, options) {
   floor.position.y = -0.02;
   floor.receiveShadow = true;
   scene.add(floor);
+  // The companies ring widens each band outwards, where its domain's name stands,
+  // and tints it so a domain reads as one group.
   plan.sectors.forEach((sector) => {
     if (sector.length <= 0) {
       return;
     }
+    const tint = companies ? SECTOR_TINT[sector.index % 2] : sector.index % 2 ? SECTOR_ODD : SECTOR_EVEN;
     const band = new THREE.Mesh(
-      new THREE.RingGeometry(CONTROL_RADIUS - 0.55, CONTROL_RADIUS + 0.55, 24, 1, -sector.start - sector.length, sector.length),
-      new THREE.MeshStandardMaterial({ color: sector.index % 2 ? SECTOR_ODD : SECTOR_EVEN, roughness: 1 })
+      new THREE.RingGeometry(CONTROL_RADIUS - 0.55, CONTROL_RADIUS + (companies ? 1.05 : 0.55), 24, 1, -sector.start - sector.length, sector.length),
+      new THREE.MeshStandardMaterial({ color: tint, roughness: 1 })
     );
     band.rotation.x = -Math.PI / 2;
     band.position.y = -0.01;
@@ -517,6 +646,8 @@ function buildWall(THREE, root, data, options) {
     groups.set(entry.id, group);
   });
 
+  const glow = companies ? glowTexture(THREE) : null;
+
   // The tiles: a flat tile for Protected, a ring on it for Needs attention, a cross
   // cut through it for Not protected, an outline for Not checked, a small disc for
   // Not applicable.
@@ -569,10 +700,30 @@ function buildWall(THREE, root, data, options) {
         group.add(bar);
       });
     }
+    entry.materials = [material];
+    // On the companies ring a not protected tile glows softly: an additive sprite
+    // that dims with its tile and is never picked.
+    if (glow && label === "not-protected") {
+      const shine = new THREE.SpriteMaterial({
+        map: glow,
+        color,
+        transparent: true,
+        opacity: 0.35,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        fog: true,
+      });
+      shine.userData.base = shine.opacity;
+      const sprite = new THREE.Sprite(shine);
+      sprite.scale.set(0.95, 0.95, 1);
+      sprite.position.y = 0.14;
+      sprite.raycast = () => {};
+      group.add(sprite);
+      entry.materials.push(shine);
+    }
     group.position.set(CONTROL_RADIUS * Math.cos(entry.angle), 0, CONTROL_RADIUS * Math.sin(entry.angle));
     group.rotation.y = -entry.angle;
     entry.group = group;
-    entry.materials = [material];
     entry.top = new THREE.Vector3(group.position.x, 0.14, group.position.z);
     scene.add(group);
     pickables.push(group);
@@ -598,39 +749,238 @@ function buildWall(THREE, root, data, options) {
     });
   });
 
-  // The links of the companies ring: a low arc from the roof of every client to
-  // every control, in the status of that pair. Three materials per status are
-  // shared by all its links (faint, lit, dimmed); a status filtered out is hidden.
-  // shortcut: one Line per pair (51 per client); merge them per status if a
-  // portfolio of hundreds of clients ever makes the ring slow.
-  const looks = {};
-  (companies ? LINKED : []).forEach((key) => {
-    const made = (opacity) => new THREE.LineBasicMaterial({ color: STATUS_COLOR[key], transparent: true, opacity });
-    looks[key] = { faint: made(LINK_OPACITY.faint), lit: made(LINK_OPACITY.lit), dim: made(LINK_OPACITY.dim) };
-  });
+  // The links of the companies ring: a thin tube from the roof of every client to
+  // every control, in the status of that pair. Each rises to the hub of its
+  // control's domain, a point above that sector, and falls from there to its tile,
+  // so the links of a domain travel together. The tubes of a status are one mesh
+  // (one draw for all of them); the alpha of each link's vertices says whether it
+  // is faint, lit, dimmed or gone, and a status filtered out hides its mesh.
+  const tallest = Math.max(0.5, ...plan.sources.concat(plan.clients).map((entry) => entry.top.y));
+  const hubs = new Map(
+    (companies ? plan.sectors : []).map((sector) => {
+      const angle = sector.start + sector.length / 2;
+      const radius = innerRadius + (CONTROL_RADIUS - innerRadius) * 0.62;
+      return [sector.code, new THREE.Vector3(radius * Math.cos(angle), Math.max(1.2, tallest * 0.6 + 0.6), radius * Math.sin(angle))];
+    })
+  );
+  const links = [];
+  const bundles = {};
+  const tubes = {};
   plan.controls.forEach((entry) => {
     (entry.control.pairs || []).forEach((pair) => {
       const office = entries.get(pair.client);
-      if (!looks[pair.label] || !office) {
+      if (LINKED.indexOf(pair.label) < 0 || !office) {
         return;
       }
-      const middle = office.top.clone().add(entry.top).multiplyScalar(0.5);
-      middle.y = Math.max(office.top.y, 1) + 0.5;
-      const curve = new THREE.QuadraticBezierCurve3(office.top, middle, entry.top);
-      const link = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(16)), looks[pair.label].faint);
-      link.userData.ends = [office.id, entry.id];
-      link.userData.label = pair.label;
-      scene.add(link);
-      beams.push(link);
+      const curve = new THREE.CatmullRomCurve3([office.top, hubs.get(entry.control.domain), entry.top], false, "centripetal");
+      const tube = new THREE.TubeGeometry(curve, TUBE_SEGMENTS, TUBE_RADIUS, TUBE_SIDES, false);
+      const count = tube.attributes.position.count;
+      tubes[pair.label] = tubes[pair.label] || [];
+      links.push({
+        ends: [office.id, entry.id],
+        label: pair.label,
+        // Every tube has as many vertices, so a link's place follows from its rank.
+        start: tubes[pair.label].length * count,
+        count,
+        alpha: 1,
+        // The path the dots of a not protected link follow, client to control.
+        path: pair.label === "not-protected" ? curve.getSpacedPoints(32) : null,
+        phase: (links.length * 0.618) % 1,
+      });
+      tubes[pair.label].push(tube);
     });
   });
+  Object.keys(tubes).forEach((key) => {
+    const geometry = mergeTubes(THREE, tubes[key]);
+    const mesh = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({ color: STATUS_COLOR[key], vertexColors: true, transparent: true, depthWrite: false })
+    );
+    scene.add(mesh);
+    bundles[key] = { mesh, alpha: geometry.attributes.color };
+  });
+
+  // The flow: small bright dots along the not protected links, client to control,
+  // only while that filter shows them and motion is not reduced.
+  const flowLinks = links.filter((link) => link.path);
+  let flow = null;
+  if (flowLinks.length) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(flowLinks.length * FLOW_DOTS * 3), 3));
+    const points = new THREE.Points(
+      geometry,
+      new THREE.PointsMaterial({
+        color: FLOW_COLOR,
+        map: glow,
+        size: 0.26,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    points.frustumCulled = false;
+    points.visible = false;
+    scene.add(points);
+    flow = { points, active: [] };
+  }
   const filters = Array.from(page.querySelectorAll(".rv-explorer-filter"));
+  let shown = new Set();
 
   function applyFilters() {
-    const shown = new Set(filters.filter((button) => button.getAttribute("aria-pressed") === "true").map((button) => button.getAttribute("data-status")));
-    beams.forEach((beam) => {
-      if (beam.userData.label) {
-        beam.visible = shown.has(beam.userData.label);
+    shown = new Set(filters.filter((button) => button.getAttribute("aria-pressed") === "true").map((button) => button.getAttribute("data-status")));
+    Object.keys(bundles).forEach((key) => {
+      bundles[key].mesh.visible = shown.has(key);
+    });
+  }
+
+  function setAlpha(link, alpha) {
+    if (link.alpha === alpha) {
+      return;
+    }
+    link.alpha = alpha;
+    const bundle = bundles[link.label];
+    for (let k = link.start; k < link.start + link.count; k += 1) {
+      bundle.alpha.array[k * 4 + 3] = alpha;
+    }
+    bundle.alpha.needsUpdate = true;
+  }
+
+  function flowing() {
+    return Boolean(flow && flow.active.length) && !options.reducedMotion;
+  }
+
+  // The dots at time `now`: FLOW_DOTS per active link, evenly spaced along it.
+  function moveFlow(now) {
+    if (!flow) {
+      return;
+    }
+    flow.points.visible = flowing();
+    if (!flow.points.visible) {
+      return;
+    }
+    const position = flow.points.geometry.attributes.position;
+    let n = 0;
+    flow.active.forEach((link) => {
+      for (let k = 0; k < FLOW_DOTS; k += 1) {
+        const along = (((now / 1000) * FLOW_SPEED + link.phase + k / FLOW_DOTS) % 1) * (link.path.length - 1);
+        const at = Math.floor(along);
+        const a = link.path[at];
+        const b = link.path[Math.min(at + 1, link.path.length - 1)];
+        const t = along - at;
+        position.setXYZ(n, a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+        n += 1;
+      }
+    });
+    position.needsUpdate = true;
+    flow.points.geometry.setDrawRange(0, n);
+  }
+
+  // The names over the companies ring: an overlay of plain elements inside the
+  // stage (aria-hidden: the tables say the same), a client's name and score over
+  // its roof and a domain's name on the floor of its sector, moved to where the
+  // camera sees them on every frame drawn. Its background is the vignette of the
+  // rim.
+  const labels = [];
+  let overlay = null;
+  if (companies) {
+    overlay = document.createElement("div");
+    overlay.className = "rv-explorer-labels";
+    overlay.setAttribute("aria-hidden", "true");
+    const label = (anchor, kind, name, extra, id) => {
+      const element = document.createElement("span");
+      element.className = "rv-explorer-label " + kind;
+      const strong = document.createElement("span");
+      strong.className = "rv-explorer-label-name";
+      strong.textContent = name;
+      element.appendChild(strong);
+      if (extra) {
+        const small = document.createElement("span");
+        small.className = "rv-explorer-label-extra";
+        small.textContent = extra;
+        element.appendChild(small);
+      }
+      overlay.appendChild(element);
+      labels.push({ element, anchor, id, domain: kind === "is-domain", width: 0, height: 0 });
+    };
+    plan.clients.forEach((entry) => {
+      const client = entry.client;
+      const score = !client.evidence ? "no evidence" : client.insufficient ? "at least " + client.scoreText : client.scoreText;
+      label(entry.top.clone().setY(entry.top.y + 0.2), "is-client", client.name, score, entry.id);
+    });
+    plan.sectors.forEach((sector) => {
+      const angle = sector.start + sector.length / 2;
+      const radius = CONTROL_RADIUS + 0.8;
+      label(new THREE.Vector3(radius * Math.cos(angle), 0, radius * Math.sin(angle)), "is-domain", sector.name, "", "");
+    });
+    canvas.after(overlay);
+  }
+
+  // Each label at its point, unless it is behind the camera or would cover much of
+  // one already placed: the chosen one first, then the clients nearest first, then
+  // the domains. Sizes are measured once (and again after a resize).
+  const projected = new THREE.Vector3();
+  let measured = false;
+
+  function measureLabels() {
+    if (!measured) {
+      labels.forEach((item) => {
+        item.width = item.element.offsetWidth;
+        item.height = item.element.offsetHeight;
+      });
+      measured = labels.every((item) => item.width > 0);
+    }
+  }
+
+  // The middle of the ring on the stage, in pixels.
+  function ringMiddle(width, height) {
+    projected.set(0, 0, 0).project(camera);
+    return { x: ((projected.x + 1) / 2) * width, y: ((1 - projected.y) / 2) * height };
+  }
+
+  // Where a label stands on the stage before it is kept inside it: a client's chip
+  // just over its point, a domain's name leaning away from the middle of the ring,
+  // off its tiles. Also used to fit the home view, so every name has room.
+  function labelBox(item, width, height, middle) {
+    projected.copy(item.anchor).project(camera);
+    let x = ((projected.x + 1) / 2) * width;
+    let y = ((1 - projected.y) / 2) * height;
+    if (item.domain) {
+      const out = Math.hypot(x - middle.x, y - middle.y) || 1;
+      x += ((x - middle.x) / out) * (item.width / 2);
+      y += ((y - middle.y) / out) * (item.height / 2) + item.height / 2;
+    }
+    return { left: x - item.width / 2, top: y - item.height, z: projected.z };
+  }
+
+  function placeLabels() {
+    if (!overlay) {
+      return;
+    }
+    const width = stage.clientWidth;
+    const height = stage.clientHeight;
+    measureLabels();
+    const middle = ringMiddle(width, height);
+    labels.forEach((item) => {
+      const box = labelBox(item, width, height, middle);
+      item.behind = box.z > 1 || box.z < -1;
+      item.depth = box.z;
+      item.left = clamp(box.left, 4, Math.max(4, width - item.width - 4));
+      item.top = clamp(box.top, 4, Math.max(4, height - item.height - 4));
+    });
+    const focus = selected || hovered;
+    const order = labels.slice().sort((a, b) => (b.id === focus) - (a.id === focus) || a.domain - b.domain || a.depth - b.depth);
+    const placed = [];
+    order.forEach((item) => {
+      const crowded = placed.some((other) => {
+        const across = Math.min(item.left + item.width, other.left + other.width) - Math.max(item.left, other.left);
+        const down = Math.min(item.top + item.height, other.top + other.height) - Math.max(item.top, other.top);
+        return across > 0 && down > 0 && across * down > LABEL_OVERLAP * Math.min(item.width * item.height, other.width * other.height);
+      });
+      const show = !item.behind && !crowded;
+      item.element.classList.toggle("is-hidden", !show);
+      if (show) {
+        placed.push(item);
+        item.element.style.transform = "translate(" + Math.round(item.left) + "px, " + Math.round(item.top) + "px)";
       }
     });
   }
@@ -643,9 +993,12 @@ function buildWall(THREE, root, data, options) {
   let inView = true;
   let autoTurn = !options.reducedMotion;
   let lastFrame = 0;
+  let lastDraw = 0;
   let tween = null;
   let selected = null;
   let hovered = null;
+  // Whether the camera has left the whole ring to frame a chosen node.
+  let focused = false;
 
   function placeCamera() {
     const flat = Math.cos(view.pitch) * view.distance;
@@ -655,18 +1008,29 @@ function buildWall(THREE, root, data, options) {
       target.z + flat * Math.cos(view.yaw)
     );
     camera.lookAt(target);
+    if (scene.fog) {
+      // The far rim fades into the ground wherever the camera stands.
+      scene.fog.near = view.distance;
+      scene.fog.far = view.distance + 20;
+    }
   }
 
-  function render() {
+  function render(now) {
     placeCamera();
+    moveFlow(now);
     renderer.render(scene, camera);
     if (card) {
       card.place(camera);
     }
+    placeLabels();
+  }
+
+  function live() {
+    return !hidden && inView && !lost;
   }
 
   function turning() {
-    return autoTurn && !hidden && inView && !lost;
+    return autoTurn && live();
   }
 
   function frame(now) {
@@ -678,18 +1042,27 @@ function buildWall(THREE, root, data, options) {
       needsRender = true;
     }
     if (tween) {
-      const t = clamp((now - tween.start) / TWEEN_MS, 0, 1);
-      view.yaw = tween.from + (tween.to - tween.from) * easeOut(t);
+      const t = clamp((now - tween.start) / tween.ms, 0, 1);
+      const eased = easeOut(t);
+      view.yaw = tween.from.yaw + (tween.to.yaw - tween.from.yaw) * eased;
+      view.pitch = tween.from.pitch + (tween.to.pitch - tween.from.pitch) * eased;
+      view.distance = tween.from.distance + (tween.to.distance - tween.from.distance) * eased;
+      target.lerpVectors(tween.from.target, tween.to.target, eased);
       needsRender = true;
       if (t >= 1) {
         tween = null;
       }
     }
+    // The flow alone draws about 30 frames a second.
+    if (flowing() && live() && now - lastDraw >= FLOW_FRAME_MS) {
+      needsRender = true;
+    }
     if (needsRender && !lost) {
-      render();
+      render(now);
+      lastDraw = now;
       needsRender = false;
     }
-    if (turning() || tween) {
+    if (turning() || tween || (flowing() && live())) {
       schedule();
     } else {
       lastFrame = 0;
@@ -710,32 +1083,99 @@ function buildWall(THREE, root, data, options) {
   // The home distance that fits the whole ring to the stage as it is shaped now:
   // the outer corners of the tiles and the roofs of the inner ring stay inside the
   // view with a little air, whichever way the ring has turned (it is round, so the
-  // turn does not matter). A view a person moved closer or away keeps its own.
-  const tallest = Math.max(0.5, ...plan.sources.concat(plan.clients).map((entry) => entry.top.y));
-  const probes = [];
+  // turn does not matter). The companies ring also keeps the hubs of its links, its
+  // outer ground bands, the rim of its floor and every name inside the view, and
+  // is lifted so it stands in the middle of the stage. A view a person moved
+  // closer or away keeps its own.
+  const probes = Array.from(hubs.values());
   for (let k = 0; k < 32; k += 1) {
     const a = (k / 32) * 2 * Math.PI;
     probes.push(new THREE.Vector3(FIT_RADIUS * Math.cos(a), 0, FIT_RADIUS * Math.sin(a)));
     probes.push(new THREE.Vector3(innerRadius * Math.cos(a), tallest, innerRadius * Math.sin(a)));
+    if (companies) {
+      probes.push(new THREE.Vector3(FLOOR_RADIUS * Math.cos(a), 0, FLOOR_RADIUS * Math.sin(a)));
+    }
+  }
+  const LABEL_EDGE = 6;
+
+  // The top and the bottom of what `points` and the names cover, in the height of
+  // the view (-1 at the foot of the stage, 1 at its head).
+  function extent(points, named) {
+    camera.updateMatrixWorld();
+    const point = new THREE.Vector3();
+    const span = { low: Infinity, high: -Infinity, wide: 0 };
+    points.forEach((probe) => {
+      point.copy(probe).project(camera);
+      span.low = Math.min(span.low, point.y);
+      span.high = Math.max(span.high, point.y);
+      span.wide = Math.max(span.wide, Math.abs(point.x));
+    });
+    if (named) {
+      const width = Math.max(stage.clientWidth, 1);
+      const height = Math.max(stage.clientHeight, 1);
+      const middle = ringMiddle(width, height);
+      labels.forEach((item) => {
+        const box = labelBox(item, width, height, middle);
+        span.high = Math.max(span.high, 1 - (2 * (box.top - LABEL_EDGE)) / height);
+        span.low = Math.min(span.low, 1 - (2 * (box.top + item.height + LABEL_EDGE)) / height);
+        // Sideways a name counts whole, unless the names cannot all fit beside the
+        // ring (a phone): then only its point counts and placeLabels keeps it in.
+        if (named === "boxes") {
+          span.wide = Math.max(span.wide, (2 * (width / 2 - box.left + LABEL_EDGE)) / width, (2 * (box.left + item.width + LABEL_EDGE - width / 2)) / width);
+        } else {
+          span.wide = Math.max(span.wide, Math.abs(projected.copy(item.anchor).project(camera).x));
+        }
+      });
+    }
+    return span;
   }
 
-  function fitDistance() {
+  // The least distance at which every point (and with `pose.named` every name)
+  // stands inside `edge` of the stage, seen from `pose` (its yaw, pitch and the
+  // point the camera looks at). With `pose.lift` the height of that point is
+  // chosen too, so what is seen stands in the middle of the stage; it is written
+  // back to `pose.target`.
+  function fitDistance(points, pose, edge) {
     const kept = { yaw: view.yaw, pitch: view.pitch, distance: view.distance };
-    const point = new THREE.Vector3();
+    const keptTarget = target.clone();
+    target.copy(pose.target);
+    if (pose.named) {
+      measureLabels();
+    }
+    const middleAt = (height) => {
+      target.y = height;
+      placeCamera();
+      const span = extent(points, pose.named);
+      return (span.low + span.high) / 2;
+    };
     let distance = MIN_DISTANCE;
     for (; distance < MAX_DISTANCE * 2; distance *= 1.03) {
-      Object.assign(view, { yaw: home.yaw, pitch: home.pitch, distance });
+      Object.assign(view, { yaw: pose.yaw, pitch: pose.pitch, distance });
+      if (pose.lift) {
+        // The middle moves almost evenly with the height: two secant steps.
+        let low = pose.target.y - 1;
+        let high = pose.target.y;
+        for (let step = 0; step < 2; step += 1) {
+          const a = middleAt(low);
+          const b = middleAt(high);
+          const next = Math.abs(b - a) < 1e-6 ? high : high - (b * (high - low)) / (b - a);
+          low = high;
+          high = next;
+        }
+        target.y = high;
+      }
       placeCamera();
-      camera.updateMatrixWorld();
-      const inside = probes.every((probe) => {
-        point.copy(probe).project(camera);
-        return Math.abs(point.x) <= FIT_EDGE && Math.abs(point.y) <= FIT_EDGE;
-      });
-      if (inside) {
+      const span = extent(points, pose.named);
+      if (span.wide <= edge && span.high <= edge && span.low >= -edge) {
         break;
       }
     }
+    if (pose.lift) {
+      pose.target.y = target.y;
+    }
     Object.assign(view, kept);
+    target.copy(keptTarget);
+    placeCamera();
     return distance;
   }
 
@@ -745,27 +1185,42 @@ function buildWall(THREE, root, data, options) {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    const atHome = Math.abs(view.distance - home.distance) < 0.001;
-    home.distance = fitDistance();
+    const atHome = !focused && Math.abs(view.distance - home.distance) < 0.001 && target.equals(center);
+    measured = false;
+    const pose = { yaw: home.yaw, pitch: home.pitch, target: center, lift: companies, named: companies ? "boxes" : false };
+    home.distance = fitDistance(probes, pose, FIT_EDGE);
+    if (companies && home.distance >= MAX_DISTANCE * 2) {
+      // The names cannot all fit beside the ring (a phone): fit their points instead.
+      pose.named = "anchors";
+      home.distance = fitDistance(probes, pose, FIT_EDGE);
+    }
     if (atHome) {
       view.distance = home.distance;
+      target.copy(center);
     }
     invalidate();
   }
 
-  // Selection and hover: the materials of the chosen node and its beams come
+  // Selection and hover: the materials of the chosen node and its links come
   // forward, everything else steps back; the tables mirror the choice. A link a
   // filter hides brings nothing forward.
   function related(id) {
     const found = new Set([id]);
     beams.forEach((beam) => {
-      if (beam.visible && beam.userData.ends.indexOf(id) >= 0) {
+      if (beam.userData.ends.indexOf(id) >= 0) {
         beam.userData.ends.forEach((end) => found.add(end));
+      }
+    });
+    links.forEach((link) => {
+      if (shown.has(link.label) && link.ends.indexOf(id) >= 0) {
+        link.ends.forEach((end) => found.add(end));
       }
     });
     return found;
   }
 
+  // A chosen node fades everything it is not linked to and shows only its own
+  // links; a hovered one dims the rest. The flow follows the links that show.
   function paint() {
     const focus = selected || hovered;
     const keep = focus ? related(focus) : null;
@@ -782,15 +1237,68 @@ function buildWall(THREE, root, data, options) {
     });
     beams.forEach((beam) => {
       const on = focus && beam.userData.ends.indexOf(focus) >= 0;
-      if (beam.userData.label) {
-        const look = looks[beam.userData.label];
-        beam.material = !focus ? look.faint : on ? look.lit : look.dim;
-        return;
-      }
       beam.material.color.setHex(on ? PICKED : BEAM);
       beam.material.opacity = !focus ? BEAM_OPACITY : on ? 0.95 : 0.08;
     });
+    links.forEach((link) => {
+      const on = focus && link.ends.indexOf(focus) >= 0;
+      setAlpha(link, !focus ? LINK_OPACITY.faint : on ? LINK_OPACITY.lit : selected ? 0 : LINK_OPACITY.dim);
+    });
+    if (flow) {
+      flow.active = shown.has("not-protected") ? flowLinks.filter((link) => !selected || link.ends.indexOf(selected) >= 0) : [];
+    }
+    labels.forEach((item) => {
+      item.element.classList.toggle("is-chosen", Boolean(focus) && item.id === focus);
+      item.element.classList.toggle("is-faded", Boolean(keep) && !item.domain && !keep.has(item.id));
+    });
     invalidate();
+  }
+
+  // The camera glides to `pose` (any of yaw, pitch, distance and target), the
+  // shorter way round; under reduced motion it is there at once.
+  function glide(pose, ms) {
+    autoTurn = false;
+    syncMotionButton();
+    const to = {
+      yaw: pose.yaw === undefined ? view.yaw : view.yaw + Math.atan2(Math.sin(pose.yaw - view.yaw), Math.cos(pose.yaw - view.yaw)),
+      pitch: pose.pitch === undefined ? view.pitch : pose.pitch,
+      distance: pose.distance === undefined ? view.distance : pose.distance,
+      target: pose.target ? pose.target.clone() : target.clone(),
+    };
+    if (options.reducedMotion) {
+      tween = null;
+      Object.assign(view, { yaw: to.yaw, pitch: to.pitch, distance: to.distance });
+      target.copy(to.target);
+      invalidate();
+      return;
+    }
+    tween = { from: { yaw: view.yaw, pitch: view.pitch, distance: view.distance, target: target.clone() }, to, start: performance.now(), ms };
+    schedule();
+  }
+
+  // Focus on the companies ring: the camera faces the chosen node and frames it
+  // with the nodes its shown links reach; no choice glides back to the whole ring.
+  function frameChoice(entry) {
+    if (!entry) {
+      if (focused) {
+        focused = false;
+        glide({ pitch: home.pitch, distance: home.distance, target: center }, FOCUS_MS);
+      }
+      return;
+    }
+    const points = [];
+    const middle = new THREE.Vector3();
+    const near = related(entry.id);
+    near.forEach((id) => {
+      const other = entries.get(id);
+      points.push(other.top, other.group.position);
+      middle.add(other.top);
+    });
+    middle.divideScalar(near.size).lerp(center, 0.35).setY(center.y);
+    const pose = { yaw: Math.PI / 2 - entry.angle, pitch: FOCUS_PITCH, target: middle };
+    pose.distance = Math.min(fitDistance(points, pose, FOCUS_EDGE), home.distance);
+    focused = true;
+    glide(pose, FOCUS_MS);
   }
 
   function markRows() {
@@ -833,7 +1341,9 @@ function buildWall(THREE, root, data, options) {
     } else if (card) {
       card.close();
     }
-    if (entry && face) {
+    if (companies) {
+      frameChoice(entry);
+    } else if (entry && face) {
       turnTo(Math.PI / 2 - entry.angle);
     }
     paint();
@@ -847,15 +1357,7 @@ function buildWall(THREE, root, data, options) {
   }
 
   function turnTo(yaw) {
-    autoTurn = false;
-    syncMotionButton();
-    if (options.reducedMotion) {
-      view.yaw = yaw;
-      invalidate();
-      return;
-    }
-    tween = { from: view.yaw, to: yaw, start: performance.now() };
-    schedule();
+    glide({ yaw }, TWEEN_MS);
   }
 
   function turnBy(delta) {
@@ -869,6 +1371,8 @@ function buildWall(THREE, root, data, options) {
 
   function reset() {
     tween = null;
+    focused = false;
+    target.copy(center);
     view.yaw = home.yaw;
     view.pitch = home.pitch;
     view.distance = home.distance;
@@ -1048,7 +1552,12 @@ function buildWall(THREE, root, data, options) {
   function applyMotion() {
     if (options.reducedMotion) {
       autoTurn = false;
-      tween = null;
+      // A glide under way ends where it was going; the flow stops at the next frame.
+      if (tween) {
+        Object.assign(view, { yaw: tween.to.yaw, pitch: tween.to.pitch, distance: tween.to.distance });
+        target.copy(tween.to.target);
+        tween = null;
+      }
     }
     if (motionButton) {
       motionButton.hidden = options.reducedMotion;
@@ -1091,6 +1600,14 @@ function buildWall(THREE, root, data, options) {
       lost = false;
       options.hideState();
       renderer.setClearColor(GROUND, 1);
+      // The shadow map and the environment map were drawn into the lost context.
+      renderer.shadowMap.needsUpdate = true;
+      if (environment) {
+        environment.dispose();
+        environment = environmentMap(THREE, renderer);
+        scene.environment = environment.texture;
+      }
+      measured = false;
       invalidate();
     },
     { signal }
@@ -1128,10 +1645,24 @@ function buildWall(THREE, root, data, options) {
     if (card) {
       card.close();
     }
-    // A link material that no link wears right now is not in the scene.
-    Object.values(looks).forEach((look) => Object.values(look).forEach((material) => material.dispose()));
+    // Every geometry, material and map in the scene (the merged links, the flow,
+    // the glow sprites and their canvas texture among them), then the environment
+    // map, which no object holds, and the name overlay.
     scene.traverse(disposeObject);
     scene.clear();
+    if (glow) {
+      glow.dispose();
+    }
+    if (environment) {
+      environment.dispose();
+      environment = null;
+      scene.environment = null;
+    }
+    if (overlay) {
+      overlay.remove();
+      overlay = null;
+      labels.length = 0;
+    }
     renderer.dispose();
     renderer.forceContextLoss();
     canvas.remove();
@@ -1149,9 +1680,20 @@ function buildWall(THREE, root, data, options) {
     return {
       nodes: entries.size,
       beams: beams.length,
+      links: links.length,
+      labels: labels.length,
+      flowing: flowing() && live(),
+      dots: flow && flow.points.visible ? flow.points.geometry.drawRange.count : 0,
       geometries: renderer.info.memory.geometries,
       textures: renderer.info.memory.textures,
       programs: renderer.info.programs ? renderer.info.programs.length : 0,
+      // Frames drawn so far: a test reads it twice to see that an idle scene draws none.
+      frames: renderer.info.render.frame,
+      // How far the ring (its floor rim, bands, roofs, hubs) and its names reach
+      // in the view as it stands, -1 to 1: inside the stage when within those;
+      // with the names whole, and with only their points sideways.
+      extent: extent(probes, companies ? "boxes" : false),
+      reach: extent(probes, companies ? "anchors" : false),
       lost,
       turning: turning(),
     };

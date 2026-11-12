@@ -35,23 +35,60 @@ client, `load_live` then `view_of`, and nothing more), and `build_portfolio` in
 - every control of the library (51) on the outer ring, grouped by domain like the
   wall, a tile in the worst status any client has for it (not protected, needs
   attention, not checked, protected; not applicable only when it is so everywhere),
-  in the shapes of the wall;
+  in the shapes of the wall. The domains stand clearly apart (a gap of about one
+  tile between them) on ground bands in two quiet alternating tints, never a status
+  colour, each band wide enough on its outer side to carry the domain's name;
 - a link from every client to every control, coloured by the status of that pair; a
-  pair that is not applicable has none.
+  pair that is not applicable has none. A link is a thin tube (radius 0.016, 20
+  segments, 4 sides) that rises from the client's roof to a point above the middle
+  of its control's domain and falls from there to the tile, so the links of a domain
+  travel together as one bundle instead of crossing the ring. The tubes of a status
+  are one merged mesh (one draw call per status, whatever the number of clients);
+  the alpha of each link's vertices says whether it is faint, lit, dimmed or gone.
 
 Four filter buttons under the stage (`aria-pressed`, one per status, with the number
 of its links) show or hide each kind of link: not protected and needs attention show
 at first, protected and not checked are hidden, so the ring reads at a glance. Links
-are faint until a node is chosen; choosing an office lights its shown links and the
-tiles at their ends and opens the company card of Home (`_company_card.html`);
-choosing a tile lights its links and opens a card that lists every client with its
+are faint until a node is chosen. Choosing an office (a press, Left and Right, or
+Show in scene) glides the camera in 0.6 s to face it and frame it with the tiles its
+shown links reach, fades every other office and tile, shows only its links, and opens
+the company card of Home (`_company_card.html`); choosing a tile frames it and its
+clients the same way and opens a card that lists every client with its
 status for that control, worst first, each a link to that control of that client that
 opens in the control drawer of the page (`_drawer.html` is on the page, so
 `data-drawer` works as on Home). On the canvas, Left and Right step through the
 clients and then the controls, Enter opens the chosen client or the control of the
 first client on the tile's card, Escape closes the card, the brackets turn the ring;
 Turn left, Turn right, Reset view and Turn by itself work as on the wall, and so does
-reduced motion. Below 600 px of stage width the card stands under the stage.
+reduced motion. Escape, the card's Close button, a press on the ground and Reset view
+return the camera to the whole ring. Its home view keeps the rim of the floor, the
+outer ground bands, the hubs of the links and every name inside the stage, and lowers
+the point the camera looks at until the ring stands in the middle of the stage (equal
+room above and below: about 72 px at 1440 px wide, 65 px at 1920 px, 20 px on a 390 px
+phone, where the names count only by their points sideways and are kept inside the
+stage as they are placed). Below 600 px of stage width the card stands under the
+stage.
+
+What the ring shows beyond shapes and colours:
+
+- **Names.** Each client's name and score stand over its roof, and each domain's
+  name lies on the floor of its sector, leaning away from the middle so it stays off
+  the tiles. They are plain elements in an overlay inside the stage
+  (`.rv-explorer-labels`, `aria-hidden="true"`, because the tables carry the same
+  facts), written with `textContent`, placed from the camera on every frame drawn,
+  kept inside the stage, hidden when behind the camera or when they would cover a
+  label already placed (the chosen one first, then the nearest clients, then the
+  domains), and faded with their node. They use `--rv-fs-xs`, white on a dark chip.
+- **Flow.** Small bright dots run along the not protected links, from the client to
+  the control, while the Not protected filter shows them; with a node chosen, only
+  along its own. Under `prefers-reduced-motion` there are none.
+- **Finish.** The materials reflect an environment map built in code (a dim room
+  with three bright panels, blurred once by `PMREMGenerator.fromScene`; no file and
+  no addon), not protected tiles glow softly (an additive sprite with a radial
+  gradient drawn into a 64 px canvas), the far rim fades into the ground (fog) and
+  the overlay darkens the corners of the stage a little (a CSS radial gradient).
+  Shadows are drawn once, since nothing in the scene moves, and again after a lost
+  context is restored, as is the environment map.
 
 Under the scene, **Companies** (each client with its score and band and how many of its
 controls stand at each status, and **Show in scene**) and **Controls across the
@@ -133,12 +170,16 @@ same dark surface as the rail; the colours on it are the dark-theme status value
   and the tables are the page. A request that fails (a session that ended, a client
   that is gone) leaves a note that says what to do. A lost graphics context stops
   the drawing with a note and resumes when the browser restores it.
-- `prefers-reduced-motion` stops the wall turning by itself and makes every move
+- `prefers-reduced-motion` stops the wall turning by itself, stops the flow of the
+  companies ring and makes every move (a turn, the glide to a chosen node and back)
   immediate, also when the setting changes while the page is open; otherwise it
   turns slowly until the person touches it. Frames are drawn only when something
-  changed or the wall is turning, never while the page is hidden or the stage is
-  out of view.
-- Leaving the page disposes every geometry, material and the renderer.
+  changed, the wall is turning or dots flow (the flow alone draws about 30 frames a
+  second), never while the page is hidden or the stage is out of view. With the Not
+  protected filter off and the turning stopped, an idle ring draws no frame at all.
+- Leaving the page disposes every geometry, material and texture (the merged links,
+  the flow, the glow sprites and their canvas texture), the environment map, the
+  name overlay and the renderer.
   `document.getElementById("explorer").revrookExplorer` offers `dispose()`,
   `mount()` and `info()` so a test can cycle the scene ten times and read the
   renderer's geometry and program counts.
@@ -148,8 +189,10 @@ same dark surface as the rail; the colours on it are the dark-theme status value
 The scene has been checked in a headless browser with a software renderer
 (SwiftShader) on the Development site; no hardware GPU, WebGPU, phone or touch
 screen has been measured. The 51 controls and up to 13 sources of a client are a
-small scene. The companies ring draws one line per pair (51 per client); it was
-checked with a handful of clients, and a portfolio of hundreds would want the links
-merged per status. The page keeps its own script (`evidence-explorer.js`) while the
+small scene. The companies ring merges its links per status, so a portfolio of
+hundreds of clients adds vertices, not draw calls; it was checked with four clients,
+where a frame took about 2 ms of script, in the Claude desktop browser on Windows
+with the page measured as a background page (no frame timing from a visible GPU
+compositor). The page keeps its own script (`evidence-explorer.js`) while the
 rookery skyline and the domain keep share `scenes.js`; they share the office model
 (`office.js`) and the card (`scene-card.js`).

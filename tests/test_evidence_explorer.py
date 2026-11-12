@@ -401,11 +401,13 @@ def test_the_companies_ring_is_read_from_the_page_and_its_card_cloned() -> None:
         'const CARD_URL = "./scene-card.js" + new URL(import.meta.url).search;',
         "({ sceneCard } = await import(CARD_URL));",
         "card.open(entry.card, entry.top, camera, keyed);",
-        # A link per pair in its status, hidden by its filter, faint until chosen.
-        "link.userData.label = pair.label;",
-        "beam.visible = shown.has(beam.userData.label);",
-        "beam.material = !focus ? look.faint : on ? look.lit : look.dim;",
-        "if (beam.visible && beam.userData.ends.indexOf(id) >= 0) {",
+        # A link per pair in its status, hidden by its filter, faint until chosen,
+        # gone when another node is chosen.
+        "label: pair.label,",
+        "bundles[key].mesh.visible = shown.has(key);",
+        "setAlpha(link, !focus ? LINK_OPACITY.faint : on ? LINK_OPACITY.lit"
+        " : selected ? 0 : LINK_OPACITY.dim);",
+        "if (shown.has(link.label) && link.ends.indexOf(id) >= 0) {",
         'button.getAttribute("aria-pressed") === "true" ? "false" : "true"',
         # The keys of the ring: step, open, close, and the brackets turn it.
         "ArrowLeft: () => step(-1),",
@@ -413,13 +415,158 @@ def test_the_companies_ring_is_read_from_the_page_and_its_card_cloned() -> None:
         "Escape: () => leave(),",
         '"[": () => turnBy(-TURN_STEP),',
         "window.location.assign(entry.href)",
-        "material.dispose()));",
+        "scene.traverse(disposeObject);",
     ):
         assert needed in SCRIPT, needed
     for forbidden in FORBIDDEN_IN_SCRIPT:
         assert forbidden not in CARD_SCRIPT, forbidden
     assert "source.cloneNode(true)" in CARD_SCRIPT
     assert "keep && keep.contains(target)" in CARD_SCRIPT
+
+
+def body_of(name: str) -> str:
+    """The text of the function `name` of the scene script, up to the closing brace
+    at its own indent."""
+    start = SCRIPT.index(f"function {name}(")
+    line = SCRIPT.rfind("\n", 0, start) + 1
+    indent = SCRIPT[line:start]
+    return SCRIPT[start : SCRIPT.index(f"\n{indent}}}\n", start)]
+
+
+def test_the_links_of_the_ring_are_tubes_bundled_per_domain() -> None:
+    # Thin tubes, few segments, one merged mesh per status (one draw each), each
+    # through the hub above its control's domain.
+    radius = re.search(r"const TUBE_RADIUS = ([0-9.]+);", SCRIPT)
+    assert radius and 0.012 <= float(radius.group(1)) <= 0.02
+    segments = re.search(r"const TUBE_SEGMENTS = (\d+);", SCRIPT)
+    sides = re.search(r"const TUBE_SIDES = (\d+);", SCRIPT)
+    assert segments and int(segments.group(1)) <= 24
+    assert sides and int(sides.group(1)) <= 6
+    for needed in (
+        "new THREE.TubeGeometry(curve, TUBE_SEGMENTS, TUBE_RADIUS, TUBE_SIDES, false)",
+        "[office.top, hubs.get(entry.control.domain), entry.top]",
+        "const geometry = mergeTubes(THREE, tubes[key]);",
+        "vertexColors: true, transparent: true, depthWrite: false",
+    ):
+        assert needed in SCRIPT, needed
+    # Each tube is freed once merged; a pair is no longer a THREE.Line of its own.
+    assert "tube.dispose();" in body_of("mergeTubes")
+    assert "new THREE.Line(" not in SCRIPT.split("const links = [];", 1)[1]
+
+
+def test_the_flow_moves_only_on_shown_not_protected_links_and_never_reduced() -> None:
+    flowing = body_of("flowing")
+    assert "!options.reducedMotion" in flowing and "flow.active.length" in flowing
+    paint = body_of("paint")
+    assert 'shown.has("not-protected")' in paint
+    assert "!selected || link.ends.indexOf(selected) >= 0" in paint
+    assert 'path: pair.label === "not-protected"' in SCRIPT
+    # Frames go on only while something moves and the stage can be seen; the flow
+    # alone draws about 30 a second.
+    frame = body_of("frame")
+    assert "if (turning() || tween || (flowing() && live())) {" in frame
+    assert "now - lastDraw >= FLOW_FRAME_MS" in frame
+    assert "return !hidden && inView && !lost;" in body_of("live")
+    # A change to reduced motion ends a glide where it was going.
+    assert "target.copy(tween.to.target);" in body_of("applyMotion")
+
+
+def test_the_names_over_the_ring_are_an_aria_hidden_overlay_of_plain_text() -> None:
+    for needed in (
+        'overlay.setAttribute("aria-hidden", "true");',
+        'overlay.className = "rv-explorer-labels";',
+        "strong.textContent = name;",
+        "small.textContent = extra;",
+        "canvas.after(overlay);",
+        # Placed on every frame drawn, hidden behind the camera or when crowded.
+        "item.behind = box.z > 1 || box.z < -1;",
+        'item.element.classList.toggle("is-hidden", !show);',
+    ):
+        assert needed in SCRIPT, needed
+    assert "placeLabels();" in body_of("render")
+    # Kept inside the stage.
+    place = body_of("placeLabels")
+    assert "clamp(box.left, 4, Math.max(4, width - item.width - 4))" in place
+    for needed in (
+        ".rv-explorer-labels {",
+        "pointer-events: none;",
+        "font-size: var(--rv-fs-xs);",
+        ".rv-explorer-label.is-hidden {",
+        ".rv-explorer-label.is-faded {",
+    ):
+        assert needed in CSS, needed
+    reduced = CSS.split("@media (prefers-reduced-motion: reduce)", 1)[1]
+    assert ".rv-explorer-label {" in reduced and "transition: none;" in reduced
+
+
+def test_the_home_view_of_the_ring_holds_its_rim_its_bands_and_every_name() -> None:
+    # The rim of the floor (outside the widest band) is a corner of the fit, the
+    # names count as their boxes (or only their points sideways on a phone), and
+    # the point the camera looks at is lowered until the ring stands mid-stage.
+    assert "FLOOR_RADIUS * Math.cos(a), 0, FLOOR_RADIUS * Math.sin(a)" in SCRIPT
+    resize = body_of("resize")
+    assert 'named: companies ? "boxes" : false' in resize
+    assert 'pose.named = "anchors";' in resize
+    assert "lift: companies" in resize and "target.copy(center);" in resize
+    fit = body_of("fitDistance")
+    assert "if (pose.lift) {" in fit and "pose.target.y = target.y;" in fit
+    assert "span.wide <= edge && span.high <= edge && span.low >= -edge" in fit
+    extent = body_of("extent")
+    assert "labelBox(item, width, height, middle)" in extent
+    # The same box places a name and fits the view, so the two cannot disagree.
+    assert "labelBox(item, width, height, middle)" in body_of("placeLabels")
+    assert 'reach: extent(probes, companies ? "anchors" : false),' in SCRIPT
+
+
+def test_a_choice_frames_its_node_and_escape_returns_to_the_whole_ring() -> None:
+    choice = body_of("frameChoice")
+    assert "const near = related(entry.id);" in choice
+    assert (
+        "glide({ pitch: home.pitch, distance: home.distance, target: center },"
+        " FOCUS_MS);"
+    ) in choice
+    assert "frameChoice(entry);" in body_of("select")
+    glide = body_of("glide")
+    assert "if (options.reducedMotion) {" in glide and "tween = null;" in glide
+    reset = body_of("reset")
+    assert "focused = false;" in reset and "target.copy(center);" in reset
+
+
+def test_the_finish_is_built_in_code_and_every_new_resource_is_freed() -> None:
+    # An environment map from a small room of panels: no file, no addon.
+    environment = body_of("environmentMap")
+    assert "new THREE.PMREMGenerator(renderer)" in environment
+    assert "pmrem.fromScene(room, 0.04)" in environment
+    assert "pmrem.dispose();" in environment and "box.dispose();" in environment
+    assert "examples/" not in SCRIPT and "addons" not in SCRIPT
+    # The glow: additive sprites with a canvas radial gradient, never picked.
+    assert "createRadialGradient" in body_of("glowTexture")
+    assert "blending: THREE.AdditiveBlending," in SCRIPT
+    assert "sprite.raycast = () => {};" in SCRIPT
+    # Shadows drawn once (nothing moves), again after a restored context, as is the
+    # environment map; fog fades the far rim.
+    assert "renderer.shadowMap.autoUpdate = false;" in SCRIPT
+    assert "PCFSoftShadowMap;" not in SCRIPT
+    restored = SCRIPT.split('"webglcontextrestored",', 1)[1].split("{ signal }", 1)[0]
+    assert "renderer.shadowMap.needsUpdate = true;" in restored
+    assert "environment = environmentMap(THREE, renderer);" in restored
+    assert "new THREE.Fog(GROUND" in SCRIPT
+    # dispose() frees the canvas texture, the environment map and the overlay too.
+    dispose = body_of("dispose")
+    for needed in (
+        "scene.traverse(disposeObject);",
+        "glow.dispose();",
+        "environment.dispose();",
+        "scene.environment = null;",
+        "overlay.remove();",
+    ):
+        assert needed in dispose, needed
+    # The sectors stand clearly apart and carry their names.
+    gap = re.search(r"const COMPANY_GAP = ([0-9.]+);", SCRIPT)
+    wall_gap = re.search(r"const SECTOR_GAP = ([0-9.]+);", SCRIPT)
+    assert gap and wall_gap and float(gap.group(1)) >= 2 * float(wall_gap.group(1))
+    assert "const gap = data.companies ? COMPANY_GAP : SECTOR_GAP;" in SCRIPT
+    assert 'domainName: row.getAttribute("data-domain-name") || "",' in SCRIPT
 
 
 def test_the_scene_reaches_the_tables_and_follows_the_motion_setting() -> None:
@@ -529,6 +676,13 @@ def test_the_companies_ring_page_has_its_tables_cards_and_filters() -> None:
         assert (pressed == "true") == (key in ("not-protected", "needs-attention"))
     assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
     assert "<style" not in html.split("<main", 1)[1] and " style=" not in html
+    # Each control row names its domain, for the floor of its sector.
+    names = {domain.code: domain.name for domain in LIBRARY.domains}
+    for control in ring.controls:
+        assert control.domain_name == names[control.domain]
+    assert html.count('data-domain-name="Identity and MFA"') == sum(
+        1 for control in ring.controls if control.domain == "ACC"
+    )
 
 
 async def test_the_page_and_its_data_show_the_same_client(

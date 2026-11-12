@@ -605,9 +605,21 @@ close it; the aria-live detail line keeps naming the choice. Home keeps the stre
 The companies ring (Evidence Explorer, the page without a client). Every active client
 is an office on an inner ring, built as on the street, and every control of the library
 a tile on an outer ring by domain in the worst status any client has for it, in the
-tile shapes of the evidence wall; a `THREE.Line` joins every client to every control in
-the status colour of that pair (none for not applicable), faint (0.22) until a node is
-chosen, then lit on the chosen node and dimmed elsewhere. Four `aria-pressed` filter
+tile shapes of the evidence wall, the domains a tile apart on ground bands of two quiet
+alternating tints (not status colours). A thin tube joins every client to every control
+in the status colour of that pair (none for not applicable), routed through a point
+above its control's domain so a domain's links travel as one bundle; the tubes of a
+status are one merged mesh. Links are faint (0.22) until a node is chosen; choosing one
+glides the camera (0.6 s, immediate under reduced motion) to frame it with the nodes its
+shown links reach, fades the rest and shows only its links, and Escape or Reset view
+returns to the whole ring. Small dots flow from client to control along the shown not
+protected links, never under reduced motion. Each client's name and score stand over its
+roof and each domain's name on its sector, in an `aria-hidden` overlay of plain elements
+(`.rv-explorer-labels`, `--rv-fs-xs`) placed from the camera, hidden behind it or when
+crowded: words over a scene are allowed only like this, repeating what the tables say.
+The materials reflect an environment map built in code (`PMREMGenerator.fromScene` of a
+few bright panels), not protected tiles glow with an additive canvas-gradient sprite,
+and fog and a CSS vignette soften the rim. Four `aria-pressed` filter
 buttons in the tool row (a group labelled "Links shown", each with its words and its
 number of links) hide or show a status; not protected and needs attention start
 pressed. The facts are read from the page, as on Home: the rows of the Companies and
