@@ -5,7 +5,8 @@
 {% block content %}
 {% include "_client_nav.html" %}
 <div class="rv-section-head rv-evidence-head">
-<div><h2 id="evidence-title">Evidence and imports</h2><p class="rv-section-note">Evidence is the export of a tool, with the time it was captured. An export that is out of date counts for less, and for nothing at twice its age.</p></div>
+<div><h2 id="evidence-title">Evidence and imports</h2><p class="rv-section-note">Past its stale date an export counts for less; at twice that age, for nothing.</p></div>
+<a class="rv-head-link" href="/experiments/evidence-explorer?client_id={{ client_id }}">Open in Evidence Explorer (preview)</a>
 </div>
 
 <section class="rv-verdict" id="evidence-status" aria-labelledby="evidence-status-title">
@@ -19,36 +20,9 @@
 </dl>
 </section>
 
-<section id="ages" aria-labelledby="ages-title">
-<div class="rv-section-head">
-<div><h3 id="ages-title">How old is each export</h3><p class="rv-section-note">The newest export of every source against the date it goes stale, the mark on its bar. Every bar is on the same scale; a bar past its mark counts for less, and for nothing at twice the age. A bar opens its row in the sources table.</p></div>
-</div>
-{% if ages %}
-<ul class="rv-ages">
-{% for bar in ages %}
-<li class="rv-age" id="age-{{ bar.code }}">
-<span class="rv-age-name">{{ i.source_mark(bar.code) }}<span>{{ bar.name }}</span></span>
-<span class="rv-age-words">{{ bar.words }}</span>
-{% if bar.imported %}
-<svg class="rv-bar rv-age-bar" viewBox="0 0 100 10" preserveAspectRatio="none" role="group" aria-label="{{ bar.name }}: {{ bar.words }}" data-roving><rect class="rv-age-track" x="0" y="0" width="100" height="10"/><a class="rv-seg-link" href="#source-{{ bar.code }}" data-tip="{{ bar.tip }}"><title>{{ bar.tip }}</title><rect class="rv-seg-{{ bar.state.key }}" x="0" y="0" width="{{ bar.width }}" height="10"/></a>{% if bar.mark %}<rect class="rv-age-mark" x="{{ bar.mark }}" y="0" width="0.6" height="10"/>{% endif %}</svg>
-{% else %}
-<svg class="rv-bar rv-age-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="rv-age-track" x="0" y="0" width="100" height="10"/></svg>
-{% endif %}
-</li>
-{% endfor %}
-</ul>
-<ul class="rv-legend">
-{% for state in ages|map(attribute="state")|unique %}
-<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-seg-{{ state.key }}" width="12" height="12" rx="3"/></svg> {{ s.status(state) }}</li>
-{% endfor %}
-<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-age-mark" x="5" width="2" height="12"/></svg> Goes stale</li>
-</ul>
-{% endif %}
-</section>
-
 <section id="refresh" aria-labelledby="refresh-title">
 <div class="rv-section-head">
-<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">The oldest export first, then the sources never imported. An export is measured by the strictest control that reads it, as the checklist measures it. Drop fresh files on <a href="/imports?client_id={{ client_id }}">Import evidence</a>, or run the DNS check below.</p></div>
+<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">Oldest first. Drop fresh files on <a href="/imports?client_id={{ client_id }}">Import evidence</a> or run the DNS check.</p></div>
 </div>
 {% if refresh %}
 <div class="rv-refresh">
@@ -65,7 +39,7 @@
 
 <section id="dns-check" class="rv-card rv-dns-check" aria-labelledby="dns-check-title">
 <div class="rv-section-head">
-<div><h3 id="dns-check-title">Public DNS check</h3><p class="rv-section-note">Reads the public SPF, DKIM and DMARC records of the client's mail domains for PC-EML-01 to PC-EML-03. Only DNS questions about these names leave revrook.</p></div>
+<div><h3 id="dns-check-title">Public DNS check</h3><p class="rv-section-note">Reads public SPF, DKIM and DMARC records for PC-EML-01 to 03. Only DNS queries leave revrook.</p></div>
 </div>
 {% if done_message %}<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ done_message }}</span></p>{% endif %}
 <form method="post" action="/clients/{{ client_id }}/dns-check">
@@ -91,7 +65,7 @@
 
 <section id="sources-section" aria-labelledby="sources-title">
 <div class="rv-section-head">
-<div><h3 id="sources-title">Sources</h3><p class="rv-section-note">Every source a control reads, with its newest export and the date it goes stale for the strictest control that reads it.</p></div>
+<div><h3 id="sources-title">Sources</h3><p class="rv-section-note">Every source a control reads: newest export, age, stale date.</p></div>
 </div>
 <table id="sources" class="rv-table-cards rv-sources">
 <caption>The newest export of every source</caption>
@@ -101,6 +75,7 @@
 <th scope="col">State</th>
 <th scope="col">Newest export</th>
 <th scope="col">Stale after</th>
+<th scope="col">Age</th>
 <th scope="col" class="rv-numeric">Exports kept</th>
 </tr>
 </thead>
@@ -111,18 +86,32 @@
 <td data-label="State">{{ s.status(row.state) }}</td>
 <td data-label="Newest export" class="rv-date">{{ s.day(row.captured_at) }}</td>
 <td data-label="Stale after" class="rv-date">{{ s.day(row.expires_at) }}</td>
+{#- The age bar of the source, matched by its code: the words say it, the bar
+    (one scale for every source, the stale date as its mark) shows it. -#}
+{% set bar = ages[row.code] %}
+<td data-label="Age" class="rv-age-cell"><span class="rv-age-words">{{ bar.words }}</span><svg class="rv-bar rv-age-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="rv-age-track" x="0" y="0" width="100" height="10"/>{% if bar.imported %}<rect class="rv-seg-{{ bar.state.key }}" x="0" y="0" width="{{ bar.width }}" height="10"/>{% if bar.mark %}<rect class="rv-age-mark" x="{{ bar.mark }}" y="0" width="0.6" height="10"/>{% endif %}{% endif %}</svg></td>
 <td data-label="Exports kept" class="rv-numeric">{{ row.exports }}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
+{% if ages %}
+<ul class="rv-legend">
+{% for state in ages.values()|map(attribute="state")|unique %}
+<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-seg-{{ state.key }}" width="12" height="12" rx="3"/></svg> {{ s.status(state) }}</li>
+{% endfor %}
+<li><svg class="rv-swatch" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false"><rect class="rv-age-mark" x="5" width="2" height="12"/></svg> Goes stale</li>
+</ul>
+{% endif %}
 </section>
 
 <section id="items-section" aria-labelledby="items-title">
 <div class="rv-section-head">
-<div><h3 id="items-title">Everything imported</h3><p class="rv-section-note">Every evidence item of this client, newest first. A revision is a later import of the same export.</p></div>
+<div><h3 id="items-title">Everything imported</h3><p class="rv-section-note">Newest first. A revision is a later import of the same export.</p></div>
 </div>
 {% if items %}
+<details class="rv-items-fold" id="items-fold">
+<summary>Everything imported ({{ items|length }} items)</summary>
 <table id="items" class="rv-table-cards rv-items">
 <caption>Every evidence item of this client, newest first</caption>
 <thead>
@@ -151,6 +140,7 @@
 {#- On a phone the list shows its newest twelve items; this link (the table as the
     target, no script) shows every one. Hidden from 768px, where every row shows. -#}
 {% if items|length > 12 %}<p class="rv-table-more"><a href="#items">Show all {{ items|length }} items</a></p>{% endif %}
+</details>
 {% else %}
 <div class="rv-empty" id="items-empty">
 {{ i.icon("inbox", "xl") }}

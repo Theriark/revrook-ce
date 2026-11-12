@@ -19,7 +19,8 @@
  * is never text on the surface or the canvas; the link colour is never text on
  * the rail; the status colours and secondary text are text on the surface only.
  *
- * Scale: type 12, 13, 14, 15, 16, 20, 28; spacing 4, 8, 12, 16, 24, 32, 48;
+ * Scale: type six tokens (--rv-fs-xs to --rv-fs-2xl: 12, 14, 16, 20, 28, 40), the
+ * body 15 and SVG text in its own units; spacing 4, 8, 12, 16, 24, 32, 48;
  * radius 8 (controls) and 12 (cards); two elevations; motion 150ms ease-out.
  */
 
@@ -48,6 +49,10 @@
   --rv-ink: var(--rv-charcoal);
   --rv-link: var(--rv-accent);
   --rv-primary: var(--rv-accent);
+  /* A score and its charts (the ring, the gauge, the earned share, the active
+     sparkline mark): never the indigo of links and buttons, so one colour means
+     one thing */
+  --rv-score: var(--rv-charcoal);
   --rv-accent-deep: #3a47b5;
   --rv-accent-tint: #eceefa;
   --rv-focus: var(--rv-charcoal);
@@ -64,6 +69,14 @@
   --rv-shadow-1: 0 1px 2px rgba(45, 47, 58, 0.06), 0 1px 1px rgba(45, 47, 58, 0.04);
   --rv-shadow-2: 0 12px 32px rgba(45, 47, 58, 0.18), 0 2px 6px rgba(45, 47, 58, 0.08);
   --rv-motion: 150ms ease-out;
+  /* The type scale: every font size of every stylesheet is one of these six,
+     except the base size of the body and SVG text, measured in viewBox units */
+  --rv-fs-xs: 12px;
+  --rv-fs-sm: 14px;
+  --rv-fs-md: 16px;
+  --rv-fs-lg: 20px;
+  --rv-fs-xl: 28px;
+  --rv-fs-2xl: 40px;
   /* The icon scale (_icons.html): sm inside a control, md beside a line of text,
      lg the mark of a card, xl the mark of an empty state */
   --rv-icon-sm: 18px;
@@ -150,6 +163,7 @@
   --rv-ink: #5563dc;
   --rv-link: #8b97f2;
   --rv-primary: #8b97f2;
+  --rv-score: #e6e7ec;
   --rv-accent-deep: #aeb7f6;
   --rv-accent-tint: #2b3050;
   --rv-focus: #ffffff;
@@ -178,6 +192,7 @@
     --rv-ink: #5563dc;
     --rv-link: #8b97f2;
     --rv-primary: #8b97f2;
+    --rv-score: #e6e7ec;
     --rv-accent-deep: #aeb7f6;
     --rv-accent-tint: #2b3050;
     --rv-focus: #ffffff;
@@ -224,7 +239,7 @@ h4 {
 
 h1 {
   margin-bottom: 0.5rem;
-  font-size: 28px;
+  font-size: var(--rv-fs-xl);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -232,7 +247,7 @@ h1 {
 h2 {
   margin-top: 2rem;
   margin-bottom: 0.75rem;
-  font-size: 20px;
+  font-size: var(--rv-fs-lg);
   font-weight: 600;
   line-height: 1.3;
 }
@@ -240,14 +255,14 @@ h2 {
 h3 {
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.4;
 }
 
 h4 {
   margin-bottom: 0.5rem;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
 }
 
@@ -260,13 +275,13 @@ dl {
 
 small,
 .rv-caption {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
 }
 
 code,
 kbd,
 samp {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   border-radius: 6px;
   padding: 0.1rem 0.35rem;
   color: var(--rv-text);
@@ -391,7 +406,7 @@ body.rv-app {
 /* Text wordmark: rev in charcoal, rook in violet-blue, bold Helvetica or Arial */
 .rv-wordmark {
   font-family: Helvetica, Arial, sans-serif;
-  font-size: 1.75rem;
+  font-size: var(--rv-fs-xl);
   font-weight: 700;
   line-height: 36px;
   white-space: nowrap;
@@ -413,21 +428,21 @@ body.rv-app {
    the title of every page name the product) */
 .rv-app .rv-header .rv-wordmark .rv-wordmark-rev,
 .rv-auth-panel .rv-wordmark .rv-wordmark-rev {
-  font-size: 1.75rem;
+  font-size: var(--rv-fs-xl);
   color: var(--rv-stone);
   background-color: var(--rv-rail);
 }
 
 .rv-app .rv-header .rv-wordmark .rv-wordmark-rook,
 .rv-auth-panel .rv-wordmark .rv-wordmark-rook {
-  font-size: 1.75rem;
+  font-size: var(--rv-fs-xl);
   color: var(--rv-gray);
   background-color: var(--rv-rail);
 }
 
 .rv-app .rv-header .rv-wordmark .rv-wordmark-rev,
 .rv-app .rv-header .rv-wordmark .rv-wordmark-rook {
-  font-size: 24px;
+  font-size: var(--rv-fs-lg);
 }
 
 @media (max-width: 599px) {
@@ -441,7 +456,7 @@ body.rv-app {
   padding: 1px 9px;
   border: 1px solid var(--rv-charcoal-soft);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   font-weight: 600;
   line-height: 1.6;
   white-space: nowrap;
@@ -521,7 +536,7 @@ body.rv-app {
 .rv-nav-group-label {
   display: none;
   margin: 12px 10px 4px;
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--rv-stone-dim);
@@ -536,7 +551,7 @@ body.rv-app {
   padding: 9px 12px;
   border: 0;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
   line-height: 1.4;
   white-space: nowrap;
@@ -585,7 +600,7 @@ body.rv-app {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 700;
   line-height: 32px;
   text-align: center;
@@ -605,7 +620,7 @@ body.rv-app {
   padding: 6px 10px;
   border: 1px solid var(--rv-charcoal-soft);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   white-space: nowrap;
   color: var(--rv-stone);
@@ -662,11 +677,11 @@ body.rv-app {
 
   .rv-app .rv-header .rv-wordmark .rv-wordmark-rev,
   .rv-app .rv-header .rv-wordmark .rv-wordmark-rook {
-    font-size: 1.75rem;
+    font-size: var(--rv-fs-xl);
   }
 
   .rv-app .rv-nav-link {
-    font-size: 15px;
+    font-size: var(--rv-fs-md);
   }
 
   .rv-nav-strip {
@@ -757,7 +772,7 @@ body.rv-app {
 .rv-page-purpose {
   max-width: 44rem;
   margin: 4px 0 0;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -840,7 +855,7 @@ main .rv-nav-link {
   padding: 10px 12px;
   border-bottom: 2px solid transparent;
   border-radius: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
   white-space: nowrap;
   text-decoration: none;
@@ -872,7 +887,7 @@ main .rv-nav-link[aria-current="page"] {
   padding: 8px 14px;
   border: 1px solid var(--rv-accent);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
   cursor: pointer;
@@ -934,14 +949,14 @@ input[type="submit"] {
 
 .rv-button-small {
   padding: 4px 10px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-button-block,
 button.rv-button-block {
   width: 100%;
   padding: 10px 16px;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
 }
 
 .rv-actions {
@@ -957,7 +972,7 @@ button.rv-button-block {
 label,
 fieldset legend {
   margin-bottom: 6px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
   color: var(--rv-text);
@@ -968,7 +983,7 @@ input:not([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [ty
 select,
 textarea {
   margin-bottom: 16px;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   line-height: 1.5;
   border-radius: 8px;
   color: var(--rv-text);
@@ -1039,7 +1054,7 @@ select:not([multiple], [size]) {
 
 [type="file"] {
   margin-bottom: 16px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 [aria-invalid="true"]:not([type="checkbox"], [type="radio"]) {
@@ -1083,7 +1098,7 @@ fieldset legend {
 .rv-help {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.45;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -1092,7 +1107,7 @@ fieldset legend {
 .rv-field-error {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-status-not-protected);
   background-color: var(--rv-surface);
@@ -1103,7 +1118,7 @@ fieldset legend {
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 10px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
 }
 
@@ -1121,14 +1136,14 @@ main table {
   border-radius: 12px;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 main table caption {
   padding: 0 0 8px;
   text-align: left;
   caption-side: top;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -1147,7 +1162,7 @@ main table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
   color: var(--rv-text);
@@ -1183,7 +1198,7 @@ main table td > ul:last-child {
 
 main table td .rv-text-secondary,
 main table th .rv-text-secondary {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-table-scroll {
@@ -1207,14 +1222,14 @@ main table th .rv-text-secondary {
 
 .rv-pseudonym {
   font-family: var(--pico-font-family-monospace);
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text);
   background-color: var(--rv-surface);
 }
 
 .rv-utc-flag {
   display: block;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
 }
 
 /* ---------- Cards and stats ---------- */
@@ -1235,13 +1250,13 @@ main table th .rv-text-secondary {
 
 .rv-card-title {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
 }
 
 .rv-card-subtitle {
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -1259,7 +1274,7 @@ main table th .rv-text-secondary {
 
 .rv-stat-value {
   display: block;
-  font-size: 28px;
+  font-size: var(--rv-fs-xl);
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -1270,7 +1285,7 @@ main table th .rv-text-secondary {
 .rv-stat-label {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -1319,7 +1334,7 @@ span.rv-status-not-applicable {
   padding: 1px 10px 1px 7px;
   border: 1px solid;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.5;
   white-space: nowrap;
@@ -1428,7 +1443,7 @@ p.rv-status-not-protected a {
 
 .rv-empty-title {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
 }
 
@@ -1486,18 +1501,18 @@ p.rv-status-not-protected a {
 }
 
 .rv-dropzone-title {
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
 }
 
 .rv-dropzone-hint {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-dropzone-file {
   display: block;
   margin-top: 8px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
@@ -1520,7 +1535,7 @@ details.rv-confirm > summary {
   padding: 8px 14px;
   border: 1px solid var(--rv-gray);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
   list-style: none;
@@ -1652,7 +1667,7 @@ body.rv-signed-out {
 .rv-auth-tagline {
   max-width: 22rem;
   margin: 0;
-  font-size: 20px;
+  font-size: var(--rv-fs-lg);
   font-weight: 600;
   line-height: 1.35;
   color: var(--rv-white);
@@ -1672,7 +1687,7 @@ body.rv-signed-out {
   gap: 10px;
   margin-bottom: 12px;
   max-width: 24rem;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   line-height: 1.45;
   color: var(--rv-stone);
   background-color: var(--rv-rail);
@@ -1724,7 +1739,7 @@ body.rv-signed-out {
 
 .rv-auth-lead {
   margin-bottom: 24px;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -1775,7 +1790,7 @@ body.rv-signed-out {
    the panel is about 300px and 24px text broke into five lines) */
 @media (min-width: 1024px) {
   .rv-auth-tagline {
-    font-size: 24px;
+    font-size: var(--rv-fs-lg);
     color: var(--rv-white);
     background-color: var(--rv-rail);
   }
@@ -1818,7 +1833,7 @@ body.rv-signed-out {
 .rv-section-note {
   max-width: 40rem;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -1854,7 +1869,7 @@ body.rv-signed-out {
 main .rv-stat .rv-stat-value {
   display: block;
   width: fit-content;
-  font-size: 28px;
+  font-size: var(--rv-fs-xl);
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -1864,7 +1879,7 @@ main .rv-stat .rv-stat-value {
 }
 
 main .rv-stat .rv-stat-value:hover {
-  font-size: 28px;
+  font-size: var(--rv-fs-xl);
   text-decoration: underline;
   text-decoration-color: var(--rv-primary);
   color: var(--rv-accent-deep);
@@ -1873,21 +1888,21 @@ main .rv-stat .rv-stat-value:hover {
 
 .rv-stat .rv-stat-label {
   margin-top: 4px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-surface);
 }
 
 .rv-stat-note {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
 
 .rv-stat-change {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-surface);
@@ -1971,7 +1986,7 @@ main .rv-rook-link:hover {
 
 .rv-ring-arc {
   fill: none;
-  stroke: var(--rv-primary);
+  stroke: var(--rv-score);
   stroke-width: 7;
   stroke-linecap: round;
 }
@@ -1986,7 +2001,7 @@ main .rv-rook-link:hover {
 .rv-rook-name {
   align-self: end;
   overflow: hidden;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
@@ -1995,13 +2010,13 @@ main .rv-rook-link:hover {
 
 .rv-rook-band {
   align-self: start;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.3;
 }
 
 .rv-rook-meta {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.4;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -2046,7 +2061,7 @@ main .rv-rook-link:hover {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 main .rv-attention-what a {
@@ -2059,7 +2074,7 @@ main .rv-attention-what a:hover {
 }
 
 .rv-attention-client {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -2188,7 +2203,7 @@ main .rv-attention-what a:hover {
   gap: 8px;
   margin: 0 0 4px;
   padding: 0;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   list-style: none;
 }
 
@@ -2210,7 +2225,7 @@ main .rv-attention-what a:hover {
 }
 
 .rv-chart-data summary {
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -2249,13 +2264,13 @@ main .rv-attention-what a:hover {
 }
 
 .rv-domain-name {
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
 }
 
 .rv-domain-sum {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
   white-space: nowrap;
@@ -2346,13 +2361,13 @@ main .rv-attention-what a:hover {
 
 .rv-timeline-what {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
 }
 
 .rv-timeline-meta {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -2380,7 +2395,7 @@ main .rv-attention-what a:hover {
   align-items: flex-start;
   gap: 10px;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.45;
 }
 
@@ -2389,7 +2404,7 @@ main .rv-attention-what a:hover {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 700;
   line-height: 24px;
   text-align: center;
@@ -2428,7 +2443,7 @@ main .rv-attention-what a:hover {
 
 .rv-toolbar label {
   margin-bottom: 4px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
@@ -2440,7 +2455,7 @@ main .rv-attention-what a:hover {
 .rv-toolbar-note {
   flex-basis: 100%;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text);
   background-color: var(--rv-canvas);
 }
@@ -2502,7 +2517,7 @@ main a.rv-chip {
   padding: 4px 10px;
   border: 1px solid var(--rv-gray);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
@@ -2539,7 +2554,7 @@ main a.rv-chip[aria-current="true"] {
 /* The clients table: the name is the row heading, the last report a small ring
    beside its band, the controls by status as pills with counts */
 .rv-clients th[scope="row"] {
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
 }
 
 main .rv-clients a.rv-client-name {
@@ -2554,7 +2569,7 @@ main .rv-clients a.rv-client-name:hover {
 .rv-cell-note {
   display: block;
   margin-top: 2px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.4;
 }
 
@@ -2596,13 +2611,13 @@ main .rv-clients a.rv-client-name:hover {
 /* The band and the date stay whole: in a squeezed cell Pico's break-word broke
    them one letter a line (seen at 768px) */
 .rv-posture-score {
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   white-space: nowrap;
 }
 
 .rv-posture-note {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -2640,18 +2655,18 @@ main a.rv-sort:hover {
 }
 
 .rv-sort-mark {
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
 }
 
 /* Compact density: tighter cells, a smaller ring, the note on the same line */
 main .rv-table-compact th,
 main .rv-table-compact td {
   padding: 6px 10px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-table-compact th[scope="row"] {
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-table-compact .rv-posture {
@@ -2678,7 +2693,7 @@ main .rv-table-compact td {
 }
 
 .rv-pager-status {
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -2765,7 +2780,7 @@ main .rv-table-compact td {
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     font-weight: 600;
     color: var(--rv-text-secondary);
     background-color: var(--rv-surface);
@@ -2818,9 +2833,9 @@ main .rv-table-compact td {
   margin-top: 0;
 }
 
-/* The domains and the evidence freshness share their row evenly: the table of
-   sources (name, state pill, two dates) needs about 420px, and in the 2fr
-   column of 1440px it had 396px, so "Not imported" broke one letter a line */
+/* The domains and the evidence freshness share their row evenly (the freshness
+   card held a table of sources then, which broke "Not imported" one letter a
+   line in a 2fr column; it is now a status line, and the row stays even) */
 @media (min-width: 1280px) {
   .rv-two-even {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2853,7 +2868,7 @@ main .rv-table-compact td {
 
 .rv-posture-grade {
   margin: 0 0 10px;
-  font-size: 24px;
+  font-size: var(--rv-fs-lg);
   font-weight: 700;
   line-height: 1.2;
   color: var(--rv-text);
@@ -2872,7 +2887,7 @@ main .rv-table-compact td {
 }
 
 .rv-facts dt {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -2880,7 +2895,7 @@ main .rv-table-compact td {
 
 .rv-facts dd {
   margin: 2px 0 0;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.35;
   font-variant-numeric: tabular-nums;
@@ -2893,7 +2908,7 @@ main .rv-table-compact td {
 
 .rv-summary p {
   margin-bottom: 6px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.5;
 }
 
@@ -2934,7 +2949,7 @@ main .rv-table-compact td {
 
 .rv-mix-count {
   min-width: 2ch;
-  font-size: 20px;
+  font-size: var(--rv-fs-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -2942,13 +2957,13 @@ main .rv-table-compact td {
 
 .rv-mix-link {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-domain-meta {
   grid-column: 1 / -1;
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -3005,7 +3020,7 @@ main .rv-checklist a.rv-control-link:hover {
   margin: 0 0 2px;
   padding: 0 0 0 14px;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.45;
 }
 
@@ -3089,7 +3104,7 @@ main .rv-checklist a.rv-control-link:hover {
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     font-weight: 600;
     color: var(--rv-text-secondary);
     background-color: var(--rv-surface);
@@ -3116,7 +3131,7 @@ main .rv-checklist a.rv-control-link:hover {
 
 .rv-control-kicker {
   margin: 0 0 4px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
 }
 
@@ -3131,7 +3146,7 @@ main .rv-control-kicker a:hover {
 .rv-control-title {
   max-width: 44rem;
   margin: 0 0 8px;
-  font-size: 24px;
+  font-size: var(--rv-fs-lg);
   line-height: 1.25;
 }
 
@@ -3142,7 +3157,7 @@ main .rv-control-kicker a:hover {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -3184,7 +3199,7 @@ main .rv-control-kicker a:hover {
 .rv-verdict span.rv-status-not-checked,
 .rv-verdict span.rv-status-not-applicable {
   padding: 6px 16px 6px 12px;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
 }
 
 .rv-verdict-facts {
@@ -3239,14 +3254,14 @@ main .rv-control-kicker a:hover {
   margin: 0 0 12px;
   padding: 2px 0 2px 14px;
   border-left: 3px solid var(--rv-text);
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 500;
   line-height: 1.5;
 }
 
 .rv-result-detail {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 /* The exceptions of this control: the owner and the state, the reason, the
@@ -3270,7 +3285,7 @@ main .rv-control-kicker a:hover {
 
 .rv-exception p {
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-exception-head {
@@ -3282,7 +3297,7 @@ main .rv-control-kicker a:hover {
 }
 
 .rv-exception .rv-exception-meta {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -3330,7 +3345,7 @@ main .rv-control-kicker a:hover {
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -3350,7 +3365,7 @@ main .rv-control-kicker a:hover {
 
 .rv-suggestion-label {
   margin: 0 0 2px;
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-canvas);
@@ -3358,7 +3373,7 @@ main .rv-control-kicker a:hover {
 
 .rv-suggestion-text {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.5;
   color: var(--rv-text);
   background-color: var(--rv-canvas);
@@ -3379,7 +3394,7 @@ main .rv-control-kicker a:hover {
   display: none;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
 }
 
@@ -3389,19 +3404,19 @@ main .rv-control-kicker a:hover {
 
 .rv-notes-status {
   margin-top: 10px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
 
 .rv-notes-status .rv-errors {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-control-foot {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 /* ---------- Evidence imports, the profile editor and the integrity check (docs/design-system.md, Evidence) ---------- */
@@ -3409,6 +3424,24 @@ main .rv-control-kicker a:hover {
 /* The head of the evidence page sits under the client tabs like the checklist;
    the three parts under the verdict each start with a section head at h3 */
 .rv-evidence-head {
+  margin-top: 8px;
+}
+
+/* The way to the Evidence Explorer preview, a quiet link at the end of the head
+   (the preview left the rail) */
+.rv-head-link {
+  font-size: var(--rv-fs-sm);
+}
+
+/* Everything imported is folded: the sources table above already shows the
+   newest export of each source */
+.rv-items-fold summary {
+  font-size: var(--rv-fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rv-items-fold table {
   margin-top: 8px;
 }
 
@@ -3452,7 +3485,7 @@ main .rv-control-kicker a:hover {
   border-bottom: 1px solid var(--rv-line);
   list-style: none;
   counter-increment: rv-refresh;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.5;
 }
 
@@ -3468,7 +3501,7 @@ main .rv-control-kicker a:hover {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 700;
   line-height: 24px;
   text-align: center;
@@ -3477,12 +3510,12 @@ main .rv-control-kicker a:hover {
 }
 
 .rv-refresh strong {
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
 }
 
 .rv-refresh-when {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-variant-numeric: tabular-nums;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -3490,7 +3523,7 @@ main .rv-control-kicker a:hover {
 
 .rv-refresh-how {
   flex-basis: 100%;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -3522,7 +3555,7 @@ section.rv-step {
   width: 100%;
   margin: 0 0 4px;
   padding: 0;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.5;
   color: var(--rv-text);
@@ -3535,7 +3568,7 @@ section.rv-step {
 
 .rv-step-title {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.5;
 }
@@ -3549,14 +3582,14 @@ section.rv-step {
 
 .rv-step-lead {
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
 
 .rv-step-note {
   margin: 0 0 16px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -3587,7 +3620,7 @@ section.rv-step {
   display: none;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-surface);
@@ -3605,7 +3638,7 @@ section.rv-step {
 
 .rv-import-reach {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-import-controls {
@@ -3617,13 +3650,13 @@ section.rv-step {
 .rv-import-controls li {
   margin: 0 0 4px;
   padding: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   list-style: none;
 }
 
 .rv-import-next {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 /* The integrity check: a broken chain carries the not-protected mark on its
@@ -3693,7 +3726,7 @@ section.rv-step {
     content: attr(data-label);
     display: block;
     margin-bottom: 3px;
-    font-size: 12px;
+    font-size: var(--rv-fs-xs);
     font-weight: 600;
     color: var(--rv-text-secondary);
     background-color: var(--rv-surface);
@@ -3775,7 +3808,7 @@ fieldset.rv-topics {
 
 .rv-topic .rv-check {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
 }
 
 .rv-topic .rv-topic-owner {
@@ -3784,7 +3817,7 @@ fieldset.rv-topics {
 
 .rv-topic .rv-topic-owner label {
   margin-bottom: 4px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
 }
 
@@ -3855,14 +3888,14 @@ fieldset.rv-topics {
   margin: 0 0 24px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--rv-gray);
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
 
 .rv-sheet-title {
   margin: 0 0 4px;
-  font-size: 28px;
+  font-size: var(--rv-fs-xl);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -3872,7 +3905,7 @@ fieldset.rv-topics {
 
 .rv-sheet-subtitle {
   margin: 0 0 24px;
-  font-size: 20px;
+  font-size: var(--rv-fs-lg);
   line-height: 1.3;
   color: var(--rv-text);
   background-color: var(--rv-surface);
@@ -3882,7 +3915,7 @@ fieldset.rv-topics {
   display: grid;
   gap: 6px 16px;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-sheet-facts > div {
@@ -3917,7 +3950,7 @@ fieldset.rv-topics {
 
 .rv-sheet-heading {
   margin: 0 0 8px;
-  font-size: 20px;
+  font-size: var(--rv-fs-lg);
   font-weight: 700;
   line-height: 1.3;
   color: var(--rv-text);
@@ -3926,7 +3959,7 @@ fieldset.rv-topics {
 
 .rv-sheet-summary p {
   margin: 0 0 10px;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   line-height: 1.55;
 }
 
@@ -3946,7 +3979,7 @@ fieldset.rv-topics {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-sheet-count {
@@ -3958,7 +3991,7 @@ fieldset.rv-topics {
   margin: 24px 0 0;
   padding-top: 8px;
   border-top: 1px solid var(--rv-line);
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   line-height: 1.5;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -3992,13 +4025,13 @@ fieldset.rv-topics {
 
 .rv-kind-name {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
 }
 
 .rv-kind-text {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -4012,7 +4045,7 @@ fieldset.rv-topics {
 /* The export history: a file name or a digest breaks anywhere, so a card on
    a phone never grows wider than the page */
 .rv-digest {
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   overflow-wrap: anywhere;
   word-break: break-all;
 }
@@ -4044,7 +4077,7 @@ fieldset.rv-topics {
   margin: 0;
   padding: 2px 0 2px 14px;
   border-left: 3px solid var(--rv-text);
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   line-height: 1.55;
 }
 
@@ -4062,13 +4095,13 @@ fieldset.rv-topics {
 
 .rv-card-heading {
   margin: 16px 0 4px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
 }
 
 .rv-card-text {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 /* The users: one chip per person with the first letter as its mark */
@@ -4090,7 +4123,7 @@ fieldset.rv-topics {
   border: 1px solid var(--rv-line);
   border-radius: 999px;
   list-style: none;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 500;
 }
 
@@ -4099,7 +4132,7 @@ fieldset.rv-topics {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   font-weight: 700;
   line-height: 24px;
   text-align: center;
@@ -4129,7 +4162,7 @@ fieldset.rv-topics {
   padding: 10px 0;
   border-top: 1px solid var(--rv-line);
   list-style: none;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-services li:first-child {
@@ -4207,7 +4240,7 @@ fieldset.rv-topics {
 
 .rv-glossary dt {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.4;
   color: var(--rv-text);
@@ -4216,7 +4249,7 @@ fieldset.rv-topics {
 
 .rv-glossary dd {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.55;
   color: var(--rv-text);
   background-color: var(--rv-surface);
@@ -4243,7 +4276,7 @@ fieldset.rv-topics {
 
 .rv-problem-code {
   margin: 0 0 8px;
-  font-size: 28px;
+  font-size: var(--rv-fs-xl);
   font-weight: 700;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
@@ -4257,19 +4290,19 @@ fieldset.rv-topics {
 
 .rv-problem-message {
   margin: 0 0 12px;
-  font-size: 16px;
+  font-size: var(--rv-fs-md);
   font-weight: 500;
 }
 
 .rv-problem-details {
   margin: 0 0 12px;
   padding-left: 1.25rem;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
 }
 
 .rv-problem-hint {
   margin: 0 0 20px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
@@ -4314,7 +4347,7 @@ fieldset.rv-topics {
   padding: 5px 9px;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   font-weight: 600;
   line-height: 1.4;
   color: var(--rv-stone);

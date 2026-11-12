@@ -222,8 +222,11 @@ def test_the_explorer_is_an_evidence_page_and_no_longer_an_experiment() -> None:
     groups = re.findall(r'<p class="rv-nav-group-label">([^<]+)</p>', NAV)
     assert groups == ["Work", "Evidence", "Administration"]
     evidence = NAV.split("Evidence</p>", 1)[1].split("Administration</p>", 1)[0]
-    assert "Evidence integrity" in evidence and "Evidence Explorer" in evidence
-    assert evidence.index("Evidence integrity") < evidence.index("Evidence Explorer")
+    # The preview left the rail: the evidence page of a client links it.
+    assert "Evidence integrity" in evidence
+    assert 'href="/experiments/evidence-explorer"' not in NAV
+    page = (TEMPLATES / "evidence_imports.html").read_text(encoding="utf-8")
+    assert 'href="/experiments/evidence-explorer?client_id={{ client_id }}"' in page
     assert "Development-only" not in EXPLORER and "preview on this" not in EXPLORER
     assert "What this view is" in EXPLORER
 
@@ -270,24 +273,23 @@ def test_the_rail_fold_is_a_real_form_in_the_rail() -> None:
         "Clients",
         "Profile editor",
         "Evidence integrity",
-        "Evidence Explorer",
         "Settings",
         "System",
-        "Glossary",
     ):
         assert f' title="{word}">' in html, word
-    assert 'aria-current="page" title="Glossary">' in html
+    # The glossary is in the account menu now, so no rail link is current.
+    assert 'aria-current="page" title=' not in html
     assert 'title="Sign out"' not in html  # sign out is in the account menu
     open_rail = templates.get_template("glossary.html").render(
         title="Glossary",
         user=type("User", (), {"username": "admin"})(),
         csrf_token=PLACEHOLDER_TOKEN,
         brand_files=frozenset(BRAND_FILES),
-        nav="glossary",
+        nav="system",
     )
     assert '<body class="rv-app" data-rail="expanded">' in open_rail
     assert 'name="rail" value="compact" aria-expanded="true"' in open_rail
-    assert 'class="rv-nav-link" href="/glossary" aria-current="page">' in open_rail
+    assert 'class="rv-nav-link" href="/system" aria-current="page">' in open_rail
     assert ' title="Home">' not in open_rail and ' title="Sign out">' not in open_rail
 
 

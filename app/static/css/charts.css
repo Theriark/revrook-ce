@@ -22,7 +22,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   box-shadow: var(--rv-shadow-2);
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.4;
   pointer-events: none;
   opacity: 0;
@@ -59,7 +59,7 @@
 
 .rv-range-label {
   margin-right: 4px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -71,7 +71,7 @@ main .rv-range button.rv-range-choice {
   padding: 4px 10px;
   border: 1px solid var(--rv-gray);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
@@ -168,7 +168,7 @@ main .rv-range button.rv-range-choice[aria-pressed="true"] {
   padding: 10px 12px;
   border-left: 3px solid var(--rv-primary);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   line-height: 1.45;
   color: var(--rv-text);
   background-color: var(--rv-canvas);
@@ -187,7 +187,7 @@ main .rv-range button.rv-range-choice[aria-pressed="true"] {
 
 /* The number of reports beside each client of the legend */
 .rv-chart-count {
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   font-variant-numeric: tabular-nums;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
@@ -218,7 +218,7 @@ main .rv-chart-legend button.rv-series {
   padding: 2px 8px;
   border: 1px solid transparent;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--rv-fs-sm);
   font-weight: 400;
   line-height: 1.4;
   text-align: left;
@@ -275,8 +275,8 @@ main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key .rv-m
   vector-effect: non-scaling-stroke;
 }
 
-/* A row of the numbers a segment leads to, and a row of the sources table an
-   age bar leads to, is focused by the script when it arrives */
+/* A row of the numbers a segment leads to is focused by the script when it
+   arrives */
 .rv-chart-data tr:focus,
 .rv-sources tr:focus {
   outline: 3px solid var(--rv-focus);
@@ -296,55 +296,26 @@ main .rv-chart-legend button.rv-series[aria-pressed="false"] .rv-chart-key .rv-m
 }
 
 .rv-spark-mark.is-active {
-  fill: var(--rv-primary);
+  fill: var(--rv-score);
 }
 
-/* How old is each export: one bar per source on a shared scale, the state
-   colour of the export as its fill (the words sit beside it), the stale date as
-   a mark in the secondary text colour, which reaches 3 to 1 in both themes */
-.rv-ages {
-  margin: 0 0 12px;
-  padding: 0;
-  list-style: none;
-}
-
-.rv-age {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 0 12px;
-  margin: 0;
-  padding: 8px 0 10px;
-  border-bottom: 1px solid var(--rv-line);
-}
-
-.rv-age:last-child {
-  border-bottom: 0;
-}
-
-.rv-age-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
+/* The age of each export, a column of the sources table: the words, then one
+   bar per source on a shared scale, the state colour of the export as its fill,
+   the stale date as a mark in the secondary text colour, which reaches 3 to 1
+   in both themes. The bar only shows what the words say (aria-hidden) */
 .rv-age-words {
-  font-size: 13px;
+  display: block;
+  font-size: var(--rv-fs-sm);
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
-  text-align: right;
   color: var(--rv-text-secondary);
   background-color: var(--rv-surface);
 }
 
-.rv-ages .rv-age-bar {
-  grid-column: 1 / -1;
+.rv-age-cell .rv-age-bar {
   display: block;
   width: 100%;
+  min-width: 96px;
   height: 10px;
   margin-top: 5px;
   border-radius: 5px;
@@ -366,7 +337,7 @@ main a.rv-chip-narrowed {
 }
 
 .rv-chip-remove {
-  font-size: 12px;
+  font-size: var(--rv-fs-xs);
   line-height: 1;
 }
 

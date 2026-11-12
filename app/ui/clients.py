@@ -338,7 +338,6 @@ async def overview(
             view=loaded.view,
             period_start=start.isoformat(),
             period_end=end.isoformat(),
-            sources=rows,
             refresh=refresh_list(rows),
             posture=posture_of(
                 client_id,
@@ -789,7 +788,8 @@ async def evidence_page(request: Request, client_id: RowId, done: str = "") -> R
             "section": "evidence",
             "sources": rows,
             "refresh": refresh_list(rows),
-            "ages": age_bars(rows, now),
+            # The age bar of each source row, matched by its code in the table.
+            "ages": {bar.code: bar for bar in age_bars(rows, now)},
             "items": items,
             "facts": evidence_facts(rows, views),
             # The import page opens on this client (THE-505, defect 8).

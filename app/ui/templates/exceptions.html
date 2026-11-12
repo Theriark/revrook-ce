@@ -8,7 +8,7 @@
 {%- set overdue_rows = open_rows|selectattr("overdue")|list %}
 {%- set closed_rows = rows|selectattr("closed")|list %}
 <div class="rv-section-head rv-under-tabs">
-<div><h2 id="exceptions-title">Exceptions register</h2><p class="rv-section-note">An exception records that a control is knowingly not met, who owns that decision and when it must be looked at again. It never changes a status and never raises the score.</p></div>
+<div><h2 id="exceptions-title">Exceptions register</h2><p class="rv-section-note">A known gap, its owner and review date. It never changes a status or the score.</p></div>
 </div>
 {% if message %}
 <p class="rv-status-protected" role="status" id="exceptions-message" tabindex="-1" data-clear-query="done"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>{{ message }}</span></p>
@@ -104,7 +104,7 @@
 
 <section class="rv-card rv-exception-card" id="add-exception" aria-labelledby="add-exception-title">
 <h3 id="add-exception-title" class="rv-card-title">Add an exception</h3>
-<p class="rv-card-subtitle">Every field but the compensating control is needed. The review date is when someone looks at this decision again.</p>
+<p class="rv-card-subtitle">Every field is required except the compensating control.</p>
 {% include "_errors.html" %}
 <form id="exception-form" method="post" action="/clients/{{ client_id }}/exceptions">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

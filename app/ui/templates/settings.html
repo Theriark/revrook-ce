@@ -2,7 +2,7 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>Settings</h1><p class="rv-page-purpose">The name printed on every report and where the reminders go. Everything else on this page is fixed by the rules or by the installation.</p></div>
+<div><h1>Settings</h1><p class="rv-page-purpose">Your business name and reminder address. Everything else here is read-only.</p></div>
 </div>
 {% if saved %}
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>The settings were saved.</span></p>
@@ -43,7 +43,7 @@
 </section>
 
 <div class="rv-section-head">
-<div><h2 id="read-only-title">Fixed by the rules and the installation</h2><p class="rv-section-note">Shown here so you know what every report says and keeps. Changing them is a configuration of the installation, not a setting.</p></div>
+<div><h2 id="read-only-title">Fixed by the rules and the installation</h2><p class="rv-section-note">Read-only: set by the rules or the installation.</p></div>
 </div>
 <div class="rv-readonly">
 <section class="rv-card" id="disclaimer-card" aria-labelledby="disclaimer-title">
@@ -63,7 +63,7 @@
 
 <section class="rv-card" id="weights-card" aria-labelledby="weights-title">
 <h3 id="weights-title" class="rv-card-title">Weights of the domains</h3>
-<p class="rv-card-subtitle">How much each domain counts towards the score under the rules {{ ruleset }}. The weights are fixed by the rules and cannot be edited here.</p>
+<p class="rv-card-subtitle">Domain weights under {{ ruleset }}, fixed by the rules.</p>
 {#- Each weight is also a course (THE-1360): a bar as long as its share of the
     largest weight, drawn for the eye beside the number it repeats. -#}
 {%- set heaviest = domains|map(attribute="weight")|max %}
@@ -80,7 +80,7 @@
 
 <section class="rv-card" id="people" aria-labelledby="people-title">
 <h3 id="people-title" class="rv-card-title">Users and mappings</h3>
-<p class="rv-card-subtitle">Everyone who can sign in to this installation. The Community Edition has one administrator{% if test_accounts %}; the others here are Development test accounts for the automated browser checks{% endif %}.</p>
+<p class="rv-card-subtitle">Who can sign in. The Community Edition has one administrator{% if test_accounts %}; the rest are Development test accounts{% endif %}.</p>
 <ul id="users" class="rv-users">
 {% for name in usernames %}
 <li><span class="rv-user-mark" aria-hidden="true">{{ name[:1]|upper }}</span>{{ name }}{% if name in test_accounts %} <span class="rv-cell-note">Development test account</span>{% endif %}</li>

@@ -9,7 +9,6 @@ are out of date first, so the MSP knows which file to fetch next.
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
-from fractions import Fraction
 from urllib.parse import urlencode
 
 from app.checks.library import Library
@@ -33,7 +32,6 @@ from app.reports.view import (
     ControlRow,
     ReportView,
 )
-from app.scoring.display import percent
 from app.scoring.snapshot import (
     SnapshotError,
     SnapshotInput,
@@ -148,18 +146,18 @@ def reason_text(reason: str | None) -> str:
 
 
 def coverage_text(result: ControlResult | None, counts_problems: bool = False) -> str:
-    """How much of the population the control was checked on, for example 9 of 10.
+    """How much of the population passes, one form for every rule: "9 of 10 pass".
 
     A count rule ("few is good", such as administrators without MFA) stores the
-    number of problems, not the number that pass: it reads "0 of 1 need work", so a
-    Protected control never shows a coverage of 0%.
+    number of problems, not the number that pass, so what passes is the rest; a
+    Protected count control reads "1 of 1 pass", never a coverage of 0.
     """
     if result is None or result.numerator is None or not result.denominator:
         return NOT_MEASURED
+    passing = result.numerator
     if counts_problems:
-        return f"{result.numerator} of {result.denominator} need work"
-    share = percent(Fraction(result.numerator, result.denominator))
-    return f"{result.numerator} of {result.denominator} ({share}%)"
+        passing = result.denominator - result.numerator
+    return f"{passing} of {result.denominator} pass"
 
 
 def count_rules(library: Library) -> frozenset[str]:

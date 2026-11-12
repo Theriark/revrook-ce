@@ -197,17 +197,21 @@ def test_a_restored_context_takes_its_ground_from_the_stylesheet_again() -> None
     assert "renderer.setClearColor(GROUND, 1);" in after.split("{ signal }", 1)[0]
 
 
-# --- D4: the dates of the freshness table ------------------------------------------
+# --- D4: the dates of the sources table ---------------------------------------------
 
 
-async def test_the_freshness_dates_of_an_overview_never_break(
+async def test_the_source_dates_of_the_evidence_page_never_break(
     ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
 ) -> None:
     csrf = await sign_in(ui_browser, db_engine)
     client_id = await seed_client(db_engine, ui_ctx)
     await make_report(ui_browser, csrf, client_id)
-    html = (await ui_browser.get(f"/clients/{client_id}")).text
+    # The overview no longer repeats the sources (2026-11-12): the evidence page
+    # holds them, with the two dates of every row in tabular figures.
+    overview = (await ui_browser.get(f"/clients/{client_id}")).text
+    assert structure_problems(overview) == [] and 'id="freshness"' not in overview
+    html = (await ui_browser.get(f"/clients/{client_id}/evidence")).text
     assert structure_problems(html) == []
-    table = html.split('<table id="freshness">', 1)[1].split("</table>", 1)[0]
+    table = html.split('<table id="sources"', 1)[1].split("</table>", 1)[0]
     rows = table.count('<th scope="row">')
-    assert rows > 0 and table.count('<td class="rv-date">') == 2 * rows
+    assert rows > 0 and table.count('class="rv-date">') == 2 * rows

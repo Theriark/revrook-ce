@@ -200,16 +200,17 @@ def test_the_exception_flag_is_set_for_the_controls_that_have_one() -> None:
     assert EXCEPTION_FLAG not in by_id["PC-ACC-02"].reasons
 
 
-def test_coverage_is_written_as_counts_and_a_share() -> None:
-    assert coverage_text(result(9, 10)) == "9 of 10 (90%)"
-    assert coverage_text(result(1, 3)) == "1 of 3 (33%)"
-    assert coverage_text(result(0, 4)) == "0 of 4 (0%)"
+def test_coverage_is_written_as_what_passes_of_the_whole() -> None:
+    assert coverage_text(result(9, 10)) == "9 of 10 pass"
+    assert coverage_text(result(1, 3)) == "1 of 3 pass"
+    assert coverage_text(result(0, 4)) == "0 of 4 pass"
     assert coverage_text(result(None, None)) == NOT_MEASURED
     assert coverage_text(result(0, 0)) == NOT_MEASURED
     assert coverage_text(None) == NOT_MEASURED
     # A count rule stores the problems: PC-ACC-02 with no administrator lacking MFA
-    # is Protected and reads "0 of 1 need work", never "0 of 1 (0%)".
-    assert coverage_text(result(0, 1), counts_problems=True) == "0 of 1 need work"
+    # is Protected and reads "1 of 1 pass", the same form as every other rule.
+    assert coverage_text(result(0, 1), counts_problems=True) == "1 of 1 pass"
+    assert coverage_text(result(3, 10), counts_problems=True) == "7 of 10 pass"
     assert coverage_text(result(None, None), counts_problems=True) == NOT_MEASURED
     assert {"PC-ACC-02", "PC-NET-02", "PC-EML-06", "PC-GOV-04"} <= count_rules(LIBRARY)
     assert "PC-ACC-01" not in count_rules(LIBRARY)

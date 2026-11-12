@@ -21,8 +21,8 @@ Open a client and its tab **Reports** (or **Prepare a report** on the overview).
 2. **Write the details.** **Prepared by** goes on the cover; **Plan for next quarter**
    is one line per step and becomes the numbered plan at the end of the review; the
    insurance topics and the owner of each go into the pack. Everything here is saved as
-   you type (the line under the form shows when); **Save the details** posts it without
-   script. The notes for each control are written on its own page
+   you type (the line under the form says "Not edited yet." until then, and when it was
+   saved); without script a **Save the details** button posts it instead. The notes for each control are written on its own page
    ([4. The checklist](04-checklist-and-control-notes.md)); the review prints only
    the notes that were written, never a placeholder for an empty one.
 3. **Make the report.** Press **Make the report for this period**. This stores the

@@ -22,7 +22,7 @@
 /* On the canvas band, as every text of the toolbar is */
 .rv-filters-active-label {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-text);
   background-color: var(--rv-canvas);
@@ -43,7 +43,7 @@ main a.rv-chip-remove .rv-icon {
 }
 
 main a.rv-filters-clear {
-  font-size: 14px;
+  font-size: var(--rv-fs-sm);
   font-weight: 600;
   color: var(--rv-link);
   background-color: var(--rv-canvas);

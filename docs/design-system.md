@@ -50,7 +50,8 @@ themes, `tests/test_theme.py` the recorded values and the switch.
 | `--rv-stone-dim` | `#a9a69e` | same | Group labels in the rail |
 | `--rv-ink` | charcoal | `#5563dc` | A pressed or hovered control with white words: button hover, the selected chip, the skip link, step numbers |
 | `--rv-link` | accent | `#8b97f2` | Links and words in the accent |
-| `--rv-primary` | accent | `#8b97f2` | Marks and lines in the accent: the current-page mark, ring arcs, sparklines, checkboxes, the violet rule of the sheet |
+| `--rv-primary` | accent | `#8b97f2` | Marks and lines in the accent: the current-page mark, sparklines, checkboxes, the violet rule of the sheet |
+| `--rv-score` | charcoal | `#e6e7ec` | A score and its charts: the posture ring arc, the Home gauge arc, the earned share of the score drivers and the active sparkline mark. One colour per meaning: the indigo stays for links and buttons. The keep band (dark in both themes) sets it to `#e6e7ec`, the report sheet to charcoal; the arc reaches 3 to 1 on its track in both themes |
 | `--rv-accent-deep` | `#3a47b5` | `#aeb7f6` | Links on hover |
 | `--rv-accent-tint` | `#eceefa` | `#2b3050` | The import area while a file is dragged over it |
 | `--rv-focus` | charcoal | `#ffffff` | The focus ring (white on the rail in both themes) |
@@ -68,8 +69,13 @@ is never text on the rail or on ink; the status colours and secondary text are t
 on the surface only; a status is never shown by colour alone; the dark block
 redefines roles only, and the block for the system theme holds the same values.
 
-Type: the system stack (`system-ui`, Segoe UI, Roboto, Helvetica, Arial). Sizes 12,
-13, 14, 15 (body), 16, 20, 24 and 28 px; the text wordmark is bold Helvetica or Arial.
+Type: the system stack (`system-ui`, Segoe UI, Roboto, Helvetica, Arial). Six sizes,
+as tokens in `revrook.css`: `--rv-fs-xs` 12, `--rv-fs-sm` 14, `--rv-fs-md` 16,
+`--rv-fs-lg` 20, `--rv-fs-xl` 28 and `--rv-fs-2xl` 40 px. Every font size of every
+stylesheet is one of them (`tests/test_design_system.py`), except the body (15 px,
+the base the others are read against) and SVG text, sized in the units of its viewBox
+(the ring values, the charts, the review horizon); the text wordmark is bold
+Helvetica or Arial. The PDF reports have their own sizes (`app/reports/templates`).
 Spacing 4, 8, 12, 16, 24, 32 and 48 px. Radius 8 px on controls and 12 px on cards and
 tables. Two elevations (`--rv-shadow-1` for cards, `--rv-shadow-2` for dialogs).
 Motion 150 ms ease-out on hover and focus only, off under `prefers-reduced-motion`.
@@ -136,10 +142,12 @@ space (as wide as the fade, so with the last link in view nothing is under it), 
 `revrook.js` marks the strip `data-scroll-end="true"` while nothing lies to the right
 of what is in view, which hides the fade; without the script the fade stays. A link
 that keyboard focus scrolls into view stops 48 px clear of the edge (`scroll-padding`).
-From 600 px to 1023 px the navigation no longer scrolls: its links wrap onto a second
-row (at 768 px eight links needed 1178 px, and the edge fell between two links, so the
-fade gave no cue), and the client tabs wrap from 600 px. Below 600 px both strips still
-scroll, with a chevron beside the fade that goes with it (pull request #83, `revamp.css`).
+Below 1024 px the navigation no longer scrolls: its links wrap onto more rows (at
+768 px eight links needed 1178 px, and the edge fell between two links, so the fade
+gave no cue; at 390 px the strip cut "Import evid..."), and below 600 px its links drop
+their icons and take 8 px by 10 px of padding, so the seven fit in two or three rows.
+The client tabs wrap from 600 px; below that they still scroll, with a chevron beside
+the fade that goes with it (pull request #83, `revamp.css`).
 The rules of this follow-up are in `app/static/css/revrook-retest.css`, loaded after
 `revrook.css` so that they win by order; they belong in `revrook.css` at its next
 rewrite.
@@ -147,12 +155,13 @@ rewrite.
 The top bar (`_topbar.html`) opens the page column of every signed-in page,
 above the stale-worker banner: the breadcrumb of the page on the left; on the right the
 search of the clients, the theme switch and the account menu, on the surface with a
-hairline under it. The theme switch is one icon button (a sun in the dark theme, a moon
+hairline under it. The clients list has its own search (`#q`), so there the bar leaves
+its search out, and the / key goes to the list's search instead. The theme switch is one icon button (a sun in the dark theme, a moon
 in the light one) that posts the other theme to `/theme`; `revrook.js` applies it at
 once and, under "system", works out which theme is showing. The account menu is a
 `details` element (`#account-menu`), so it opens without script; its panel names the
-person (picture or initial in a circle, `_avatar.html`), links **Account** and
-**Settings**, and holds the sign-out form; `revrook.js` closes it on Escape or a click
+person (picture or initial in a circle, `_avatar.html`), links **Account**,
+**Settings** and **Glossary**, and holds the sign-out form; `revrook.js` closes it on Escape or a click
 outside. The **Account** page (`app/ui/account.py`) sets the display name, the picture
 (PNG, JPEG or WebP up to 512 KB, recognised by its first bytes and served back only as
 one of those types from `/account/picture/<id>?v=<version>`), the password (the current
@@ -195,11 +204,14 @@ signed-out header does so below 1024 px, where it shares its line with the badge
 the theme switch beside the panel (which still carries the whole lockup). Without the
 mark file the wordmark alone is the brand, as before.
 
-A page marks where it is with `nav` in its context: `home`, `clients`,
-`profile-editor`, `integrity`, `explorer`, `settings`, `system` or `glossary`. The
-link of that page carries `aria-current="page"` and the violet-blue mark. The links
-are three groups: Work (Home, Clients), Evidence (the profile editor, the integrity
-check and the Evidence Explorer) and Administration (Settings, System, Glossary).
+A page marks where it is with `nav` in its context: `home`, `clients`, `imports`,
+`profile-editor`, `integrity`, `settings` or `system` (the rail), or `explorer`,
+`glossary` or `account` (not in the rail). The link of that page carries
+`aria-current="page"` and the violet-blue mark. The rail holds seven links in three
+groups: Work (Home, Clients), Evidence (Import evidence, the profile editor and the
+integrity check) and Administration (Settings, System). The Glossary is a link of the
+account menu; the Evidence Explorer preview is a quiet link in the head of a client's
+evidence page ("Open in Evidence Explorer (preview)", `?client_id=`).
 
 The rail fold (`_rail.html`). From 1024 px one button at the top of the rail folds it
 to its icons: a 72 px rail with the mark, one icon per link, the stacked icons of the
@@ -431,7 +443,7 @@ The charts and what feeds each:
 | Home | Controls by domain (`#domains`) | The live view of every client, controls by status | The row of the domain under "Show the numbers" |
 | Client overview | Controls by status (`.rv-mix-bar`) | The live view of the client | The checklist narrowed to that status (`?status=`) |
 | Client overview | Coverage by domain (`#domains`) | The live view of the client | The checklist narrowed to that domain and status (`?domain=`, `?status=`) |
-| Evidence and imports | How old is each export (`#ages`) | The newest export of every source and the date it goes stale (`SourceRow`) | The row of the source in the Sources table |
+| Evidence and imports | The Age column of the Sources table (`.rv-age-bar`) | The newest export of every source and the date it goes stale (`SourceRow`) | Nothing: the bar shows what its words say |
 | Report builder | Score over time (`#history`) | Every stored report of the client, over 90 days, a year or all of them (`?span=`) | The report behind each mark |
 
 How a chart answers:
@@ -719,8 +731,9 @@ and the tabs. Under it the period toolbar (`form.rv-period`), then:
   with its protected share, its weight and its score, a legend of status pills and
   every number under "Show the numbers"; a segment opens the checklist narrowed to
   that domain and status (the Charts section).
-- How fresh is the evidence (`#freshness`): the strip that names how many sources
-  need a fresh export (or that every source is current) and the table of sources.
+- How fresh is the evidence (`#freshness-card`): the strip that names how many
+  sources need a fresh export, with the way to the evidence page (or that every
+  source is current); the sources themselves are on the evidence page only.
 - Recent changes (`#recent-changes`): the audit entries of this client only, read
   with the same words as Home.
 
@@ -819,18 +832,21 @@ verdict (`section.rv-verdict`, the band of the control page): the state of the
 client's evidence as one large pill (every export current; `1 stale`; `1 expired, 2
 not imported`; no evidence yet) beside four facts (sources, current, to refresh,
 items imported), computed by `evidence_facts` in `app/ui/viewmodels.py` from the
-source rows the page shows. Then four parts, each with a section head at h3:
-"How old is each export" (`#ages`, `age_bars` in `app/ui/charts.py`), one bar per
-source on one shared scale with the age of its newest export in words, the state
-token of the export as its fill and the date it goes stale as a mark, each bar a link
-to the row of the source in the Sources table (the Charts section);
+source rows the page shows. Then the parts, each with a section head at h3:
 "Refresh these exports", an ordered list (`.rv-refresh`, the oldest export first and
 then the sources never imported) whose numbers are the order to work in, with the
 state pill, the date of the newest export and what to do, or a success strip when
-every export is current; "Sources", a table of every source a control reads with
-its state, newest export, the date it goes stale and the exports kept; and
-"Everything imported", a table of every item with its id under the source, its type,
-date, state, revisions and size, or an empty state that leads to the profile editor.
+every export is current; the public DNS check; "Sources", a table of every source a
+control reads with its state, newest export, the date it goes stale, its age and the
+exports kept. The Age column (`age_bars` in `app/ui/charts.py`, matched to its row by
+the source code) gives the age in words over one bar per source on one shared scale,
+the state token of the export as its fill and the stale date as a mark; the bar is
+hidden from assistive technology, since the words say the same, and the legend sits
+under the table. "Everything imported" folds its table of every item (its id under
+the source, its type, date, state, revisions and size) into a `details` element,
+closed, whose summary counts the items, or shows an empty state that leads to the
+profile editor. The head of the page also links the Evidence Explorer preview of the
+client.
 Dates are `.rv-date` (tabular figures, never wrapped); counts are `.rv-numeric`.
 
 The profile editor. The page header names the job; without a client the page is one
@@ -907,9 +923,11 @@ Three numbered step cards (`section.rv-step` with
 the period, two date fields side by side with the quiet button and the period
 beside it; the details, the preparer, the plan with its help, and the topics of the
 insurer in `fieldset.rv-topics`, one row each (`div.rv-topic`) with the checkbox
-beside the owner field, then the quiet save button with the "Saving" indicator
-(`.rv-notes-saving`, shown while htmx posts the form) and the status line
-(`#details-status`, `aria-live="polite"`) that receives "Saved at" or the refusal;
+beside the owner field, then the "Saving" indicator (`.rv-notes-saving`, shown
+while htmx posts the form; the quiet save button is drawn only without script, in
+`noscript`, since htmx saves as the person types) and the status line
+(`#details-status`, `aria-live="polite"`, "Not edited yet." until the first save) that
+receives "Saved at" or the refusal;
 and the one primary action of the page, making the report. Then "Score over time"
 (`#history`, `_history_chart.html`), the score of the client at every stored report
 over 90 days, a year or all of them, each a mark that opens the report (the Charts

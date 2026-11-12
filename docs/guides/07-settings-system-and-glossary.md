@@ -56,7 +56,7 @@ Open **System** in the Administration group.
 
 ## The glossary
 
-Open **Glossary** in the Administration group: the words revrook uses, each explained
+Open **Glossary** in the account menu (your name at the top right): the words revrook uses, each explained
 once, in the order you meet them (pack date, evidence, the three evidence types,
 freshness, coverage, best case, lower bound, gate control, the four statuses,
 exception, QBR, MFA, SPF, DKIM and DMARC, snapshot), and what a report is. **Every

@@ -52,7 +52,7 @@ OVERVIEW_PARTS = (
     "status-counts",
     "needs-attention",
     "domains",
-    "freshness",
+    "freshness-card",
     "recent-changes",
 )
 RING_TITLE = re.compile(r'<title id="ring-(\d+)-title">([^<]+)</title>')

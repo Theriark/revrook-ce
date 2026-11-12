@@ -103,8 +103,8 @@ or a scene gets the room. Point at an icon, or reach it with Tab, to read its na
 a tooltip; the current page keeps its mark. The same button, now **Open the rail**,
 opens it again. The choice is remembered in this browser, so the next page is drawn
 folded or open from the start. Below 1024 px the navigation is a bar at the top (its
-links on two rows from 600 px, a strip that scrolls sideways on a phone) and the button
-is not shown.
+links wrap onto more rows; on a phone they drop their icons) and the button is not
+shown.
 
 ![Home with the rail folded at 1440 px, dark theme](../images/home-1440-rail-folded-dark.png)
 
@@ -120,7 +120,8 @@ same charcoal in both themes; the pictures of this guide show both.
 
 ## The Evidence Explorer
 
-Open **Evidence Explorer** in the Evidence group. It shows, for one client, which
+Open the **Evidence and imports** tab of a client and press **Open in Evidence
+Explorer (preview)** at the top; the preview is no longer in the rail. It shows, for one client, which
 evidence exports feed which controls, and where the evidence behind a status is stale
 or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 

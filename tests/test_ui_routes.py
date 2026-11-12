@@ -163,7 +163,7 @@ async def test_a_client_goes_from_a_period_to_an_exported_review(
     assert overview.status_code == 200
     assert title_of(overview.text) == f"Overview - {NAME} - revrook"
     assert f"Period {QUARTER[0]} to {QUARTER[1]}" in overview.text
-    for fragment in ('id="period-picker"', 'id="summary"', 'id="freshness"'):
+    for fragment in ('id="period-picker"', 'id="summary"', 'id="freshness-card"'):
         assert fragment in overview.text
 
     note = await ui_browser.post(

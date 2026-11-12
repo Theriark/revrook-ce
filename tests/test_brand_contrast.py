@@ -87,7 +87,9 @@ NON_TEXT_PAIRS = (
     ("the focus ring on the canvas", "--rv-focus", "--rv-canvas"),
     ("the focus ring on the rail and the panel", "--rv-white", "--rv-rail"),
     ("the mark of a checkbox or a radio", "--rv-primary", "--rv-surface"),
-    ("the arc of a posture ring", "--rv-primary", "--rv-surface"),
+    ("the arc of a posture ring", "--rv-score", "--rv-surface"),
+    ("the arc of a score ring against its track", "--rv-score", "--rv-line"),
+    ("the earned share of the score drivers", "--rv-score", "--rv-surface"),
     ("the sparkline and the trend line", "--rv-primary", "--rv-surface"),
     ("the track of a ring with thin evidence", "--rv-text-secondary", "--rv-surface"),
     ("the protected segment of a bar", "--rv-status-protected", "--rv-surface"),
@@ -175,6 +177,9 @@ def contrast_ratio(first: str, second: str) -> float:
 def font_size_px(value: str | None) -> float:
     if value is None:
         return 0.0
+    token = VAR.fullmatch(value.strip())
+    if token is not None:  # a step of the type scale (--rv-fs-*)
+        value = VARIABLES[token.group(1)]
     match = re.fullmatch(r"([0-9.]+)(px|rem|em)", value)
     assert match is not None, f"unsupported font-size {value!r}"
     size = float(match.group(1))
@@ -349,7 +354,8 @@ def test_the_graphics_that_carry_meaning_are_drawn_with_checked_tokens() -> None
         "var(--rv-text-secondary)"
     )
     assert rules[".rv-seg-not-checked"]["fill"] == "var(--rv-status-not-checked)"
-    assert rules[".rv-ring-arc"]["stroke"] == "var(--rv-primary)"
+    # A score is never drawn in the indigo of links and buttons (--rv-score).
+    assert rules[".rv-ring-arc"]["stroke"] == "var(--rv-score)"
     assert rules[".rv-spark polyline"]["stroke"] == "var(--rv-primary)"
     assert VARIABLES["--pico-form-element-border-color"] == "var(--rv-gray)"
     # The strong line never draws a stroke or a fill: those carry meaning.

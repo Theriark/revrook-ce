@@ -95,20 +95,22 @@ Open the client and its tab **Evidence and imports**.
 
 - The verdict band: the state of the client's evidence as one pill, with the sources,
   the current ones, the ones to refresh and the items imported.
-- **How old is each export**: one bar per source on the same scale, its age against the
-  mark where it goes stale; a bar opens its row in the sources table.
 - **Refresh these exports**: a numbered list in the order to work in, the oldest export
   first, then the sources never imported.
 - **Public DNS check**: the card that runs the check of the client's mail domains,
   once or every Monday ([11. The public DNS check](11-public-dns-check.md)).
-- **Sources**: every source a control reads, with its newest export and the date it
-  goes stale. An export is measured by the strictest control that reads it, the way
+- **Sources**: every source a control reads, with its newest export, the date it goes
+  stale and its **Age**: the age in words over a bar, every bar on the same scale with
+  a mark where the export goes stale. An export is measured by the strictest control that reads it, the way
   the checklist measures it: a device export goes stale after 7 days, not after the
   35 days of the store, so this page and the checklist agree. An export that is out of
   date counts for less, and for nothing at twice its age
   ([scoring engine](../scoring-engine.md)).
-- **Everything imported**: every evidence item, newest first, with its type, capture
-  date, state, revisions and size. A revision is a later import of the same export.
+- **Everything imported**: folded under **Everything imported (N items)**; open it for
+  every evidence item, newest first, with its type, capture date, state, revisions and
+  size. A revision is a later import of the same export.
+- **Open in Evidence Explorer (preview)**, at the top of the page, opens the explorer
+  on this client ([8. The Evidence Explorer](08-scenes-rail-and-explorer.md#the-evidence-explorer)).
 
 ## Check the hash chains
 

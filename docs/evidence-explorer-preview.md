@@ -1,7 +1,7 @@
 # Evidence Explorer
 
-A page at `/experiments/evidence-explorer`, in the Evidence group of the navigation,
-that shows, for one client, which evidence exports feed which controls, and where the
+A page at `/experiments/evidence-explorer`, opened from the evidence page of a client
+("Open in Evidence Explorer (preview)", `?client_id=`), that shows, for one client, which evidence exports feed which controls, and where the
 evidence behind a status is stale or missing. It began as an experiment on the
 Development installation to judge a scene drawn in the browser; after the founder
 saw it, the same direction was taken to Home and the client overview
