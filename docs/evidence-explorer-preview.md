@@ -36,7 +36,7 @@ hidden: the card opens with **Show the 3D view** in its head, and the wall is dr
 Home and the client overview keep in this browser. The public DNS check counts as a
 source of the three mail controls, so it stands as a pillar of its own.
 
-## The scene: the rookery wall
+## The scene: the evidence wall
 
 An inner ring of pillars, one per evidence source, each as tall as the number of
 controls it feeds and crenellated like a rook; a current export is a full pillar in

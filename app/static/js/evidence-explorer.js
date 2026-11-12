@@ -6,7 +6,7 @@
  * it never downloads the library.
  *
  * The tables of the page are the record. This script adds one way of looking at
- * them, the rookery wall: a pillar per evidence source on an inner ring, a tile per
+ * them, the evidence wall: an office block per evidence source on an inner ring, a tile per
  * control on an outer ring grouped by domain, a beam from a source to each control
  * that reads it. Status is shape and colour together, never colour alone, and every
  * word is in the DOM (the detail line, the legend, the tables): nothing is written
@@ -270,7 +270,7 @@ function buildWall(THREE, root, data, options) {
   canvas.setAttribute("aria-roledescription", "scene");
   canvas.setAttribute(
     "aria-label",
-    "The rookery wall of " + data.client_name + ": " + data.sources.length + " evidence sources and " + data.controls.length + " controls. Left and Right turn it, plus and minus move closer and away, Home resets the view. The tables below carry the same facts."
+    "The evidence wall of " + data.client_name + ": " + data.sources.length + " evidence sources and " + data.controls.length + " controls. Left and Right turn it, plus and minus move closer and away, Home resets the view. The tables below carry the same facts."
   );
   canvas.setAttribute("aria-describedby", "explorer-detail");
   stage.insertBefore(canvas, stage.firstChild);
