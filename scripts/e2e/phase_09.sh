@@ -164,7 +164,7 @@ PY
 overview="$(browser "${BASE_URL}/clients/${client_id}?period_start=${period_start}&period_end=${period_end}")"
 [[ "${overview}" == *'id="period-picker"'* ]] || fail "the overview has no period picker"
 [[ "${overview}" == *"Period ${period_start} to ${period_end}"* ]] || fail "the overview does not show the period"
-[[ "${overview}" == *'id="summary"'* && "${overview}" == *'id="freshness"'* ]] || fail "the overview has no summary or freshness table"
+[[ "${overview}" == *'id="summary"'* && "${overview}" == *'id="freshness-card"'* ]] || fail "the overview has no summary or freshness card"
 echo "phase_09: overview for ${period_start} to ${period_end}"
 
 # The checklist: all 51 controls, and the filter keeps only rows that changed or need a look.
