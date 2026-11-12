@@ -52,12 +52,12 @@ No workflow runs on a push to a feature branch (`feat/**`, `feature/**`, `fix/**
 |---|-------|-----------|----|
 | 1 | ruff check and format | `pyproject.toml` exists | always runs |
 | 2 | mypy | `pyproject.toml` exists | always runs |
-| 3 | pytest, PostgreSQL 16, coverage 80 percent overall, 95 percent core packages (aggregate, nested subpackages included); fails if any test is skipped | `pyproject.toml` exists | always runs |
+| 3 | pytest, PostgreSQL 16, as four parallel shards (`TEST_SHARD=i/4` in `tests/conftest.py`: every 4th collected test, each shard with its own database); fails if any test is skipped or a shard runs none. The job `coverage` combines the four shards' data: coverage 80 percent overall, 95 percent core packages (aggregate, nested subpackages included) | `pyproject.toml` exists | always runs |
 | 4 | alembic up, check, down, up | `alembic.ini` exists | always runs |
 | 5 | pip-audit, fails on any known vulnerability (exceptions in `.pip-audit-exceptions`) | `pyproject.toml` exists | always runs |
 | 6 | licence audit and psycopg grep | `tools/licence_audit.py` exists | always runs |
 | 7 | content licence rows (exact path match) | `data/` exists | always runs, `LICENSES-CONTENT.md` required |
-| 8 | docker build, non-root check | `Dockerfile` exists, lint, typecheck, test and audit succeeded | always runs, every prerequisite must succeed |
+| 8 | docker build, non-root check (in parallel with checks 1 to 7: the image is only built and inspected, never pushed; nothing is deployed before the gate, which needs every check) | `Dockerfile` exists | always runs |
 | 9 | compose smoke (`.env.ci` copied from `.env.example`, `/readyz` on port 8080, `scripts/e2e/phase_00.sh`, then `tests/e2e/run.sh` if present; with `CI=true` a missing docker or web container fails the script instead of skipping) | `docker-compose.yml` exists, check 8 succeeded | always runs |
 
 ### STRICT

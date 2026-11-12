@@ -133,6 +133,35 @@ def forbid_real_network(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return blocked
 
 
+def shard_of(value: str) -> tuple[int, int] | None:
+    """TEST_SHARD "i/n" as (i, n), or None when unset; ValueError when malformed."""
+    if not value:
+        return None
+    index_text, _, total_text = value.partition("/")
+    index, total = int(index_text), int(total_text)
+    if not 1 <= index <= total:
+        raise ValueError(f"TEST_SHARD must be i/n with 1 <= i <= n, got {value!r}")
+    return index, total
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[Any]) -> None:
+    """CI runs the suite as parallel shards (docs/ci-cd.md): TEST_SHARD="i/n" keeps
+    every n-th collected test starting at the i-th, so the shards split the suite
+    evenly and together run every test exactly once. Unset, nothing changes."""
+    shard = shard_of(os.environ.get("TEST_SHARD", ""))
+    if shard is None:
+        return
+    kept = [item for pos, item in enumerate(items) if in_shard(pos, *shard)]
+    dropped = [item for pos, item in enumerate(items) if not in_shard(pos, *shard)]
+    config.hook.pytest_deselected(items=dropped)
+    items[:] = kept
+
+
+def in_shard(position: int, index: int, total: int) -> bool:
+    """Whether the collected test at `position` (from 0) belongs to shard i of n."""
+    return position % total == index - 1
+
+
 def pytest_terminal_summary(terminalreporter: Any) -> None:
     """Print the sensitivity harness result at the end of the run (phase 5).
 
