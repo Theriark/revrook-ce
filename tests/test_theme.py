@@ -132,12 +132,13 @@ def test_the_system_theme_follows_the_system_without_script() -> None:
     media = CSS.split("@media (prefers-color-scheme: dark) {", 1)
     assert len(media) == 2 and '\n  :root[data-theme="system"] {' in media[1]
     assert block(SYSTEM_SELECTOR) == block(DARK_SELECTOR)
-    # The brand needs no rule per theme: the mark is drawn on nothing, its tile
-    # is the stylesheet's and the wordmark takes the colours of the roles.
+    # The brand needs no rule per theme: the mark is drawn on nothing and shows on
+    # nothing, a thin cream edge keeps it off a dark ground, and the wordmark
+    # takes the colours of the roles.
     assert "rv-logo-on-dark" not in CSS
-    assert block(".rv-mark")["background-color"] == "var(--rv-mark-tile)"
-    assert VARIABLES["--rv-mark-tile"] == "#fffef5"
-    assert "--rv-mark-tile" not in block(DARK_SELECTOR)
+    assert "background-color" not in block(".rv-mark")
+    assert VARIABLES["--rv-mark-edge"] == "rgba(255, 254, 245, 0.7)"
+    assert "--rv-mark-edge" not in block(DARK_SELECTOR)
 
 
 def test_the_pico_mapping_is_repeated_at_the_rank_of_picos_light_block() -> None:

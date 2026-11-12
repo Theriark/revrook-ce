@@ -70,9 +70,9 @@
   --rv-icon-md: 22px;
   --rv-icon-lg: 36px;
   --rv-icon-xl: 48px;
-  /* The tile behind the rook mark: the cream of the approved logo files, the
-     same in both themes (the mark itself is drawn on nothing) */
-  --rv-mark-tile: #fffef5;
+  /* The thin edge round the rook mark: the cream of the approved logo files,
+     the same in both themes (the mark itself is drawn on nothing) */
+  --rv-mark-edge: rgba(255, 254, 245, 0.7);
 
   /* Pico CSS variables: the reset follows the same roles in both themes */
   color-scheme: light;
@@ -357,11 +357,10 @@ body.rv-app {
   text-decoration: none;
 }
 
-/* The brand lockup (_brand.html): the rook mark in its cream tile beside the
-   wordmark. The mark file is drawn on nothing, so the tile is the stylesheet's
-   and the lockup sits on the rail, on the sign-in panel and on the surface of
-   either theme without the surround the composed logo files carry. The rook
-   sits left of centre in its file; the shift centres it in the tile */
+/* The brand lockup (_brand.html): the rook mark beside the wordmark. The mark
+   file is drawn on nothing and shows on nothing: no tile. A thin cream edge
+   (--rv-mark-edge) keeps the black head apart from a dark rail or sign-in panel
+   and is lost against the light rail */
 .rv-lockup {
   display: inline-flex;
   align-items: center;
@@ -381,16 +380,13 @@ body.rv-app {
   place-items: center;
   width: 40px;
   height: 40px;
-  overflow: hidden;
-  border-radius: 24%;
-  background-color: var(--rv-mark-tile);
 }
 
 .rv-mark-img {
   display: block;
   width: 100%;
   height: 100%;
-  transform: translateX(13%);
+  filter: drop-shadow(0 0 0.5px var(--rv-mark-edge)) drop-shadow(0 0 1px var(--rv-mark-edge));
 }
 
 /* Text wordmark: rev in charcoal, rook in violet-blue, bold Helvetica or Arial */
