@@ -35,6 +35,11 @@
 <li><a class="rv-chip" href="/clients{{ query.params(show=key, page=1) }}"{% if query.show == key %} aria-current="true"{% endif %}>{{ label }} <span class="rv-chip-count">{{ count }}</span></a></li>
 {% endfor %}
 </ul>
+<ul class="rv-chips rv-band-chips" id="bands" aria-label="Band of the last report">
+{% for item in bands %}{% if item.count or query.band == item.key %}
+<li><a class="rv-chip" href="/clients{{ query.params(band=item.key, page=1) }}" title="{{ item.tip }}"{% if query.band == item.key %} aria-current="true"{% endif %}>{{ item.name }} <span class="rv-chip-count">{{ item.count }}</span></a></li>
+{% endif %}{% endfor %}
+</ul>
 <ul class="rv-chips rv-density" aria-label="Density">
 <li><a class="rv-chip" href="/clients{{ query.params(density='comfortable') }}"{% if query.density == "comfortable" %} aria-current="true"{% endif %}>Comfortable</a></li>
 <li><a class="rv-chip" href="/clients{{ query.params(density='compact') }}"{% if query.density == "compact" %} aria-current="true"{% endif %}>Compact</a></li>
@@ -54,25 +59,9 @@
 {% if active|length > 1 %}<a class="rv-filters-clear" href="/clients{{ query.without_filters }}" data-filter-clear>Clear all filters</a>{% endif %}
 </div>
 {% endif %}
+{% if bands.unclassified %}<p class="rv-toolbar-note" id="bands-unclassified">{{ bands.unclassified }} client{% if bands.unclassified != 1 %}s{% endif %} with a report from another ruleset {% if bands.unclassified != 1 %}are{% else %}is{% endif %} in no band.</p>{% endif %}
 </form>
 <p class="rv-sr-only" id="filter-status" role="status" aria-live="polite" data-shown="{% if rows %}{{ page.total }} client{% if page.total != 1 %}s{% endif %} shown.{% else %}No client matches.{% endif %}"></p>
-<section class="rv-card rv-bands-card" id="bands" aria-labelledby="bands-title">
-<h2 id="bands-title" class="rv-card-title">Clients by band</h2>
-<p class="rv-card-subtitle">Where every client stood at its last report, under the search and the filter above. A band shows only those clients.</p>
-<ul class="rv-bands" aria-label="Bands of the last reports" data-roving>
-{% for item in bands %}
-<li class="rv-band">
-<a class="rv-band-link" href="/clients{{ query.params(band=item.key, page=1) }}" data-tip="{{ item.tip }}"{% if query.band == item.key %} aria-current="true"{% endif %}>
-<span class="rv-band-name">{{ item.name }}</span>
-<svg class="rv-bar rv-band-bar" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="rv-band-track" x="0" y="0" width="100" height="10"/>{% if item.count %}<rect class="rv-band-fill" x="0" y="0" width="{{ item.width }}" height="10"/>{% endif %}</svg>
-<span class="rv-band-count">{{ item.count }}</span>
-</a>
-</li>
-{% endfor %}
-</ul>
-{% if bands.unclassified %}<p class="rv-bands-note" id="bands-unclassified">{{ bands.unclassified }} client{% if bands.unclassified != 1 %}s have{% else %} has{% endif %} a last report in a band this version does not know (a report made under another ruleset), so no bar counts {% if bands.unclassified != 1 %}them{% else %}it{% endif %}. With no band chosen, the list below shows {% if bands.unclassified != 1 %}them{% else %}it{% endif %}.</p>{% endif %}
-{% if query.band %}<p class="rv-bands-note"><a href="/clients{{ query.params(band='', page=1) }}">Show every band</a></p>{% endif %}
-</section>
 {% if rows %}
 {#- Bulk actions (THE-1189): the script reveals the select boxes and the bar, and
     runs only actions the application already has, one client after another: make

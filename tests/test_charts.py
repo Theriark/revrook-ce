@@ -415,7 +415,7 @@ def test_the_sparklines_and_the_bars_carry_their_words_and_their_links() -> None
     assert '<tr id="source-{{ row.code }}" tabindex="-1">' in EVIDENCE
     assert "s.status(state)" in EVIDENCE
     # The clients list: a band is a link that narrows the list.
-    assert 'id="bands"' in LIST and 'data-tip="{{ item.tip }}"' in LIST
+    assert 'id="bands"' in LIST and 'title="{{ item.tip }}"' in LIST
     assert 'href="/clients{{ query.params(band=item.key, page=1) }}"' in LIST
     assert '<input type="hidden" name="band" value="{{ query.band }}">' in LIST
     # The checklist names a narrowing and takes it away.
@@ -438,23 +438,12 @@ def test_the_chart_rules_use_role_tokens_and_short_motion() -> None:
         ".rv-chart a.rv-mark:focus-visible circle {",
         ".rv-spark-mark.is-active {",
         ".rv-age-mark {",
-        ".rv-band-fill {",
         "main a.rv-chip-narrowed {",
     ):
         assert selector in CSS, selector
-    # Seen on Development: Pico's square marker on every li showed beside each
-    # band of the clients list, so the band item itself takes none.
-    band = re.search(r"\n\.rv-bands > li\.rv-band \{([^}]*)\}", CSS)
-    assert band is not None and "list-style: none;" in band.group(1)
-    # On a phone the count sits beside the name on the first row and the bar
-    # takes the second, each placed by name: left to the auto placement, the
-    # count (after the bar in the markup) sat on a row of its own under the bar
-    # at 390 px on Development.
-    narrow = CSS[CSS.index("@media (max-width: 599px) {") :]
-    assert "  .rv-band-count {\n    grid-row: 1;\n    grid-column: 2;\n  }" in narrow
-    bar = "  .rv-bands .rv-band-bar {\n    grid-row: 2;\n    grid-column: 1 / -1;\n  }"
-    assert bar in narrow
-    # And the history card, as wide as the page, drew its axis text at 20px.
+    # The bands of the clients list are chips now (clients.html): no chart rules
+    assert ".rv-band" not in CSS
+    # The history card, as wide as the page, drew its axis text at 20px.
     history = re.search(r"\n\.rv-history \.rv-chart-wide \{([^}]*)\}", CSS)
     assert history is not None and "max-width: 640px;" in history.group(1)
     plain = re.sub(r"/\*.*?\*/", "", CSS, flags=re.DOTALL)
@@ -667,14 +656,14 @@ async def test_the_list_counts_the_bands_and_narrows_to_one(
     page = await ui_browser.get("/clients")
     assert page.status_code == 200 and structure_problems(page.text) == []
     assert 'id="bands"' in page.text
-    assert '<span class="rv-band-name">No report yet</span>' in page.text
+    assert 'No report yet <span class="rv-chip-count">1</span>' in page.text
     assert 'href="/clients?band=none"' in page.text
     none = await ui_browser.get("/clients", params={"band": "none"})
     assert none.status_code == 200 and structure_problems(none.text) == []
     assert f'href="/clients/{other_id}"' in none.text
     assert f'href="/clients/{client_id}">' not in none.text
-    assert 'href="/clients?band=none" data-tip="No report yet\n1 client"' in none.text
-    assert 'aria-current="true"' in none.text and ">Show every band</a>" in none.text
+    assert 'href="/clients?band=none" title="No report yet\n1 client"' in none.text
+    assert 'aria-current="true"' in none.text and "Remove filter: </span>" in none.text
     assert ", no report yet, by name" in none.text
     refused = await ui_browser.get("/clients", params={"band": "purple"})
     assert refused.status_code == 422

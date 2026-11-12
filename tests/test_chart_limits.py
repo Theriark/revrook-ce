@@ -85,10 +85,10 @@ async def test_the_list_says_how_many_clients_no_bar_counts(
     page = await ui_browser.get("/clients")
     assert page.status_code == 200 and structure_problems(page.text) == []
     assert 'id="bands-unclassified"' in page.text
-    assert "1 client has a last report in a band this version does not know" in (
-        page.text
-    )
-    assert 'class="rv-band-count">0</span>' in page.text
+    assert "1 client with a report from another ruleset is in no band." in page.text
+    # A band chip shows only when a client is in it
+    assert 'class="rv-chips rv-band-chips" id="bands"' in page.text
+    assert 'href="/clients?band=' not in page.text
     assert f'href="/clients/{client_id}"' in page.text
 
 

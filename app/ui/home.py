@@ -36,7 +36,6 @@ from app.ui.common import (
 from app.ui.dashboard import (
     EVENT_WORDS,
     HISTORY_DAYS,
-    MAX_ATTENTION,
     MAX_EVENTS,
     MAX_SNAPSHOTS,
     NARROW_CHART,
@@ -63,6 +62,8 @@ from app.ui.viewmodels import (
 from app.web import clock_of, current_session, session_factory
 
 router = APIRouter()
+# Home lists the five most urgent controls; the rest are on the checklists
+HOME_ATTENTION = 5
 
 
 @dataclass(frozen=True)
@@ -236,7 +237,7 @@ async def load_board(
         "drivers": DRIVERS,
         "unread": unread,
         "stats": stat_cards(postures, weekly, evidence_summary(sources)),
-        "attention": prioritised(attention)[:MAX_ATTENTION],
+        "attention": prioritised(attention)[:HOME_ATTENTION],
         "attention_total": len(attention),
         "trend": trend_chart(trend_points, names, now, days=days),
         "trend_narrow": trend_chart(

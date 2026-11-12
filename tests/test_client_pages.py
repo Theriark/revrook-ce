@@ -419,7 +419,9 @@ async def test_the_checklist_has_the_filter_chips_and_the_control_its_verdict(
     assert '<table id="checklist" class="rv-checklist">' in html
     headings = html.count('<th scope="row"><a class="rv-control-link"')
     assert headings == len(LIBRARY.controls)
-    assert html.count('<td data-label="Why it needs a look"></td>') > 0
+    assert html.count('<td data-label="Also needs a look"></td>') > 0
+    # No topic owner is set, so the Owner column is left out
+    assert 'data-label="Owner"' not in html
     assert '<ul class="rv-flags">' in html and ", gate control</span>" in html
     assert len(STATUS_SPAN.findall(html)) == len(STATUS.findall(html))
 
@@ -429,7 +431,8 @@ async def test_the_checklist_has_the_filter_chips_and_the_control_its_verdict(
     assert narrowed.status_code == 200 and structure_problems(narrowed.text) == []
     assert 'id="show-flagged" class="rv-chip" href="/clients/' in narrowed.text
     assert 'aria-current="true">Changed or needs a look' in narrowed.text
-    assert '<td data-label="Why it needs a look"></td>' not in narrowed.text
+    # The status has its own column: it is not repeated as a reason
+    assert "<li>Not protected</li>" not in narrowed.text
 
     control_id = LIBRARY.controls[0].id
     control = await ui_browser.get(f"/clients/{client_id}/controls/{control_id}")

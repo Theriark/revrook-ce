@@ -35,7 +35,7 @@ LIBRARY = load_library()
 LONG_NAME = "Northwind Harbour Logistics Ltd"
 LABEL_X = WIDE_CHART.width - WIDE_CHART.right + 10
 SHEET = '<link rel="stylesheet" href="/static/css/revamp.css?v='
-GROUP_ROW = re.compile(r'<tr class="rv-group-row"><th scope="rowgroup" colspan="6">')
+GROUP_ROW = re.compile(r'<tr class="rv-group-row"><th scope="rowgroup" colspan="5">')
 
 
 def report(client_id: int, score: int) -> ReportPoint:
