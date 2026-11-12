@@ -28,7 +28,7 @@ network use.
 
 ## 1. Keys that are yours
 
-The compose file reads two keys from `.env`. `.env.example` holds throwaway values:
+The compose file reads three values from `.env`. `.env.example` holds throwaway values:
 never reuse them. Make your own, once, and keep them somewhere other than the server
 ([operations.md](operations.md#backup) says why):
 
@@ -36,12 +36,14 @@ never reuse them. Make your own, once, and keep them somewhere other than the se
 cp .env.example .env
 SECRET_KEY="$(openssl rand -hex 32)"
 FERNET_KEY="$(openssl rand -base64 32 | tr '+/' '-_')"
+POSTGRES_PASSWORD="$(openssl rand -hex 24)"
 echo "SECRET_KEY=${SECRET_KEY}"
 echo "FERNET_KEY=${FERNET_KEY}"
+echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
 ```
 
-The last two commands print the two lines you need, once, on your own terminal. Copy
-each one over the `SECRET_KEY=` or `FERNET_KEY=` line of `.env` with an editor (do not
+The last three commands print the three lines you need, once, on your own terminal. Copy
+each one over the `SECRET_KEY=`, `FERNET_KEY=` or `POSTGRES_PASSWORD=` line of `.env` with an editor (do not
 paste them into a shared terminal log or a ticket), then close that terminal or clear
 it.
 
@@ -50,10 +52,11 @@ it.
   text of 32 bytes. **If you lose it, every stored pseudonym key is unreadable**, and a
   restored backup is useless without it.
 
-The compose file also carries a database password, `local-dev-only-not-a-secret`, in
-`POSTGRES_PASSWORD` and in `DATABASE_URL`. The database port is not published, so the
-password is only reachable from the compose network, but change it to something of your
-own in both places before the first start if other containers share that network.
+- `POSTGRES_PASSWORD` is the password of the compose database; the `db` service sets
+  it and `DATABASE_URL` of web and worker uses it. Keep it to letters and digits (the
+  command above makes 48 hex characters) so it fits in `DATABASE_URL` as it is. The
+  database reads it only when its volume is created: to change it later, see
+  [upgrade.md](upgrade.md#the-database-password).
 
 ## 2. Start
 

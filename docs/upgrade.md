@@ -54,6 +54,29 @@ With a different setup the steps are the same in spirit: stop the old container,
 the new image with the same environment and the same volumes, watch the log, run
 `verify-chain`.
 
+## The database password
+
+Since 2026-11-12 the compose file reads the database password from `POSTGRES_PASSWORD`
+in `.env`, like the two keys, and stops with "copy .env.example to .env" when it is
+missing. An installation made before that keeps the password its database volume was
+created with, because PostgreSQL reads `POSTGRES_PASSWORD` only when the volume is
+new. Before the upgrade, add that password to `.env`:
+
+```bash
+echo "POSTGRES_PASSWORD=local-dev-only-not-a-secret" >> .env
+```
+
+(or the password you put in the compose file yourself). To change it to a password of
+your own afterwards, set it in the database first and then in `.env`, and recreate the
+services:
+
+```bash
+NEW="$(openssl rand -hex 24)"
+docker compose exec db psql -U revrook -d revrook -c "ALTER USER revrook PASSWORD '${NEW}'"
+echo "POSTGRES_PASSWORD=${NEW}"     # copy this line over the one in .env
+docker compose up -d
+```
+
 ## Going back
 
 Do not run `alembic downgrade` on an installation that holds data. Every migration has a

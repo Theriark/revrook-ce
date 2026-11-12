@@ -105,6 +105,12 @@ scanned. The results per branch are under Code Security, Repositories,
 which holds only the workflow definitions, so read `development` for the
 application. This adds to check 5 (`pip-audit`); it does not replace it.
 
+The PostgreSQL image is pinned to a digest (`postgres:16@sha256:…`) in
+`docker-compose.yml` and in the two service containers of `ci.yml`. Dependabot
+(`docker-compose`) proposes a newer digest for the compose file; move the two `ci.yml`
+lines to the same digest in that pull request, since Dependabot does not update service
+containers of a workflow.
+
 ## Known gaps
 
 - `Promote - Stage` and `Release candidate` follow publishing contract revision 2 but have never been executed; they are verified only by `tests/test_publishing_workflows.py` (inputs, run names, concurrency, order of verification, bash syntax). Accepted assumptions: `version` is the stable `27.<minor>.<patch>` (a leading `v` or an `-rc.<n>` suffix is accepted and stripped); `image` is `ghcr.io/theriark/revrook-ce@sha256:<digest>` or the bare digest.

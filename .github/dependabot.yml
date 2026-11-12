@@ -7,3 +7,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+  # Keeps the postgres:16 image of docker-compose.yml on its newest digest (the image
+  # is pinned to a digest; the two CI service containers in ci.yml carry the same
+  # digest and are moved with it by hand, see docs/ci-cd.md).
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

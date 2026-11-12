@@ -5,7 +5,7 @@
 name: revrook
 
 x-app-environment: &app-environment
-  DATABASE_URL: postgresql+asyncpg://revrook:local-dev-only-not-a-secret@db:5432/revrook
+  DATABASE_URL: postgresql+asyncpg://revrook:${POSTGRES_PASSWORD:?copy .env.example to .env}@db:5432/revrook
   SECRET_KEY: ${SECRET_KEY:?copy .env.example to .env}
   FERNET_KEY: ${FERNET_KEY:?copy .env.example to .env}
   BASE_URL: http://localhost:8080
@@ -13,10 +13,12 @@ x-app-environment: &app-environment
 
 services:
   db:
-    image: postgres:16
+    # postgres:16, pinned to the multi-arch index digest of 2026-11-07; Dependabot
+    # (docker-compose, .github/dependabot.yml) proposes newer digests.
+    image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
     environment:
       POSTGRES_USER: revrook
-      POSTGRES_PASSWORD: local-dev-only-not-a-secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env}
       POSTGRES_DB: revrook
     volumes:
       - db-data:/var/lib/postgresql/data
