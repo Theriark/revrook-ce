@@ -16,6 +16,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Changed
 
+- The 26 guide pictures of Home, the clients list and the checklist were captured again on 2026-11-12 from Development (commit `38da74b`), so they show the shorter pages ([docs/images/README.md](docs/images/README.md)).
 - Shorter pages. Home puts **Needs attention** (now the five most urgent, with a link to the rest) and the score over time right under the stat cards, folds the mean score and the colour key into **How the score works**, and its notes say less. The clients list shows the bands as chips beside the filters instead of a chart card above the table. The checklist drops the Owner column until a topic owner is set, and its last column, **Also needs a look**, no longer repeats the status.
 - The rook mark of the brand lockup (rail, sign-in panel, signed-out header) no longer sits in a cream tile: it shows on the rail or panel itself, with a thin cream edge so the black head stays visible on a dark ground. The favicons were already transparent.
 - Faster CI: pytest runs as four parallel shards (`TEST_SHARD`), a `coverage` job combines their data and keeps both thresholds, and the docker build and compose smoke test start alongside the checks instead of after them. The gate and the Development deployment still wait for every check ([docs/ci-cd.md](docs/ci-cd.md)).

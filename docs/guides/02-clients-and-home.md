@@ -60,7 +60,7 @@ Every score is out of a hundred. The score drivers split those hundred points of
 client into what it earns and what costs it the rest, with the arithmetic of the
 scoring engine, so the parts add up to a hundred exactly and nothing is estimated.
 
-![What moves the score at 1440 px, light theme](../images/home-1440-drivers.png)
+![How the score works opened, over the score drivers, at 1440 px, light theme](../images/home-1440-drivers.png)
 
 1. **The summary** gives the mean score over the clients with evidence and names the
    driver that costs the most points on average. When it counts a client whose evidence
@@ -79,7 +79,7 @@ scoring engine, so the parts add up to a hundred exactly and nothing is estimate
    score; a client without evidence has no bar and a link to import its exports.
 4. **Show the numbers** holds every point of every client in a table.
 
-![What moves the score at 1440 px, dark theme](../images/home-1440-drivers-dark.png)
+![How the score works opened, over the score drivers, at 1440 px, dark theme](../images/home-1440-drivers-dark.png)
 
 ## Score over time with few reports
 

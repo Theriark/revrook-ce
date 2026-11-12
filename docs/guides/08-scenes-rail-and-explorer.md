@@ -90,7 +90,7 @@ and the cards and the bars stay where they were. The choice is kept in this brow
 only (another browser, or another person, still opens on the cards), and it holds for
 Home, the client overview and the Evidence Explorer together.
 
-![Home as it opens, the scenes hidden, at 1440 px, dark theme](../images/home-1440-scenes-hidden-dark.png)
+![What moves the score as Home opens, the 3D view hidden, at 1440 px, dark theme](../images/home-1440-scenes-hidden-dark.png)
 
 ## Fold the rail
 

@@ -8,6 +8,21 @@ none holds a credential, a real person, a real customer or another environment.
 
 ## The current set
 
+On 2026-11-12, 26 of these pictures were captured again, because pull request #98
+changed the pages they show: Home now has Needs attention and Score over time under the
+stat cards and folds the mean score into **How the score works**, the clients list shows
+the bands as chips, and the checklist no longer repeats the status or shows an empty
+Owner column. They are every picture of Home, the clients list and the checklist (with
+the control drawer over it), taken between 08:40 and 08:44 UTC in two browser sessions
+(the second only retook the rook chosen with the keyboard) with the same browser tools and the same administrator test account, on commit
+`38da74b76d0daeef035921cbfa3f5f784d0b3224` (image
+`ghcr.io/theriark/revrook-ce@sha256:96fcfb92a4e1298a1848b5a9cafa1c6cc85f4a4992bf2b0a62d653c8cf27ea13`,
+CI run 43135573327; the System page showed `build 38da74b76d0d`). The scene pictures of
+Home are now scrolled to What moves the score, which no longer sits at the top of the
+page. In `MANIFEST.json` each of them carries `candidate` and, under `replaces`, the
+SHA-256 of the 2026-11-11 picture; `recapture` lists them. The other 36 pictures are the
+set of 2026-11-11 described below.
+
 The set holds 62 pictures, all captured on 2026-11-11 between 20:28 and 20:49
 Europe/Lisbon (UTC+00:00, so the same as UTC) in one browser session, while the
 Development site ran the application build documented and captured below: the merge

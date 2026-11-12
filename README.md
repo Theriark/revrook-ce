@@ -45,7 +45,7 @@ one rook per client as tall as its score. The 3D view opens hidden and is drawn 
 ([guide 2](docs/guides/02-clients-and-home.md),
 [guide 8](docs/guides/08-scenes-rail-and-explorer.md)).
 
-![Home with the keep, the ledger, the gauge and the rookery skyline at 1440 px, dark theme](docs/images/home-1440-dark.png)
+![What moves the score on Home, the gauge beside the rookery skyline, at 1440 px, dark theme](docs/images/home-1440-dark.png)
 
 **Import evidence**: every export of a client dropped on one page, each file recognised
 by its columns and stored on its own, so a refused file stops none of the others
