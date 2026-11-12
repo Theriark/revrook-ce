@@ -146,7 +146,7 @@ or missing ([evidence-explorer-preview.md](../evidence-explorer-preview.md)).
 
 ![The Evidence Explorer at 768 px (tablet view), light theme](../images/evidence-explorer-768.png)
 
-![The rookery wall on a phone at 390 px, light theme](../images/evidence-explorer-390.png)
+![The evidence wall on a phone at 390 px, light theme](../images/evidence-explorer-390.png)
 
 ## Known limits
 
