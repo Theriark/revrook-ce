@@ -22,7 +22,10 @@ function clamp(value, low, high) {
 // by its Close button (refocus, the canvas gets the focus back) or by a press
 // outside it (no refocus), unless the press is in `keep` (the buttons under a
 // stage that change the view, not the choice). Every listener ends with `signal`.
-export function sceneCard({ page, stage, canvas, signal, keep = null, onKey, onClose }) {
+// `ceiling(camera, from, to)`, when given, is the highest the card may stand over
+// the columns from `from` to `to`, in pixels from the top of the stage (Home's
+// street: the far edge of its ground, above which the stage shows only the band).
+export function sceneCard({ page, stage, canvas, signal, keep = null, ceiling = null, onKey, onClose }) {
   let card = null;
 
   function close() {
@@ -45,6 +48,7 @@ export function sceneCard({ page, stage, canvas, signal, keep = null, onKey, onC
     if (docked) {
       card.element.style.left = "";
       card.element.style.top = "";
+      card.element.style.maxHeight = "";
       if (card.element.parentNode !== stage.parentNode) {
         stage.after(card.element);
       }
@@ -57,11 +61,14 @@ export function sceneCard({ page, stage, canvas, signal, keep = null, onKey, onC
     const x = ((point.x + 1) / 2) * width;
     const y = ((1 - point.y) / 2) * height;
     const wide = card.element.offsetWidth;
-    const high = card.element.offsetHeight;
     const gap = 16;
-    const left = x + gap + wide > width - 8 ? x - gap - wide : x + gap;
-    card.element.style.left = clamp(left, 8, Math.max(8, width - wide - 8)) + "px";
-    card.element.style.top = clamp(y - high / 2, 8, Math.max(8, height - high - 8)) + "px";
+    const left = clamp(x + gap + wide > width - 8 ? x - gap - wide : x + gap, 8, Math.max(8, width - wide - 8));
+    card.element.style.left = left + "px";
+    // Under the ceiling; content that does not fit scrolls inside the card.
+    const top = ceiling ? clamp(ceiling(camera, left, left + wide) + 8, 8, height / 2) : 8;
+    card.element.style.maxHeight = height - top - 8 + "px";
+    const high = card.element.offsetHeight;
+    card.element.style.top = clamp(y - high / 2, top, Math.max(top, height - high - 8)) + "px";
   }
 
   // The card of the template `id` beside `anchor`; a node without a template has

@@ -5,7 +5,7 @@ database. The page tests need PostgreSQL (DATABASE_URL) and are skipped without 
 """
 
 import re
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from fractions import Fraction
 from pathlib import Path
 
@@ -24,6 +24,7 @@ from app.ui.clientlist import (
     ClientCard,
     LastReport,
     ListQuery,
+    days_between,
     filter_counts,
     last_report_of,
     last_reports,
@@ -258,6 +259,12 @@ def test_the_pages_hold_fifty_rows_and_a_number_past_the_end_is_the_last() -> No
     assert card(1, "x", days_old=1).age_text == "yesterday"
     assert card(1, "x", days_old=12).age_text == "12 days ago"
     assert card(1, "x").age_text == ""
+    # Calendar days in UTC: 23 hours back across midnight is yesterday, not today.
+    late = datetime(2026, 11, 11, 19, 20, tzinfo=UTC)
+    assert days_between(late, datetime(2026, 11, 12, 18, 0, tzinfo=UTC)) == 1
+    assert days_between(late, datetime(2026, 11, 11, 23, 59, tzinfo=UTC)) == 0
+    lisbon_noon = datetime(2026, 11, 12, 12, 0, tzinfo=timezone(timedelta(hours=1)))
+    assert days_between(late, lisbon_noon) == 1
 
 
 # --- the overview -------------------------------------------------------------------

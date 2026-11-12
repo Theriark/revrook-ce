@@ -35,8 +35,9 @@
 <li><a class="rv-chip" href="/clients{{ query.params(show=key, page=1) }}"{% if query.show == key %} aria-current="true"{% endif %}>{{ label }} <span class="rv-chip-count">{{ count }}</span></a></li>
 {% endfor %}
 </ul>
+{#- "No report yet" is a chip of the row above; its band chip shows only while chosen. -#}
 <ul class="rv-chips rv-band-chips" id="bands" aria-label="Band of the last report">
-{% for item in bands %}{% if item.count or query.band == item.key %}
+{% for item in bands %}{% if (item.count and item.key != "none") or query.band == item.key %}
 <li><a class="rv-chip" href="/clients{{ query.params(band=item.key, page=1) }}" title="{{ item.tip }}"{% if query.band == item.key %} aria-current="true"{% endif %}>{{ item.name }} <span class="rv-chip-count">{{ item.count }}</span></a></li>
 {% endif %}{% endfor %}
 </ul>

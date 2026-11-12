@@ -32,7 +32,7 @@
 
 {% macro page(page_id, title) -%}
 <section class="page" id="{{ page_id }}" aria-labelledby="{{ page_id }}-title">
-<p class="page-head">{{ ctx.msp_name }} &middot; {{ ctx.client_name }} &middot; {{ report_name }}</p>
+<p class="page-head">{% if ctx.msp_name %}{{ ctx.msp_name }} &middot; {% endif %}{{ ctx.client_name }} &middot; {{ report_name }}</p>
 <h2 id="{{ page_id }}-title">{{ title }}</h2>
 {{ caller() }}
 {{ footer() }}
@@ -59,7 +59,7 @@
 
 {% macro notice(title, signoff=False) -%}
 <section class="page" id="notice" aria-labelledby="notice-title">
-<p class="page-head">{{ ctx.msp_name }} &middot; {{ ctx.client_name }} &middot; {{ report_name }}</p>
+<p class="page-head">{% if ctx.msp_name %}{{ ctx.msp_name }} &middot; {% endif %}{{ ctx.client_name }} &middot; {{ report_name }}</p>
 <h2 id="notice-title">{{ title }}</h2>
 <p class="disclaimer-full">{{ disclaimer }}</p>
 <p class="note">Prepared by {{ ctx.prepared_by }} for {{ ctx.client_name }}. Pack date {{ view.snapshot.as_of|day }}.</p>

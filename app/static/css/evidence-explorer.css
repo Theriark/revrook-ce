@@ -292,6 +292,11 @@ main .rv-explorer-table tbody tr[data-selected="true"] > th {
   display: none;
 }
 
+/* At 768px the button broke one word a line in its narrow column */
+.rv-explorer-pick {
+  white-space: nowrap;
+}
+
 @media (max-width: 599px) {
   .rv-explorer-stage {
     aspect-ratio: 4 / 3;

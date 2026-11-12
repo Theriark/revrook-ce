@@ -65,8 +65,11 @@ CHART_TOP = 12
 CHART_BOTTOM = 28
 # The distance between two stacked labels at the ends of the lines, in chart
 # units: a label is 12 units of text in a box of about 14, so at 14 two labels
-# touched (seen at 768px); 18 leaves 4 units of air, and six fit in the plot.
-LABEL_GAP = 18
+# touched (seen at 768px). At 18 two labels of two lines (14 apart) still read as
+# one block of four lines (Seed Gaps over Seed Stale at 1440px); 20 leaves 6 units
+# of air, three times the air inside a label. More pushed a crowded stack so far
+# up that the label of a higher line left its line end (THE-1414).
+LABEL_GAP = 20
 # A label is 12 units of text from 10 units right of the plot, and each of its lines
 # keeps to the 140 units left of the drawing less 4 units of air: it is fitted by
 # the width it is drawn at (app/ui/textfit.py), not by its number of characters

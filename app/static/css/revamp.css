@@ -90,6 +90,13 @@
   border-bottom: 1px solid var(--rv-rail-line);
 }
 
+/* The sign-in panel stays charcoal in both themes. Like the rail, its "rook"
+   takes the link colour of its ground, here the one of the dark surfaces
+   (#8b97f2, 4.9:1 on charcoal; the gray was 4.09:1) */
+.rv-auth-panel {
+  --rv-gray: #8b97f2;
+}
+
 /* The ring of a focused control in the rail is the page's own focus colour */
 .rv-app .rv-header :is(a, button, input, select, summary):focus-visible {
   outline-color: var(--rv-focus);

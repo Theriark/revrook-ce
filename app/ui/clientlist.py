@@ -12,7 +12,7 @@ newest snapshots.
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
-from datetime import datetime
+from datetime import UTC, datetime
 from fractions import Fraction
 from typing import Any
 from urllib.parse import urlencode
@@ -167,6 +167,12 @@ def last_reports(
             continue
         found[client_id] = last_report_of(snapshot)
     return found
+
+
+def days_between(earlier: datetime, now: datetime) -> int:
+    """Calendar days from `earlier` to `now` in UTC, the dates the list writes; whole
+    24-hour spans called evidence from late yesterday "today"."""
+    return (now.astimezone(UTC).date() - earlier.astimezone(UTC).date()).days
 
 
 @dataclass(frozen=True)

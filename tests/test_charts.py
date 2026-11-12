@@ -690,8 +690,10 @@ async def test_the_list_counts_the_bands_and_narrows_to_one(
     page = await ui_browser.get("/clients")
     assert page.status_code == 200 and structure_problems(page.text) == []
     assert 'id="bands"' in page.text
-    assert 'No report yet <span class="rv-chip-count">1</span>' in page.text
-    assert 'href="/clients?band=none"' in page.text
+    # Clients without a report are a chip of the Show row only, not a band chip too.
+    assert page.text.count('No report yet <span class="rv-chip-count">1</span>') == 1
+    assert 'href="/clients?show=no-report"' in page.text
+    assert 'href="/clients?band=none"' not in page.text
     none = await ui_browser.get("/clients", params={"band": "none"})
     assert none.status_code == 200 and structure_problems(none.text) == []
     assert f'href="/clients/{other_id}"' in none.text

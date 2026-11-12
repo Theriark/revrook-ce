@@ -1201,8 +1201,9 @@ function buildWall(THREE, root, data, options) {
     measured = false;
     const pose = { yaw: home.yaw, pitch: home.pitch, target: center, lift: companies, named: companies ? "boxes" : false };
     home.distance = fitDistance(probes, pose, FIT_EDGE);
-    if (companies && home.distance >= MAX_DISTANCE * 2) {
-      // The names cannot all fit beside the ring (a phone): fit their points instead.
+    if (companies && home.distance > MAX_DISTANCE) {
+      // The names fit beside the ring only from farther than a person can move away
+      // (a tablet or a phone), which leaves the ring small: fit their points instead.
       pose.named = "anchors";
       home.distance = fitDistance(probes, pose, FIT_EDGE);
     }

@@ -668,6 +668,34 @@ function buildScene(THREE, root, options) {
     });
   }
 
+  // The far edge of the ground on the stage, in pixels from its top, over the
+  // columns from `from` to `to`: above it the stage is the band's own colour, so
+  // the card of a chosen office stands under it (scene-card.js, ceiling).
+  const groundEdge = [];
+  const groundRadius = floor.geometry.parameters.radius;
+  for (let k = 0; k < 144; k += 1) {
+    const a = (k / 144) * 2 * Math.PI;
+    groundEdge.push(new THREE.Vector3(groundRadius * Math.cos(a), 0, groundRadius * Math.sin(a)));
+  }
+  const seen = new THREE.Vector3();
+  function farEdge(eye, from, to) {
+    const width = stage.clientWidth;
+    const height = stage.clientHeight;
+    const near = eye.position.distanceTo(target);
+    let lowest = 0;
+    groundEdge.forEach((point) => {
+      if (point.distanceTo(eye.position) <= near) {
+        return;
+      }
+      seen.copy(point).project(eye);
+      const x = ((seen.x + 1) / 2) * width;
+      if (x >= from && x <= to) {
+        lowest = Math.max(lowest, ((1 - seen.y) / 2) * height);
+      }
+    });
+    return lowest;
+  }
+
   // The company card of the chosen office (client-card-<id>, scene-card.js); a
   // node without a template (a domain of the keep) has no card.
   const card = sceneCard({
@@ -675,6 +703,7 @@ function buildScene(THREE, root, options) {
     stage,
     canvas,
     signal,
+    ceiling: farEdge,
     onKey,
     onClose: (refocus) => (refocus ? leave() : select(null, false)),
   });
