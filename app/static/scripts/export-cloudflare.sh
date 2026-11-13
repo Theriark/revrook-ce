@@ -19,6 +19,8 @@
 # Only GET requests are sent; the token is not written anywhere. Served by revrook at
 # /static/scripts/export-cloudflare.sh; guide: docs/guides/12-cloud-exports.md.
 set -euo pipefail
+# jq on Windows (Git Bash) ends its lines with CRLF: drop the CR so no value carries it.
+jq() { command jq "$@" | tr -d '\r'; }
 
 out=${1:?usage: export-cloudflare.sh OUTPUT_FOLDER [ACCOUNT_ID...]   (CLOUDFLARE_API_TOKEN must be set)}
 shift
