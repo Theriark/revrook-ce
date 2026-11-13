@@ -60,8 +60,49 @@ A file with nothing in it is not written. Not read, so shown as unknown: the pat
 antivirus state of a VM (VM Manager is not read), snapshot retention and restore tests,
 and Backup and DR Service.
 
+## Cloudflare: `export-cloudflare.sh`
+
+You need `curl`, `jq` and a Cloudflare API token of the client with two read-only
+permissions: **Cloudflare Tunnel Read** and **Access: Apps and Policies Read**
+(My Profile, API Tokens, Create Token, Custom token). The script sends GET requests
+only and writes the token nowhere:
+
+```bash
+CLOUDFLARE_API_TOKEN=... ./export-cloudflare.sh ./contoso-cf-2026-11              # every account of the token
+CLOUDFLARE_API_TOKEN=... ./export-cloudflare.sh ./contoso-cf-2026-11 ACCOUNT_ID   # one account
+```
+
+Every public hostname of a Cloudflare Tunnel is a path from the internet into the
+client's network. The script reads each tunnel's routes and the Access applications:
+
+| File | What it holds |
+| --- | --- |
+| `network-export-cloudflare.csv` | One `rule` line from `any` source per public hostname that no Access application guards, to the port of its service: `ssh` 22, `rdp` 3389, `smb` 445, `tcp` its own port, and 443 for web services. A published SSH or RDP route without Access is what PC-NET-02 looks for. |
+
+A hostname counts as guarded when an Access application covers it (its own name, or a
+wildcard such as `*.example.com` over it; an application on a path such as
+`example.com/admin` guards only that path) and the application has at least one policy
+and no Bypass policy. Guarded hostnames are counted and not written; the script prints
+both numbers. A tunnel configured by a local file (not in the dashboard) has no routes
+the API returns; the script names it and skips it. The file is written only when a
+hostname is open.
+
 ## Import the files
 
 Open **Import evidence**, choose the client and drop the folder (or its files) on the
 import area. Each file is recognised by its columns. A CSV file carries no capture time,
 so set **exported at** on the form to the time the script ran.
+
+Revrook uses the newest file of each kind for a client: a newer `network-export`
+replaces the older one, it does not add to it. When a client has more than one source of
+the same kind (the office firewall and a cloud, or two clouds), import them as one file.
+The three scripts write the same columns for each kind, so their files join with one
+header:
+
+```bash
+awk 'FNR > 1 || NR == 1' */network-export-*.csv > network-export.csv
+```
+
+A file of another tool (a firewall export) has other columns: bring its lines into the
+same columns first, or import the cloud file and that tool's file as one file made in a
+spreadsheet.

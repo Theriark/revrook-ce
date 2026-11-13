@@ -114,3 +114,18 @@ def test_the_script_only_reads_the_projects() -> None:
     assert len(calls) == 5
     for _, action in calls:
         assert action == "list", action
+
+
+def test_each_kind_has_the_same_columns_in_every_cloud_script() -> None:
+    # The files of one kind are joined into one import (guide 12), so their headers
+    # must match.
+    scripts = ("export-aws.sh", "export-gcp.sh", "export-cloudflare.sh")
+    found: dict[str, set[str]] = {}
+    for name in scripts:
+        text = (SCRIPT.parent / name).read_text(encoding="utf-8")
+        for match in re.finditer(
+            r"(?:record_type|hostname|system_or_device),[a-z_,]+", text
+        ):
+            found.setdefault(match.group().split(",")[0], set()).add(match.group())
+    assert set(found) == {"record_type", "hostname", "system_or_device"}
+    assert all(len(headers) == 1 for headers in found.values()), found

@@ -156,7 +156,10 @@ AWS Backup jobs as a `backup-export`, with describe and list calls only
 ([guide 12](guides/12-cloud-exports.md)). `app/static/scripts/export-gcp.sh` writes the
 ingress VPC firewall rules, running VMs and disk snapshots of Google Cloud projects in the
 same three formats, with list calls only, and skips a project without the Compute Engine
-API.
+API. `app/static/scripts/export-cloudflare.sh` writes the public hostnames of a client's
+Cloudflare Tunnels that no Access application guards as `network-export` rules, with GET
+requests only. The checks read the newest file of each source, so several exports of
+one kind are imported as one file (guide 12 shows how).
 
 ## The five Microsoft sources
 
