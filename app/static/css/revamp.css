@@ -2177,6 +2177,62 @@ main .rv-exceptions td[data-label="Owner"] {
   animation: rv-arc-in var(--rv-motion-focal) both;
 }
 
+/* A list arrives as a list: the stat cards of Home and the rows of a
+   needs-attention list rise into place one after the other, the last of them a
+   quarter of a second after the first. They are in place from the start when
+   motion is reduced (the delay alone would hide a row until its turn) */
+@keyframes rv-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.rv-stat-grid > .rv-stat,
+.rv-attention-row {
+  animation: rv-arrive var(--rv-motion-enter) both;
+}
+
+.rv-stat-grid > .rv-stat:nth-child(2),
+.rv-attention-row:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.rv-stat-grid > .rv-stat:nth-child(3),
+.rv-attention-row:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.rv-stat-grid > .rv-stat:nth-child(4),
+.rv-attention-row:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.rv-attention-row:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+.rv-attention-row:nth-child(6) {
+  animation-delay: 175ms;
+}
+
+.rv-attention-row:nth-child(7) {
+  animation-delay: 210ms;
+}
+
+.rv-attention-row:nth-child(n + 8) {
+  animation-delay: 245ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-stat-grid > .rv-stat,
+  .rv-attention-row,
+  .rv-gauge-arc,
+  .rv-ring-large .rv-ring-arc {
+    animation: none;
+  }
+}
+
 /* Inter: figures of one width wherever numbers stand under each other, headings
    that break into lines of like length, and the parts a browser draws itself in
    the colours of the page */

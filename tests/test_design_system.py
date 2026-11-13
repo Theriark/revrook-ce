@@ -263,6 +263,12 @@ def test_motion_is_short_and_respects_reduced_motion() -> None:
     assert revamp.count("@view-transition {") == 1
     opt_in = revamp.split("@view-transition {", 1)[0].rsplit("@media", 1)[1]
     assert "(prefers-reduced-motion: no-preference)" in opt_in
+    # A list that arrives is in place at once when motion is reduced: its delay
+    # alone would hide a row until its turn.
+    still = revamp.rsplit("@media (prefers-reduced-motion: reduce) {", 1)[1]
+    still = still.split("\n}", 1)[0]
+    assert ".rv-attention-row" in still and "animation: none;" in still
+    assert re.search(r"@keyframes rv-arrive \{\s*from \{[^}]*opacity: 0;", revamp)
     # The browser reads that rule when it meets <body>: the head holds the parser
     # with a script that is not deferred, after the stylesheets.
     base = (ROOT / "app/ui/templates/base.html").read_text("utf-8")
