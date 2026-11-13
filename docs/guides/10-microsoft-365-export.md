@@ -43,7 +43,10 @@ browser window PowerShell opens; no password, token or secret is written anywher
    ```
 
    `-SkipExchange` writes only the five Graph files; `-SkipAlerts` leaves the
-   protection alerts out of the Exchange file.
+   protection alerts out of the Exchange file. Add `-UseDeviceCode` when no sign-in
+   window appears (Windows opens it through its account manager, which an embedded
+   terminal, a remote session or a server may not show): each sign-in then prints a
+   short code to enter at https://microsoft.com/devicelogin in any browser.
 3. Sign in when Microsoft Graph asks, and again when Exchange Online asks. The script
    prints each file with the number of records it holds, then `Done`.
 4. Open **Import evidence**, choose the client and drop the whole folder on the import
