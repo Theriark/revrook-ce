@@ -292,6 +292,25 @@ def test_a_client_keeps_its_parts_over_a_page_change() -> None:
         assert revamp.count(f"view-transition-name: {part};") == 1, part
 
 
+def test_nothing_shifts_between_two_pages() -> None:
+    revamp = (ROOT / "app/static/css/revamp.css").read_text("utf-8")
+    # Measured on a local build of 790c5c5 at 1920px: a page without a scrollbar
+    # stood at 516px and one with it at 508.5px; the tabs of a client were at
+    # 133px without actions beside its name and at 138.6px with them.
+    assert re.search(r"\nhtml \{\s*scrollbar-gutter: stable;\s*\}", revamp)
+    header = re.search(
+        r"\n\.rv-content > \.rv-client-header \{\s*min-height: 38px;\s*\}", revamp
+    )
+    assert header is not None
+    # The rows of the clients list are named from data-part: an id alone starts
+    # with a digit and cannot be a name.
+    row = re.search(r"\.rv-clients tr\[data-part\] \{([^}]*)\}", revamp)
+    assert row is not None
+    assert "attr(data-part type(<custom-ident>), none)" in row.group(1)
+    clients = (ROOT / "app/ui/templates/clients.html").read_text("utf-8")
+    assert clients.count('data-part="client-{{ row.id }}"') == 1
+
+
 def test_the_overview_puts_the_changes_beside_the_domains() -> None:
     page = (ROOT / "app/ui/templates/client_overview.html").read_text("utf-8")
     row = page.split('<div class="rv-two rv-two-even">', 1)[1]

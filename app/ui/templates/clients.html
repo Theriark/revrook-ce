@@ -86,7 +86,7 @@
 </thead>
 <tbody>
 {% for row in rows %}
-<tr data-bulk-row="{{ row.id }}" data-name="{{ row.name }}" data-score="{% if row.report %}{{ row.report.score_text }}{% endif %}" data-band="{% if row.report %}{{ row.report.band }}{% endif %}" data-report-day="{% if row.report %}{{ row.report.as_of.date().isoformat() }}{% endif %}" data-newest="{% if row.newest %}{{ row.newest.date().isoformat() }}{% endif %}" data-exports="{{ row.exports }}">
+<tr data-bulk-row="{{ row.id }}" data-name="{{ row.name }}" data-score="{% if row.report %}{{ row.report.score_text }}{% endif %}" data-band="{% if row.report %}{{ row.report.band }}{% endif %}" data-report-day="{% if row.report %}{{ row.report.as_of.date().isoformat() }}{% endif %}" data-newest="{% if row.newest %}{{ row.newest.date().isoformat() }}{% endif %}" data-exports="{{ row.exports }}" data-part="client-{{ row.id }}">
 <td class="rv-bulk-cell" data-bulk-cell hidden><input type="checkbox" id="bulk-{{ row.id }}" value="{{ row.id }}" data-bulk-pick aria-label="Select {{ row.name }}"></td>
 <th scope="row" data-label="Client"><a class="rv-client-name" href="/clients/{{ row.id }}">{{ row.name }}</a></th>
 <td data-label="Last report">

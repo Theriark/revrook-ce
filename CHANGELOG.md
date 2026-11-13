@@ -8,6 +8,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Added
 
+- On the **clients list** a sort, a search, a band or a page of the list moves the rows that stay, as on the checklist. The control drawer arrives on the arrival curve. Signed out, the words of the panel stand in the middle of it.
 - The **overview of a client** fills its last row: the recent changes stand beside the domains, under the freshness line, instead of leaving half the row empty; the status bars grow from their left end when the page opens.
 - On the **checklist**, narrowing, searching or sorting moves the rows: one that stays slides to its new place, one that leaves fades out, one that comes fades in. The name of the client and the tabs stay where they are from one page of a client to the next. The name of a control is text that takes the link colour when pointed at.
 - The interface is set in **Inter**, served by the installation itself (`app/static/vendor/inter`, SIL Open Font License 1.1, accepted for font files only), so a page looks the same on every machine; tables draw their figures at one width, and a page title is 28 px at every width.
@@ -100,6 +101,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Fixed
 
+- Nothing shifts between two pages: a page too short to scroll stood 7 px to the right of a long one (the room of the scrollbar is kept on every page now), and the tabs of a client moved 5 px between a page with actions beside its name and one without.
 - The clients table fits again in Inter: between 1024 px and 1099 px the page scrolled sideways by a few pixels, and on a wide window the age of the newest evidence broke under its date and made every row a line taller.
 - The Microsoft 365 export script no longer stops at the first source Microsoft refuses: a tenant without Entra ID P1 (the registration report) or Intune (the devices) got no file at all, because the first refusal ended the run. Such a source is now skipped with a warning naming Microsoft's error code, the others are written, and the run ends with the list of skipped files. Exchange Online signs in through the browser (`-DisableWAM`, module 3.7 or later), because its Windows account-manager sign-in failed with "A server side error has occurred". Found on the first export of Theriark's own tenant.
 - The Microsoft 365 export script (`export-m365.ps1`) takes `-UseDeviceCode`: Microsoft Graph, Exchange Online and Security & Compliance then sign in with a code entered at https://microsoft.com/devicelogin instead of a sign-in window. On Windows the Graph module signs in through the account manager, whose window an embedded terminal or a remote session may not show, so the export stopped with "A window handle must be configured" or "User canceled authentication". The import stays manual; nothing else in the script changed.
