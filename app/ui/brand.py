@@ -60,12 +60,16 @@ CITY_FILES = tuple(
 # The stylesheets and scripts base.html links, under app/static. Their addresses
 # carry asset_version() as the `v` query, so a changed file has a new address.
 ASSET_FILES = (
+    # the @font-face rules of Inter; its two font files keep their names
+    "vendor/inter/inter.css",
     "vendor/pico/pico.min.css",
     "css/revrook.css",
     "css/revrook-retest.css",
     "css/charts.css",
     "css/scenes.css",
     "css/revamp.css",
+    # holds the parser until the stylesheets are in (base.html)
+    "js/page-change.js",
     "vendor/htmx/htmx.min.js",
     "js/revrook.js",
     "js/charts.js",

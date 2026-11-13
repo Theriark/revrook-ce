@@ -130,7 +130,9 @@ def page() -> Tree:
 
 def new_rules() -> list[tuple[str, str, str]]:
     """(media query, selector, declarations) of every rule of the THE-1414 block."""
-    block = CSS.split(SECTION, 1)[1]
+    block = CSS.split(SECTION, 1)[1].split("*/", 1)[1]
+    # the block ends at the header of the next one (later revamps follow it)
+    block = re.split(r"/\* -{6,} ", block, maxsplit=1)[0]
     block = re.sub(r"/\*.*?\*/", "", block, flags=re.DOTALL)
     rules = []
     for media, body in re.findall(r"@media ([^{]+)\{(.*?)\n\}", block, re.DOTALL):

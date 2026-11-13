@@ -2,8 +2,9 @@
 
 The web interface is one stylesheet, `app/static/css/revrook.css`, on top of the
 vendored Pico CSS, which is kept only as a reset and for element defaults. There is
-no build chain, the fonts are the system stack, nothing is loaded from outside the
-installation, and no page carries an inline style or script
+no build chain, the one typeface (Inter) is served by the installation itself,
+nothing is loaded from outside the installation, and no page carries an inline style
+or script
 ([docs/security.md](security.md)). This page records the tokens, the shell and the
 components so that every page is built from the same parts.
 
@@ -12,7 +13,8 @@ components so that every page is built from the same parts.
 A small MSP owner opens revrook to see where each client stands and to prepare the
 evidence a client, an insurer or a quarterly review asks for. The interface is calm,
 dense and readable: charcoal and white with one violet-blue accent, status always as
-an icon and its words, and nothing that moves unless the person did something.
+an icon and its words, and motion only where it says something: a page change, an
+arrival, the score (Motion, under Tokens).
 
 Every signed-in page has a top bar with the breadcrumb trail, the search, the theme
 button and the account menu (see The shell below); the page title, its purpose and the
@@ -70,7 +72,16 @@ is never text on the rail or on ink; the status colours and secondary text are t
 on the surface only; a status is never shown by colour alone; the dark block
 redefines roles only, and the block for the system theme holds the same values.
 
-Type: the system stack (`system-ui`, Segoe UI, Roboto, Helvetica, Arial). Six sizes,
+Type: Inter, one family for everything, so a page looks the same on every machine. It
+is the variable upright face with the weight and optical-size axes (the large sizes
+draw with its display shapes), self-hosted in `app/static/vendor/inter` (SIL Open Font
+License 1.1, [docs/licences.md](licences.md)): `inter.css` holds the two `@font-face`
+rules, the Latin file (73 KB) and the Latin Extended file, which a browser fetches
+only for a page that needs it. The system stack (`system-ui`, Segoe UI, Roboto,
+Helvetica, Arial) stays behind it for any other script and while the file loads. A
+table draws its figures at one width (`tabular-nums`), headings break into lines of
+like length, and the selection, the caret and the scrollbar take the colours of the
+page. A page title is 28 px at every width; the 40 px step is for a figure. Six sizes,
 as tokens in `revrook.css`: `--rv-fs-xs` 12, `--rv-fs-sm` 14, `--rv-fs-md` 16,
 `--rv-fs-lg` 20, `--rv-fs-xl` 28 and `--rv-fs-2xl` 40 px. Every font size of every
 stylesheet is one of them (`tests/test_design_system.py`), except the body (15 px,
@@ -79,7 +90,19 @@ the base the others are read against) and SVG text, sized in the units of its vi
 Helvetica or Arial. The PDF reports have their own sizes (`app/reports/templates`).
 Spacing 4, 8, 12, 16, 24, 32 and 48 px. Radius 8 px on controls and 12 px on cards and
 tables. Two elevations (`--rv-shadow-1` for cards, `--rv-shadow-2` for dialogs).
-Motion 150 ms ease-out on hover and focus only, off under `prefers-reduced-motion`.
+Motion (since 2026-11-13; before, only hover and focus moved). Three kinds, each with
+its token, and nothing else moves. Feedback: hover, focus and a pressed control, 150 ms
+ease-out (`--rv-motion`). Arrival: something that enters or changes place, 320 ms on a
+curve that starts fast and settles (`--rv-motion-enter`, `--rv-ease-out`). The score:
+the arc of the gauge of Home and of the large ring of a client draws from nothing to
+its value once, 720 ms (`--rv-motion-focal`); the rings of a table row do not. A page
+change cross-fades the page column in about 220 ms while the rail and the top bar stay
+where they are (`@view-transition` in `revamp.css`; a browser without it changes page
+as before). A browser decides that when it meets `<body>`, so `base.html` links
+`js/page-change.js`, a file that runs nothing, without `defer` after the stylesheets:
+the parser then waits for them. Under `prefers-reduced-motion` every animation and
+transition is cut and the page change is not animated; nothing is hidden until an
+animation runs, so a page without motion is the same page.
 
 ## Themes
 

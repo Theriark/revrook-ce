@@ -179,17 +179,13 @@
   border-bottom: 0;
 }
 
+/* 28px at every width since 2026-11-13: the 40px step is for a figure (a score, a
+   count), so a page name no longer outweighs what the page shows */
 .rv-content > .rv-page-header h1 {
   font-size: var(--rv-fs-xl);
-  font-weight: 700;
+  font-weight: 650;
   line-height: 1.15;
-  letter-spacing: -0.015em;
-}
-
-@media (min-width: 768px) {
-  .rv-content > .rv-page-header h1 {
-    font-size: var(--rv-fs-2xl);
-  }
+  letter-spacing: -0.02em;
 }
 
 .rv-content > .rv-page-header .rv-page-purpose {
@@ -2126,4 +2122,84 @@ main .rv-exceptions td[data-label="Owner"] {
   .rv-app .rv-header .rv-nav-link .rv-icon {
     display: none;
   }
+}
+
+/* ---------- Revamp of 2026-11-13: type and motion foundation ---------- */
+
+/* Motion (docs/design-system.md, Motion). Feedback keeps --rv-motion. An arrival
+   takes the longer curve that starts fast and settles, and the one drawn moment of
+   a page is its score arc. Under prefers-reduced-motion the rule of revrook.css
+   cuts every animation and transition, and the page change below is not asked for */
+:root {
+  --rv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --rv-motion-enter: 320ms var(--rv-ease-out);
+  --rv-motion-focal: 720ms var(--rv-ease-out);
+}
+
+/* A page change cross-fades the page column. The rail and the top bar are the same
+   parts on both pages, so each is its own group and stays where it is; a browser
+   without view transitions changes page as before. A browser reads this rule when
+   it meets <body>, so base.html holds the parser until the stylesheets are in
+   (js/page-change.js) */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
+.rv-app > .rv-header {
+  view-transition-name: rv-rail;
+}
+
+.rv-topbar {
+  view-transition-name: rv-topbar;
+}
+
+::view-transition-group(*) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--rv-ease-out);
+}
+
+::view-transition-old(root) {
+  animation-duration: 120ms;
+}
+
+/* The score arc of a page (the gauge of Home, the large ring of a client) draws
+   from nothing to its value once; the rings of a table row do not */
+@keyframes rv-arc-in {
+  from {
+    stroke-dasharray: 0 400;
+  }
+}
+
+.rv-gauge-arc,
+.rv-ring-large .rv-ring-arc {
+  animation: rv-arc-in var(--rv-motion-focal) both;
+}
+
+/* Inter: figures of one width wherever numbers stand under each other, headings
+   that break into lines of like length, and the parts a browser draws itself in
+   the colours of the page */
+main table {
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+html {
+  scrollbar-color: var(--rv-line-strong) transparent;
+}
+
+input,
+textarea {
+  caret-color: var(--rv-primary);
+}
+
+::selection {
+  color: var(--rv-text);
+  background-color: var(--rv-accent-tint);
 }

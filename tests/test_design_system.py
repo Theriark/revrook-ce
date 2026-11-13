@@ -255,6 +255,30 @@ def test_every_font_size_is_on_the_type_scale() -> None:
 def test_motion_is_short_and_respects_reduced_motion() -> None:
     assert "--rv-motion: 150ms ease-out;" in CSS
     assert "@media (prefers-reduced-motion: reduce)" in CSS
+    # Since 2026-11-13 an arrival and the score arc move too: each has its token,
+    # and a page change is animated only when motion is not reduced.
+    revamp = (ROOT / "app/static/css/revamp.css").read_text("utf-8")
+    assert "--rv-motion-enter: 320ms var(--rv-ease-out);" in revamp
+    assert "--rv-motion-focal: 720ms var(--rv-ease-out);" in revamp
+    assert revamp.count("@view-transition {") == 1
+    opt_in = revamp.split("@view-transition {", 1)[0].rsplit("@media", 1)[1]
+    assert "(prefers-reduced-motion: no-preference)" in opt_in
+    # The browser reads that rule when it meets <body>: the head holds the parser
+    # with a script that is not deferred, after the stylesheets.
+    base = (ROOT / "app/ui/templates/base.html").read_text("utf-8")
+    hold = '<script src="/static/js/page-change.js?v={{ asset_version }}"></script>'
+    assert base.index("css/revamp.css") < base.index(hold) < base.index("</head>")
+
+
+def test_the_typeface_is_served_by_the_installation() -> None:
+    assert '--pico-font-family: "Inter Variable", system-ui,' in CSS
+    vendor = ROOT / "app/static/vendor/inter"
+    faces = (vendor / "inter.css").read_text("utf-8")
+    files = re.findall(r'url\("([^"]+)"\)', faces)
+    assert len(files) == 2 and all("/" not in name for name in files)
+    for name in files:
+        assert (vendor / name).is_file(), name
+    assert "SIL Open Font License" in (vendor / "LICENSE").read_text("utf-8")
 
 
 def test_the_narrow_bar_and_the_rail_make_room_for_the_sign_out_button() -> None:
