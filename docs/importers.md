@@ -150,6 +150,11 @@ Policy.Read.All and RoleManagement.Read.Directory, and an Exchange role that rea
 organisation settings). The Intune export selects its fields, so no serial number,
 IMEI or phone number is written; mailboxes are written by their directory id.
 
+`app/static/scripts/export-aws.sh` writes an AWS account's inbound security group
+rules as a `network-export`, its running EC2 instances as a `device-inventory` and its
+AWS Backup jobs as a `backup-export`, with describe and list calls only
+([guide 12](guides/12-cloud-exports.md)).
+
 ## The five Microsoft sources
 
 Fields and columns marked **INFERRED** are not in the phase plan's list for the
