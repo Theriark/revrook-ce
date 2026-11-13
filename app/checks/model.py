@@ -52,7 +52,8 @@ SUMMARY_KIND = "summary"
 
 @dataclass(frozen=True)
 class SourceFacts:
-    """The facts of the newest evidence item of one source (one adapter).
+    """The facts of the newest evidence item of one source (one adapter); for a
+    device, backup or network source, of the newest item of each tool (app/posture.py).
 
     `captured_at` is the capture time of the evidence item: the time in the file,
     or the upload time when the file has none. Every age is measured from it.

@@ -93,16 +93,13 @@ Open **Import evidence**, choose the client and drop the folder (or its files) o
 import area. Each file is recognised by its columns. A CSV file carries no capture time,
 so set **exported at** on the form to the time the script ran.
 
-Revrook uses the newest file of each kind for a client: a newer `network-export`
-replaces the older one, it does not add to it. When a client has more than one source of
-the same kind (the office firewall and a cloud, or two clouds), import them as one file.
-The three scripts write the same columns for each kind, so their files join with one
-header:
-
-```bash
-awk 'FNR > 1 || NR == 1' */network-export-*.csv > network-export.csv
-```
-
-A file of another tool (a firewall export) has other columns: bring its lines into the
-same columns first, or import the cloud file and that tool's file as one file made in a
-spreadsheet.
+Every line the scripts write names its tool in a `tool` column (`aws`, `gcp`,
+`cloudflare`). A client often has several tools for one kind of evidence: the office
+firewall and a cloud for the network, or two clouds. For the device, backup and network
+sources the checks read the newest file of each tool together, so importing the AWS file
+does not push out the firewall's file: it replaces only the previous AWS file. A file
+without a `tool` column counts as one more tool, so the firewall export of another
+product needs no change. Ages are measured from the newest of these files. A tool's file
+stops counting once it is more than 35 days older than the newest file of its kind (the
+default maximum age of an export), so a tool the client no longer uses drops out by
+itself.

@@ -87,6 +87,17 @@ def read_text_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactValue:
     return safe_text(raw.get(key), label=label) or None
 
 
+MAX_TOOL_LENGTH = 40
+
+
+def read_tool_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactValue:
+    """The tool that wrote the file (aws, unifi), in lower case."""
+    text = read_text_cell(raw, key, label, flags)
+    if isinstance(text, str) and len(text) > MAX_TOOL_LENGTH:
+        raise RowError(f"{label} is too long")
+    return text.lower() if isinstance(text, str) else None
+
+
 def read_version_cell(raw: Raw, key: str, label: str, flags: Flags) -> FactValue:
     return clean_version(read_text(raw, key))
 
@@ -405,7 +416,17 @@ class CsvAdapter:
             summary[name] = max(stamps, default=None)
         unread = any(slug(cell) in UNREAD_HEADERS for cell in header)
         summary["unread_columns_present"] = unread
+        if TOOL in self.fields:
+            # One tool per file; a file whose rows name none or several has none.
+            tools = {fact.value.get("tool") for fact in facts} - {None}
+            if len(tools) == 1:
+                summary["tool"] = tools.pop()
         return summary
+
+
+# The tool that wrote a device, backup or network file. The checks read the newest
+# file of each tool of these sources together (app/posture.py).
+TOOL = Field(Column("tool", "tool", False, ("export_tool",)), read_tool_cell)
 
 
 # --- 6. device inventory, patch and antivirus --------------------------------
@@ -467,6 +488,7 @@ class DeviceInventoryAdapter(CsvAdapter):
         Field(Column("log_forwarding", "log_forwarding"), read_flag_cell),
         Field(Column("user", "user", False, ("UPN", "user_principal_name")),
               target="user"),
+        TOOL,
     )
     columns = columns_of(fields)
     any_of = (("device_id", "hostname"),)
@@ -567,6 +589,7 @@ class BackupAdapter(CsvAdapter):
         Field(Column("offsite", "offsite"), read_flag_cell),
         Field(Column("restore_test_result", "restore_test_result"),
               word_reader(RESTORE_RESULTS)),
+        TOOL,
     )
     columns = columns_of(fields)
     counts = (
@@ -695,6 +718,7 @@ class NetworkAdapter(CsvAdapter):
         Field(Column("guest_isolated", "guest_isolated"),
               read_flag_cell, kinds=SSID),
         Field(Column("guest_ssid", "guest_ssid"), read_flag_cell, kinds=SSID),
+        TOOL,
     )
     columns = columns_of(fields)
     any_of = (("device_id", "rule_enabled", "ssid"),)
