@@ -40,8 +40,16 @@ Write only the five Graph files.
 .PARAMETER SkipAlerts
 Leave the protection alerts out of exchange-export.csv.
 
+.PARAMETER UseDeviceCode
+Sign in with a code instead of a sign-in window: each sign-in prints a short code to
+enter at https://microsoft.com/devicelogin in any browser. Use it when the Windows
+sign-in window does not appear (an embedded terminal, a remote session, a server).
+
 .EXAMPLE
 ./export-m365.ps1 -OutputFolder ./contoso-2026-11 -TenantId contoso.onmicrosoft.com
+
+.EXAMPLE
+./export-m365.ps1 -OutputFolder ./contoso-2026-11 -TenantId contoso.onmicrosoft.com -UseDeviceCode
 
 Download it from Import evidence in revrook (it is served at
 /static/scripts/export-m365.ps1); a downloaded script may need
@@ -52,7 +60,8 @@ param(
     [Parameter(Mandatory = $true)][string]$OutputFolder,
     [string]$TenantId,
     [switch]$SkipExchange,
-    [switch]$SkipAlerts
+    [switch]$SkipAlerts,
+    [switch]$UseDeviceCode
 )
 
 Set-StrictMode -Version 3
@@ -136,6 +145,7 @@ New-Item -ItemType Directory -Force -Path $OutputFolder | Out-Null
 Import-Module Microsoft.Graph.Authentication
 $connect = @{ Scopes = $GraphScopes; NoWelcome = $true }
 if ($TenantId) { $connect['TenantId'] = $TenantId }
+if ($UseDeviceCode) { $connect['UseDeviceCode'] = $true }
 Connect-MgGraph @connect
 
 $graph = 'https://graph.microsoft.com/v1.0'
@@ -156,6 +166,7 @@ if ($SkipExchange) {
 Import-Module ExchangeOnlineManagement
 $exchange = @{ ShowBanner = $false }
 if ($TenantId) { $exchange['Organization'] = $TenantId }
+if ($UseDeviceCode) { $exchange['Device'] = $true }
 Connect-ExchangeOnline @exchange
 
 $rows = New-Object System.Collections.ArrayList
@@ -213,7 +224,9 @@ $organisation = Get-OrganizationConfig
 Disconnect-ExchangeOnline -Confirm:$false | Out-Null
 
 if (-not $SkipAlerts) {
-    Connect-IPPSSession
+    $compliance = @{}
+    if ($UseDeviceCode) { $compliance['Device'] = $true }
+    Connect-IPPSSession @compliance
     foreach ($alert in @(Get-ProtectionAlert)) {
         $kind = $AlertKinds[[string]$alert.Name]
         if (-not $kind) { continue }
