@@ -22,7 +22,9 @@ one primary action stand on the page under it. The rail on the left carries the 
 lockup and the navigation, with a 3 px violet-blue mark on the current page; it is
 stone in the light theme and the darkest surface in the dark one. The keep below
 describes the charcoal band of earlier versions, which the shell of 2026-11-12 removed.
-Signed-out pages show the charcoal as a panel with the stacked lockup next to the form.
+Signed-out pages show the charcoal as a panel with the stacked lockup next to the form;
+from 1024 px the words of the panel are one column of 24rem in the middle of it, read
+from the left (2026-11-13: they stood at its left edge with the rest of the panel empty).
 
 ## Tokens
 
@@ -152,6 +154,19 @@ sit on in both themes; `tests/test_brand_contrast.py` lists those pairs. The str
 line is decoration and is kept out of them.
 
 ## The shell
+
+Nothing shifts between two pages (2026-11-13; a page change is animated now, so a
+shift of a few pixels shows). The room of the scrollbar is kept on every page
+(`scrollbar-gutter: stable` on the root): a page too short to scroll had none, and its
+content stood 7 px to the right of the content of a long page. The name of a client
+keeps the height of a button (38 px) whether actions stand beside it or not, so the
+tabs under it stay where they are from one page of a client to the next. The parts a
+page change keeps in place are the rail, the top bar, the name of a client with its
+actions, its tabs, every row of the checklist (named after its control) and every row
+of the clients list (named `client-` and its id, from `data-part`): a sort, a search, a
+band or a page of the list moves the rows that stay. A name must be unique on its page,
+or the browser cuts the whole page change. The control drawer arrives in 320 ms on the
+arrival curve (it opened in 150 ms, the time of a hover).
 
 `app/ui/templates/base.html` draws one of two shells. A page rendered with a `user` in
 its context gets the app shell: the rail (`header.rv-header`) with the brand lockup, the

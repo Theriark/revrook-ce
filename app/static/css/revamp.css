@@ -2351,3 +2351,43 @@ textarea {
 .rv-checklist tr[data-control] {
   view-transition-name: attr(data-control type(<custom-ident>), none);
 }
+
+/* ---------- Revamp of 2026-11-13: every other page ---------- */
+
+/* Nothing shifts between two pages. A page too short to scroll had no scrollbar,
+   so its content stood 7px to the right of the content of a long page; the room
+   of the scrollbar is kept on every page. A client with actions beside its name
+   was 5px taller than one without, so the tabs moved down and up from one page of
+   a client to the next; the name keeps the height of a button */
+html {
+  scrollbar-gutter: stable;
+}
+
+.rv-content > .rv-client-header {
+  min-height: 38px;
+}
+
+/* The clients list keeps its rows over a page change, as the checklist does: a
+   sort, a search, a band or a page of the list moves the rows that stay. The name
+   comes from data-part (client-12): the id alone cannot be a name, it starts with
+   a digit */
+.rv-clients tr[data-part] {
+  view-transition-name: attr(data-part type(<custom-ident>), none);
+}
+
+/* The control drawer arrives on the arrival curve (it opened in 150ms, the time
+   of a hover); the rule of revrook-retest.css keeps its name and its keyframes */
+dialog.rv-drawer[open] {
+  animation-duration: 320ms;
+  animation-timing-function: var(--rv-ease-out);
+}
+
+/* Signed out, from 1024px: the panel is half the window and its words stood at
+   its left edge with the rest empty. They are one column of 24rem in the middle
+   of the panel, still read from the left */
+@media (min-width: 1024px) {
+  .rv-auth-panel {
+    padding-inline: max(40px, calc(50% - 12rem));
+  }
+}
+
