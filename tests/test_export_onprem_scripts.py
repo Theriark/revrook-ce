@@ -225,10 +225,7 @@ def test_unifi_writes_the_gateway_inbound_rules_and_wifi(tmp_path: Path) -> None
         f"rule,Allow SSH to the gateway,,,,,,true,inbound,allow,any,22,,,,,{tool}"
         in got
     )
-    assert (
-        f"rule,Allow Router Advertisements,,,,,,true,inbound,allow,any,,,,,,{tool}"
-        in got
-    )
+    assert "Allow Router Advertisements" not in got  # ICMP opens no port
     assert not any(
         "Mail" in x or "Return Traffic" in x or "Port Forward" in x for x in got
     )
@@ -236,7 +233,7 @@ def test_unifi_writes_the_gateway_inbound_rules_and_wifi(tmp_path: Path) -> None
     # A user-defined policy lets guests reach an internal zone: not isolated.
     assert f"ssid,,,,,,,,,,,,Guests,open,true,false,{tool}" in got
     value = summary("network-export", file)
-    assert value["rules"] == 3 and value["perimeter_devices"] == 1
+    assert value["rules"] == 2 and value["perimeter_devices"] == 1
     assert value["tool"] == tool.lower()  # revrook keeps tools in lower case
 
 
