@@ -143,6 +143,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Security
 
+- `dnspython` (the public DNS check) is pinned at 2.9.2 in both lock files: 2.9.0 has CVE-2026-128089, which the vulnerability check of the merge gate refuses.
 - `opentelemetry-api` (a dependency of FastAPI) is pinned at 1.45.2 in both lock files: 1.45.1 has CVE-2026-126360, which the vulnerability check of the merge gate refuses.
 - The security checklist of phase 11 was run and is in [docs/security-review.md](docs/security-review.md): no finding of High or Medium severity is open. Fixed: parallel sign-ins could use up the database connections, request bodies other than uploads had no size cap and the data export was built whole in memory.
 - Scores are uncalibrated design choices and mappings to outside frameworks are unverified unless marked; nothing in revrook is a certification.
