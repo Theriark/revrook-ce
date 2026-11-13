@@ -127,7 +127,7 @@ before it, so a record changed or removed afterwards breaks the chain at that po
    deletion itself can be proved; while they are intact they are folded into one line
    under the table, which opens to list them.
 
-![Evidence integrity after a check at 1440 px: the four clients listed, every chain intact (no client has been deleted on the installation pictured, so there is no folded line)](../images/evidence-integrity-1440.png)
+![Evidence integrity after a check at 1440 px: the twelve clients listed, every chain intact, and under the table the folded line of the 26 clients deleted on the installation pictured](../images/evidence-integrity-1440.png)
 
 What the check proves: that nothing in the log changed after it was written. It does
 not prove that the data in the source system was true, and it cannot see records cut

@@ -200,7 +200,7 @@ client's wall directly ([evidence-explorer-preview.md](../evidence-explorer-prev
 ## Known limits
 
 - The scenes were checked in a headless Chrome with a software renderer on the
-  Development site, and the pictures of this guide were taken in a headless Chrome with
-  a hardware GPU on a local build; no phone or touch screen has been measured.
+  Development site, and the pictures of this guide were taken there in a headless Chrome
+  with a hardware GPU; no phone or touch screen has been measured.
 
 Back to the [guides](README.md).
