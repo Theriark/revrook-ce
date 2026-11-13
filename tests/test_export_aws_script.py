@@ -19,6 +19,20 @@ SCRIPT = ROOT / "app" / "static" / "scripts" / "export-aws.sh"
 BY_CODE = {adapter.source_code: adapter for adapter in ADAPTERS}
 BASH = shutil.which("bash")
 
+
+STAMP = re.compile(r",\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+
+
+def without_stamp(text: str) -> list[str]:
+    """The lines of a written file without the exported_at column every line has."""
+    lines = text.splitlines()
+    assert lines[0].endswith(",exported_at")
+    assert all(STAMP.search(line) for line in lines[1:])
+    return [lines[0].removesuffix(",exported_at")] + [
+        STAMP.sub("", x) for x in lines[1:]
+    ]
+
+
 # Tab-separated answers, in the column order of each --query of the script.
 FAKE_AWS = r"""#!/usr/bin/env bash
 case "$1 $2" in
@@ -64,11 +78,20 @@ def summary(code: str, file: Path) -> dict:
     result = BY_CODE[code].parse(file.read_bytes(), 1000)
     value = dict(result.facts[-1].value)
     assert value["rows_rejected"] == 0
+    # exported_at dates the file: revrook takes its capture time from it.
+    assert value["capture_time_source"] == "file"
     return value
 
 
 def test_inbound_rules_are_read_with_their_source(exported: Path) -> None:
-    text = (exported / "network-export-aws.csv").read_text(encoding="utf-8")
+    text = (
+        "\n".join(
+            without_stamp(
+                (exported / "network-export-aws.csv").read_text(encoding="utf-8")
+            )
+        )
+        + "\n"
+    )
     # A group of the same VPC is reached from the VPC's blocks only; across a
     # peering the source is unknown.
     assert "sg-2,true,inbound,allow,172.31.0.0/16 2a05:d018::/56,any" in text
@@ -80,8 +103,8 @@ def test_inbound_rules_are_read_with_their_source(exported: Path) -> None:
 
 
 def test_running_instances_carry_their_disk_encryption(exported: Path) -> None:
-    lines = (
-        (exported / "device-inventory-aws.csv").read_text(encoding="utf-8").splitlines()
+    lines = without_stamp(
+        (exported / "device-inventory-aws.csv").read_text(encoding="utf-8")
     )
     assert lines[1].startswith("i-a,linux,server,") and lines[1].endswith(",false,aws")
     assert lines[2].startswith("i-b,windows,server,") and lines[2].endswith(",,aws")
@@ -90,8 +113,8 @@ def test_running_instances_carry_their_disk_encryption(exported: Path) -> None:
 
 
 def test_a_backup_job_keeps_its_newest_result_and_last_success(exported: Path) -> None:
-    lines = (
-        (exported / "backup-export-aws.csv").read_text(encoding="utf-8").splitlines()
+    lines = without_stamp(
+        (exported / "backup-export-aws.csv").read_text(encoding="utf-8")
     )
     assert "arn:db,plan-1 (v),2026-11-10T05:20:00Z,failed,,,database,,aws" in lines
     assert "arn:vol,on-demand (v),2026-11-11T05:10:00Z,success,,,server,,aws" in lines

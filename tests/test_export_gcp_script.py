@@ -19,6 +19,20 @@ SCRIPT = ROOT / "app" / "static" / "scripts" / "export-gcp.sh"
 BY_CODE = {adapter.source_code: adapter for adapter in ADAPTERS}
 BASH = shutil.which("bash")
 
+
+STAMP = re.compile(r",\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+
+
+def without_stamp(text: str) -> list[str]:
+    """The lines of a written file without the exported_at column every line has."""
+    lines = text.splitlines()
+    assert lines[0].endswith(",exported_at")
+    assert all(STAMP.search(line) for line in lines[1:])
+    return [lines[0].removesuffix(",exported_at")] + [
+        STAMP.sub("", x) for x in lines[1:]
+    ]
+
+
 # Tab-separated answers, in the column order of each --format of the script. Project
 # p2 has no Compute Engine API and must be skipped without a compute call.
 FAKE_GCLOUD = r"""#!/usr/bin/env bash
@@ -71,11 +85,12 @@ def summary(code: str, file: Path) -> dict:
     result = BY_CODE[code].parse(file.read_bytes(), 1000)
     value = dict(result.facts[-1].value)
     assert value["rows_rejected"] == 0
+    assert value["capture_time_source"] == "file"
     return value
 
 
 def test_every_port_of_an_ingress_rule_is_a_line(exported: Path) -> None:
-    lines = (exported / "network-export-gcp.csv").read_text().splitlines()
+    lines = without_stamp((exported / "network-export-gcp.csv").read_text())
     assert "rule,p1/ssh,true,inbound,allow,0.0.0.0/0,22,gcp" in lines
     assert "rule,p1/ssh,true,inbound,allow,0.0.0.0/0,8000-8100,gcp" in lines
     assert "rule,p1/internal,true,inbound,allow,10.128.0.0/9,any,gcp" in lines
@@ -87,7 +102,7 @@ def test_every_port_of_an_ingress_rule_is_a_line(exported: Path) -> None:
 
 
 def test_running_vms_are_servers_with_encrypted_disks(exported: Path) -> None:
-    lines = (exported / "device-inventory-gcp.csv").read_text().splitlines()
+    lines = without_stamp((exported / "device-inventory-gcp.csv").read_text())
     assert lines[1].startswith("p1/europe-west1-b/web,linux,server,")
     assert lines[2].startswith("p1/europe-west1-b/dc,windows,server,")
     value = summary("device-inventory", exported / "device-inventory-gcp.csv")
@@ -95,7 +110,7 @@ def test_running_vms_are_servers_with_encrypted_disks(exported: Path) -> None:
 
 
 def test_a_disk_keeps_its_newest_result_and_last_success(exported: Path) -> None:
-    lines = (exported / "backup-export-gcp.csv").read_text().splitlines()
+    lines = without_stamp((exported / "backup-export-gcp.csv").read_text())
     assert "p1/disk-a,daily,2026-11-11T05:00:00Z,failed,,,server,true,gcp" in lines
     assert (
         "p1/disk-b,manual snapshots,2026-11-10T05:00:00Z,success,,,server,true,gcp"
@@ -127,6 +142,8 @@ def test_each_kind_has_the_same_columns_in_every_cloud_script() -> None:
         for match in re.finditer(
             r"(?:record_type|hostname|system_or_device),[a-z_,]+", text
         ):
-            found.setdefault(match.group().split(",")[0], set()).add(match.group())
+            # exported_at is added to every file, by the header or a last step.
+            header = match.group().removesuffix(",exported_at")
+            found.setdefault(header.split(",")[0], set()).add(header)
     assert set(found) == {"record_type", "hostname", "system_or_device"}
     assert all(len(headers) == 1 for headers in found.values()), found

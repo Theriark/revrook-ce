@@ -24,6 +24,7 @@ out=${1:?usage: export-cloudflare.sh OUTPUT_FOLDER [ACCOUNT_ID...]   (CLOUDFLARE
 shift
 : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN to a read-only Cloudflare API token}"
 mkdir -p "$out"
+now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 api() { curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/$1"; }
 # Every page of a list, as one JSON array.
@@ -71,9 +72,10 @@ guarded=$(awk -F'\t' '$1 == "guarded"' "$rules" | wc -l | tr -d ' ')
 open=$(awk -F'\t' '$1 == "open"' "$rules" | wc -l | tr -d ' ')
 echo "Public hostnames: $open open to the internet, $guarded behind Cloudflare Access (not written)."
 if [ "$open" -gt 0 ]; then
-  { echo "record_type,device_id,rule_enabled,direction,action,source,destination_port,tool"
-    awk -F'\t' '$1 == "open" { d = $2; gsub(/"/, "\"\"", d); if (d ~ /[",]/) d = "\"" d "\""
-      print "rule," d ",true,inbound,allow,any," $3 ",cloudflare" }' "$rules"; } >"$out/network-export-cloudflare.csv"
+  # exported_at: revrook reads it as the capture time (and a repeat export is never a duplicate).
+  { echo "record_type,device_id,rule_enabled,direction,action,source,destination_port,tool,exported_at"
+    awk -F'\t' -v t="$now" '$1 == "open" { d = $2; gsub(/"/, "\"\"", d); if (d ~ /[",]/) d = "\"" d "\""
+      print "rule," d ",true,inbound,allow,any," $3 ",cloudflare," t }' "$rules"; } >"$out/network-export-cloudflare.csv"
   echo "network-export-cloudflare.csv: $open rows"
 fi
 echo Done

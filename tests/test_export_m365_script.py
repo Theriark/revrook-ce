@@ -42,3 +42,10 @@ def test_a_refused_source_is_skipped_not_fatal() -> None:
 def test_exchange_signs_in_through_the_browser_when_it_can() -> None:
     assert "Parameters.ContainsKey('DisableWAM')" in SCRIPT
     assert "$exchange['DisableWAM'] = $true" in SCRIPT
+
+
+def test_every_exchange_line_says_when_it_was_exported() -> None:
+    # revrook reads exported_at as the capture time of the Exchange CSV.
+    assert "'recipient_count', 'last_acknowledged', 'exported_at'" in SCRIPT
+    assert "$row['exported_at'] = $ExportedAt" in SCRIPT
+    assert "ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')" in SCRIPT

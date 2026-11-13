@@ -90,8 +90,10 @@ hostname is open.
 ## Import the files
 
 Open **Import evidence**, choose the client and drop the folder (or its files) on the
-import area. Each file is recognised by its columns. A CSV file carries no capture time,
-so set **exported at** on the form to the time the script ran.
+import area. Each file is recognised by its columns. Every line says when it was
+exported (`exported_at`): revrook dates the evidence from it, so the time on the form is
+not used, and running a script again next month is imported again even when nothing in
+the account changed.
 
 Every line the scripts write names its tool in a `tool` column (`aws`, `gcp`,
 `cloudflare`). A client often has several tools for one kind of evidence: the office

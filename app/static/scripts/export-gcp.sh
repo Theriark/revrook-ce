@@ -90,7 +90,10 @@ for p in $projects; do
 done
 
 write() { # file, header, lines
-  if [ -s "$3" ]; then { echo "$2"; cat "$3"; } >"$out/$1"; echo "$1: $(wc -l <"$3" | tr -d ' ') rows"
+  # exported_at: revrook reads it as the capture time, and a new export of an unchanged
+  # project still differs from the last one, so it is never refused as a duplicate.
+  if [ -s "$3" ]; then { echo "$2,exported_at"; awk -v t="$now" '{ print $0 "," t }' "$3"; } >"$out/$1"
+    echo "$1: $(wc -l <"$3" | tr -d ' ') rows"
   else echo "Nothing found: $1 not written."; fi
 }
 write network-export-gcp.csv "record_type,device_id,rule_enabled,direction,action,source,destination_port,tool" "$net"

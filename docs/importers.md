@@ -43,7 +43,8 @@ flags that are the same for every source:
 | `timezone_assumed_utc` | A time in the file had no time zone and was read as UTC. |
 
 The capture time of a file is the top-level `capturedAt` of a JSON object, the
-newest `createdDateTime` of Secure Score, or none (CSV exports carry no time).
+newest `createdDateTime` of Secure Score, the newest `exported_at` of a CSV export
+(below), or none.
 
 ### Dates without a time zone
 
@@ -139,8 +140,9 @@ files for one client in one form: up to 20 files and the upload limit
    others. The page lists each file with its source, the facts stored and the rows
    refused. The file name is shown in that list only and never stored.
 
-The CSV files carry no capture time, so the page asks when the files were exported
-(default: now); a Graph file keeps its own `capturedAt`. The internal
+A CSV file without an `exported_at` column carries no capture time, so the page asks
+when the files were exported (default: now); a Graph file keeps its own `capturedAt`
+and a CSV file its own `exported_at`. The internal
 `reference-csv` source is not offered (`app.sources.INTERNAL_SOURCES`).
 
 `app/static/scripts/export-m365.ps1`, linked from the page, writes the five Microsoft
@@ -283,7 +285,18 @@ be in the file; "row" means an empty cell rejects that row. A column that is
 optional and absent gives an unknown value (`null`), and the summary counts how many
 values are known (`*_known`), so a missing column is never read as `false`.
 
-A CSV carries no capture time, so for all six `capture_time_source` is `upload`.
+### When the file was exported: the `exported_at` column
+
+Every CSV source takes an optional `exported_at` column (aliases `exported`,
+`exported_utc`; a time, read as UTC when it has no zone). The newest value of the
+file is its capture time (`capture_time_source` is `file`), so a script that writes
+it dates its evidence itself, and the form's time is not needed. It also keeps a new
+export of an unchanged account from being refused: two exports at different times
+have different bytes, while the same bytes uploaded twice for one client are refused
+as a duplicate. The export scripts (`export-aws.sh`, `export-gcp.sh`,
+`export-cloudflare.sh`, and the Exchange CSV of `export-m365.ps1`) write it on every
+line. Without the column the capture time is the upload's (`capture_time_source` is
+`upload`).
 Personal identifiers (a user, a device, a mailbox, a mail domain, a network name)
 are named as identifiers and become pseudonyms; serial numbers and client names are
 never read, and the summary says `unread_columns_present` when the file had such a

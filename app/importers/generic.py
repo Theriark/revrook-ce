@@ -31,6 +31,7 @@ import ipaddress
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Self
 
 from app.importers.base import FactValue, ImportRejectedError, ParsedFact, ParseResult
@@ -346,10 +347,13 @@ class CsvAdapter:
         rejects = Rejects(self.prefix)
         facts = read_rows(table.rows(), self.read_row, flags, rejects)
         counts = self.summarise(facts, table.header)
+        captured = exported_at(facts)
         summary = summary_fact(
-            self.prefix, counts, rejects, flags, capture_in_file=False
+            self.prefix, counts, rejects, flags, capture_in_file=captured is not None
         )
-        return ParseResult(facts=(*facts, *rejects.facts, summary))
+        return ParseResult(
+            facts=(*facts, *rejects.facts, summary), captured_at=captured
+        )
 
     def kind_of(self, raw: Raw) -> str:
         """The record type of a row (the only one, for a single-kind contract)."""
@@ -424,6 +428,22 @@ class CsvAdapter:
         return summary
 
 
+# When the file was exported (any CSV source): it becomes the file's capture time, so a
+# script that writes it dates its evidence itself, and an unchanged export written
+# again has other bytes and is imported again instead of refused as a duplicate.
+EXPORTED = Field(
+    Column("exported_at", "exported_at", False, ("exported", "exported_utc")),
+    read_time_cell,
+)
+
+
+def exported_at(facts: Sequence[ParsedFact]) -> datetime | None:
+    """The newest exported_at of the lines of a file, or None."""
+    stamps = [fact.value.get("exported_at") for fact in facts]
+    found = [datetime.fromisoformat(s) for s in stamps if isinstance(s, str)]
+    return max(found, default=None)
+
+
 # The tool that wrote a device, backup or network file. The checks read the newest
 # file of each tool of these sources together (app/posture.py).
 TOOL = Field(Column("tool", "tool", False, ("export_tool",)), read_tool_cell)
@@ -489,6 +509,7 @@ class DeviceInventoryAdapter(CsvAdapter):
         Field(Column("user", "user", False, ("UPN", "user_principal_name")),
               target="user"),
         TOOL,
+        EXPORTED,
     )
     columns = columns_of(fields)
     any_of = (("device_id", "hostname"),)
@@ -590,6 +611,7 @@ class BackupAdapter(CsvAdapter):
         Field(Column("restore_test_result", "restore_test_result"),
               word_reader(RESTORE_RESULTS)),
         TOOL,
+        EXPORTED,
     )
     columns = columns_of(fields)
     counts = (
@@ -719,6 +741,7 @@ class NetworkAdapter(CsvAdapter):
               read_flag_cell, kinds=SSID),
         Field(Column("guest_ssid", "guest_ssid"), read_flag_cell, kinds=SSID),
         TOOL,
+        EXPORTED,
     )
     columns = columns_of(fields)
     any_of = (("device_id", "rule_enabled", "ssid"),)
@@ -763,6 +786,7 @@ class TrainingAdapter(CsvAdapter):
         Field(Column("completed_utc", "completed_utc", True,
                      ("completed", "Completed on", "Completion date")),
               read_time_cell, required=True),
+        EXPORTED,
     )
     columns = columns_of(fields)
     counts = (Count("completions", "rows"),)
@@ -788,6 +812,7 @@ class LeaversAdapter(CsvAdapter):
               read_time_cell, required=True),
         Field(Column("account_enabled", "account_enabled", False, ("accountEnabled",)),
               read_flag_cell),
+        EXPORTED,
     )
     columns = columns_of(fields)
     counts = (
@@ -889,6 +914,7 @@ class ExchangeAdapter(CsvAdapter):
               read_count_cell, kinds=ALERT),
         Field(Column("last_acknowledged", "last_acknowledged"),
               read_time_cell, kinds=ALERT),
+        EXPORTED,
     )
     columns = columns_of(fields)
     counts = (
