@@ -93,8 +93,8 @@ def test_a_backup_job_keeps_its_newest_result_and_last_success(exported: Path) -
     lines = (
         (exported / "backup-export-aws.csv").read_text(encoding="utf-8").splitlines()
     )
-    assert "arn:db,plan-1 (v),2026-11-10T05:20:00Z,failed,,,database" in lines
-    assert "arn:vol,on-demand (v),2026-11-11T05:10:00Z,success,,,server" in lines
+    assert "arn:db,plan-1 (v),2026-11-10T05:20:00Z,failed,,,database," in lines
+    assert "arn:vol,on-demand (v),2026-11-11T05:10:00Z,success,,,server," in lines
     value = summary("backup-export", exported / "backup-export-aws.csv")
     assert value["jobs"] == 2 and value["failed"] == 1 and value["success"] == 1
 

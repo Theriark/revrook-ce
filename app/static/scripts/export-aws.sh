@@ -89,11 +89,11 @@ for r in $regions; do
         if ($3 == "COMPLETED" && !(key in ok)) ok[key] = $4
       }
       END { for (i = 1; i <= n; i++) { k = order[i]
-        print q(system_[k]) "," q(job[k]) "," q(ok[k]) "," result[k] ",,," type[k] } }' >>"$bak"
+        print q(system_[k]) "," q(job[k]) "," q(ok[k]) "," result[k] ",,," type[k] "," } }' >>"$bak"
 done
 if [ -s "$bak" ]; then
   # Retention, encryption and restore tests are not in the job list; revrook reads the empty cells as unknown.
-  { echo "system_or_device,backup_job,last_success,last_result,retention_days,restore_test_date,asset_type"
+  { echo "system_or_device,backup_job,last_success,last_result,retention_days,restore_test_date,asset_type,encrypted"
     cat "$bak"; } >"$out/backup-export-aws.csv"
 else
   echo "No AWS Backup job: backup-export-aws.csv not written."
