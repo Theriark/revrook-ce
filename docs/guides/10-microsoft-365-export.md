@@ -50,7 +50,8 @@ browser window PowerShell opens; no password, token or secret is written anywher
    A tenant may block sign-in by code (Microsoft answers with error 530035, as a
    Conditional Access or security-defaults rule); then run the script without the
    switch in a normal PowerShell window, where the sign-in window does appear.
-3. Sign in when Microsoft Graph asks, and again when Exchange Online asks. The script
+3. Sign in when Microsoft Graph asks, and again when Exchange Online asks. Exchange Online
+   signs in through your browser (module 3.7 or later). The script
    prints each file with the number of records it holds, then `Done`.
 4. Open **Import evidence**, choose the client and drop the whole folder on the import
    area (or choose the six files). Each file is recognised by its content; the five
@@ -69,6 +70,10 @@ browser window PowerShell opens; no password, token or secret is written anywher
 | `conditional-access.json` | Graph `identity/conditionalAccess/policies` | the Conditional Access policies and their state |
 | `directory-roles.json` | Graph `directoryRoles` with their members | the directory roles and who holds them |
 | `exchange-export.csv` | Exchange Online | DKIM signing per domain, the outbound and transport settings, the mailboxes by their directory id, the audit configuration and the protection alerts |
+
+A source the tenant has no licence for is skipped with a warning and the others are
+still written: the registration report and the Conditional Access policies need Entra
+ID P1 or P2, the devices need Intune. Its controls stay Not checked.
 
 A tenant with nothing to report in one of them (no Conditional Access policy, for
 example) still gets its file, with an empty `value`; Import evidence recognises it by
