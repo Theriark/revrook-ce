@@ -12,10 +12,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app.checks.model import SourceFacts
 from app.evidence.assurance import Assurance
-from app.evidence.service import NewEvidence
+from app.evidence.expiry import Freshness
+from app.evidence.service import EvidenceView, NewEvidence
 from app.importers.generic import ADAPTERS
 from app.posture import TOOL_WINDOW, load_sources, merged, newest_items, per_tool
 from app.settings import Settings
+from app.ui.viewmodels import source_rows
+from app.worker.reminders import due_reminders
 from helpers import NOW as STORE_NOW
 from helpers import create_test_client, make_context, upload
 
@@ -123,3 +126,46 @@ async def test_the_checks_read_the_newest_file_of_each_tool(
     ports = [row["destination_port"] for row in sources["network-export"].rows("rule")]
     assert ports == [51820, 25565]
     assert sources["network-export"].captured_at == STORE_NOW - timedelta(days=1)
+
+
+def test_the_sources_table_shows_a_tool_source_by_its_oldest_counted_file() -> None:
+    def view(item_id: int, days: int, tool: str | None) -> EvidenceView:
+        captured = STORE_NOW - timedelta(days=days)
+        return EvidenceView(
+            item_id=item_id,
+            source_code="network-export",
+            assurance=Assurance.AUTOMATIC_EXPORT,
+            captured_at=captured,
+            expires_at=captured + timedelta(days=35),
+            freshness=Freshness.CURRENT,
+            revisions=1,
+            files_kept=0,
+            sha256="ab" * 32,
+            size_bytes=10,
+            tool=tool,
+        )
+
+    newest_first = [
+        view(1, 1, "aws"),
+        view(2, 9, None),
+        view(3, 12, "aws"),
+        view(4, TOOL_WINDOW.days + 2, "veeam"),
+    ]
+    (row,) = source_rows(newest_first, [])
+    assert row.captured_at == STORE_NOW - timedelta(days=9)
+    assert row.name == "Network export (aws, unnamed)"
+    assert row.exports == 4
+
+
+async def test_a_stale_tool_file_is_reminded_beside_a_fresh_one(
+    db_engine: AsyncEngine, settings: Settings, tmp_path: Path
+) -> None:
+    ctx = make_context(settings, tmp_path)
+    client_id = await create_test_client(db_engine, ctx)
+    firewall = await upload(db_engine, ctx, client_id, network_file(None, 3389, 30))
+    await upload(db_engine, ctx, client_id, network_file("aws", 443, 1))
+    factory = async_sessionmaker(db_engine, expire_on_commit=False)
+    async with factory() as session:
+        due = await due_reminders(session, STORE_NOW)
+    # The firewall export goes stale in 5 days; the fresh AWS one does not hide it.
+    assert [reminder.item_id for reminder in due] == [firewall.item_id]

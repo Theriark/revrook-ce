@@ -18,6 +18,7 @@ DOC = ROOT / "LICENSES-CONTENT.md"
 ALLOWED_LICENCES = {"MIT", "CC0-1.0"}
 EXPECTED = {
     "data/controls.yaml",
+    "data/lifecycle.yaml",
     "data/nist/nist-csf-2.0-names.json",
     "data/nist/nist-sp800-171r3-names.json",
 }
@@ -83,7 +84,7 @@ def test_every_row_is_complete_and_the_licence_is_permissive() -> None:
 
 def test_the_nist_rows_credit_nist_and_name_the_licence_source() -> None:
     rows = table_rows()
-    for path in EXPECTED - {"data/controls.yaml"}:
+    for path in EXPECTED - {"data/controls.yaml", "data/lifecycle.yaml"}:
         assert "NIST" in rows[path][1], path
         assert "usnistgov/oscal-content" in rows[path][1], path
         assert rows[path][2] == "CC0-1.0", path

@@ -22,6 +22,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import delete, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
@@ -29,6 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.evidence.assurance import Assurance
 from app.evidence.expiry import days_left, reminder_thresholds_due
+from app.evidence.tools import TOOL_SOURCES, per_tool, tools_of
 from app.models import Client, EvidenceItem, ReminderSent
 
 SUBJECT = "revrook: evidence is about to expire or has expired"
@@ -69,6 +71,41 @@ def effective_expiry(
     return min(expires_at, captured_at + timedelta(days=days))
 
 
+async def _newest_of_each_tool(session: AsyncSession) -> list[Any]:
+    """For the sources of several tools, the newest export of each tool of each client
+    (app/evidence/tools.py): each is reminded about on its own, so a stale firewall
+    export is not hidden by a fresh cloud one."""
+    found = await session.execute(
+        select(
+            EvidenceItem.id,
+            EvidenceItem.client_id,
+            EvidenceItem.source_code,
+            EvidenceItem.assurance_level,
+            EvidenceItem.captured_at,
+            EvidenceItem.expires_at,
+            Client.name.label("client_name"),
+        )
+        .join(Client, Client.id == EvidenceItem.client_id)
+        .where(
+            Client.archived_at.is_(None),
+            EvidenceItem.source_code.in_(TOOL_SOURCES),
+            EvidenceItem.assurance_level == Assurance.AUTOMATIC_EXPORT.value,
+        )
+        .order_by(
+            EvidenceItem.client_id,
+            EvidenceItem.source_code,
+            EvidenceItem.captured_at.desc(),
+            EvidenceItem.id.desc(),
+        )
+    )
+    rows = found.all()
+    tools = await tools_of(session, [row.id for row in rows])
+    by_client: defaultdict[int, list[tuple[Any, str | None]]] = defaultdict(list)
+    for row in rows:
+        by_client[row.client_id].append((row, tools.get(row.id)))
+    return [row for pairs in by_client.values() for row in per_tool(pairs)]
+
+
 async def due_reminders(
     session: AsyncSession, now: datetime, max_ages: Mapping[str, int] | None = None
 ) -> list[Reminder]:
@@ -97,7 +134,9 @@ async def due_reminders(
             EvidenceItem.id.desc(),
         )
     )
-    candidates = [row for row in newest.all() if row.expires_at is not None]
+    rows = [row for row in newest.all() if row.source_code not in TOOL_SOURCES]
+    rows += await _newest_of_each_tool(session)
+    candidates = [row for row in rows if row.expires_at is not None]
     if not candidates:
         return []
     item_ids = [row.id for row in candidates]

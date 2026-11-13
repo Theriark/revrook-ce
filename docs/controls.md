@@ -196,9 +196,16 @@ to are included. A NIST name is shown only for a verified row, with the credit
   (passed to the engine as `licence_log_retention_days`) and a manual artefact. That
   table does not exist yet; without it and without an artefact the control is
   unknown.
-- The vendor end-of-support table that `PC-DEV-03` needs is shipped data that does
-  not exist yet; the engine takes it as `Evidence.lifecycle` and is unknown without
-  it.
+- `PC-DEV-03` joins devices to the vendor end-of-support table shipped in
+  `data/lifecycle.yaml` (`app/checks/lifecycle.py`, given to the engine as
+  `Evidence.lifecycle`): Windows client and server builds and Ubuntu LTS releases,
+  with the vendors' dates and links. A device matches the longest version prefix of
+  its family; where one build is two products (10.0.26100 is Windows 11 24H2 and
+  Windows Server 2025) the entry names a form factor, and a device of unknown form
+  factor matches neither. Windows client dates are the Home and Pro ones; Enterprise,
+  Education and paid Extended Security Updates are recorded as exceptions. macOS,
+  Debian and Red Hat are not in the table (no dates, or version numbers that would
+  match each other), so their devices count as not in the table.
 - PC-EML-01 to 03 read the facts of our own DNS check (phase 7), in the shape
   documented in `app/checks/email.py`. A client that has never been checked has
   these three controls unknown with `licence_or_scope`. Phase 7 stores a check as

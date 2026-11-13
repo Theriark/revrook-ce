@@ -45,6 +45,8 @@ class Device:
     os: str | None
     version: str | None
     encrypted: bool | None
+    # server, workstation or mobile, from the inventory (Intune does not say).
+    form_factor: str | None = None
 
 
 def _either(first: bool | None, second: bool | None) -> bool | None:
@@ -81,11 +83,13 @@ def merged_devices(ctx: Context) -> tuple[list[Device], datetime | None] | None:
             os_name = text_of(row.get("os"))
             version = text_of(row.get(version_column))
             encrypted = flag_of(row.get(flag_column))
+            form = text_of(row.get("form_factor"))
             if before is not None:
                 os_name = before.os or os_name
                 version = before.version or version
                 encrypted = _either(before.encrypted, encrypted)
-            found[key] = Device(key, os_name, version, encrypted)
+                form = before.form_factor or form
+            found[key] = Device(key, os_name, version, encrypted, form)
     at = oldest(
         [
             inventory.captured_at if inventory is not None else None,
@@ -144,15 +148,15 @@ def _lifecycle_end(
     table: tuple[LifecycleEntry, ...], device: Device
 ) -> LifecycleEntry | None:
     """The entry of the longest version prefix that matches the device."""
-    best: LifecycleEntry | None = None
-    for entry in table:
-        if entry.os != device.os:
-            continue
-        if not (device.version or "").startswith(entry.version_prefix):
-            continue
-        if best is None or len(entry.version_prefix) > len(best.version_prefix):
-            best = entry
-    return best
+    matches = [
+        entry
+        for entry in table
+        if entry.os == device.os
+        and (device.version or "").startswith(entry.version_prefix)
+        and entry.form_factor in (None, device.form_factor)
+    ]
+    # One build of two products matches only the entry of the device's form factor.
+    return max(matches, key=lambda entry: len(entry.version_prefix), default=None)
 
 
 def dev_03(ctx: Context) -> Outcome:

@@ -157,6 +157,31 @@ def secure_score(profile: str, captured: datetime) -> bytes:
     return to_json({"@odata.context": f"{GRAPH}secureScores", "value": value})
 
 
+# The devices of the client, shared by the inventory and Intune: revrook keys a device
+# by its id (Intune DeviceId, the inventory's device_id), never by its name, and
+# PC-DEV-03 dates its build (data/lifecycle.yaml).
+# (inventory system, Intune OS, form factor)
+DEVICES = (
+    *[("Windows 11", "Windows", "laptop")] * 6,
+    ("macOS 14", "macOS", "laptop"),
+    ("Linux Ubuntu 22.04", "Linux", "server"),
+    ("Windows Server 2022", "Windows", "server"),
+)
+
+
+def device_build(profile: str, index: int) -> str:
+    """A supported build in TIDY (Windows 11 25H2, Server 2022, Ubuntu 22.04); GAPS
+    keeps one Windows 10 laptop, past its end of support."""
+    system = DEVICES[index][0]
+    if system == "Windows Server 2022":
+        return "10.0.20348.2700"
+    if system.startswith("Linux"):
+        return "22.04"
+    if system.startswith("macOS"):
+        return "14.6"
+    return "10.0.19045.6456" if profile == GAPS and index == 5 else "10.0.26200.6584"
+
+
 def intune_devices(profile: str, captured: datetime) -> bytes:
     header = (
         "DeviceName",
@@ -170,20 +195,21 @@ def intune_devices(profile: str, captured: datetime) -> bytes:
         "DeviceId",
     )
     tidy = profile == TIDY
-    systems = ["Windows"] * 5 + ["macOS", "iOS", "Android"]
     rows = []
-    for index, system in enumerate(systems):
-        compliant = tidy or index not in (2, 3, 7)
+    for index, (_, system, _) in enumerate(DEVICES):
+        if not tidy and index >= 7:
+            continue  # GAPS: the two servers were never enrolled
+        compliant = tidy or index not in (2, 3, 6)
         rows.append(
             [
-                f"{HOST_PREFIX}M{index + 1:03d}",
+                f"{HOST_PREFIX}{index + 1:04d}",
                 "mdm",
-                "company" if tidy or index < 6 else "personal",
+                "company" if tidy or index != 6 else "personal",
                 "compliant" if compliant else "noncompliant",
                 system,
-                f"10.0.{22000 + index}",
+                device_build(profile, index),
                 naive(captured - timedelta(hours=index)),
-                user(index % USER_COUNT + 1),
+                user(index + 1) if index < 7 else "",
                 new_id(profile, "device", index),
             ]
         )
@@ -303,6 +329,7 @@ def directory_roles(profile: str, captured: datetime) -> bytes:
 # --- generic and administrative sources ---------------------------------------------
 
 INVENTORY_HEADER = (
+    "device_id",
     "hostname",
     "os",
     "form_factor",
@@ -325,18 +352,16 @@ INVENTORY_HEADER = (
 
 def device_inventory(profile: str, captured: datetime) -> bytes:
     tidy = profile == TIDY
-    systems = ["Windows 11"] * 6 + ["macOS 14", "Linux Ubuntu 22.04"]
-    systems += ["Windows Server 2022"]
-    forms = ["laptop"] * 7 + ["server", "server"]
     lines = []
-    for index, system in enumerate(systems):
+    for index, (system, _, form) in enumerate(DEVICES):
         weak = not tidy and index in (6, 7, 8)
         lines.append(
             {
+                "device_id": new_id(profile, "device", index),
                 "hostname": f"{HOST_PREFIX}{index + 1:04d}",
                 "os": system,
-                "form_factor": forms[index],
-                "os_build": "10.0.22631" if system.startswith("Windows") else "",
+                "form_factor": form,
+                "os_build": device_build(profile, index),
                 "last_seen": naive(captured - timedelta(hours=index)),
                 "patch_status": "pending" if weak else "up_to_date",
                 "pending_critical_updates": "2" if weak else "0",
@@ -380,7 +405,13 @@ def backup_export(profile: str, captured: datetime) -> bytes:
         tested = tidy or index == 0
         lines.append(
             {
-                "system_or_device": f"SEED-SYSTEM-{index + 1:02d}",
+                # The server jobs name the inventory servers by their device id, as
+                # a backup tool's asset id (PC-BCK-01 matches them).
+                "system_or_device": (
+                    new_id(profile, "device", index + 7)
+                    if asset == "server"
+                    else f"SEED-SYSTEM-{index + 1:02d}"
+                ),
                 "backup_job": f"seed-job-{index + 1}",
                 "last_success": stamp(
                     captured - timedelta(hours=index * 6 + (400 if failed else 2))
@@ -471,7 +502,8 @@ def network_export(profile: str, captured: datetime) -> bytes:
 
 
 def training(profile: str, captured: datetime) -> bytes:
-    people = range(1, 10) if profile == TIDY else range(1, 4)
+    # Every member account (the last user is the guest) in TIDY: PC-GOV-03.
+    people = range(1, USER_COUNT) if profile == TIDY else range(1, 4)
     rows = [
         [user(number), "Security basics 2026", stamp(captured - timedelta(days=number))]
         for number in people
@@ -545,6 +577,19 @@ def exchange_export(profile: str, captured: datetime) -> bytes:
             "disabled": "false" if tidy else "true",
             "recipient_count": "2" if tidy else "0",
             "last_acknowledged": stamp(captured - timedelta(days=5)),
+        },
+        # PC-LOG-04 wants three kinds of alert enabled.
+        {
+            "record_type": "alert",
+            "alert_kind": "New mail forwarding rule",
+            "disabled": "false" if tidy else "true",
+            "recipient_count": "2" if tidy else "0",
+        },
+        {
+            "record_type": "alert",
+            "alert_kind": "Risky sign-in",
+            "disabled": "false" if tidy else "true",
+            "recipient_count": "2" if tidy else "0",
         },
     ]
     return keyed_rows(EXCHANGE_HEADER, lines)

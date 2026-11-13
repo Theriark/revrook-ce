@@ -126,13 +126,16 @@ class LifecycleEntry:
 
     `os` is the family word of the importers (windows, macos, ...); a device matches
     when its version starts with `version_prefix` (empty matches every version). The
-    longest matching prefix wins. The table itself is shipped data that part 2 does
-    not contain; the engine reads it from here.
+    longest matching prefix wins. `form_factor` (server or workstation) is set where
+    one build number is two products (Windows 11 24H2 and Windows Server 2025); a
+    device whose form factor is not known does not match such an entry. The table is
+    shipped data (data/lifecycle.yaml, app/checks/lifecycle.py).
     """
 
     os: str
     version_prefix: str
     end_of_support: date
+    form_factor: str | None = None
 
 
 @dataclass(frozen=True)

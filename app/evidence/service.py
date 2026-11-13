@@ -48,6 +48,7 @@ from app.evidence.expiry import (
 )
 from app.evidence.files import FileStore, sha256_hex, storage_key
 from app.evidence.locking import lock_client
+from app.evidence.tools import TOOL_SOURCES, tools_of
 from app.importers.base import (
     SOURCE_CODE_PATTERN,
     FactValue,
@@ -129,6 +130,8 @@ class EvidenceView:
     files_kept: int
     sha256: str
     size_bytes: int
+    # The tool its file names (device, backup, network: app/evidence/tools.py).
+    tool: str | None = None
 
 
 @dataclass(frozen=True)
@@ -659,8 +662,18 @@ async def list_evidence(
         .where(EvidenceItem.client_id == client_id)
         .order_by(EvidenceItem.captured_at.desc(), EvidenceItem.id.desc())
     )
+    found = result.all()
+    tools = await tools_of(
+        session,
+        [
+            item.id
+            for item, _, _ in found
+            if item.source_code in TOOL_SOURCES
+            and item.assurance_level == Assurance.AUTOMATIC_EXPORT.value
+        ],
+    )
     views: list[EvidenceView] = []
-    for item, revisions, files_kept in result.all():
+    for item, revisions, files_kept in found:
         expires_at = item.expires_at
         freshness = (
             state_of_item(item.captured_at, expires_at, as_of)
@@ -679,6 +692,7 @@ async def list_evidence(
                 files_kept=files_kept,
                 sha256=item.sha256,
                 size_bytes=item.size_bytes,
+                tool=tools.get(item.id),
             )
         )
     return views
