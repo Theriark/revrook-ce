@@ -2228,7 +2228,9 @@ main .rv-exceptions td[data-label="Owner"] {
   .rv-stat-grid > .rv-stat,
   .rv-attention-row,
   .rv-gauge-arc,
-  .rv-ring-large .rv-ring-arc {
+  .rv-ring-large .rv-ring-arc,
+  .rv-mix-bar,
+  .rv-domain .rv-bar {
     animation: none;
   }
 }
@@ -2258,4 +2260,94 @@ textarea {
 ::selection {
   color: var(--rv-text);
   background-color: var(--rv-accent-tint);
+}
+
+/* ---------- Revamp of 2026-11-13: the client overview and the checklist ---------- */
+
+/* The side column of the overview: the freshness line and the recent changes, one
+   under the other beside the domains */
+.rv-overview-side {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rv-overview-side > .rv-card {
+  margin: 0;
+}
+
+.rv-overview-side > #recent-changes {
+  flex: 1;
+}
+
+.rv-overview-side .rv-timeline {
+  margin-top: 16px;
+}
+
+/* A bar of controls by status grows from its left end when the page opens, the
+   domains one after the other. The clip is gone once it has run, so the focus
+   ring of a segment is never cut */
+@keyframes rv-bar-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}
+
+.rv-mix-bar,
+.rv-domain .rv-bar {
+  animation: rv-bar-in var(--rv-motion-focal) backwards;
+}
+
+.rv-domain:nth-child(2) .rv-bar {
+  animation-delay: 40ms;
+}
+
+.rv-domain:nth-child(3) .rv-bar {
+  animation-delay: 80ms;
+}
+
+.rv-domain:nth-child(4) .rv-bar {
+  animation-delay: 120ms;
+}
+
+.rv-domain:nth-child(5) .rv-bar {
+  animation-delay: 160ms;
+}
+
+.rv-domain:nth-child(6) .rv-bar {
+  animation-delay: 200ms;
+}
+
+.rv-domain:nth-child(7) .rv-bar {
+  animation-delay: 240ms;
+}
+
+.rv-domain:nth-child(n + 8) .rv-bar {
+  animation-delay: 280ms;
+}
+
+/* Over a page change the parts of a client that both pages share keep their
+   place: the name with its actions, the tabs, and every row of the checklist,
+   named after its control. Narrowing or sorting the checklist is a page change,
+   so a row that stays slides to its new place, one that leaves fades out and one
+   that comes fades in. A browser that cannot read a name from an attribute drops
+   the last rule and cross-fades the table with the page. With reduced motion a
+   page change is not animated at all and the bars are whole from the start (the
+   block above) */
+.rv-content > .rv-client-header {
+  view-transition-name: rv-client-header;
+}
+
+.rv-content > .rv-tabs-strip {
+  view-transition-name: rv-client-tabs;
+}
+
+.rv-checklist tr[data-control] {
+  view-transition-name: attr(data-control type(<custom-ident>), none);
 }
