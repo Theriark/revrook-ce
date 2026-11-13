@@ -129,6 +129,10 @@
 </details>
 </section>
 
+{#- The side column (2026-11-13): the freshness line and the recent changes stand
+    beside the domains, which are eight bars tall; the changes used to follow the
+    row at full width and left the right half of the row empty. -#}
+<div class="rv-overview-side">
 <section class="rv-card" id="freshness-card" aria-labelledby="freshness-title">
 <h2 id="freshness-title" class="rv-card-title">How fresh is the evidence?</h2>
 <p class="rv-card-subtitle">Whether the newest export of every source is still current.</p>
@@ -138,13 +142,10 @@
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Every source is current.</span></p>
 {% endif %}
 </section>
-</div>
 
-<section id="recent-changes" aria-labelledby="changes-title">
-<div class="rv-section-head">
-<h2 id="changes-title">Recent changes</h2>
-<p class="rv-section-note">Newest audit entries for this client.</p>
-</div>
+<section class="rv-card" id="recent-changes" aria-labelledby="changes-title">
+<h2 id="changes-title" class="rv-card-title">Recent changes</h2>
+<p class="rv-card-subtitle">Newest audit entries for this client.</p>
 {% if changes %}
 <ol class="rv-timeline">
 {% for line in changes %}
@@ -159,5 +160,7 @@
 <p class="rv-text-secondary" id="changes-empty">Nothing has changed yet.</p>
 {% endif %}
 </section>
+</div>
+</div>
 {% include "_drawer.html" %}
 {% endblock %}

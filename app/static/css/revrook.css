@@ -2945,12 +2945,13 @@ main .rv-table-compact td {
   background-color: var(--rv-surface);
 }
 
+/* No figures of one width here: a fact is a phrase, not a column, and in Inter
+   the date of "Unchanged since 2026-11-13" stood apart letter by letter */
 .rv-facts dd {
   margin: 2px 0 0;
   font-size: var(--rv-fs-md);
   font-weight: 600;
   line-height: 1.35;
-  font-variant-numeric: tabular-nums;
 }
 
 .rv-summary {
@@ -3035,13 +3036,20 @@ main .rv-table-compact td {
 /* The checklist: the control is the row heading with its id under it, the
    status a pill, the flags a short dotted list. There is no scroll box, so the
    head stays sticky while the page scrolls; below 768px every row is a card */
+/* The name of a control is text that takes the link colour when pointed at
+   (2026-11-13), as in a needs-attention list: fifty bold links read as a wall */
 main .rv-checklist a.rv-control-link {
   font-weight: 600;
   text-decoration: none;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  transition: color var(--rv-motion);
 }
 
 main .rv-checklist a.rv-control-link:hover {
   text-decoration: underline;
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
 }
 
 .rv-checklist .rv-cell-note {

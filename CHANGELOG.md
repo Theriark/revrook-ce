@@ -8,6 +8,8 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Added
 
+- The **overview of a client** fills its last row: the recent changes stand beside the domains, under the freshness line, instead of leaving half the row empty; the status bars grow from their left end when the page opens.
+- On the **checklist**, narrowing, searching or sorting moves the rows: one that stays slides to its new place, one that leaves fades out, one that comes fades in. The name of the client and the tabs stay where they are from one page of a client to the next. The name of a control is text that takes the link colour when pointed at.
 - The interface is set in **Inter**, served by the installation itself (`app/static/vendor/inter`, SIL Open Font License 1.1, accepted for font files only), so a page looks the same on every machine; tables draw their figures at one width, and a page title is 28 px at every width.
 - **Motion** where it says something: a page change cross-fades the page column while the rail and the top bar stay, the score arc of Home and of a client draws to its value once, and the stat cards and the needs-attention rows arrive one after the other. In a needs-attention list the name of a control is text that takes the link colour when pointed at. All of it is off under `prefers-reduced-motion` ([design system](docs/design-system.md), Motion).
 - Home's client street opens a **company card** beside the chosen office (score and band, its three most urgent controls, its exports to refresh, and Open client, Checklist and Evidence), docked under the stage on a phone ([guide 8](docs/guides/08-scenes-rail-and-explorer.md#the-company-card)).

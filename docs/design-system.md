@@ -856,6 +856,16 @@ and the tabs. Under it the period toolbar (`form.rv-period`), then:
 - Recent changes (`#recent-changes`): the audit entries of this client only, read
   with the same words as Home.
 
+The last row (2026-11-13) is two columns: the domains, and beside them a side column
+(`.rv-overview-side`) with the freshness line and the recent changes as cards, one
+under the other and as tall as the domains. The changes used to follow the row at
+full width, which left the right half of the row empty under the freshness line for
+the height of eight bars. The bars of the domains and the bar of Controls by status
+grow from their left end when the page opens, the domains 40 ms apart (`rv-bar-in`;
+the clip is gone once it has run, so the focus ring of a segment is whole). A fact of
+Where the client stands is a phrase and not a column, so it does not use figures of
+one width.
+
 ## Checklist and control detail
 
 The checklist (`app/ui/templates/checklist.html`) is where the owner scans every
@@ -890,7 +900,15 @@ keeps its capitals ("within Not protected"), with a way back to every control; a
 unknown order or status is refused with 422. From 768 px the tools sit in a row that
 wraps when the toolbar is too narrow (two rows at 768 and 1024 px, one row at 1440 px,
 Reset included), bottom-aligned so the search box lines up with the menus under their
-labels; below 600 px each takes the whole width. The table (`table.rv-checklist`) has
+labels; below 600 px each takes the whole width. Narrowing, searching or sorting is a
+page change, and since 2026-11-13 every row is its own part of it, named after its
+control (`view-transition-name` read from `data-control`): a row that stays slides to
+its new place, one that leaves fades out and one that comes fades in. The name of the
+client with its actions and the tabs are parts too, so they stay where they are from
+one page of a client to the next. A browser that cannot read a name from an attribute
+cross-fades the table with the page; with reduced motion nothing is animated. The
+name of a control is text that takes the link colour when pointed at, as in a
+needs-attention list. The table (`table.rv-checklist`) has
 no scroll box, so its head stays sticky: the control is the row heading with its
 id and "gate control" under it, the status a pill, the coverage and the date in
 tabular figures, the owner, and the flags as a short dotted list (`ul.rv-flags`). A

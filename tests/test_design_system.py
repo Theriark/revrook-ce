@@ -276,6 +276,36 @@ def test_motion_is_short_and_respects_reduced_motion() -> None:
     assert base.index("css/revamp.css") < base.index(hold) < base.index("</head>")
 
 
+def test_a_client_keeps_its_parts_over_a_page_change() -> None:
+    revamp = (ROOT / "app/static/css/revamp.css").read_text("utf-8")
+    # The rows of the checklist are named after their control, so the name must
+    # be on the row and one row must not carry two controls.
+    row = re.search(r"\.rv-checklist tr\[data-control\] \{([^}]*)\}", revamp)
+    assert row is not None
+    assert (
+        "view-transition-name: attr(data-control type(<custom-ident>), none);"
+        in row.group(1)
+    )
+    checklist = (ROOT / "app/ui/templates/checklist.html").read_text("utf-8")
+    assert checklist.count('<tr data-control="{{ item.row.control_id }}"') == 1
+    for part in ("rv-client-header", "rv-client-tabs", "rv-rail", "rv-topbar"):
+        assert revamp.count(f"view-transition-name: {part};") == 1, part
+
+
+def test_the_overview_puts_the_changes_beside_the_domains() -> None:
+    page = (ROOT / "app/ui/templates/client_overview.html").read_text("utf-8")
+    row = page.split('<div class="rv-two rv-two-even">', 1)[1]
+    side = row.split('<div class="rv-overview-side">', 1)
+    assert 'id="domains"' in side[0] and 'id="freshness-card"' not in side[0]
+    assert side[1].index('id="freshness-card"') < side[1].index('id="recent-changes"')
+    # A bar that grows is whole again afterwards, and whole at once when motion
+    # is reduced.
+    revamp = (ROOT / "app/static/css/revamp.css").read_text("utf-8")
+    assert "animation: rv-bar-in var(--rv-motion-focal) backwards;" in revamp
+    still = revamp.rsplit("@media (prefers-reduced-motion: reduce) {", 1)[1]
+    assert ".rv-domain .rv-bar" in still.split("\n}", 1)[0]
+
+
 def test_the_clients_table_fits_in_the_wider_letters_of_inter() -> None:
     # Measured on a local build of f30b984: at 1024px the six columns needed 764px
     # of the 697px of the page (it scrolled sideways), and from 1440px the age of
