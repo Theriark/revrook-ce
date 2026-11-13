@@ -36,6 +36,30 @@ What the script does not read, so revrook shows it as unknown: the patch and
 antivirus state of an instance (Systems Manager is not read), the retention, encryption
 and restore tests of a backup, and anything outside EC2 and AWS Backup.
 
+## Google Cloud: `export-gcp.sh`
+
+You need the Google Cloud CLI, signed in with an account that can read the client's
+projects (the role Viewer, or Compute Viewer, is enough):
+
+```bash
+gcloud auth login
+./export-gcp.sh ./contoso-gcp-2026-11                 # every project the account can see
+./export-gcp.sh ./contoso-gcp-2026-11 proj-a proj-b   # only these projects
+```
+
+A project without the Compute Engine API is skipped (the script says so); the API is
+never turned on. For the others it writes:
+
+| File | What it holds |
+| --- | --- |
+| `network-export-gcp.csv` | One `rule` line per protocol and port of each ingress VPC firewall rule: allow or deny, enabled or disabled, its source ranges, and its port (`any` for all ports). A rule with only source tags or service accounts has no address range, so its source is left empty and revrook reads it as unknown. |
+| `device-inventory-gcp.csv` | One line per running VM: Windows when its boot disk carries a Windows licence, otherwise Linux, a server, seen at the time of the export, with an encrypted disk (Google encrypts every persistent disk at rest). |
+| `backup-export-gcp.csv` | One line per disk and snapshot schedule (or `manual snapshots`): the state of the newest finished snapshot (ready is success, failed is failed), the time of the newest ready one, encrypted (Google encrypts every snapshot). |
+
+A file with nothing in it is not written. Not read, so shown as unknown: the patch and
+antivirus state of a VM (VM Manager is not read), snapshot retention and restore tests,
+and Backup and DR Service.
+
 ## Import the files
 
 Open **Import evidence**, choose the client and drop the folder (or its files) on the

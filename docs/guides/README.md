@@ -26,7 +26,7 @@ certification.
 | [9. The top bar, the filters in use and bulk actions](09-top-bar-filters-and-bulk-actions.md) | Find a page and a client from the top bar, remove the filters of the clients list, make reports for, download or delete several clients at once |
 | [10. Export Microsoft 365 with the script](10-microsoft-365-export.md) | Run the read-only PowerShell script that writes the six Microsoft 365 files of a tenant, and drop them on Import evidence |
 | [11. The public DNS check](11-public-dns-check.md) | Run the SPF, DKIM and DMARC check of a client's mail domains from its evidence page, once or every Monday, and read its result |
-| [12. Export the cloud accounts with scripts](12-cloud-exports.md) | Run the read-only script of a cloud (AWS) that writes its firewall rules, servers and backups as revrook CSV files, and drop them on Import evidence |
+| [12. Export the cloud accounts with scripts](12-cloud-exports.md) | Run the read-only script of a cloud (AWS, Google Cloud) that writes its firewall rules, servers and backups as revrook CSV files, and drop them on Import evidence |
 
 Every guide uses the same test installation and its administrator account
 (`local-admin`). The clients ("Seed Gaps Ltd (synthetic)", "Seed Tidy Ltd (synthetic)"
