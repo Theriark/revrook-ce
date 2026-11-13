@@ -102,6 +102,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Fixed
 
+- Opening the preview of a report no longer writes an exception to the console: the preview takes no part in a page change, so the page that is left for it cuts the change itself.
 - Nothing shifts between two pages: a page too short to scroll stood 7 px to the right of a long one (the room of the scrollbar is kept on every page now), and the tabs of a client moved 5 px between a page with actions beside its name and one without.
 - The clients table fits again in Inter: between 1024 px and 1099 px the page scrolled sideways by a few pixels, and on a wide window the age of the newest evidence broke under its date and made every row a line taller.
 - The Microsoft 365 export script no longer stops at the first source Microsoft refuses: a tenant without Entra ID P1 (the registration report) or Intune (the devices) got no file at all, because the first refusal ended the run. Such a source is now skipped with a warning naming Microsoft's error code, the others are written, and the run ends with the list of skipped files. Exchange Online signs in through the browser (`-DisableWAM`, module 3.7 or later), because its Windows account-manager sign-in failed with "A server side error has occurred". Found on the first export of Theriark's own tenant.

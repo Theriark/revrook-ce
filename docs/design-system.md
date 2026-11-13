@@ -104,8 +104,11 @@ row by row. A page
 change cross-fades the page column in about 220 ms while the rail and the top bar stay
 where they are (`@view-transition` in `revamp.css`; a browser without it changes page
 as before). A browser decides that when it meets `<body>`, so `base.html` links
-`js/page-change.js`, a file that runs nothing, without `defer` after the stylesheets:
-the parser then waits for them. Under `prefers-reduced-motion` every animation and
+`js/page-change.js` without `defer` after the stylesheets: the parser then waits for
+them. That file runs one thing: a report preview is the report as the client gets it,
+with no rule of ours, so the page that is left for it cuts the page change itself
+(`pageswap`); the browser would otherwise cut it on arrival and write an exception to
+the console of the preview. Under `prefers-reduced-motion` every animation and
 transition is cut and the page change is not animated; nothing is hidden until an
 animation runs, so a page without motion is the same page.
 
