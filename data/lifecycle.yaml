@@ -1,0 +1,42 @@
+# Vendor end-of-support dates read by PC-DEV-03 (app/checks/lifecycle.py).
+#
+# A device matches an entry when its operating-system family (the importers' family
+# word) is `os` and its version (os_build of the inventory, osVersion of Intune) starts
+# with `version_prefix`; the longest prefix wins. `form_factor` (server or workstation)
+# is set where one build number is two products; a device whose form factor is not
+# known does not match such an entry. Read from the vendors' lifecycle pages on
+# 2026-11-13; check them again before a release, vendors move dates (ESU, extensions).
+#
+# Windows client dates are those of Home and Pro, the earlier of the editions:
+# Enterprise and Education get a year more, and paid Extended Security Updates
+# (Windows 10, Windows Server) are not end of support. A client covered by either is
+# recorded as an exception of PC-DEV-03.
+# Ubuntu: end of standard support (the release cycle gives a month; its last day is
+# used). Expanded Security Maintenance (Ubuntu Pro) is not counted.
+# Not shipped: macOS (Apple publishes no end dates), Debian and Red Hat (their version
+# numbers would match each other's: RHEL 9.4 against Debian 9).
+
+entries:
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-10-home-and-pro
+  - {os: windows, version_prefix: "10.0.19045", end_of_support: 2025-10-14, product: "Windows 10 22H2"}
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro
+  - {os: windows, version_prefix: "10.0.22000", end_of_support: 2023-10-10, product: "Windows 11 21H2"}
+  - {os: windows, version_prefix: "10.0.22621", end_of_support: 2024-10-08, product: "Windows 11 22H2"}
+  - {os: windows, version_prefix: "10.0.22631", end_of_support: 2025-11-11, product: "Windows 11 23H2"}
+  - {os: windows, version_prefix: "10.0.26100", form_factor: workstation, end_of_support: 2026-10-13, product: "Windows 11 24H2"}
+  - {os: windows, version_prefix: "10.0.26200", end_of_support: 2027-10-12, product: "Windows 11 25H2"}
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2012-r2
+  - {os: windows, version_prefix: "10.0.9600", end_of_support: 2023-10-10, product: "Windows Server 2012 R2"}
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2016
+  - {os: windows, version_prefix: "10.0.14393", form_factor: server, end_of_support: 2027-01-12, product: "Windows Server 2016"}
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2019
+  - {os: windows, version_prefix: "10.0.17763", form_factor: server, end_of_support: 2029-01-09, product: "Windows Server 2019"}
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2022
+  - {os: windows, version_prefix: "10.0.20348", end_of_support: 2031-10-14, product: "Windows Server 2022"}
+  # https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2025
+  - {os: windows, version_prefix: "10.0.26100", form_factor: server, end_of_support: 2034-11-14, product: "Windows Server 2025"}
+  # https://ubuntu.com/about/release-cycle
+  - {os: linux, version_prefix: "18.04", end_of_support: 2023-05-31, product: "Ubuntu 18.04 LTS"}
+  - {os: linux, version_prefix: "20.04", end_of_support: 2025-05-31, product: "Ubuntu 20.04 LTS"}
+  - {os: linux, version_prefix: "22.04", end_of_support: 2027-05-31, product: "Ubuntu 22.04 LTS"}
+  - {os: linux, version_prefix: "24.04", end_of_support: 2029-05-31, product: "Ubuntu 24.04 LTS"}

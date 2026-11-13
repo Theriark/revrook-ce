@@ -16,6 +16,7 @@ from app.checks.model import ControlResult
 from app.evidence.assurance import Assurance
 from app.evidence.expiry import Freshness, state_of_item
 from app.evidence.service import EvidenceView
+from app.evidence.tools import TOOL_SOURCES, per_tool
 from app.reports.status import (
     NEEDS_ATTENTION,
     NOT_APPLICABLE,
@@ -298,7 +299,8 @@ def sort_rows(rows: Sequence[ChecklistRow], sort: str) -> list[ChecklistRow]:
 
 @dataclass(frozen=True)
 class SourceRow:
-    """One evidence source of a client: its newest export and how old it is."""
+    """One evidence source of a client: its newest export and how old it is (for a
+    source of several tools, the oldest file that counts: app/evidence/tools.py)."""
 
     code: str
     name: str
@@ -347,6 +349,7 @@ def source_rows(
     """
     newest: dict[str, EvidenceView] = {}
     counts: dict[str, int] = {}
+    by_tool: dict[str, list[tuple[EvidenceView, str | None]]] = {}
     for view in views:
         if view.assurance is not Assurance.AUTOMATIC_EXPORT:
             continue
@@ -354,6 +357,17 @@ def source_rows(
             continue
         counts[view.source_code] = counts.get(view.source_code, 0) + 1
         newest.setdefault(view.source_code, view)
+        if view.source_code in TOOL_SOURCES:
+            by_tool.setdefault(view.source_code, []).append((view, view.tool))
+    names: dict[str, str] = {}
+    for code, candidates in by_tool.items():
+        # Several tools: the files that count are the newest of each tool, and the
+        # source is as fresh as the oldest of them (the first to go stale).
+        counted = per_tool(candidates)
+        newest[code] = min(counted, key=lambda view: view.captured_at)
+        tools = sorted({view.tool or "unnamed" for view in counted})
+        if len(counted) > 1 or counted[0].tool:
+            names[code] = f"{source_name(code)} ({', '.join(tools)})"
     rows: list[SourceRow] = []
     for code, view in newest.items():
         freshness, stale_at = _measured(view, (max_ages or {}).get(code), as_of)
@@ -361,7 +375,7 @@ def source_rows(
         rows.append(
             SourceRow(
                 code=code,
-                name=source_name(code),
+                name=names.get(code, source_name(code)),
                 state=state,
                 captured_at=view.captured_at,
                 expires_at=stale_at,

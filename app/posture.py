@@ -10,20 +10,20 @@ of them use.
 """
 
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Protocol
+from datetime import datetime
+from typing import Any
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.checks.engine import evaluate_all
 from app.checks.library import Library
+from app.checks.lifecycle import load_lifecycle
 from app.checks.model import ControlResult, Evidence, SourceFacts
-from app.evidence.assurance import Assurance
 from app.evidence.errors import ClientNotFoundError
-from app.evidence.expiry import DEFAULT_MAX_AGE_DAYS
+from app.evidence.tools import TOOL_SOURCES, TOOL_WINDOW, per_tool, tools_of
 from app.exceptions import ExceptionEntry
 from app.models import Client, EvidenceItem, ExceptionRecord, Fact
 from app.reports.view import ReportContext, ReportError, ReportView, build_view
@@ -35,19 +35,6 @@ from app.scoring.snapshot import (
 )
 
 AUTOMATIC_EXPORT = "automatic-export"
-# Sources that several tools export for one client (the office firewall and a cloud):
-# the newest file of each tool counts, read together as one source.
-TOOL_SOURCES = frozenset({"device-inventory", "backup-export", "network-export"})
-# A tool's file counts while it is at most this much older than the newest file of
-# its source, so a tool that is no longer used drops out.
-TOOL_WINDOW = timedelta(days=DEFAULT_MAX_AGE_DAYS[Assurance.AUTOMATIC_EXPORT])
-
-
-class Dated(Protocol):
-    @property
-    def source_code(self) -> str: ...
-    @property
-    def captured_at(self) -> datetime: ...
 
 
 @dataclass(frozen=True)
@@ -84,24 +71,6 @@ async def open_exceptions(
         )
         for row in rows.scalars()
     )
-
-
-def per_tool[T: Dated](candidates: Sequence[tuple[T, str | None]]) -> list[T]:
-    """The newest item of each tool of a source, from (item, tool) pairs that are
-    newest first within each source. A file that names no tool is one more tool; an
-    item more than TOOL_WINDOW older than the newest item of its source is left out.
-    """
-    newest: dict[str, datetime] = {}
-    seen: set[tuple[str, str | None]] = set()
-    chosen: list[T] = []
-    for item, tool in candidates:
-        first = newest.setdefault(item.source_code, item.captured_at)
-        key = (item.source_code, tool)
-        if key in seen or first - item.captured_at > TOOL_WINDOW:
-            continue
-        seen.add(key)
-        chosen.append(item)
-    return chosen
 
 
 async def newest_items(session: AsyncSession, client_id: int) -> list[EvidenceItem]:
@@ -148,13 +117,7 @@ async def newest_items(session: AsyncSession, client_id: int) -> list[EvidenceIt
         )
     )
     tooled = list(recent.scalars())
-    summaries = await session.execute(
-        select(Fact.evidence_item_id, Fact.value).where(
-            Fact.evidence_item_id.in_([item.id for item in tooled]),
-            Fact.fact_key.endswith(".summary"),
-        )
-    )
-    tools = {item_id: value.get("tool") for item_id, value in summaries}
+    tools = await tools_of(session, [item.id for item in tooled])
     others = [item for item in items if item.source_code not in TOOL_SOURCES]
     return others + per_tool([(item, tools.get(item.id)) for item in tooled])
 
@@ -218,7 +181,9 @@ async def load_live(
     items = await newest_items(session, client_id)
     sources = await load_sources(session, items)
     exceptions = await open_exceptions(session, client_id)
-    evidence = Evidence(as_of=as_of, sources=sources, exceptions=exceptions)
+    evidence = Evidence(
+        as_of=as_of, sources=sources, exceptions=exceptions, lifecycle=load_lifecycle()
+    )
     results = evaluate_all(library, evidence)
     refs = [EvidenceRef(str(item.id), item.sha256) for item in items]
     snapshot = snapshot_input(library, results, as_of, refs, importer_summary(items))

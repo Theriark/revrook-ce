@@ -174,7 +174,10 @@ without a tool being one more tool (`app/posture.py`, `per_tool`): their rows ar
 set, measured from the newest capture time, and the newest file's summary is kept (the
 checks of these sources read rows only). A file more than 35 days (the default maximum
 age of an automatic export) older than the newest file of its source no longer counts.
-Every other source keeps its newest file only.
+Every other source keeps its newest file only. The Sources table of the evidence page
+shows such a source once, named with its tools ("Network export (aws, unnamed)"), as old
+as the oldest file that counts; the expiry reminders remind about the newest file of
+each tool on its own (`app/evidence/tools.py`).
 
 ## The five Microsoft sources
 
