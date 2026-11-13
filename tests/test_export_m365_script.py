@@ -28,3 +28,17 @@ def test_the_script_only_reads_the_tenant() -> None:
     writes = ("Set-Org", "Set-Mailbox", "New-Inbound", "Remove-", "Enable-", "Disable-")
     for verb in writes:
         assert not any(verb in line for line in code), verb
+
+
+def test_a_refused_source_is_skipped_not_fatal() -> None:
+    # A tenant without Entra ID P1 or Intune must still get the other files.
+    save = SCRIPT[SCRIPT.index("function Save-Graph") :]
+    save = save[: save.index("\n}\n")]
+    assert "try {" in save and "catch {" in save
+    assert "[void]$Skipped.Add($Name)" in save
+    assert SCRIPT.count('Write-Warning ("Not written: "') == 2
+
+
+def test_exchange_signs_in_through_the_browser_when_it_can() -> None:
+    assert "Parameters.ContainsKey('DisableWAM')" in SCRIPT
+    assert "$exchange['DisableWAM'] = $true" in SCRIPT

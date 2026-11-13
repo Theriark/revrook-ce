@@ -98,8 +98,23 @@ function Get-GraphPages([string]$Uri) {
     }
 }
 
+$Skipped = New-Object System.Collections.ArrayList
+
 function Save-Graph([string]$Name, [string]$Uri) {
-    $answer = Get-GraphPages $Uri
+    # A tenant may lack the licence a source needs (Entra ID P1 for the registration
+    # report and Conditional Access, Intune for the devices): Graph then refuses that
+    # one read. The file is not written, its controls stay Not checked, and the
+    # other sources are still exported.
+    try {
+        $answer = Get-GraphPages $Uri
+    } catch {
+        $reason = [string]$_.Exception.Message
+        $code = [regex]::Match([string]$_, '"code"\s*:\s*"([^"]+)"').Groups[1].Value
+        if ($code) { $reason = $code }
+        Write-Warning ("{0} not written: {1}" -f $Name, $reason)
+        [void]$Skipped.Add($Name)
+        return
+    }
     $path = Join-Path $OutputFolder $Name
     Write-Utf8File $path ($answer | ConvertTo-Json -Depth 30)
     Write-Host ("{0,-26} {1} records" -f $Name, @($answer['value']).Count)
@@ -158,7 +173,8 @@ Save-Graph 'directory-roles.json' "$graph/directoryRoles?`$expand=members"
 Disconnect-MgGraph | Out-Null
 
 if ($SkipExchange) {
-    Write-Host "Done: five Graph files in $OutputFolder (Exchange skipped)."
+    if ($Skipped.Count) { Write-Warning ("Not written: " + ($Skipped -join ', ')) }
+    Write-Host "Done: the Graph files in $OutputFolder (Exchange skipped)."
     return
 }
 
@@ -167,6 +183,12 @@ Import-Module ExchangeOnlineManagement
 $exchange = @{ ShowBanner = $false }
 if ($TenantId) { $exchange['Organization'] = $TenantId }
 if ($UseDeviceCode) { $exchange['Device'] = $true }
+# The Windows account manager (WAM) sign-in of ExchangeOnlineManagement fails in
+# some sessions with "A server side error has occurred"; the browser sign-in does
+# not. -DisableWAM exists from module 3.7 on.
+elseif ((Get-Command Connect-ExchangeOnline).Parameters.ContainsKey('DisableWAM')) {
+    $exchange['DisableWAM'] = $true
+}
 Connect-ExchangeOnline @exchange
 
 $rows = New-Object System.Collections.ArrayList
@@ -242,4 +264,5 @@ if (-not $SkipAlerts) {
 $csv = ($rows | ConvertTo-Csv -NoTypeInformation -WarningAction SilentlyContinue) -join "`n"
 Write-Utf8File (Join-Path $OutputFolder 'exchange-export.csv') ($csv + "`n")
 Write-Host ("{0,-26} {1} rows" -f 'exchange-export.csv', $rows.Count)
+if ($Skipped.Count) { Write-Warning ("Not written: " + ($Skipped -join ', ')) }
 Write-Host "Done: drop the folder $OutputFolder on Import evidence in revrook."
