@@ -89,7 +89,8 @@ as tokens in `revrook.css`: `--rv-fs-xs` 12, `--rv-fs-sm` 14, `--rv-fs-md` 16,
 stylesheet is one of them (`tests/test_design_system.py`), except the body (15 px,
 the base the others are read against) and SVG text, sized in the units of its viewBox
 (the ring values, the charts, the review horizon); the text wordmark is bold
-Helvetica or Arial. The PDF reports have their own sizes (`app/reports/templates`).
+Helvetica or Arial. The reports have their own sizes (`app/reports/templates`) and the same typeface,
+carried inside each file (`docs/pdf-spike.md`).
 Spacing 4, 8, 12, 16, 24, 32 and 48 px. Radius 8 px on controls and 12 px on cards and
 tables. Two elevations (`--rv-shadow-1` for cards, `--rv-shadow-2` for dialogs).
 Motion (since 2026-11-13; before, only hover and focus moved). Three kinds, each with

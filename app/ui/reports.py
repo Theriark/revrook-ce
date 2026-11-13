@@ -59,9 +59,11 @@ from app.ui.dashboard import (
 from app.web import clock_of, files_of, session_factory
 
 router = APIRouter()
+# The preview is the report as it would be sent: its own inline style, and the
+# typeface it carries inside itself as a data: font. Nothing else, and no script.
 PREVIEW_POLICY = (
-    "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; "
-    "form-action 'none'; frame-ancestors 'none'"
+    "default-src 'none'; style-src 'unsafe-inline'; font-src data:; "
+    "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 NO_SUCH_REPORT = "There is no such report."
 # The message of the builder after the redirect of the details form (without

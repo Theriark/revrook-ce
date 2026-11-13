@@ -13,11 +13,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from app.checks.library import Library, load_library
-from app.reports.render import KINDS, render_report
+from app.reports.render import KINDS, font_base64, render_report
 from app.reports.view import build_view
 from tools import report_clients
 
 GOLDEN_DIR = Path(__file__).resolve().parent.parent / "tests" / "golden" / "reports"
+# A golden file names the typeface a report carries instead of holding its 97 KB
+# six times over; tests/test_reports.py checks the carried bytes on their own.
+FONT_MARK = b"INTER-LATIN-WOFF2"
 
 
 def golden_path(kind: str, name: str) -> Path:
@@ -32,7 +35,10 @@ def golden_html(library: Library, kind: str, name: str) -> bytes:
         report_clients.context_for(name),
         report_clients.previous_bytes(library, name),
     )
-    return render_report(kind, view)
+    made = render_report(kind, view)
+    payload = font_base64().encode("ascii")
+    assert made.count(payload) == 1
+    return made.replace(payload, FONT_MARK)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

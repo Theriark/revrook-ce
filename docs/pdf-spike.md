@@ -63,7 +63,15 @@ edition; the licence and font gates would still need to be assessed.
 
 ## What CE ships instead
 
-- HTML, one file with its stylesheet inlined, that loads nothing from outside.
+- HTML, one file with its stylesheet inlined, that loads nothing from outside. Since
+  2026-11-13 the file carries its typeface inside itself: the Latin file of Inter
+  (`app/static/vendor/inter`, SIL Open Font License 1.1) as a `data:` font in front of
+  the stylesheet (`app/reports/render.py`), so a report looks the same on the client's
+  machine as in revrook, on screen and in a PDF saved from the browser. It adds about
+  97 KB to every report (a report of a worked client is about 155 KB, 58 KB before);
+  an export made earlier keeps the bytes it was made with. A letter the Latin file does
+  not hold is drawn in the system font. The preview route allows that font and nothing
+  more (`font-src data:` in its policy; no script, no image, no address).
 - A print stylesheet (`app/reports/print.css`): A4, one `.page` for each section of the
   report, each section starting on a new sheet, with the footer and the disclaimer at the
   end of the section. A section that is longer than one printed sheet carries its footer

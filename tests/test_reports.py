@@ -7,11 +7,13 @@ hypothesis is not in the development lock, so the property test draws its cases 
 random.Random and a fixed seed, as tests/test_scoring_properties.py does.
 """
 
+import base64
 import random
 import re
 from dataclasses import replace
 from datetime import datetime, timedelta
 from fractions import Fraction
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -38,9 +40,11 @@ from app.reports.view import (
 )
 from app.scoring.model import ControlInput
 from app.scoring.snapshot import parse_snapshot, regenerate, render_snapshot
+from app.ui.reports import PREVIEW_POLICY
 from tools import make_report_golden, report_clients
 
 LIBRARY = load_library()
+ROOT = Path(__file__).resolve().parent.parent
 NAMES = tuple(report_clients.NAMES)
 EXPECTED_SCORES = {"A": "89.5", "B": "45.7", "C": "49.0"}
 HOSTILE = "<script>alert(\"x\")</script> & 'quoted' <img src=x onerror=y>"
@@ -126,11 +130,40 @@ def test_the_insurance_pack_has_a_sign_off_line_on_its_last_page() -> None:
     assert "Client sign-off" not in html_of(QBR, "A")
 
 
+def test_a_report_carries_the_typeface_of_the_interface() -> None:
+    # A report is opened far from the installation, so Inter travels inside it.
+    text = html_of(QBR, "A")
+    carried = re.search(r"url\(data:font/woff2;base64,([A-Za-z0-9+/=]+)\)", text)
+    assert carried is not None
+    font = ROOT / "app/static/vendor/inter/inter-latin-opsz-normal.woff2"
+    assert base64.b64decode(carried.group(1)) == font.read_bytes()
+    assert text.index("@font-face") < text.index(
+        'font-family: "Inter Variable", system-ui'
+    )
+    # The preview shows the report under a policy of its own: that font, its inline
+    # style, and nothing else (no script, no image, no address).
+    policy = dict(part.split(" ", 1) for part in PREVIEW_POLICY.split("; "))
+    assert policy["default-src"] == "'none'" and policy["font-src"] == "data:"
+    assert set(policy) == {
+        "default-src",
+        "style-src",
+        "font-src",
+        "base-uri",
+        "form-action",
+        "frame-ancestors",
+    }
+    # A golden file names the typeface instead of holding it.
+    golden = make_report_golden.golden_path(QBR, "A").read_bytes()
+    assert make_report_golden.FONT_MARK in golden and len(golden) < 80_000
+
+
 @pytest.mark.parametrize("kind", KINDS)
 def test_no_revrook_logo_is_on_a_client_page(kind: str) -> None:
     text = html_of(kind, "A")
     head, body = text.split("</head>")
-    assert "<img" not in text and "<picture" not in text and "url(" not in text
+    assert "<img" not in text and "<picture" not in text
+    # The one address of a report is the typeface it carries inside itself.
+    assert text.count("url(") == 1 and "url(data:font/woff2;base64," in text
     assert "logo" not in body.lower() and "logo" not in head.split("<style>")[0]
     assert 'name="generator" content="revrook"' in head
     assert body.count(GENERATED_WITH) == len(SECTION.findall(body))

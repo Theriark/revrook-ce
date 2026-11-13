@@ -7,10 +7,15 @@ HTML) and in full on the last. Every text that came from a person (names, reason
 notes) goes through Jinja2 autoescape, so a hostile client name or exception text is
 printed as text.
 
+The typeface of the interface (Inter, app/static/vendor/inter) travels inside the
+file as a data: font, since a report is opened far from the installation: it adds
+about 97 KB to every report and is the one `url(` of the file.
+
 The output depends on the view alone: no clock, no random value, no dictionary
 order that is not fixed. The same view is the same bytes.
 """
 
+import base64
 import functools
 import re
 from dataclasses import dataclass
@@ -98,6 +103,25 @@ def _environment() -> Environment:
     return environment
 
 
+# The Latin file of Inter. A letter it does not hold is drawn in the system font.
+FONT_FILE = HERE.parent / "static/vendor/inter/inter-latin-opsz-normal.woff2"
+
+
+@functools.cache
+def font_base64() -> str:
+    """The font file as it stands in a report, between `base64,` and `)`."""
+    return base64.b64encode(FONT_FILE.read_bytes()).decode("ascii")
+
+
+@functools.cache
+def _font_face() -> Markup:
+    return Markup(
+        '@font-face { font-family: "Inter Variable"; font-style: normal; '
+        "font-weight: 100 900; "
+        f'src: url(data:font/woff2;base64,{font_base64()}) format("woff2"); }}\n'
+    )
+
+
 @functools.cache
 def _stylesheet(name: str) -> Markup:
     text = (HERE / name).read_text(encoding="utf-8")
@@ -139,6 +163,7 @@ def _render(name: str, view: ReportView, report_name: str, **more: object) -> by
         report_name=report_name,
         disclaimer=DISCLAIMER,
         generated_with=GENERATED_WITH,
+        font_css=_font_face(),
         css=_stylesheet("report.css"),
         print_css=_stylesheet("print.css"),
         not_entered=NOT_ENTERED,

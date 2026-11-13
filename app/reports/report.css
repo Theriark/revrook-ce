@@ -1,6 +1,8 @@
 /*
  * Report stylesheet (phase 8). It is inlined into every report, so a report is one
- * file that loads nothing from outside. System fonts only; the brand tokens of
+ * file that loads nothing from outside. Its typeface is Inter, which render.py puts
+ * in front of this sheet as a data: font (the system fonts stay behind it for a
+ * letter the Latin file does not hold). The brand tokens of
  * app/static/css/revrook.css and its contrast rules:
  *   - every rule that sets a text colour also sets its background-color, so
  *     tests/test_report_contrast.py reads each foreground and background pair here;
@@ -24,8 +26,8 @@
 }
 
 html {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+  font-family: "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
