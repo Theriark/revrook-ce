@@ -73,7 +73,7 @@ def test_inbound_rules_are_read_with_their_source(exported: Path) -> None:
     # peering the source is unknown.
     assert "sg-2,true,inbound,allow,172.31.0.0/16 2a05:d018::/56,any" in text
     assert "sg-2,true,inbound,allow,,443" in text
-    assert "allow,::/0,\n" in text  # ICMP has no port
+    assert "allow,::/0,,aws\n" in text  # ICMP has no port
     value = summary("network-export", exported / "network-export-aws.csv")
     assert value["rules"] == 5
     assert value["rules_any_source"] == 2  # 0.0.0.0/0 and ::/0
@@ -83,8 +83,8 @@ def test_running_instances_carry_their_disk_encryption(exported: Path) -> None:
     lines = (
         (exported / "device-inventory-aws.csv").read_text(encoding="utf-8").splitlines()
     )
-    assert lines[1].startswith("i-a,linux,server,") and lines[1].endswith(",false")
-    assert lines[2].startswith("i-b,windows,server,") and lines[2].endswith(",")
+    assert lines[1].startswith("i-a,linux,server,") and lines[1].endswith(",false,aws")
+    assert lines[2].startswith("i-b,windows,server,") and lines[2].endswith(",,aws")
     value = summary("device-inventory", exported / "device-inventory-aws.csv")
     assert value["devices"] == 2 and value["encryption_known"] == 1
 
@@ -93,8 +93,8 @@ def test_a_backup_job_keeps_its_newest_result_and_last_success(exported: Path) -
     lines = (
         (exported / "backup-export-aws.csv").read_text(encoding="utf-8").splitlines()
     )
-    assert "arn:db,plan-1 (v),2026-11-10T05:20:00Z,failed,,,database," in lines
-    assert "arn:vol,on-demand (v),2026-11-11T05:10:00Z,success,,,server," in lines
+    assert "arn:db,plan-1 (v),2026-11-10T05:20:00Z,failed,,,database,,aws" in lines
+    assert "arn:vol,on-demand (v),2026-11-11T05:10:00Z,success,,,server,,aws" in lines
     value = summary("backup-export", exported / "backup-export-aws.csv")
     assert value["jobs"] == 2 and value["failed"] == 1 and value["success"] == 1
 

@@ -29,7 +29,7 @@ csv='function q(v) { if (v == "None") v = ""; gsub(/"/, "\"\"", v); return (v ~ 
      { sub(/\r$/, "") }'
 
 net="$out/network-export-aws.csv"
-echo "record_type,device_id,rule_enabled,direction,action,source,destination_port" >"$net"
+echo "record_type,device_id,rule_enabled,direction,action,source,destination_port,tool" >"$net"
 dev=$(mktemp); vol=$(mktemp); map=$(mktemp); bak=$(mktemp)
 trap 'rm -f "$dev" "$vol" "$map" "$bak"' EXIT
 for r in $regions; do
@@ -49,7 +49,7 @@ for r in $regions; do
         if ($2 ~ /^(icmp|icmpv6|1|58)$/) port = "" # ICMP has a type and code, not ports
         src = ($5 != "None") ? $5 : $6
         if ($7 != "None" && $8 == "None") src = cidr[vpc[$1]]
-        print "rule," q(r "/" $1) ",true,inbound,allow," q(src) "," port
+        print "rule," q(r "/" $1) ",true,inbound,allow," q(src) "," port ",aws"
       }' "$map" - >>"$net"
 
   # shortcut: patch and antivirus state are left unknown (SSM is not read), add SSM patch states when a client runs SSM.
@@ -61,12 +61,12 @@ for r in $regions; do
       FILENAME == vol { if ($1 != "None") enc[$1] = (enc[$1] == "false") ? "false" : tolower($2); next }
       NF >= 2 {
         os = tolower($2) ~ /windows/ ? "windows" : "linux"
-        print q($1) "," os ",server," now ",unknown,,,unknown,," (($1 in enc) ? enc[$1] : "")
+        print q($1) "," os ",server," now ",unknown,,,unknown,," (($1 in enc) ? enc[$1] : "") ",aws"
       }' "$vol" - >>"$dev"
 done
 
 if [ -s "$dev" ]; then
-  { echo "hostname,os,form_factor,last_seen,patch_status,pending_critical_updates,av_product,av_status,av_signature_date,disk_encrypted"
+  { echo "hostname,os,form_factor,last_seen,patch_status,pending_critical_updates,av_product,av_status,av_signature_date,disk_encrypted,tool"
     cat "$dev"; } >"$out/device-inventory-aws.csv"
 else
   echo "No running EC2 instance: device-inventory-aws.csv not written."
@@ -89,11 +89,11 @@ for r in $regions; do
         if ($3 == "COMPLETED" && !(key in ok)) ok[key] = $4
       }
       END { for (i = 1; i <= n; i++) { k = order[i]
-        print q(system_[k]) "," q(job[k]) "," q(ok[k]) "," result[k] ",,," type[k] "," } }' >>"$bak"
+        print q(system_[k]) "," q(job[k]) "," q(ok[k]) "," result[k] ",,," type[k] ",,aws" } }' >>"$bak"
 done
 if [ -s "$bak" ]; then
   # Retention, encryption and restore tests are not in the job list; revrook reads the empty cells as unknown.
-  { echo "system_or_device,backup_job,last_success,last_result,retention_days,restore_test_date,asset_type,encrypted"
+  { echo "system_or_device,backup_job,last_success,last_result,retention_days,restore_test_date,asset_type,encrypted,tool"
     cat "$bak"; } >"$out/backup-export-aws.csv"
 else
   echo "No AWS Backup job: backup-export-aws.csv not written."

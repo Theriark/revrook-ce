@@ -44,7 +44,9 @@ evidence** on the evidence page of a client, which opens the page on that client
 
 The links above the table open the evidence page or the checklist of the client.
 Every control that reads a source takes its status from the newest export of that
-source; the others keep their status until their own export is imported. The score
+source (for devices, backups and the network, the newest export of each tool, see
+[12. Export the cloud accounts with scripts](12-cloud-exports.md#import-the-files));
+the others keep their status until their own export is imported. The score
 on the clients list and on Home comes from the newest report, so make a report to
 carry the change there ([6. Reports and exports](06-reports-and-exports.md)).
 

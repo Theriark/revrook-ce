@@ -158,8 +158,21 @@ ingress VPC firewall rules, running VMs and disk snapshots of Google Cloud proje
 same three formats, with list calls only, and skips a project without the Compute Engine
 API. `app/static/scripts/export-cloudflare.sh` writes the public hostnames of a client's
 Cloudflare Tunnels that no Access application guards as `network-export` rules, with GET
-requests only. The checks read the newest file of each source, so several exports of
-one kind are imported as one file (guide 12 shows how).
+requests only. Each script names itself in the `tool` column, so its files count beside
+the client's other tools (below).
+
+### Several tools of one source: the `tool` column
+
+`device-inventory`, `backup-export` and `network-export` take an optional `tool` column
+(alias `export_tool`, at most 40 characters, read in lower case): the tool that wrote the
+file, such as `aws` or `unifi`. When every line of a file names the same tool, its summary
+records it as `tool`; a file whose lines name none, or several, has no tool. For these
+three sources the checks read the newest file of each tool of the client together, a file
+without a tool being one more tool (`app/posture.py`, `per_tool`): their rows are one
+set, measured from the newest capture time, and the newest file's summary is kept (the
+checks of these sources read rows only). A file more than 35 days (the default maximum
+age of an automatic export) older than the newest file of its source no longer counts.
+Every other source keeps its newest file only.
 
 ## The five Microsoft sources
 
@@ -307,6 +320,7 @@ One row per device, with patch and antivirus state. Either `device_id` or
 | `dns_filter_active` | dns_filter_active | no | true or false |
 | `log_forwarding` | log_forwarding | no | true or false |
 | `user` | user (UPN, user_principal_name) | no | identifier |
+| `tool` | tool (export_tool) | no | the tool that wrote the file (below) |
 
 Facts: `inventory.device`. Summary: `devices`, the operating system counts
 (`windows`, `macos`, `ios`, `android`, `linux`), `servers`, `patch_up_to_date`,
@@ -335,6 +349,7 @@ and are counted, never stored by name. A row needs `system_or_device`.
 | `immutable` | immutable | no | true or false |
 | `offsite` | offsite | no | true or false |
 | `restore_test_result` | restore_test_result | no | success or failed (pass, fail) |
+| `tool` | tool (export_tool) | no | the tool that wrote the file (below) |
 
 Facts: `backup.job`. Summary: `jobs`, `success`, `warning`, `failed`,
 `schedule_known`, `retention_known`, `encrypted`, `encryption_known`, `immutable`,
@@ -370,6 +385,7 @@ identifiers; the syslog target is reduced to whether one is set.
 | `security_mode` | security_mode | ssid, row | open, wep, wpa, wpa2, wpa2-enterprise, wpa3, wpa3-enterprise, wpa2-wpa3, owe |
 | `guest_isolated` | guest_isolated | ssid | true or false |
 | `guest_ssid` | guest_ssid | ssid | true or false |
+| `tool` | tool (export_tool) | every line | the tool that wrote the file (below) |
 
 #### The source of a rule: `any`, `restricted` or unknown
 

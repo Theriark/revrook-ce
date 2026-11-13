@@ -71,9 +71,9 @@ guarded=$(awk -F'\t' '$1 == "guarded"' "$rules" | wc -l | tr -d ' ')
 open=$(awk -F'\t' '$1 == "open"' "$rules" | wc -l | tr -d ' ')
 echo "Public hostnames: $open open to the internet, $guarded behind Cloudflare Access (not written)."
 if [ "$open" -gt 0 ]; then
-  { echo "record_type,device_id,rule_enabled,direction,action,source,destination_port"
+  { echo "record_type,device_id,rule_enabled,direction,action,source,destination_port,tool"
     awk -F'\t' '$1 == "open" { d = $2; gsub(/"/, "\"\"", d); if (d ~ /[",]/) d = "\"" d "\""
-      print "rule," d ",true,inbound,allow,any," $3 }' "$rules"; } >"$out/network-export-cloudflare.csv"
+      print "rule," d ",true,inbound,allow,any," $3 ",cloudflare" }' "$rules"; } >"$out/network-export-cloudflare.csv"
   echo "network-export-cloudflare.csv: $open rows"
 fi
 echo Done

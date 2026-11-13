@@ -115,11 +115,12 @@ def test_only_hosts_without_a_real_access_guard_are_written(
 ) -> None:
     out, stdout = run
     lines = (out / "network-export-cloudflare.csv").read_text().splitlines()
+    # open: a Bypass policy; www: guarded on a path only; empty: no policy.
     assert lines[1:] == [
-        "rule,core/open.c.example,true,inbound,allow,any,22",  # a Bypass policy
-        "rule,core/www.c.example,true,inbound,allow,any,443",  # guarded on a path only
-        "rule,core/empty.c.example,true,inbound,allow,any,3389",  # no policy
-        "rule,core/db.c.example,true,inbound,allow,any,5432",
+        "rule,core/open.c.example,true,inbound,allow,any,22,cloudflare",
+        "rule,core/www.c.example,true,inbound,allow,any,443,cloudflare",
+        "rule,core/empty.c.example,true,inbound,allow,any,3389,cloudflare",
+        "rule,core/db.c.example,true,inbound,allow,any,5432,cloudflare",
     ]
     assert "4 open to the internet, 2 behind Cloudflare Access" in stdout
     assert "Tunnel local: no remote configuration" in stdout

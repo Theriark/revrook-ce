@@ -76,12 +76,12 @@ def summary(code: str, file: Path) -> dict:
 
 def test_every_port_of_an_ingress_rule_is_a_line(exported: Path) -> None:
     lines = (exported / "network-export-gcp.csv").read_text().splitlines()
-    assert "rule,p1/ssh,true,inbound,allow,0.0.0.0/0,22" in lines
-    assert "rule,p1/ssh,true,inbound,allow,0.0.0.0/0,8000-8100" in lines
-    assert "rule,p1/internal,true,inbound,allow,10.128.0.0/9,any" in lines
-    assert "rule,p1/tagged,true,inbound,allow,,443" in lines  # tags only: unknown
-    assert "rule,p1/old,false,inbound,allow,0.0.0.0/0," in lines  # disabled, ICMP
-    assert "rule,p1/block,true,inbound,deny,0.0.0.0/0,53" in lines
+    assert "rule,p1/ssh,true,inbound,allow,0.0.0.0/0,22,gcp" in lines
+    assert "rule,p1/ssh,true,inbound,allow,0.0.0.0/0,8000-8100,gcp" in lines
+    assert "rule,p1/internal,true,inbound,allow,10.128.0.0/9,any,gcp" in lines
+    assert "rule,p1/tagged,true,inbound,allow,,443,gcp" in lines  # tags only: unknown
+    assert "rule,p1/old,false,inbound,allow,0.0.0.0/0,,gcp" in lines  # disabled, ICMP
+    assert "rule,p1/block,true,inbound,deny,0.0.0.0/0,53,gcp" in lines
     value = summary("network-export", exported / "network-export-gcp.csv")
     assert value["rules"] == 6 and value["rules_enabled"] == 5
 
@@ -96,9 +96,10 @@ def test_running_vms_are_servers_with_encrypted_disks(exported: Path) -> None:
 
 def test_a_disk_keeps_its_newest_result_and_last_success(exported: Path) -> None:
     lines = (exported / "backup-export-gcp.csv").read_text().splitlines()
-    assert "p1/disk-a,daily,2026-11-11T05:00:00Z,failed,,,server,true" in lines
+    assert "p1/disk-a,daily,2026-11-11T05:00:00Z,failed,,,server,true,gcp" in lines
     assert (
-        "p1/disk-b,manual snapshots,2026-11-10T05:00:00Z,success,,,server,true" in lines
+        "p1/disk-b,manual snapshots,2026-11-10T05:00:00Z,success,,,server,true,gcp"
+        in lines
     )
     value = summary("backup-export", exported / "backup-export-gcp.csv")
     assert value["jobs"] == 2 and value["failed"] == 1 and value["encrypted"] == 2

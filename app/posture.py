@@ -1,7 +1,8 @@
 """The live state of one client: its newest evidence, run through the check engine.
 
 Nothing here is stored. The newest automatic export of every source is read with its
-facts, the open exceptions are attached, and the check engine decides every control
+facts (for a device, backup or network source, the newest export of each tool), the
+open exceptions are attached, and the check engine decides every control
 (`evaluate_all`). The scoring inputs of that state are a `SnapshotInput`, the same
 thing a stored snapshot is made of, so a page of the application and a report show
 the same numbers: `build_view` turns the bytes of a snapshot into the view that both
@@ -9,18 +10,20 @@ of them use.
 """
 
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
+from datetime import datetime, timedelta
+from typing import Any, Protocol
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.checks.engine import evaluate_all
 from app.checks.library import Library
 from app.checks.model import ControlResult, Evidence, SourceFacts
+from app.evidence.assurance import Assurance
 from app.evidence.errors import ClientNotFoundError
+from app.evidence.expiry import DEFAULT_MAX_AGE_DAYS
 from app.exceptions import ExceptionEntry
 from app.models import Client, EvidenceItem, ExceptionRecord, Fact
 from app.reports.view import ReportContext, ReportError, ReportView, build_view
@@ -32,6 +35,19 @@ from app.scoring.snapshot import (
 )
 
 AUTOMATIC_EXPORT = "automatic-export"
+# Sources that several tools export for one client (the office firewall and a cloud):
+# the newest file of each tool counts, read together as one source.
+TOOL_SOURCES = frozenset({"device-inventory", "backup-export", "network-export"})
+# A tool's file counts while it is at most this much older than the newest file of
+# its source, so a tool that is no longer used drops out.
+TOOL_WINDOW = timedelta(days=DEFAULT_MAX_AGE_DAYS[Assurance.AUTOMATIC_EXPORT])
+
+
+class Dated(Protocol):
+    @property
+    def source_code(self) -> str: ...
+    @property
+    def captured_at(self) -> datetime: ...
 
 
 @dataclass(frozen=True)
@@ -70,9 +86,27 @@ async def open_exceptions(
     )
 
 
+def per_tool[T: Dated](candidates: Sequence[tuple[T, str | None]]) -> list[T]:
+    """The newest item of each tool of a source, from (item, tool) pairs that are
+    newest first within each source. A file that names no tool is one more tool; an
+    item more than TOOL_WINDOW older than the newest item of its source is left out.
+    """
+    newest: dict[str, datetime] = {}
+    seen: set[tuple[str, str | None]] = set()
+    chosen: list[T] = []
+    for item, tool in candidates:
+        first = newest.setdefault(item.source_code, item.captured_at)
+        key = (item.source_code, tool)
+        if key in seen or first - item.captured_at > TOOL_WINDOW:
+            continue
+        seen.add(key)
+        chosen.append(item)
+    return chosen
+
+
 async def newest_items(session: AsyncSession, client_id: int) -> list[EvidenceItem]:
-    """The newest automatic export of every source of the client."""
-    found = await session.execute(
+    """The automatic exports of the client the checks read (see per_tool)."""
+    newest = await session.execute(
         select(EvidenceItem)
         .where(
             EvidenceItem.client_id == client_id,
@@ -85,7 +119,44 @@ async def newest_items(session: AsyncSession, client_id: int) -> list[EvidenceIt
             EvidenceItem.id.desc(),
         )
     )
-    return list(found.scalars())
+    items = list(newest.scalars())
+    since = {
+        item.source_code: item.captured_at - TOOL_WINDOW
+        for item in items
+        if item.source_code in TOOL_SOURCES
+    }
+    if not since:
+        return items
+    recent = await session.execute(
+        select(EvidenceItem)
+        .where(
+            EvidenceItem.client_id == client_id,
+            EvidenceItem.assurance_level == AUTOMATIC_EXPORT,
+            or_(
+                *(
+                    and_(
+                        EvidenceItem.source_code == code, EvidenceItem.captured_at >= at
+                    )
+                    for code, at in since.items()
+                )
+            ),
+        )
+        .order_by(
+            EvidenceItem.source_code,
+            EvidenceItem.captured_at.desc(),
+            EvidenceItem.id.desc(),
+        )
+    )
+    tooled = list(recent.scalars())
+    summaries = await session.execute(
+        select(Fact.evidence_item_id, Fact.value).where(
+            Fact.evidence_item_id.in_([item.id for item in tooled]),
+            Fact.fact_key.endswith(".summary"),
+        )
+    )
+    tools = {item_id: value.get("tool") for item_id, value in summaries}
+    others = [item for item in items if item.source_code not in TOOL_SOURCES]
+    return others + per_tool([(item, tools.get(item.id)) for item in tooled])
 
 
 async def load_sources(
@@ -102,12 +173,27 @@ async def load_sources(
     grouped: defaultdict[int, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
     for item_id, key, value in rows:
         grouped[item_id].append((key, value))
-    return {
-        item.source_code: SourceFacts.from_facts(
-            item.captured_at, grouped.get(item.id, [])
-        )
-        for item in items
+    sources: dict[str, SourceFacts] = {}
+    for item in items:
+        facts = SourceFacts.from_facts(item.captured_at, grouped.get(item.id, []))
+        earlier = sources.get(item.source_code)
+        sources[item.source_code] = facts if earlier is None else merged(earlier, facts)
+    return sources
+
+
+def merged(first: SourceFacts, other: SourceFacts) -> SourceFacts:
+    """Two files of one source read as one: every row, measured from the newer capture.
+
+    An age is then measured from the newest export, so a row of the older file is
+    never younger than it is. The summary is the first file's (the checks of the
+    TOOL_SOURCES read rows only).
+    """
+    kinds = {
+        kind: first.rows(kind) + other.rows(kind)
+        for kind in dict.fromkeys([*first.kinds, *other.kinds])
     }
+    captured_at = max(first.captured_at, other.captured_at)
+    return SourceFacts(captured_at=captured_at, kinds=kinds, summary=first.summary)
 
 
 def importer_summary(items: list[EvidenceItem]) -> str:

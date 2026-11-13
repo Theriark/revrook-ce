@@ -56,7 +56,7 @@ for p in $projects; do
           proto = part[i]; port = "any"
           if (index(proto, ":")) { port = substr(proto, index(proto, ":") + 1); proto = substr(proto, 1, index(proto, ":") - 1) }
           if (proto ~ /^(icmp|ipv6-icmp|1|58)$/) port = "" # ICMP has a type, not ports
-          print "rule," q(p "/" $1) "," ($2 == "True" ? "false" : "true") ",inbound," action "," q($3) "," port
+          print "rule," q(p "/" $1) "," ($2 == "True" ? "false" : "true") ",inbound," action "," q($3) "," port ",gcp"
         }
       }
       NF >= 1 && $1 != "" { if ($4 != "") emit($4, "allow"); if ($5 != "") emit($5, "deny") }' >>"$net"
@@ -68,7 +68,7 @@ for p in $projects; do
     awk -F'\t' -v p="$p" -v now="$now" "$csv"'
       NF >= 1 && $1 != "" {
         os = tolower($3) ~ /windows/ ? "windows" : "linux"
-        print q(p "/" $2 "/" $1) "," os ",server," now ",unknown,,,unknown,,true"
+        print q(p "/" $2 "/" $1) "," os ",server," now ",unknown,,,unknown,,true,gcp"
       }' >>"$dev"
 
   # Newest snapshot first per disk and schedule: its state is the last result; the
@@ -86,14 +86,14 @@ for p in $projects; do
         if ($3 == "READY" && !(key in ok)) ok[key] = $4
       }
       END { for (i = 1; i <= n; i++) { k = order[i]
-        print q(disk[k]) "," q(job[k]) "," q(ok[k]) "," result[k] ",,,server,true" } }' >>"$bak"
+        print q(disk[k]) "," q(job[k]) "," q(ok[k]) "," result[k] ",,,server,true,gcp" } }' >>"$bak"
 done
 
 write() { # file, header, lines
   if [ -s "$3" ]; then { echo "$2"; cat "$3"; } >"$out/$1"; echo "$1: $(wc -l <"$3" | tr -d ' ') rows"
   else echo "Nothing found: $1 not written."; fi
 }
-write network-export-gcp.csv "record_type,device_id,rule_enabled,direction,action,source,destination_port" "$net"
-write device-inventory-gcp.csv "hostname,os,form_factor,last_seen,patch_status,pending_critical_updates,av_product,av_status,av_signature_date,disk_encrypted" "$dev"
-write backup-export-gcp.csv "system_or_device,backup_job,last_success,last_result,retention_days,restore_test_date,asset_type,encrypted" "$bak"
+write network-export-gcp.csv "record_type,device_id,rule_enabled,direction,action,source,destination_port,tool" "$net"
+write device-inventory-gcp.csv "hostname,os,form_factor,last_seen,patch_status,pending_critical_updates,av_product,av_status,av_signature_date,disk_encrypted,tool" "$dev"
+write backup-export-gcp.csv "system_or_device,backup_job,last_success,last_result,retention_days,restore_test_date,asset_type,encrypted,tool" "$bak"
 echo Done
