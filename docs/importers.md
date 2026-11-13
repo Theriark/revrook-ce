@@ -160,7 +160,9 @@ ingress VPC firewall rules, running VMs and disk snapshots of Google Cloud proje
 same three formats, with list calls only, and skips a project without the Compute Engine
 API. `app/static/scripts/export-cloudflare.sh` writes the public hostnames of a client's
 Cloudflare Tunnels that no Access application guards as `network-export` rules, with GET
-requests only. Each script names itself in the `tool` column, so its files count beside
+requests only. `export-unifi.sh`, `export-checkmk.sh` and `export-xo.sh` write the
+same formats from a UniFi console, a Checkmk site and Xen Orchestra ([guide
+12](guides/12-cloud-exports.md#the-office-unifi-checkmk-and-xen-orchestra)). Each script names itself in the `tool` column, so its files count beside
 the client's other tools (below).
 
 ### Several tools of one source: the `tool` column
