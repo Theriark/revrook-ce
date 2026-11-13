@@ -1,3 +1,4 @@
+import hashlib
 import re
 from pathlib import Path
 
@@ -27,6 +28,17 @@ def table_rows() -> dict[str, list[str]]:
             cells = [cell.strip() for cell in line.strip("|").split("|")]
             rows[cells[0].lower()] = cells
     return rows
+
+
+def test_the_typeface_is_recorded_under_the_font_licence() -> None:
+    # OFL-1.1 is accepted for font files only, so it is not on the code allow-list.
+    row = table_rows().get("inter")
+    assert row is not None and row[1] == "OFL-1.1"
+    assert not licence_audit.is_allowed_expression("OFL-1.1")
+    fonts = sorted((ROOT / "app/static/vendor/inter").glob("*.woff2"))
+    recorded = set(re.findall(r"`([0-9a-f]{64})`", row[4]))
+    assert {hashlib.sha256(f.read_bytes()).hexdigest() for f in fonts} == recorded
+    assert len(fonts) == 2
 
 
 def test_there_are_runtime_dependencies_to_check() -> None:
