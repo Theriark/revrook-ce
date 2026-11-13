@@ -274,6 +274,19 @@ def test_motion_is_short_and_respects_reduced_motion() -> None:
     base = (ROOT / "app/ui/templates/base.html").read_text("utf-8")
     hold = '<script src="/static/js/page-change.js?v={{ asset_version }}"></script>'
     assert base.index("css/revamp.css") < base.index(hold) < base.index("</head>")
+    # A report preview takes no part in a page change (it is the client's file):
+    # the page left for it cuts the change, or the browser writes an exception to
+    # the console of the preview (seen on Development febc6fd).
+    script = (ROOT / "app/static/js/page-change.js").read_text("utf-8")
+    assert 'window.addEventListener("pageswap"' in script
+    assert "event.viewTransition.skipTransition();" in script
+    leaves = re.search(
+        r"if \(/(.+?)/\.test\(new URL\(entry\.url\)\.pathname\)\)", script
+    )
+    assert leaves is not None
+    pattern = re.compile(leaves.group(1).replace(r"\/", "/"))
+    assert pattern.search("/clients/2/reports/4/preview/qbr")
+    assert not pattern.search("/clients/2/reports/4")
 
 
 def test_a_client_keeps_its_parts_over_a_page_change() -> None:
