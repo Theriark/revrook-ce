@@ -30,11 +30,10 @@ The [quick start](docs/quick-start.md) takes you from nothing to an exported qua
 
 ## What it looks like
 
-Live captures taken on 2026-11-12 of a local build of commit
-`544b16606e7475b8b10db186c8ff38db78800eb7` (the merge of pull request #114) with the
-Evidence Explorer table fix of the same pull request as these pictures, with the
-synthetic data of the Development seed only ([capture manifest](docs/images/README.md));
-they are not captures of a deployment.
+Live captures taken on 2026-11-13 on the Development site, running commit
+`0f705cace6f1d91c950693a2f1d67552904a2744` (the merge of pull request #135), with the 3D
+view shown and the synthetic test data of that installation only
+([capture manifest](docs/images/README.md)).
 
 **Home**: the title and the one primary action on the page, the four stat cards as one
 ledger, **Needs attention** beside the score over time, and under **What moves the

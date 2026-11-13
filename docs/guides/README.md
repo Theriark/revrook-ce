@@ -2,11 +2,9 @@
 
 Step-by-step tutorials for every flow of the revrook Community Edition web interface,
 in the order a new installation meets them. Every picture is a live capture, taken on
-2026-11-12, of a local build of commit `544b16606e7475b8b10db186c8ff38db78800eb7` (the
-merge of pull request #114) with the Evidence Explorer table fix of the same pull request
-as these pictures, with the synthetic data of the
-Development seed (see the [capture manifest](../images/README.md)); it is not a
-capture of a deployment. Pictures at 1440 px are the desktop view; pictures at 768 px
+2026-11-13, of the Development site running commit `0f705cace6f1d91c950693a2f1d67552904a2744`
+(the merge of pull request #135), with the 3D view shown and the synthetic test data of
+that installation (see the [capture manifest](../images/README.md)). Pictures at 1440 px are the desktop view; pictures at 768 px
 and 390 px are labelled as tablet and phone views in their captions. The pictures
 are in [docs/images](../images/README.md) with a capture manifest (file, SHA-256, page,
 viewport, theme, capture time and the guide that uses each). What the output is, and is
@@ -29,13 +27,13 @@ certification.
 | [12. Export the cloud accounts and the office tools with scripts](12-cloud-exports.md) | Run the read-only script of a cloud (AWS, Google Cloud, Cloudflare) or an office tool (UniFi, Checkmk, Xen Orchestra) that writes its firewall rules or published tunnel hostnames, servers and backups as revrook CSV files, and drop them on Import evidence beside the client's other tools |
 
 Every guide uses the same test installation and its administrator account
-(`local-admin`). The clients ("Seed Gaps Ltd (synthetic)", "Seed Tidy Ltd (synthetic)"
-and the others) and the leavers file in the pictures are synthetic test data; the
-installation pictured has no business name set, so the report pictures show none.
+(`revrook-admin`). The clients ("Seed Gaps Ltd (synthetic)", "Seed Tidy Ltd (synthetic)",
+the Mock clients and the others) and the leavers file in the pictures are synthetic test
+data; the business name of the installation pictured is "Sample MSP", a made-up name.
 Nothing in them is a real customer, a real address or a credential. The files imported for guide 3 are invented too (two leavers at
 `seed.example.invalid`, a Conditional Access and an Intune export made by the
 Development seed's own builders, and a help-desk file that matches no source). Two parts
-of the pages stay out of the main pictures, as in the earlier sets, because on the shared
-Development installation they name a seeded sign-in account: **Recent changes** on Home
-and on a client overview, and **Users and mappings** in Settings (see the capture
-manifest).
+of the pages stay out of the pictures, as in the earlier sets, because on the shared
+Development installation they can name a seeded sign-in account: **Recent changes** on
+Home and **Users and mappings** in Settings (see the capture manifest). **Recent
+changes** of a client overview is pictured: there it names only `revrook-admin`.
