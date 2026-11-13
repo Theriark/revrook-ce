@@ -153,7 +153,10 @@ IMEI or phone number is written; mailboxes are written by their directory id.
 `app/static/scripts/export-aws.sh` writes an AWS account's inbound security group
 rules as a `network-export`, its running EC2 instances as a `device-inventory` and its
 AWS Backup jobs as a `backup-export`, with describe and list calls only
-([guide 12](guides/12-cloud-exports.md)).
+([guide 12](guides/12-cloud-exports.md)). `app/static/scripts/export-gcp.sh` writes the
+ingress VPC firewall rules, running VMs and disk snapshots of Google Cloud projects in the
+same three formats, with list calls only, and skips a project without the Compute Engine
+API.
 
 ## The five Microsoft sources
 
