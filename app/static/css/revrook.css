@@ -2658,6 +2658,30 @@ main .rv-clients a.rv-client-name:hover {
   margin-left: 8px;
 }
 
+/* With room (from 1440px) a heading and the age of the newest evidence keep to
+   one line and the name has room: with the wider letters of Inter (2026-11-13) the
+   age broke in two under its date and a row grew a line taller */
+@media (min-width: 1440px) {
+  .rv-clients thead th,
+  .rv-clients td[data-label="Newest evidence"] .rv-cell-note {
+    white-space: nowrap;
+  }
+
+  .rv-clients th[scope="row"] {
+    min-width: 15rem;
+  }
+}
+
+/* Just above the cards (1024px to 1099px) the six columns need 764px in Inter and
+   the page has 697px: the cells give up half of their side padding there, so the
+   table fits and the page does not scroll sideways */
+@media (min-width: 1024px) and (max-width: 1099px) {
+  main .rv-clients th,
+  main .rv-clients td {
+    padding-inline: 6px;
+  }
+}
+
 /* Beside the sidebar the page is about 712px wide at 1024px, too narrow for the
    four row actions on one line beside the other columns, so they wrap there */
 @media (max-width: 1279px) {
