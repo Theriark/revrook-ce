@@ -129,6 +129,7 @@ function Flag($Value) {
 function Exchange-Row([hashtable]$Cells) {
     $row = [ordered]@{}
     foreach ($column in $ExchangeColumns) { $row[$column] = '' }
+    $row['exported_at'] = $ExportedAt
     foreach ($key in $Cells.Keys) { $row[$key] = $Cells[$key] }
     return [pscustomobject]$row
 }
@@ -137,8 +138,10 @@ $ExchangeColumns = @(
     'record_type', 'domain', 'enabled', 'policy_type', 'auto_forwarding_mode',
     'mailbox', 'recipient_type', 'forwarding_external', 'account_enabled',
     'unified_audit_log_enabled', 'audit_disabled', 'alert_kind', 'disabled',
-    'recipient_count', 'last_acknowledged'
+    'recipient_count', 'last_acknowledged', 'exported_at'
 )
+# Every line says when it was exported: revrook reads it as the file's capture time.
+$ExportedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 # Default alert policies of Microsoft 365 and the kind revrook reads them as. Only
 # these are written; there is no default policy for risky sign-ins (that alert
 # lives in Entra ID Protection), so that control stays Not checked from this file.

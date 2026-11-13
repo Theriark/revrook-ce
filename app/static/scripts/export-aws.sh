@@ -99,5 +99,11 @@ else
   echo "No AWS Backup job: backup-export-aws.csv not written."
 fi
 
+# Every line says when it was exported: revrook reads it as the file's capture time, and an
+# export of an unchanged account still differs from the last one, so it is never refused.
+stamp() { awk -v t="$now" 'NR == 1 { print $0 ",exported_at"; next } { print $0 "," t }' "$1" >"$1.tmp" && mv "$1.tmp" "$1"; }
+stamp "$net"
+[ -s "$dev" ] && stamp "$out/device-inventory-aws.csv"
+[ -s "$bak" ] && stamp "$out/backup-export-aws.csv"
 for f in "$out"/*-aws.csv; do echo "$(basename "$f"): $(($(wc -l <"$f") - 1)) rows"; done
 echo Done

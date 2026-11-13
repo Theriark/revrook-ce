@@ -6,6 +6,7 @@ writes is then read by revrook's own importer. It needs jq, as on the MSP's mach
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -18,6 +19,21 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "app" / "static" / "scripts" / "export-cloudflare.sh"
 NETWORK = next(a for a in ADAPTERS if a.source_code == "network-export")
 BASH = shutil.which("bash")
+
+
+STAMP = re.compile(r",\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+
+
+def without_stamp(text: str) -> list[str]:
+    """The lines of a written file without the exported_at column every line has."""
+    lines = text.splitlines()
+    assert lines[0].endswith(",exported_at")
+    assert all(STAMP.search(line) for line in lines[1:])
+    return [lines[0].removesuffix(",exported_at")] + [
+        STAMP.sub("", x) for x in lines[1:]
+    ]
+
+
 ALLOW = {"decision": "allow", "include": [{"email_domain": {"domain": "c.example"}}]}
 BYPASS = {"decision": "bypass", "include": [{"everyone": {}}]}
 
@@ -114,7 +130,7 @@ def test_only_hosts_without_a_real_access_guard_are_written(
     run: tuple[Path, str],
 ) -> None:
     out, stdout = run
-    lines = (out / "network-export-cloudflare.csv").read_text().splitlines()
+    lines = without_stamp((out / "network-export-cloudflare.csv").read_text())
     # open: a Bypass policy; www: guarded on a path only; empty: no policy.
     assert lines[1:] == [
         "rule,core/open.c.example,true,inbound,allow,any,22,cloudflare",
@@ -131,6 +147,7 @@ def test_revrook_reads_the_file(run: tuple[Path, str]) -> None:
     result = NETWORK.parse((out / "network-export-cloudflare.csv").read_bytes(), 1000)
     value = dict(result.facts[-1].value)
     assert value["rows_rejected"] == 0
+    assert value["capture_time_source"] == "file"
     assert value["rules"] == 4 and value["rules_any_source"] == 4
 
 
