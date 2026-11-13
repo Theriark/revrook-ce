@@ -276,6 +276,18 @@ def test_motion_is_short_and_respects_reduced_motion() -> None:
     assert base.index("css/revamp.css") < base.index(hold) < base.index("</head>")
 
 
+def test_the_clients_table_fits_in_the_wider_letters_of_inter() -> None:
+    # Measured on a local build of f30b984: at 1024px the six columns needed 764px
+    # of the 697px of the page (it scrolled sideways), and from 1440px the age of
+    # the newest evidence broke under its date.
+    tight = CSS.split("@media (min-width: 1024px) and (max-width: 1099px) {", 1)[1]
+    tight = tight.split("\n}", 1)[0]
+    assert "main .rv-clients td" in tight and "padding-inline: 6px;" in tight
+    wide = CSS.split("@media (min-width: 1440px) {", 1)[1].split("\n}", 1)[0]
+    assert '.rv-clients td[data-label="Newest evidence"] .rv-cell-note' in wide
+    assert "white-space: nowrap;" in wide
+
+
 def test_the_typeface_is_served_by_the_installation() -> None:
     assert '--pico-font-family: "Inter Variable", system-ui,' in CSS
     vendor = ROOT / "app/static/vendor/inter"

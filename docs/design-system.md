@@ -754,6 +754,12 @@ last stored report as a small posture ring beside its band and date, the control
 that report by status as pills with their counts ("3 not protected", "7 need
 attention", "1 not checked", or "All checked controls protected"), the date of the
 newest evidence with its age and the number of exports, and the row actions. The
+widths were measured again in Inter (2026-11-13), whose letters are wider than those
+of the system fonts: from 1440 px a heading and the age of the newest evidence keep to
+one line and the name has at least 15rem, so a row is as tall as its pills and no
+taller; from 1024 px to 1099 px, just above the cards, the six columns need 764 px
+and the page has 697 px, so the cells give up half of their side padding and the page
+does not scroll sideways. The
 posture is read from the newest stored snapshot of each client with the same scoring
 the report was made with (`last_report_of`), never from a check run on the list, so
 the page stays one query for the clients and one for their newest snapshots. A client
