@@ -214,6 +214,8 @@ def test_coverage_is_written_as_what_passes_of_the_whole() -> None:
     assert coverage_text(result(None, None), counts_problems=True) == NOT_MEASURED
     assert {"PC-ACC-02", "PC-NET-02", "PC-EML-06", "PC-GOV-04"} <= count_rules(LIBRARY)
     assert "PC-ACC-01" not in count_rules(LIBRARY)
+    # State rules that store problems too: no device past support reads "8 of 8 pass".
+    assert {"PC-DEV-03", "PC-EML-05"} <= count_rules(LIBRARY)
 
 
 def test_a_reason_is_put_into_words() -> None:
