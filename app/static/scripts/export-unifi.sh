@@ -95,9 +95,9 @@ jq -r --arg now "$now" --arg released "$released" \
       | (.dst_port | tostring | split(",")[])
       | ["rule", $f.name, "", "", "", "", "", "true", "inbound", "allow",
          (if ($f.src // "any") == "any" or ($f.src // "") == "" then "any" else $f.src end), ., "", "", "", "", $tool, $now] ),
-    ( $inbound[] | . as $p
-      | (if (.ipProtocolScope.protocolFilter.protocol.name // "") | test("ICMP") then [""]
-         else ports(.destination.trafficFilter.portFilter // null) end)[]
+    # ICMP opens no port, so it is left out (a line without a port reads as undecided).
+    ( $inbound[] | select((.ipProtocolScope.protocolFilter.protocol.name // "") | test("ICMP") | not) | . as $p
+      | ports(.destination.trafficFilter.portFilter // null)[]
       | ["rule", $p.name, "", "", "", "", "", "true", "inbound", "allow",
          sources($p.source.trafficFilter // null), ., "", "", "", "", $tool, $now] ),
     ( $wifi[0][] | . as $w

@@ -105,7 +105,7 @@ UNIFI_URL=https://192.168.1.1 UNIFI_API_KEY=... ./export-unifi.sh ./contoso-2026
 
 | File | What it holds |
 | --- | --- |
-| `network-export-unifi.csv` | The gateway: its firmware release date (from Ubiquiti's public firmware list), whether a management port (22, 80, 443, 8443) is open from the internet, and its syslog target ("this controller only" is none). One `rule` line per enabled port forward (its internet port and allowed source) and per enabled allow policy from the External zone (return traffic is left out; ICMP has no port). One `ssid` line per Wi-Fi network: its security mode, guest when its network is in the Guest or Hotspot zone, and isolated unless a policy you made lets that zone reach an internal zone. |
+| `network-export-unifi.csv` | The gateway: its firmware release date (from Ubiquiti's public firmware list), whether a management port (22, 80, 443, 8443) is open from the internet, and its syslog target ("this controller only" is none). One `rule` line per enabled port forward (its internet port and allowed source) and per enabled allow policy from the External zone (return traffic and ICMP, which opens no port, are left out). One `ssid` line per Wi-Fi network: its security mode, guest when its network is in the Guest or Hotspot zone, and isolated unless a policy you made lets that zone reach an internal zone. |
 
 Every line names its tool as `unifi:<gateway name>`, so the files of two consoles of one
 client count together. A UniFi OS console has an owner account from its setup, so the
