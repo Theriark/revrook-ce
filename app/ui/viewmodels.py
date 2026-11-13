@@ -161,9 +161,16 @@ def coverage_text(result: ControlResult | None, counts_problems: bool = False) -
     return f"{passing} of {result.denominator} pass"
 
 
+# State rules whose outcome counts problems too ("pass count 0" in their vectors):
+# PC-DEV-03 stores the devices past vendor support, PC-EML-05 the mailboxes that
+# forward outside.
+PROBLEM_COUNTS = frozenset({"PC-DEV-03", "PC-EML-05"})
+
+
 def count_rules(library: Library) -> frozenset[str]:
-    """The controls whose rule counts problems (rule kind count)."""
-    return frozenset(c.id for c in library.controls if c.rule.kind == "count")
+    """The controls whose outcome counts problems (rule kind count, PROBLEM_COUNTS)."""
+    counting = {c.id for c in library.controls if c.rule.kind == "count"}
+    return frozenset(counting | (PROBLEM_COUNTS & {c.id for c in library.controls}))
 
 
 def flags_of(row: ControlRow, excepted: bool) -> tuple[str, ...]:

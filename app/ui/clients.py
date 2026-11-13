@@ -518,7 +518,9 @@ async def control_page(
             exceptions=notes,
             suggestion=suggested_sentence(row),
             reason=reason_text(result.reason),
-            coverage=coverage_text(result, control.rule.kind == "count"),
+            coverage=coverage_text(
+                result, control.id in count_rules(library_of(request))
+            ),
         )
         name = DRAWER_TEMPLATE if wants_drawer(request) else "control.html"
         return page(request, name, user, context)
