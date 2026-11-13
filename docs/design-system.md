@@ -95,7 +95,9 @@ its token, and nothing else moves. Feedback: hover, focus and a pressed control,
 ease-out (`--rv-motion`). Arrival: something that enters or changes place, 320 ms on a
 curve that starts fast and settles (`--rv-motion-enter`, `--rv-ease-out`). The score:
 the arc of the gauge of Home and of the large ring of a client draws from nothing to
-its value once, 720 ms (`--rv-motion-focal`); the rings of a table row do not. A page
+its value once, 720 ms (`--rv-motion-focal`); the rings of a table row do not. A list
+that opens a page (the stat cards of Home, the rows of a needs-attention list) arrives
+row by row. A page
 change cross-fades the page column in about 220 ms while the rail and the top bar stay
 where they are (`@view-transition` in `revamp.css`; a browser without it changes page
 as before). A browser decides that when it meets `<body>`, so `base.html` links
@@ -410,7 +412,11 @@ Its parts, in order:
 - Needs attention (`.rv-attention`): the eight most urgent controls across every
   client, gate controls first, then what is not protected, by weight. Every row is the
   status pill, the control, the client and the reason beyond the status (old evidence,
-  an open exception), and one action.
+  an open exception), and one action. The name of the control is text that takes the
+  link colour when pointed at (2026-11-13: eight bold links read as a wall, and the
+  pill already carries the colour). The rows, like the stat cards above them, arrive
+  one after the other, 35 ms apart, the last a quarter of a second after the first
+  (`rv-arrive`, Motion under Tokens); with reduced motion they are in place at once.
 - Score over time (`.rv-chart`, the body of the card in `_trend_chart.html`): one
   line per client from the stored reports of the last 7, 30 or 90 days, up to six,
   labelled at its end and told apart by its dash pattern (a label that the labels

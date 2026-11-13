@@ -2085,13 +2085,20 @@ main .rv-rook-link:hover {
   font-size: var(--rv-fs-sm);
 }
 
+/* The name of a control is text, not a wall of links: it takes the link colour
+   when pointed at (2026-11-13), and the status chip beside it carries the colour */
 main .rv-attention-what a {
   font-weight: 600;
   text-decoration: none;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+  transition: color var(--rv-motion);
 }
 
 main .rv-attention-what a:hover {
   text-decoration: underline;
+  color: var(--rv-link);
+  background-color: var(--rv-surface);
 }
 
 .rv-attention-client {
