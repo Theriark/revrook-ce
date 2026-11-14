@@ -25,9 +25,9 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markupsafe import Markup
 
-from app.reports.charts import Bar, bar_chart
+from app.reports.charts import Bar, bar_chart, score_dial, status_bar
 from app.reports.disclaimer import DISCLAIMER, GENERATED_WITH
-from app.reports.status import NOT_APPLICABLE, NOT_PROTECTED
+from app.reports.status import NOT_APPLICABLE, NOT_CHECKED, NOT_PROTECTED
 from app.reports.topics import TOPICS
 from app.reports.view import (
     EVIDENCE_CURRENT,
@@ -40,7 +40,7 @@ from app.reports.view import (
     ReportView,
     iso_date,
 )
-from app.scoring.display import format_fixed, percent
+from app.scoring.display import format_fixed, headline, percent
 from app.scoring.model import (
     GATE_EXPIRED,
     GATE_FAIL,
@@ -65,6 +65,14 @@ CAP_REASONS = {
     GATE_PARTIAL: "needs attention",
     GATE_STALE: "has evidence that is out of date",
 }
+
+
+@dataclass(frozen=True)
+class Waiting:
+    """One kind of evidence and the controls that could not be checked and read it."""
+
+    source: str
+    control_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -183,6 +191,42 @@ def _domain_chart(view: ReportView) -> Markup:
     )
 
 
+def _score_dial(view: ReportView) -> Markup:
+    result = view.result
+    return score_dial(
+        "score-dial",
+        "Score",
+        headline(result) + ".",
+        result.score,
+        format_fixed(result.score),
+        "lower bound" if result.insufficient else "out of 100",
+    )
+
+
+def _status_chart(view: ReportView) -> Markup:
+    summary = ", ".join(f"{label.text} {count}" for label, count in view.counts)
+    return status_bar(
+        "status-chart",
+        "Controls by status",
+        f"One bar split by status. {summary}.",
+        [(label.key, count) for label, count in view.counts],
+    )
+
+
+def _waiting(view: ReportView) -> list[Waiting]:
+    """The kinds of evidence the controls that were not checked read, the one most
+    controls wait for first. A control that reads two kinds is under both.
+    """
+    by_source: dict[str, list[str]] = {}
+    for row in view.rows:
+        if row.label != NOT_CHECKED:
+            continue
+        for source in row.sources:
+            by_source.setdefault(source, []).append(row.control_id)
+    ordered = sorted(by_source.items(), key=lambda item: (-len(item[1]), item[0]))
+    return [Waiting(source, tuple(ids)) for source, ids in ordered]
+
+
 def _roadmap(view: ReportView) -> list[RoadmapItem]:
     items: list[RoadmapItem] = []
     for item in view.ranked:
@@ -211,6 +255,10 @@ def render_qbr(view: ReportView) -> bytes:
         view,
         REPORT_NAMES[QBR],
         n=_numbers(view),
+        score_dial=_score_dial(view),
+        status_chart=_status_chart(view),
+        waiting=_waiting(view),
+        not_checked=sum(1 for row in view.rows if row.label == NOT_CHECKED),
         domain_chart=_domain_chart(view),
         roadmap=_roadmap(view),
         evidence_counts=evidence_counts,
@@ -232,6 +280,7 @@ def render_insurance_pack(view: ReportView) -> bytes:
         "insurance.html",
         view,
         REPORT_NAMES[INSURANCE],
+        score_dial=None,  # the pack answers a form; its cover carries no score
         topics=view.topics,
         register_by_topic=by_topic,
     )

@@ -73,8 +73,8 @@ edition; the licence and font gates would still need to be assessed.
   not hold is drawn in the system font. The preview route allows that font and nothing
   more (`font-src data:` in its policy; no script, no image, no address).
 - A print stylesheet (`app/reports/print.css`): A4, one `.page` for each section of the
-  report, each section starting on a new sheet, with the footer and the disclaimer at the
-  end of the section. A section that is longer than one printed sheet carries its footer
+  report; the cover, the appendix and the last page start on a new sheet and the other
+  sections follow one another, each with the footer and the disclaimer at its end. A section that is longer than one printed sheet carries its footer
   on its last sheet only, so a sheet in the middle of a long section has no disclaimer.
   "Save as PDF" in a browser gives a PDF of it.
 - The disclaimer in the footer of every section and in full on the last page (checked on

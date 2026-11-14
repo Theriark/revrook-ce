@@ -5,6 +5,11 @@
 <svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-{{ name if name in ('check', 'alert', 'cross', 'question') else 'dash' }}"/></svg>
 {%- endmacro %}
 
+{#- The mark of a domain, beside its name; a code the library does not have has none. -#}
+{% macro domain_icon(code) -%}
+{% if code in ('ACC', 'DEV', 'END', 'EML', 'BCK', 'NET', 'LOG', 'GOV') %}<svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-{{ code|lower }}"/></svg>{% endif %}
+{%- endmacro %}
+
 {#- A status is always an icon and its words, never a colour alone. -#}
 {% macro status(label) -%}
 <span class="status status-{{ label.key }}">{{ icon(label.icon) }}{{ label.text }}</span>
@@ -30,22 +35,31 @@
 </footer>
 {%- endmacro %}
 
-{% macro page(page_id, title) -%}
+{% macro page(page_id, title, domain=None) -%}
 <section class="page" id="{{ page_id }}" aria-labelledby="{{ page_id }}-title">
 <p class="page-head">{% if ctx.msp_name %}{{ ctx.msp_name }} &middot; {% endif %}{{ ctx.client_name }} &middot; {{ report_name }}</p>
-<h2 id="{{ page_id }}-title">{{ title }}</h2>
+<h2 id="{{ page_id }}-title">{% if domain %}{{ domain_icon(domain) }}{% endif %}{{ title }}</h2>
 {{ caller() }}
 {{ footer() }}
 </section>
 {%- endmacro %}
 
+{#- The cover: who wrote the report, what it is and for whom on the dark head; under
+    it the score dial (the quarterly review only) beside the facts of the report. -#}
 {% macro cover(subtitle) -%}
 <section class="page cover" id="cover" aria-labelledby="cover-title">
-<h1 id="cover-title">{{ ctx.msp_name }}</h1>
-<p class="cover-title">{{ subtitle }}</p>
-<dl class="facts">
-<dt>Client</dt><dd>{{ ctx.client_name }}</dd>
-<dt>Period</dt><dd>{{ ctx.period_start.isoformat() }} to {{ ctx.period_end.isoformat() }}</dd>
+<div class="cover-head">
+{% if ctx.msp_name %}<p class="cover-msp">{{ ctx.msp_name }}</p>{% endif %}
+<h1 id="cover-title">{{ subtitle }}</h1>
+<p class="cover-client">{{ ctx.client_name }}</p>
+<p class="cover-period">{{ ctx.period_start.isoformat() }} to {{ ctx.period_end.isoformat() }}</p>
+</div>
+<div class="cover-body">
+{% if score_dial %}<div class="cover-score">
+{{ score_dial }}
+<p class="cover-rating">{{ view.result.band }}</p>
+</div>
+{% endif %}<dl class="facts">
 <dt>Prepared by</dt><dd>{{ ctx.prepared_by }}</dd>
 <dt>Generated</dt><dd>{{ ctx.generated_on.isoformat() }}</dd>
 <dt>Pack date</dt><dd>{{ view.snapshot.as_of|day }}</dd>
@@ -53,6 +67,7 @@
 <dd>{% if ctx.data_sources %}<ul>{% for source in ctx.data_sources %}<li>{{ source }}</li>{% endfor %}</ul>{% else %}None entered{% endif %}</dd>
 <dt>Snapshot</dt><dd>{{ view.snapshot_sha256[:16] }} (rules {{ view.snapshot.ruleset_id }} {{ view.snapshot.ruleset_version }})</dd>
 </dl>
+</div>
 {{ footer() }}
 </section>
 {%- endmacro %}

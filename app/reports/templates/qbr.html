@@ -9,13 +9,17 @@
 <p>{{ line }}</p>
 {% endfor %}
 </div>
-<dl class="facts">
-<dt>{% if view.result.insufficient %}Lower bound of the score{% else %}Score{% endif %}</dt><dd>{{ n.score }} out of 100{% if view.result.insufficient %} (a lower bound only: the evidence is too thin to rate){% endif %}</dd>
-<dt>Best case</dt><dd>{{ n.best_case }}</dd>
-<dt>Evidence coverage</dt><dd>{{ n.coverage }} percent</dd>
-<dt>Band</dt><dd>{{ n.band }}</dd>
+<dl class="figures">
+<div><dt>{% if view.result.insufficient %}Lower bound of the score{% else %}Score{% endif %}</dt><dd>{{ n.score }} out of 100</dd></div>
+<div><dt>Evidence coverage</dt><dd>{{ n.coverage }} percent</dd></div>
+<div><dt>Band</dt><dd>{{ n.band }}</dd></div>
 </dl>
+<dl class="facts">
+<dt>Best case</dt><dd>{{ n.best_case }}</dd>
+</dl>
+{% if view.result.insufficient %}<p class="note">The score is a lower bound only: the evidence is too thin to rate.</p>{% endif %}
 {% if n.cap %}<p class="note">{{ n.cap }}</p>{% endif %}
+{{ status_chart }}
 {% call m.table("Controls by status", "summary-status-caption") %}
 <thead><tr><th scope="col">Status</th><th scope="col" class="num">Controls</th></tr></thead>
 <tbody>
@@ -36,7 +40,7 @@
 </thead>
 <tbody>
 {% for domain in view.domains %}
-<tr><th scope="row">{{ domain.name }}</th><td class="num">{{ domain.weight }}</td><td class="num">{{ domain.score_text }}</td>
+<tr><th scope="row">{{ m.domain_icon(domain.code) }}{{ domain.name }}</th><td class="num">{{ domain.weight }}</td><td class="num">{{ domain.score_text }}</td>
 {% for label, count in domain.counts %}<td class="num">{{ count }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
@@ -49,6 +53,7 @@
 <article class="finding" aria-labelledby="finding-{{ item.rank }}">
 <h3 id="finding-{{ item.rank }}">{{ item.rank }}. {{ item.row.title }}</h3>
 <p>{{ m.status(item.row.label) }} <span class="secondary">{{ item.row.control_id }}{% if item.row.gate %} &middot; gate control{% endif %} &middot; {{ item.row.domain_name }}</span></p>
+<p class="note">Read from: {{ item.row.sources|join(", ") }}{% if item.row.evidence_at %}, evidence dated {{ item.row.evidence_at|day }}{% endif %}.</p>
 {#- Only the notes that were written: a client never reads an empty placeholder. -#}
 {% if item.finding.did or item.finding.recommend or item.finding.need or item.finding.by_when %}
 <dl class="facts">
@@ -65,9 +70,26 @@
 {% endif %}
 {% endcall %}
 
+{% if waiting %}
+{% call m.page("unchecked", "What could not be checked") %}
+<p>{{ not_checked }} of the {{ view.rows|length }} controls could not be checked: no dated evidence covers them, or it is too old to count. They are neither good nor bad news until they are checked.</p>
+{% call m.table("The evidence these controls read, the kind most of them wait for first", "unchecked-caption") %}
+<thead><tr><th scope="col">Evidence</th><th scope="col" class="num">Controls waiting</th><th scope="col">Which</th></tr></thead>
+<tbody>
+{% for item in waiting %}
+<tr><td>{{ item.source[:1]|upper }}{{ item.source[1:] }}</td><td class="num">{{ item.control_ids|length }}</td><td>{{ item.control_ids|join(", ") }}</td></tr>
+{% endfor %}
+</tbody>
+{% endcall %}
+<p class="note">A control that reads two kinds of evidence is listed under both. The appendix lists every control with its status.</p>
+{% endcall %}
+{% endif %}
+
+{#- Only what was written: a client never reads an empty roadmap or an empty plan. -#}
+{% if roadmap or ctx.next_quarter_plan %}
 {% call m.page("roadmap", "Remediation roadmap and next quarter") %}
-<h3>Roadmap</h3>
 {% if roadmap %}
+<h3>Roadmap</h3>
 {% call m.table("Actions in order of urgency", "roadmap-caption") %}
 <thead><tr><th scope="col">Priority</th><th scope="col">Control</th><th scope="col">Action</th><th scope="col">By when</th></tr></thead>
 <tbody>
@@ -76,16 +98,13 @@
 {% endfor %}
 </tbody>
 {% endcall %}
-{% else %}
-<p>No action has been entered yet.</p>
 {% endif %}
-<h3>Plan for next quarter</h3>
 {% if ctx.next_quarter_plan %}
+<h3>Plan for next quarter</h3>
 <ol>{% for line in ctx.next_quarter_plan %}<li>{{ line }}</li>{% endfor %}</ol>
-{% else %}
-<p>No plan has been entered yet.</p>
 {% endif %}
 {% endcall %}
+{% endif %}
 
 {% call m.page("evidence", "Evidence status and expiry") %}
 {% call m.table("Controls by state of their evidence", "evidence-states-caption") %}
@@ -128,7 +147,7 @@
 {% endcall %}
 
 {% for domain, rows in appendix %}
-{% call m.page("appendix-" ~ domain.code|lower, "Appendix: " ~ domain.name) %}
+{% call m.page("appendix-" ~ domain.code|lower, "Appendix: " ~ domain.name, domain.code) %}
 {% call m.table(domain.name ~ ": every control, its status and its evidence", "appendix-" ~ domain.code|lower ~ "-caption") %}
 <thead><tr><th scope="col">Control</th><th scope="col" class="num">Weight</th><th scope="col">Status</th><th scope="col">Evidence dated</th><th scope="col">Expires</th><th scope="col">Evidence type</th></tr></thead>
 <tbody>

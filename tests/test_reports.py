@@ -22,6 +22,7 @@ from markupsafe import escape
 from app.checks.library import load_library
 from app.checks.model import NaReview
 from app.exceptions import ExceptionEntry
+from app.reports.charts import DIAL_LENGTH, MIX_GAP, WIDTH, dial_dash, segment_widths
 from app.reports.completeness import (
     MAX_NAME,
     ExportBlockedError,
@@ -204,6 +205,90 @@ def test_every_chart_is_followed_by_a_table_of_its_numbers(name: str) -> None:
     # The caption names the frame the table scrolls in (THE-1189 acceptance D3).
     numbers = '<caption id="coverage-caption">Data for the chart'
     assert numbers in after[after.index("</svg>") :]
+
+
+# --- the look of the document ---------------------------------------------------------
+
+
+def section_of(text: str, page_id: str) -> str | None:
+    found = [m.group(0) for m in SECTION.finditer(text) if m.group(1) == page_id]
+    return found[0] if found else None
+
+
+def test_the_cover_of_the_review_carries_the_score_dial_and_the_pack_none() -> None:
+    cover = section_of(html_of(QBR, "B"), "cover")
+    assert cover is not None
+    assert '<svg class="dial" role="img"' in cover
+    assert "<title" in cover and "<desc" in cover
+    assert f'text-anchor="middle">{EXPECTED_SCORES["B"]}</text>' in cover
+    # The client and the period stand on the head of the cover, under the report.
+    assert cover.index("<h1") < cover.index('class="cover-client"')
+    pack = section_of(html_of(INSURANCE, "B"), "cover")
+    assert pack is not None and 'class="dial"' not in pack
+
+
+def test_the_dial_and_the_status_bar_are_drawn_from_whole_numbers() -> None:
+    assert dial_dash(Fraction(0)) == 0 and dial_dash(Fraction(-3)) == 0
+    assert dial_dash(Fraction(249, 10)) == 249
+    assert dial_dash(Fraction(100)) == dial_dash(Fraction(140)) == DIAL_LENGTH
+    assert segment_widths([0, 0, 0, 0]) == [0, 0, 0, 0]
+    for counts in ([11, 4, 6, 30], [51, 0, 0, 0], [1, 1, 1, 48], [0, 0, 0, 1]):
+        widths = segment_widths(counts)
+        drawn = [width for width in widths if width]
+        # A status with controls is always seen; the bar is exactly as wide as it is.
+        assert [width > 0 for width in widths] == [count > 0 for count in counts]
+        assert sum(widths) + MIX_GAP * (len(drawn) - 1) == WIDTH
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_the_status_bar_stands_on_the_table_of_its_numbers(name: str) -> None:
+    text = html_of(QBR, name)
+    after = text[text.index('<svg class="mix"') :]
+    assert "<title" in after and "<desc" in after
+    rest = after[after.index("</svg>") + len("</svg>") :]
+    assert rest.lstrip().startswith(
+        '<div class="table-scroll" role="region" tabindex="0" '
+        'aria-labelledby="summary-status-caption">'
+    )
+
+
+def test_what_could_not_be_checked_names_the_evidence_it_waits_for() -> None:
+    view = view_of("B")
+    waiting = [row for row in view.rows if row.label == NOT_CHECKED]
+    section = section_of(html_of(QBR, "B"), "unchecked")
+    assert waiting and section is not None
+    assert (
+        f"{len(waiting)} of the {len(view.rows)} controls could not be checked"
+        in section
+    )
+    for row in waiting:
+        assert row.control_id in section, row.control_id
+    # With every control checked there is nothing to say, and no empty section.
+    checked = replace(
+        view, rows=tuple(row for row in view.rows if row.label != NOT_CHECKED)
+    )
+    assert 'id="unchecked"' not in render_report(QBR, checked).decode("utf-8")
+
+
+def test_a_client_never_reads_an_empty_roadmap() -> None:
+    assert section_of(html_of(QBR, "A"), "roadmap") is not None
+    bare = replace(report_clients.context_for("A"), findings={}, next_quarter_plan=())
+    text = html_of(QBR, "A", bare)
+    assert section_of(text, "roadmap") is None
+    assert "has been entered yet" not in text
+    # One of the two alone is printed without the empty heading of the other.
+    plan = replace(bare, next_quarter_plan=("Review the firewall rules.",))
+    section = section_of(html_of(QBR, "A", plan), "roadmap")
+    assert section is not None
+    assert "Plan for next quarter" in section and "<h3>Roadmap</h3>" not in section
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_a_domain_is_marked_where_it_is_named(name: str) -> None:
+    text = html_of(QBR, name)
+    symbols = set(re.findall(r'<symbol id="(rv-icon-dom-[a-z]+)"', text))
+    used = set(re.findall(r'<use href="#(rv-icon-dom-[a-z]+)"/>', text))
+    assert len(symbols) == 8 and used == symbols
 
 
 # --- built from a stored snapshot only ------------------------------------------------
