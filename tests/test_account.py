@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app.models import AppUser, AuditEvent
 from app.ui.account import avatar_type_of
+from app.ui.brand import STATIC_DIR
 from helpers import PASSWORD, create_admin, csrf_from, login
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
@@ -162,3 +163,39 @@ async def test_the_theme_is_chosen_on_the_account_page(
         "/account/theme", data={"csrf_token": csrf, "theme": "purple"}
     )
     assert refused.status_code == 422
+
+
+async def test_a_picture_over_the_body_limit_is_refused_as_a_page_not_as_json(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    """A photo of a few megabytes is stopped by the size limit before the route
+    runs (app/limits.py): the person must get a page that says so, not JSON."""
+    csrf = await signed_in(ui_browser, db_engine)
+    page = (await ui_browser.get("/account")).text
+    assert 'data-max-bytes="524288"' in page
+    refused = await ui_browser.post(
+        "/account/picture",
+        data={"csrf_token": csrf},
+        files={"picture": ("photo.jpg", b"x" * 1_100_000, "image/jpeg")},
+    )
+    assert refused.status_code == 413
+    assert refused.headers["content-type"].startswith("text/html")
+    assert 'class="rv-problem"' in refused.text and "Too large" in refused.text
+    assert "larger than revrook accepts" in refused.text
+    assert "Content-Security-Policy" in refused.headers
+    assert (await user_row(db_engine)).avatar_type is None
+    swapped = await ui_browser.post(
+        "/account/picture",
+        headers={"HX-Request": "true"},
+        data={"csrf_token": csrf},
+        files={"picture": ("photo.jpg", b"x" * 1_100_000, "image/jpeg")},
+    )
+    assert swapped.status_code == 413 and 'class="rv-errors"' in swapped.text
+
+
+def test_the_shell_script_shrinks_a_large_picture_before_it_is_sent() -> None:
+    script = (STATIC_DIR / "js/revrook.js").read_text(encoding="utf-8")
+    assert 'document.addEventListener("submit", sendSmallerPicture);' in script
+    assert 'form.querySelector("input[data-max-bytes]")' in script
+    # what cannot be made smaller is sent as it is, so the server can say why
+    assert ".catch(function () {})" in script and "form.submit();" in script

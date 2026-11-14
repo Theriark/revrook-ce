@@ -34,8 +34,8 @@
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <div class="rv-field">
 <label for="picture">Picture</label>
-<input id="picture" name="picture" type="file" accept="image/png,image/jpeg,image/webp" required aria-describedby="picture-help{% if errors.picture %} picture-error{% endif %}"{% if errors.picture %} aria-invalid="true"{% endif %}>
-<small id="picture-help" class="rv-help">PNG, JPEG or WebP, up to {{ max_avatar_kb }} KB. Shown in a circle.</small>
+<input id="picture" name="picture" type="file" accept="image/png,image/jpeg,image/webp" required data-max-bytes="{{ max_avatar_kb * 1024 }}" aria-describedby="picture-help{% if errors.picture %} picture-error{% endif %}"{% if errors.picture %} aria-invalid="true"{% endif %}>
+<small id="picture-help" class="rv-help">PNG, JPEG or WebP. A picture over {{ max_avatar_kb }} KB is made smaller before it is sent. Shown in a circle.</small>
 {% if errors.picture %}<small id="picture-error" class="rv-field-error">{{ errors.picture|join(' ') }}</small>{% endif %}
 </div>
 <div class="rv-actions">

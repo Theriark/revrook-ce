@@ -51,7 +51,8 @@ Open the account menu (your picture or initial at the right of the top bar) and 
 ## Your account
 
 The account menu also opens **Account**: your display name (shown in the top bar
-instead of the username), a picture (PNG, JPEG or WebP, up to 512 KB), your password
+instead of the username), a picture (PNG, JPEG or WebP; a large photo is made smaller
+for you before it is sent), your password
 (the current one first, then a new one of at least 12 characters, twice) and the theme
 (light, dark, or the same as the system). The sun or moon button beside the menu
 switches between light and dark at once.

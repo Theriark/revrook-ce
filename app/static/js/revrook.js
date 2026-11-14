@@ -42,6 +42,11 @@
  * - the search of the top bar (templates/_topbar.html): the / key moves focus
  *   to it from anywhere outside a field, a menu or an open dialog; without the
  *   script the search is reached like any field.
+ * - the picture of the Account page (templates/account.html): a file over the
+ *   limit of the server (data-max-bytes) is drawn smaller here and sent as a
+ *   JPEG, so a photo straight from a camera can be used; without the script,
+ *   or when the browser cannot read the file, the file is sent as it is and
+ *   the server says what is wrong with it.
  */
 (function () {
   "use strict";
@@ -525,12 +530,60 @@
     }
   }
 
+  // The longest side of a picture that was made smaller, in pixels: four times
+  // the largest circle it is shown in, and a few tens of kilobytes as a JPEG.
+  var PICTURE_SIDE = 512;
+
+  function smallerPicture(file) {
+    return window.createImageBitmap(file).then(function (bitmap) {
+      var scale = Math.min(1, PICTURE_SIDE / Math.max(bitmap.width, bitmap.height));
+      var canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      var context = canvas.getContext("2d");
+      // A JPEG has no transparency: what was clear is white, not black
+      context.fillStyle = "white";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      return new Promise(function (resolve) {
+        canvas.toBlob(resolve, "image/jpeg", 0.85);
+      });
+    });
+  }
+
+  function sendSmallerPicture(event) {
+    var form = event.target;
+    var input = form.querySelector && form.querySelector("input[data-max-bytes]");
+    var file = input && input.files && input.files[0];
+    var limit = input ? Number(input.getAttribute("data-max-bytes")) : 0;
+    if (!file || !limit || file.size <= limit) {
+      return;
+    }
+    if (!window.createImageBitmap || !window.DataTransfer || !window.Promise) {
+      return;
+    }
+    event.preventDefault();
+    smallerPicture(file)
+      .then(function (blob) {
+        if (blob && blob.size <= limit) {
+          var files = new DataTransfer();
+          files.items.add(new File([blob], "picture.jpg", { type: "image/jpeg" }));
+          input.files = files.files;
+        }
+      })
+      .catch(function () {})
+      .then(function () {
+        form.submit();
+      });
+  }
+
   function ready() {
     watchDrawer();
     syncThemeToggle();
     document.addEventListener("keydown", closeAccountMenu);
     document.addEventListener("click", closeAccountMenu);
     document.addEventListener("keydown", focusSearch);
+    document.addEventListener("submit", sendSmallerPicture);
     document.addEventListener("click", applyTheme);
     document.addEventListener("click", applyRail);
     document.addEventListener("htmx:afterRequest", themePosted);
