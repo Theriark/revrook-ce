@@ -570,6 +570,22 @@ def test_the_report_sheet_is_white_paper_on_the_canvas_band() -> None:
     assert sheet_tag in report
     for part in ("rv-sheet-head", "rv-sheet-facts", "rv-sheet-rule", "rv-sheet-counts"):
         assert f'class="{part}"' in report, part
+    # The sheet is drawn as the file is: the dark head of the cover (the roles take
+    # the values of the keep inside it), the score dial and the status bar
+    revamp = (ROOT / "app/static/css/revamp.css").read_text(encoding="utf-8")
+    cover = re.search(
+        r"\n\.rv-sheet-band \.rv-sheet \.rv-sheet-cover \{([^}]*)\}", revamp
+    )
+    assert cover is not None
+    assert "--rv-surface: var(--rv-cover-ground);" in cover.group(1)
+    assert "--rv-text: var(--rv-cover-ink);" in cover.group(1)
+    paper = revamp.split(".rv-sheet-band .rv-sheet {", 1)[1].split("}", 1)[0]
+    assert "--rv-cover-ground: #2d2f3a;" in paper
+    assert "--rv-cover-ink: #ffffff;" in paper
+    assert "background-color: var(--rv-surface);" in cover.group(1)
+    for part in ("rv-sheet-cover", "rv-sheet-top", "rv-sheet-score"):
+        assert f'class="{part}"' in report, part
+    assert "{{ score_dial }}" in report and "{{ status_chart }}" in report
     # The ids the tests of phase 9 read stay where they were
     for marker in ('id="summary"', 'id="problems"', 'id="kinds"', 'id="export-status"'):
         assert marker in report, marker

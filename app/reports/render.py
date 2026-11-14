@@ -192,7 +192,8 @@ def _domain_chart(view: ReportView) -> Markup:
     )
 
 
-def _score_dial(view: ReportView) -> Markup:
+def dial_of(view: ReportView) -> Markup:
+    """The score dial of a view, as the cover of the quarterly review draws it."""
     result = view.result
     return score_dial(
         "score-dial",
@@ -204,7 +205,8 @@ def _score_dial(view: ReportView) -> Markup:
     )
 
 
-def _status_chart(view: ReportView) -> Markup:
+def status_chart_of(view: ReportView) -> Markup:
+    """The controls of a view by status as one bar, as the summary draws it."""
     summary = ", ".join(f"{label.text} {count}" for label, count in view.counts)
     return status_bar(
         "status-chart",
@@ -272,8 +274,8 @@ def render_qbr(view: ReportView) -> bytes:
         view,
         REPORT_NAMES[QBR],
         n=_numbers(view),
-        score_dial=_score_dial(view),
-        status_chart=_status_chart(view),
+        score_dial=dial_of(view),
+        status_chart=status_chart_of(view),
         waiting=_waiting(view),
         next_steps=_next_steps(view),
         not_checked=sum(1 for row in view.rows if row.label == NOT_CHECKED),

@@ -81,6 +81,12 @@ and every sheet carries its number. The surfaces that carry meaning by their col
 (the head of the cover, a table heading, a bar) ask the printer to keep them, so a
 PDF saved from the browser looks like the screen without the background option.
 
+The page **Preview and export** of the application draws its paper sheet the same way
+(`app/ui/templates/report.html`): the dark head of the cover, the dial (`dial_of`) and
+the status bar (`status_chart_of`) are the ones the file prints, so what a technician
+sees before exporting is the cover and the summary of the file. The card of the
+reports says how to get a PDF: print the preview from the browser.
+
 ## The disclaimer and the brand
 
 The disclaimer of rnd-report-3 section 3.8 (`app/reports/disclaimer.py`) is in the footer

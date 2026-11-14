@@ -34,17 +34,27 @@
 <div class="rv-report-sheet-column">
 <div class="rv-sheet-band">
 <article class="rv-sheet" id="sheet" aria-labelledby="sheet-title">
-<p class="rv-sheet-head"><span>{% if view.context.msp_name %}{{ view.context.msp_name }}{% else %}Your business{% endif %}</span><span>{{ view.context.client_name }}</span></p>
+{#- The head of the cover as the file draws it: dark, with the logo of the
+    business when one is set, its name, the client and the period. -#}
+<div class="rv-sheet-cover">
+{% if view.context.logo %}<img class="rv-sheet-logo" src="/settings/logo" alt="">
+{% endif %}<p class="rv-sheet-head"><span>{% if view.context.msp_name %}{{ view.context.msp_name }}{% else %}Your business{% endif %}</span><span>{{ view.context.client_name }}</span></p>
 <h3 id="sheet-title" class="rv-sheet-title">{% if view.context.msp_name %}{{ view.context.msp_name }}{% else %}Your business name goes here{% endif %}</h3>
 <p class="rv-sheet-subtitle">Security review for {{ view.context.client_name }}</p>
+<p class="rv-sheet-period">{{ view.context.period_start.isoformat() }} to {{ view.context.period_end.isoformat() }}</p>
+</div>
+<div class="rv-sheet-top">
+<div class="rv-sheet-score">
+{{ score_dial }}
+<p class="rv-sheet-rating">{{ view.result.band }}</p>
+</div>
 <dl class="rv-sheet-facts">
-<div><dt>Client</dt><dd>{{ view.context.client_name }}</dd></div>
-<div><dt>Period</dt><dd>{{ view.context.period_start.isoformat() }} to {{ view.context.period_end.isoformat() }}</dd></div>
 <div><dt>Prepared by</dt><dd>{{ view.context.prepared_by }}</dd></div>
 <div><dt>Generated</dt><dd>{{ view.context.generated_on.isoformat() }}</dd></div>
 <div><dt>Pack date</dt><dd>{{ s.day(view.snapshot.as_of) }}</dd></div>
-<div><dt>Data sources</dt><dd>{% if view.context.data_sources %}{{ view.context.data_sources|join(", ") }}{% else %}None entered{% endif %}</dd></div>
+<div><dt>Data sources</dt><dd>{% if view.context.data_sources %}{{ view.context.data_sources|length }}: {{ view.context.data_sources|join(", ") }}{% else %}None entered{% endif %}</dd></div>
 </dl>
+</div>
 <div class="rv-sheet-rule" aria-hidden="true"></div>
 <h4 class="rv-sheet-heading">Summary</h4>
 <div id="summary" class="rv-sheet-summary">
@@ -52,6 +62,7 @@
 <p>{{ line }}</p>
 {% endfor %}
 </div>
+{{ status_chart }}
 <ul class="rv-sheet-counts" aria-label="Controls by status">
 {% for label, count in view.counts %}
 <li>{{ s.status(label) }}<span class="rv-sheet-count">{{ count }}</span></li>
@@ -78,7 +89,7 @@
 
 <section class="rv-card" id="kinds-card" aria-labelledby="kinds-title">
 <h3 id="kinds-title" class="rv-card-title">The reports</h3>
-<p class="rv-card-subtitle">Both are made from this same stored state. A preview opens the file as it would be sent; an export keeps an unchangeable copy and its hash.</p>
+<p class="rv-card-subtitle">Both are made from this same stored state. A preview opens the file as it would be sent; an export keeps an unchangeable copy and its hash. For a PDF, open the preview and print it from your browser (Ctrl+P, then Save as PDF): the cover, the sheet numbers and the colours are kept.</p>
 <ul id="kinds" class="rv-kinds">
 {% for kind, name in kinds %}
 <li class="rv-kind">

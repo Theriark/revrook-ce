@@ -129,3 +129,33 @@ async def test_a_report_says_what_each_check_found_and_who_prepared_it(
     async with async_sessionmaker(db_engine)() as session:
         total = len(list(await session.execute(select(ControlResult.id))))
     assert total == len(kept)
+
+
+async def test_the_page_of_a_report_draws_its_sheet_as_the_file_is(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    csrf = await sign_in(ui_browser, db_engine)
+    client_id = await seed_client(db_engine, ui_ctx)
+    report = await make_report(ui_browser, csrf, client_id)
+    page = (await ui_browser.get(report)).text
+    sheet = page.split('<article class="rv-sheet"')[1].split("</article>")[0]
+    # The dark head of the cover, the score dial and the status bar of the file.
+    assert '<div class="rv-sheet-cover">' in sheet
+    assert sheet.index('class="rv-sheet-cover"') < sheet.index('class="rv-sheet-title"')
+    assert '<svg class="dial" role="img"' in sheet and '<svg class="mix"' in sheet
+    assert sheet.index('<svg class="mix"') < sheet.index('class="rv-sheet-counts"')
+    preview = (await ui_browser.get(f"{report}/preview/qbr")).text
+    dial = re.search(r'<svg class="dial".*?</svg>', sheet, re.DOTALL)
+    assert dial is not None and dial.group(0) in preview
+    # No logo is set: none is drawn. Once one is, the sheet shows the kept file.
+    assert "rv-sheet-logo" not in sheet
+    stored = await ui_browser.post(
+        "/settings/logo",
+        data={"csrf_token": csrf},
+        files={"logo": ("logo.png", PNG, "image/png")},
+    )
+    assert stored.status_code == 303
+    page = (await ui_browser.get(report)).text
+    assert '<img class="rv-sheet-logo" src="/settings/logo" alt="">' in page
+    # A PDF is the preview printed from the browser, and the page says so.
+    assert "print it from your browser" in page and "Save as PDF" in page
