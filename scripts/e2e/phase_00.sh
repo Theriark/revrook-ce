@@ -3,7 +3,7 @@
 # "docker compose up --wait"). Run with: bash scripts/e2e/phase_00.sh
 #
 # Proves: /healthz and /readyz answer 200 on port 8080, the web container runs as
-# uid 10001 and its image holds no development package.
+# uid 10001, its image holds no development package and it prints a report to PDF.
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -39,6 +39,23 @@ else
     echo "phase_00: web container uid ${uid}"
     image="$(docker inspect --format '{{.Image}}' "${container}")"
     bash "${ROOT}/scripts/check_image_packages.sh" "${image}" || fail "image package check failed (see lines above)"
+    # The browser of the image prints a report (app/reports/pdf.py), inside the
+    # running container: read-only root, /tmp as tmpfs, uid 10001. The golden
+    # review goes in as HTML and must come out as a PDF.
+    pdf="$(mktemp)"
+    docker exec -i "${container}" python -m app.reports.pdf \
+      < "${ROOT}/tests/golden/reports/qbr-client-a.html" > "${pdf}" \
+      || fail "the container could not print a report to PDF"
+    [[ "$(head -c 5 "${pdf}")" == "%PDF-" ]] || fail "what the container printed is not a PDF"
+    size="$(wc -c < "${pdf}")"
+    [[ "${size}" -gt 100000 ]] || fail "the printed report is only ${size} bytes"
+    # A4 sheets, as the print stylesheet asks (not the paper of the browser), and
+    # the whole report, not one sheet.
+    grep -a -q '/MediaBox \[0 0 59[45]' "${pdf}" || fail "the printed report is not on A4 sheets"
+    sheets="$(grep -a -c '/Type /Page$' "${pdf}" || true)"
+    [[ "${sheets}" -ge 10 ]] || fail "the printed report has ${sheets} sheets, expected the whole review"
+    echo "phase_00: a report prints to a PDF of ${size} bytes, ${sheets} A4 sheets"
+    rm -f "${pdf}"
   elif [[ "${strict}" == "true" ]]; then
     fail "no compose web container found by label (project revrook, service web) in CI"
   else

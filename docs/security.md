@@ -118,6 +118,22 @@ An importer reads a file the MSP exported from a tool. The file is untrusted.
   as facts, and a file in which no row can be read is refused. A reason names the
   column and never repeats what the file said.
 
+## The browser that prints a report
+
+A PDF of a report is printed by a headless Chromium the image installs
+(`app/reports/pdf.py`, [pdf-spike.md](pdf-spike.md)). It is started for one file and
+stopped after it, at most one at a time, by a signed-in person only.
+
+- The file it reads is the report revrook rendered. A policy inside the file forbids
+  scripts and every address except `data:` fonts and images; no host name is resolved.
+- Its profile and home are a temporary folder, removed with the file.
+- It runs **without its own sandbox**: a container gives it no user namespace. A flaw
+  in how the browser reads a picture could therefore be used by an administrator who
+  uploads a crafted logo, the only bytes in a report that come from outside. The
+  container still runs as uid 10001 on a read-only root.
+- The browser is a Debian package: its security fixes arrive when the image is built
+  again.
+
 ## Known limits
 
 - Sign-out clears the cookie but cannot revoke a stolen signed cookie before it

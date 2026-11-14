@@ -2,8 +2,8 @@
 
 Two reports are made from one stored state of a client: the **quarterly security
 review** and the **cyber insurance evidence pack**, each as one HTML file with print
-styles ([reports](../reports.md)). There is no PDF export in the Community Edition:
-print the HTML file to PDF from the browser if you need one.
+styles ([reports](../reports.md)). **Download PDF** gives the same report as a PDF
+file, ready to send.
 
 Before the first export, set the name of your business in **Settings**
 ([1. First start](01-first-start.md)).
@@ -47,8 +47,9 @@ report.
 - The paper sheet, white in both themes and set in a charcoal frame, shows the cover and the summary as the client receives them:
   the dark head with your logo, your business, the client and the period, the score dial with its band, who prepared it and when,
   the summary sentences and the controls by status as one bar above their counts. The whole file is what **Preview** opens.
-- For a PDF, open the preview and print it from your browser (Ctrl+P, then **Save as PDF**): the cover is a sheet of its own,
-  every sheet carries its number and the colours are kept. revrook itself makes no PDF file ([why](../pdf-spike.md)).
+- **Download PDF** saves the report as a PDF file: the cover is a sheet of its own, every sheet carries its number and the
+  colours are kept. It is the preview, printed for you ([how](../pdf-spike.md)). The PDF is not kept by revrook; the copy that
+  is kept, with its hash, is the export.
 - **The reports**: for each of the two, **Preview** opens the file as it would be sent,
   and **Export the quarterly security review** or **Export the cyber insurance
   evidence pack** keeps an unchangeable copy and its SHA-256 and opens the export

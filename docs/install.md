@@ -16,6 +16,10 @@ release exists. Everything below is what the repository does today.
 | `db` | PostgreSQL 16. The only database revrook supports. |
 | `/data` | A volume for the kept files (exports of reports and, if you keep them, raw files). |
 
+The image holds a headless Chromium, used only to print a report to PDF
+([pdf-spike.md](pdf-spike.md)); it needs nothing beyond the `/tmp` the stack already
+mounts.
+
 The image can also run web and worker as two processes of one container (`ROLE=all`,
 the default of the image). The compose file runs them as two containers.
 

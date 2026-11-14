@@ -9,7 +9,9 @@ Policy (merge gate check 6): MIT, MIT-0, BSD-2-Clause, BSD-3-Clause, Apache-2.0,
 ISC, PSF-2.0, Python-2.0, CNRI-Python, 0BSD, Unlicense and CC0-1.0 are allowed;
 MPL-2.0 only for development packages. LGPL, GPL, AGPL, SSPL and unknown
 licences fail, transitive packages included. `tools/licence_audit.py` enforces
-this on the installed packages; psycopg must not appear in the lock file.
+this on the installed packages; psycopg must not appear in the lock file. The audit
+reads Python packages; the programs the image installs from Debian are recorded in
+[System packages of the image](#system-packages-of-the-image).
 
 ## Direct runtime dependencies
 
@@ -60,6 +62,22 @@ choose another resolution.
 | Inter | OFL-1.1 | rsms/inter `LICENSE.txt` (the copy in the npm tarball @fontsource-variable/inter 5.3.0, kept as `app/static/vendor/inter/LICENSE`) | 2026-11-13 | The typeface of the interface: two unmodified font files (Latin and Latin Extended, upright, weight and optical-size axes) and their `@font-face` rules. The SIL Open Font License is accepted for font files only (founder decision of 2026-11-13); it is not on the allow-list of the code audit and no code is under it. It allows bundling and redistribution with software and embedding in a document (a report carries the Latin file inside itself); the fonts are not sold on their own and keep their name and licence file. SHA-256: Latin `2c295d99e26dcf357d4d01bcf270fd6924b600c9a13dd8c363ef114f4c6976fa`, Latin Extended `5e6d4fe9d9f4bff8b2a2469d25ab19576bb85331e22c6ed51398e16f95d56a9c`. |
 | three.js 0.186.1 | MIT | mrdoob/three.js `LICENSE` (the copy in the npm tarball three-0.186.1.tgz) | 2026-10-23 | Loaded only by the Evidence Explorer preview page, from `app/static/vendor/three`, after the browser is found to offer WebGL 2. Two unmodified files of the published build, not committed: `tools/fetch_three.py` writes them in CI and in the image build after checking the tarball integrity (sha512) and the SHA-256 of each file recorded in `app/static/vendor/three/PINNED.json`; `tests/test_evidence_explorer.py` checks them again. The licence file is committed. No CDN. |
 
+## System packages of the image
+
+The image installs these with `apt` from Debian 13, unmodified (`Dockerfile`). They are
+programs and libraries beside revrook, not Python packages, so check 6 does not see
+them. No code of revrook links to them: the browser is started as a separate program
+(`app/reports/pdf.py`).
+
+| Package | Licence | Read in | Date | Notes |
+| --- | --- | --- | --- | --- |
+| chromium-headless-shell, with chromium-common (156.0.8078.79-1~deb13u1 on the day) | BSD-3-Clause for Chromium itself (`Files: *`). Parts from other projects keep their own terms: the stanzas of the file name Apache-2.0, MIT, MPL-1.1 and MPL-2.0, LGPL-2.0+ and LGPL-2.1+, GPL-2+ (among them files of FFmpeg), ICU, Unicode, zlib and others | Debian's copyright file of the source package `chromium` (metadata.ftp-master.debian.org, 284 KB): the stanza for `Files: *` read, the licence of every other stanza counted, not every stanza read | 2026-11-14 | Prints a report to PDF. Founder decision of 2026-11-14 ([pdf-spike.md](pdf-spike.md)). The image passes these components on as Debian ships them; their source is Debian's source package. |
+| fonts-dejavu-core (2.37-8) | Bitstream Vera licence; the DejaVu changes are in the public domain | Debian's copyright file of the source package `fonts-dejavu` | 2026-11-14 | Draws in a PDF the letters the typeface inside a report does not hold (it holds Latin). Fonts may be passed on with software, not sold on their own. |
+| The libraries `apt` installs with the browser (its package dependencies) | **Not read** | | | Unmodified Debian packages. Nothing is recorded about them from memory; each carries its terms in `/usr/share/doc/<package>/copyright` inside the image. |
+
+The base image (`python:3.12-slim`, Debian 13) was already a set of Debian packages
+under their own licences before this section existed; it is not recorded here.
+
 ## Planned dependencies not yet in `requirements.in`
 
 | Dependency | Needed from | Status |
@@ -67,7 +85,7 @@ choose another resolution.
 | openpyxl | phase 3 or 4 (XLSX import) | LICENSE file NOT read. Its source lives on foss.heptapod.net, which the phase 0 run could not read. Read it before adding the dependency. |
 | httpx | development tests now; possibly runtime later | Direct dependency of the development group only, see the decision below. LICENSE (BSD-3-Clause) read in encode/httpx `LICENSE.md` on 2026-10-17. |
 | hypothesis | phase 2 (development only) | Not added yet. LICENSE file not read. |
-| WeasyPrint, Pango and the other libraries a PDF needs, Noto Sans | phase 8 spike | **Not added, and not read.** The PDF gates were not assessed (see `docs/pdf-spike.md`): their licence files were not opened and the font cannot be committed by the crew, so CE ships HTML with a print stylesheet and none of them is a dependency. An opt-in script (`RUN_PDF_SPIKE=1`, not run by CI) builds a throwaway image that installs some of them only to measure size, memory and time; it is never shipped. |
+| WeasyPrint, Pango and the other libraries a PDF needs, Noto Sans | phase 8 spike | **Not added, and not read.** The PDF gates were not assessed (see `docs/pdf-spike.md`): their licence files were not opened and the font cannot be committed by the crew, so CE ships HTML with a print stylesheet and none of them is a dependency. Since 2026-11-14 a PDF is printed by the browser of the image instead (see above), so none of them is planned. An opt-in script (`RUN_PDF_SPIKE=1`, not run by CI) builds a throwaway image that installs some of them only to measure size, memory and time; it is never shipped. |
 
 ## Open licence decision for R&D: httpx pulls in certifi (MPL-2.0)
 

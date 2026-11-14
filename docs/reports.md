@@ -2,7 +2,8 @@
 
 Two reports are built from a stored snapshot (`app/scoring/snapshot.py`): the quarterly
 security review (QBR) and the cyber insurance evidence pack. The shipping format is HTML
-with a print stylesheet; see `docs/pdf-spike.md` for why there is no PDF.
+with a print stylesheet. A PDF is that same file, printed on request by the browser of the
+image (`app/reports/pdf.py`, see `docs/pdf-spike.md`).
 
 ## From snapshot to file
 
@@ -85,7 +86,11 @@ The page **Preview and export** of the application draws its paper sheet the sam
 (`app/ui/templates/report.html`): the dark head of the cover, the dial (`dial_of`) and
 the status bar (`status_chart_of`) are the ones the file prints, so what a technician
 sees before exporting is the cover and the summary of the file. The card of the
-reports says how to get a PDF: print the preview from the browser.
+reports offers **Download PDF** for each report (`GET
+/clients/<id>/reports/<id>/pdf/<kind>`): the bytes of the preview, printed by the
+browser of the image, one request at a time. On a machine without a browser there is
+no button and the card says how to print the preview. A PDF is not kept and has no
+row in the export history: the export stays the HTML file and its hash.
 
 ## The disclaimer and the brand
 

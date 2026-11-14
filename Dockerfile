@@ -28,6 +28,12 @@ ENV PATH=/opt/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     ROLE=all \
     EVIDENCE_DIR=/data/evidence
+# A headless Chromium prints a report to PDF (app/reports/pdf.py). DejaVu draws the
+# letters the typeface inside a report does not hold.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        chromium-headless-shell fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 10001 revrook \
     && useradd --system --uid 10001 --gid 10001 --no-create-home \
         --shell /usr/sbin/nologin revrook \

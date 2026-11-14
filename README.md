@@ -109,7 +109,7 @@ sideways, with a cue at its edge, and every card and table row takes the whole w
 | [docs/evidence-explorer-preview.md](docs/evidence-explorer-preview.md) | The Evidence Explorer, the scene of one client's evidence sources and the controls they feed |
 | [docs/testing.md](docs/testing.md) | Testing notes |
 | [docs/ci-cd.md](docs/ci-cd.md) | CI/CD flow and known gaps |
-| [docs/pdf-spike.md](docs/pdf-spike.md) | The PDF spike and why the reports are HTML |
+| [docs/pdf-spike.md](docs/pdf-spike.md) | How a report becomes a PDF, and the earlier PDF spike |
 | [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state and the release workflow check |
 | [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
 | [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the import page, the Microsoft 365 export script, the public DNS check, the scenes, the folded rail, the Evidence Explorer, the top bar, the checklist tools, the score drivers and the bulk actions, with live screenshots ([docs/images](docs/images/README.md)) |

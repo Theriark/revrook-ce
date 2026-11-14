@@ -1,5 +1,6 @@
 """FastAPI application: health endpoints, sign-in pages and the token API."""
 
+import asyncio
 import html
 import logging
 from collections.abc import AsyncIterator
@@ -25,6 +26,7 @@ from app.ext.registry import ExtensionRegistry, load_plugins
 from app.importers.registry import build_default_registry
 from app.limits import UploadSizeLimitMiddleware
 from app.ratelimit import ConcurrencyGate
+from app.reports.pdf import find_browser
 from app.security import SecurityHeadersMiddleware, SessionCodec
 from app.settings import Settings, get_settings
 from app.system import worker_banner
@@ -149,6 +151,9 @@ def create_app(
     app.state.importers = build_default_registry()
     app.state.library = load_library()
     app.state.dns_resolver = make_resolver(resolved.dns_resolver)
+    # The browser that prints a report to PDF (app/reports/pdf.py), one at a time.
+    app.state.pdf_browser = find_browser()
+    app.state.pdf_turn = asyncio.Semaphore(1)
     # Added first, so the security headers (added next) wrap its refusals too.
     app.add_middleware(
         UploadSizeLimitMiddleware,
@@ -242,6 +247,7 @@ def create_app(
     app.include_router(ui_imports.router)
     app.include_router(ui_profiles.router)
     app.include_router(ui_reports.router)
+    app.include_router(ui_reports.files_router)
     app.include_router(ui_site.router)
     app.include_router(ui_site.files_router)
     app.include_router(ui_system.router)

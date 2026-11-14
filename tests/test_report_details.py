@@ -157,5 +157,8 @@ async def test_the_page_of_a_report_draws_its_sheet_as_the_file_is(
     assert stored.status_code == 303
     page = (await ui_browser.get(report)).text
     assert '<img class="rv-sheet-logo" src="/settings/logo" alt="">' in page
-    # A PDF is the preview printed from the browser, and the page says so.
+    # Where the machine has no browser to make a PDF with (tests/test_report_pdf.py
+    # reads the other case), the page says how to print the preview.
+    ui_browser._transport.app.state.pdf_browser = None  # type: ignore[attr-defined]
+    page = (await ui_browser.get(report)).text
     assert "print it from your browser" in page and "Save as PDF" in page

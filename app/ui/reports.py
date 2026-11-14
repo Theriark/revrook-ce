@@ -8,7 +8,9 @@ check, an immutable copy under its SHA-256 and one row of history. A download re
 that copy back and checks it against its hash, for the client named in the address.
 """
 
+import asyncio
 import base64
+import logging
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -25,7 +27,14 @@ from app.models import AppUser, Client, EvidenceItem, Snapshot
 from app.posture import load_live, open_exceptions, view_from
 from app.preferences import get_logo, get_msp_name
 from app.reports.completeness import completeness_problems
-from app.reports.export import ExportRecord, export_report, list_exports, read_export
+from app.reports.export import (
+    ExportRecord,
+    export_filename,
+    export_report,
+    list_exports,
+    read_export,
+)
+from app.reports.pdf import PdfError, pdf_of
 from app.reports.render import (
     INSURANCE,
     KINDS,
@@ -71,6 +80,9 @@ from app.ui.dashboard import (
 from app.web import clock_of, files_of, session_factory
 
 router = APIRouter()
+# Routes that answer with a file, not a page (the page checks read `router`).
+files_router = APIRouter()
+logger = logging.getLogger("revrook.web")
 # The preview is the report as it would be sent: its own inline style, and the
 # typeface it carries inside itself as a data: font. Nothing else, and no script.
 PREVIEW_POLICY = (
@@ -127,6 +139,11 @@ async def history_of(
         "reports_capped": capped,
         "reports_cap": MAX_SNAPSHOTS,
     }
+
+
+PRINT_INSTEAD = "Open the preview and print it from your browser (Save as PDF)."
+NO_PDF = f"This installation has no browser to make a PDF with. {PRINT_INSTEAD}"
+PDF_FAILED = f"The PDF could not be made this time. {PRINT_INSTEAD}"
 
 
 def check_kind(kind: str) -> str:
@@ -343,6 +360,8 @@ async def report_page(
             "status_chart": status_chart_of(view),
             "problems": completeness_problems(view),
             "kinds": KIND_LIST,
+            # Without a browser on the machine the page says how to print one.
+            "pdf": request.app.state.pdf_browser is not None,
         }
         return page(request, "report.html", user, context)
 
@@ -365,6 +384,42 @@ async def preview(
             headers={
                 "Content-Security-Policy": PREVIEW_POLICY,
                 "Cache-Control": "no-store",
+            },
+        )
+
+    return await guarded(request, handle)
+
+
+@files_router.get("/clients/{client_id}/reports/{snapshot_id}/pdf/{kind}")
+async def pdf(
+    request: Request, client_id: RowId, snapshot_id: RowId, kind: str
+) -> Response:
+    """The report as a PDF file: the file the preview shows, printed."""
+
+    async def handle(user: AppUser) -> Response:
+        check_kind(kind)
+        browser = request.app.state.pdf_browser
+        if browser is None:
+            raise FormError(NO_PDF, 404)
+        async with session_factory(request)() as session:
+            view = await build_report_view(
+                request, session, user, client_id, snapshot_id
+            )
+        html = render_report(kind, view)
+        try:
+            # One browser at a time: a second request waits for the first.
+            async with request.app.state.pdf_turn:
+                data = await asyncio.to_thread(pdf_of, html, browser)
+        except PdfError as error:
+            logger.warning("A report could not be printed to PDF: %s", error)
+            raise FormError(PDF_FAILED, 503) from error
+        name = export_filename(kind, view).removesuffix(".html") + ".pdf"
+        return Response(
+            content=data,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{name}"',
+                "Cache-Control": with_no_transform("no-store"),
             },
         )
 
