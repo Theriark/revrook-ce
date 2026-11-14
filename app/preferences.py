@@ -4,7 +4,10 @@ The MSP name (phase 9) is printed on every report. The reminder address (phase 1
 is where the expiry reminders go; the mail relay itself is set in the environment.
 """
 
+import base64
+import binascii
 import re
+from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy.dialects.postgresql import insert
@@ -17,6 +20,11 @@ from app.textcheck import control_character
 
 MSP_NAME_KEY = "msp_name"
 REMINDER_KEY = "reminder_recipient"
+LOGO_KEY = "msp_logo"
+MAX_LOGO_BYTES = 200 * 1024
+# A picture file only (never SVG, which can carry script): the caller names the
+# type by the first bytes of the file, not by what the browser said.
+LOGO_TYPES = ("image/png", "image/jpeg", "image/webp")
 MAX_EMAIL_LENGTH = 254
 # One plain address: letters, digits and a few signs, an @ and a dotted domain. No
 # space, quote, comma or angle bracket, so it cannot add a recipient or a header.
@@ -69,6 +77,68 @@ async def set_msp_name(
         target_id=MSP_NAME_KEY,
     )
     return cleaned
+
+
+@dataclass(frozen=True)
+class Logo:
+    """The logo of the MSP: a picture file and its media type."""
+
+    media_type: str
+    data: bytes
+
+
+async def get_logo(session: AsyncSession) -> Logo | None:
+    """The logo printed on the cover of every report; None until one is set."""
+    row = await session.get(Setting, LOGO_KEY)
+    if row is None:
+        return None
+    media_type, encoded = row.value.get("type"), row.value.get("data")
+    if media_type not in LOGO_TYPES or not isinstance(encoded, str) or not encoded:
+        return None
+    try:
+        return Logo(media_type, base64.b64decode(encoded, validate=True))
+    except binascii.Error:
+        return None
+
+
+async def set_logo(
+    session: AsyncSession,
+    data: bytes,
+    media_type: str | None,
+    *,
+    user_id: int | None,
+    now: datetime,
+) -> None:
+    """Save the logo. Raises ValueError with a readable message when it is bad."""
+    if media_type not in LOGO_TYPES or not data:
+        raise ValueError("The logo must be a PNG, JPEG or WebP image.")
+    if len(data) > MAX_LOGO_BYTES:
+        raise ValueError(f"The logo must be at most {MAX_LOGO_BYTES // 1024} KB.")
+    value = {"type": media_type, "data": base64.b64encode(data).decode("ascii")}
+    await _save(session, LOGO_KEY, value, user_id, now)
+    add_audit_event(
+        session,
+        "settings.msp_logo",
+        actor_user_id=user_id,
+        target_type="setting",
+        target_id=LOGO_KEY,
+        detail={"bytes": len(data)},
+    )
+
+
+async def remove_logo(
+    session: AsyncSession, *, user_id: int | None, now: datetime
+) -> None:
+    """Take the logo away: the cover of a report prints the name alone again."""
+    await _save(session, LOGO_KEY, {}, user_id, now)
+    add_audit_event(
+        session,
+        "settings.msp_logo",
+        actor_user_id=user_id,
+        target_type="setting",
+        target_id=LOGO_KEY,
+        detail={"removed": True},
+    )
 
 
 async def get_reminder_recipient(session: AsyncSession) -> str | None:

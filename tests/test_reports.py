@@ -142,13 +142,16 @@ def test_a_report_carries_the_typeface_of_the_interface() -> None:
         'font-family: "Inter Variable", system-ui'
     )
     # The preview shows the report under a policy of its own: that font, its inline
-    # style, and nothing else (no script, no image, no address).
+    # style, a picture carried inside the file (the logo of the business) and
+    # nothing else (no script, no address).
     policy = dict(part.split(" ", 1) for part in PREVIEW_POLICY.split("; "))
     assert policy["default-src"] == "'none'" and policy["font-src"] == "data:"
+    assert policy["img-src"] == "data:"
     assert set(policy) == {
         "default-src",
         "style-src",
         "font-src",
+        "img-src",
         "base-uri",
         "form-action",
         "frame-ancestors",
@@ -289,6 +292,40 @@ def test_a_domain_is_marked_where_it_is_named(name: str) -> None:
     symbols = set(re.findall(r'<symbol id="(rv-icon-dom-[a-z]+)"', text))
     used = set(re.findall(r'<use href="#(rv-icon-dom-[a-z]+)"/>', text))
     assert len(symbols) == 8 and used == symbols
+
+
+def test_a_finding_says_what_the_check_found_when_the_snapshot_keeps_it() -> None:
+    seen = "28 of 35 member users with MFA"
+    context = replace(report_clients.context_for("B"), observed={"PC-ACC-01": seen})
+    section = section_of(html_of(QBR, "B", context), "findings")
+    assert section is not None
+    assert f"<dt>What was checked</dt><dd>{seen}</dd>" in section
+    # A snapshot made before the sentences were kept prints none.
+    plain = section_of(html_of(QBR, "B"), "findings")
+    assert plain is not None and "What was checked" not in plain
+
+
+def test_the_evidence_is_named_as_a_client_reads_it() -> None:
+    body = html_of(QBR, "B").split("</head>")[1]
+    assert "Microsoft 365 export (Entra, Intune, Secure Score)" in body
+    for shorthand in LIBRARY.source_codes.values():
+        assert shorthand not in body, shorthand
+
+
+@pytest.mark.parametrize("kind", KINDS)
+def test_the_logo_of_the_business_stands_on_the_cover_inside_the_file(
+    kind: str,
+) -> None:
+    data = base64.b64encode(b"\x89PNG\r\n\x1a\n" + bytes(32)).decode("ascii")
+    context = replace(report_clients.context_for("A"), logo=("image/png", data))
+    text = html_of(kind, "A", context)
+    cover = section_of(text, "cover")
+    assert cover is not None
+    mark = f'<img class="cover-mark" src="data:image/png;base64,{data}" alt="">'
+    assert mark in cover and cover.index(mark) < cover.index(report_clients.MSP)
+    # Still one file that loads nothing: the picture and the typeface are inside it.
+    assert text.count("<img") == 1 and text.count("src=") == 1
+    assert text.count("url(") == 1
 
 
 # --- built from a stored snapshot only ------------------------------------------------

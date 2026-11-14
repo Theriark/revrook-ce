@@ -45,6 +45,21 @@ TOP_FINDINGS = 5
 LATEST = datetime.max.replace(tzinfo=UTC)
 NOT_ENTERED = "Not yet entered"
 
+# The kinds of evidence as a client reads them, by the letter of the library (its
+# own wording is a shorthand for the people who write the rules). A letter that is
+# not here keeps the library's words.
+PLAIN_SOURCES = {
+    "G": "Microsoft 365 export (Entra, Intune, Secure Score)",
+    "X": "Exchange Online settings export",
+    "R": "Device inventory, patch and antivirus export",
+    "B": "Backup jobs export",
+    "N": "Network export",
+    "D": "Public DNS check",
+    "T": "Training completions export",
+    "H": "Leavers list",
+    "M": "Manual evidence (a dated document or an attestation)",
+}
+
 EVIDENCE_NONE = "No dated evidence"
 EVIDENCE_CURRENT = "Current"
 EVIDENCE_EXPIRING = "Expires within 30 days"
@@ -82,6 +97,11 @@ class ReportContext:
     na_reviews: Mapping[str, NaReview] = field(default_factory=dict)
     topic_owners: Mapping[str, str] = field(default_factory=dict)
     asked_topics: frozenset[str] | None = None
+    # What each control was found to be when the snapshot was made (the sentence of
+    # the check engine), by control id; empty for a snapshot made before it was kept.
+    observed: Mapping[str, str] = field(default_factory=dict)
+    # The logo of the MSP for the cover: its media type and its bytes in base64.
+    logo: tuple[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -228,7 +248,8 @@ def _rows(
     titles = {control.id: control.title for control in library.controls}
     sources = {
         control.id: tuple(
-            library.source_codes.get(code, code) for code in control.sources
+            PLAIN_SOURCES.get(code) or library.source_codes.get(code, code)
+            for code in control.sources
         )
         for control in library.controls
     }

@@ -8,6 +8,7 @@ check, an immutable copy under its SHA-256 and one row of history. A download re
 that copy back and checks it against its hash, for the client named in the address.
 """
 
+import base64
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -22,7 +23,7 @@ from app.evidence.errors import ClientNotFoundError
 from app.evidence.locking import lock_client
 from app.models import AppUser, Client, EvidenceItem, Snapshot
 from app.posture import load_live, open_exceptions, view_from
-from app.preferences import get_msp_name
+from app.preferences import get_logo, get_msp_name
 from app.reports.completeness import completeness_problems
 from app.reports.export import ExportRecord, export_report, list_exports, read_export
 from app.reports.render import INSURANCE, KINDS, QBR, REPORT_NAMES, render_report
@@ -33,11 +34,14 @@ from app.security import with_no_transform
 from app.snapshots import (
     earlier_bytes,
     list_snapshots,
+    load_observed,
     load_snapshot,
     recent_twin,
+    store_results,
     store_snapshot,
 )
 from app.sources import is_shown, source_name
+from app.ui.account import display_name_of
 from app.ui.auth import redirect
 from app.ui.charts import HISTORY_RANGES, history_days, read_range
 from app.ui.common import (
@@ -63,6 +67,7 @@ router = APIRouter()
 # typeface it carries inside itself as a data: font. Nothing else, and no script.
 PREVIEW_POLICY = (
     "default-src 'none'; style-src 'unsafe-inline'; font-src data:; "
+    "img-src data:; "
     "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 NO_SUCH_REPORT = "There is no such report."
@@ -160,12 +165,13 @@ async def build_report_view(
         raise ReportError(str(error)) from None
     ids = [int(ref.evidence_id) for ref in evidence if ref.evidence_id.isdecimal()]
     draft = await load_draft(session, client_id)
+    logo = await get_logo(session)
     context = ReportContext(
         msp_name=await get_msp_name(session),
         client_name=client.name,
         period_start=row.period_start,
         period_end=row.period_end,
-        prepared_by=draft.prepared_by or user.username,
+        prepared_by=draft.prepared_by or display_name_of(user),
         generated_on=clock_of(request)().date(),
         data_sources=await used_sources(session, client_id, ids),
         findings=draft.findings,
@@ -173,6 +179,12 @@ async def build_report_view(
         exceptions=await open_exceptions(session, client_id),
         topic_owners=draft.owners,
         asked_topics=draft.asked,
+        observed=await load_observed(session, snapshot_id),
+        logo=(
+            None
+            if logo is None
+            else (logo.media_type, base64.b64encode(logo.data).decode("ascii"))
+        ),
     )
     previous = await earlier_bytes(session, client_id, row.as_of, row.id)
     return view_from(data, library_of(request), context, previous)
@@ -213,7 +225,7 @@ async def builder_page(
             "period_start": start.isoformat(),
             "period_end": end.isoformat(),
             "msp_name": msp_name,
-            "prepared_by": draft.prepared_by or user.username,
+            "prepared_by": draft.prepared_by or display_name_of(user),
             "plan_text": "\n".join(draft.plan),
             "topics": topics,
             "snapshots": lines,
@@ -286,6 +298,7 @@ async def make_snapshot(
             snapshot_id = await store_snapshot(
                 session, client_id, live.snapshot, start, end
             )
+            await store_results(session, snapshot_id, live.results.values())
             add_audit_event(
                 session,
                 "snapshot.created",

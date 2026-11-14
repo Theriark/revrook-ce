@@ -79,6 +79,19 @@ body {
   print-color-adjust: exact;
 }
 
+/* The logo of the business, on a white plate so that a dark mark is seen too. */
+.cover-mark {
+  display: block;
+  max-width: 60mm;
+  max-height: 18mm;
+  margin: 0 0 5mm;
+  padding: 2mm 3mm;
+  border-radius: 1mm;
+  background-color: var(--rv-white);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 .cover-msp {
   margin: 0 0 16mm;
   font-size: 1.125rem;
@@ -443,7 +456,7 @@ td.date {
   display: block;
   width: 100%;
   height: 22px;
-  margin: 0 0 0.75rem;
+  margin: 0.75rem 0;
 }
 
 .mix-protected {
