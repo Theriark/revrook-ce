@@ -27,60 +27,180 @@ html {
 
 body {
   margin: 0;
-  padding: 1rem;
+  padding: 1.5rem 1rem;
   font-size: 16px;
   line-height: 1.5;
   color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  background-color: var(--rv-stone);
+}
+
+::selection {
+  color: var(--rv-white);
+  background-color: var(--rv-accent);
 }
 
 .page {
   box-sizing: border-box;
   max-width: 210mm;
-  min-height: 250mm;
   margin: 0 auto 1.5rem;
   padding: 14mm 14mm 10mm;
-  border: 1px solid var(--rv-gray);
+  box-shadow: 0 1px 2px rgb(45 47 58 / 0.1), 0 10px 28px rgb(45 47 58 / 0.1);
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
+.cover {
+  display: flex;
+  flex-direction: column;
+  min-height: 250mm;
+}
+
+.cover .page-footer {
+  margin-top: auto;
+}
+
+.cover-head {
+  margin: -14mm -14mm 12mm;
+  padding: 16mm 14mm 13mm;
+  border-bottom: 4px solid var(--rv-accent);
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.cover-msp {
+  margin: 0 0 16mm;
+  font-size: 1.125rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.cover-client {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.cover-period {
+  margin: 0.35rem 0 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.cover-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12mm;
+  align-items: start;
+}
+
+.cover-body > dl:only-child {
+  grid-column: 1 / -1;
+}
+
+.cover-score {
+  text-align: center;
+}
+
+.cover-rating {
+  margin: 0.25rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 650;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.dial {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.dial-track,
+.dial-value {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.dial-track {
+  stroke: var(--rv-stone);
+}
+
+.dial-value {
+  stroke: var(--rv-accent);
+}
+
+.dial-number {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: var(--rv-charcoal);
+}
+
+.dial-caption {
+  font-size: 9px;
+  fill: var(--rv-text-secondary);
+}
+
 .page-head {
-  margin: 0 0 1rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid var(--rv-gray);
-  font-size: 13px;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rv-stone);
+  font-size: 12px;
   color: var(--rv-text-secondary);
   background-color: var(--rv-white);
 }
 
-h1 {
-  margin: 0 0 0.5rem;
-  font-size: 2.5rem;
-  line-height: 1.15;
-  font-weight: 700;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-}
-
 h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.5rem;
+  margin: 0 0 1rem;
+  font-size: 1.625rem;
+  line-height: 1.2;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 h3 {
-  margin: 1rem 0 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 700;
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  font-weight: 650;
+  text-wrap: balance;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 p {
   margin: 0 0 0.5rem;
+}
+
+ul,
+ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
 }
 
 .lead {
@@ -92,22 +212,15 @@ p {
   background-color: var(--rv-white);
 }
 
-.cover-title {
-  margin: 0 0 2rem;
-  font-size: 1.5rem;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-}
-
 dl.facts {
   display: grid;
-  grid-template-columns: 11rem 1fr;
-  gap: 0.35rem 1rem;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 0.4rem 1rem;
   margin: 0 0 1rem;
 }
 
 dl.facts dt {
-  font-weight: 700;
+  font-weight: 650;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
@@ -118,33 +231,82 @@ dl.facts dd {
   background-color: var(--rv-white);
 }
 
+dl.facts ul {
+  margin: 0;
+}
+
+dl.figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1.25rem 0 1rem;
+  border-top: 2px solid var(--rv-charcoal);
+  border-bottom: 1px solid var(--rv-stone);
+}
+
+dl.figures > div {
+  padding: 0.7rem 1rem 0.8rem 0;
+}
+
+dl.figures > div + div {
+  padding-left: 1rem;
+  border-left: 1px solid var(--rv-stone);
+}
+
+dl.figures dt {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+dl.figures dd {
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.25;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
 table {
   width: 100%;
   margin: 0 0 1rem;
   border-collapse: collapse;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 caption {
-  padding: 0 0 0.35rem;
+  padding: 0 0 0.4rem;
   text-align: left;
-  font-weight: 700;
+  font-weight: 650;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 th {
-  padding: 0.35rem 0.5rem;
+  padding: 0.45rem 0.5rem;
   text-align: left;
   vertical-align: bottom;
+  font-weight: 650;
   color: var(--rv-charcoal);
   background-color: var(--rv-stone);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+tbody th {
+  vertical-align: top;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rv-stone);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
 }
 
 td {
-  padding: 0.35rem 0.5rem;
+  padding: 0.45rem 0.5rem;
   vertical-align: top;
-  border-bottom: 1px solid var(--rv-gray);
+  border-bottom: 1px solid var(--rv-stone);
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
@@ -196,6 +358,12 @@ td.date {
   vertical-align: -0.2em;
 }
 
+.rv-icon-domain {
+  margin-right: 0.4em;
+  color: var(--rv-accent);
+  background-color: var(--rv-white);
+}
+
 .note {
   margin: 0.25rem 0 0;
   font-size: 13px;
@@ -204,26 +372,39 @@ td.date {
 }
 
 .finding {
-  margin: 0 0 1rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rv-gray);
+  padding: 0.85rem 0 0.9rem;
+  border-top: 1px solid var(--rv-stone);
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 .finding h3 {
-  margin-top: 0;
+  margin: 0 0 0.3rem;
+}
+
+.finding p {
+  margin: 0 0 0.2rem;
+}
+
+.finding dl.facts {
+  margin: 0.6rem 0 0;
 }
 
 .summary-lines p {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
+}
+
+.summary-lines p:first-child {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 650;
 }
 
 .chart {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
 }
 
 .chart-track {
@@ -238,6 +419,29 @@ td.date {
 .chart-value {
   font-size: 13px;
   fill: var(--rv-charcoal);
+}
+
+.mix {
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0 0 0.75rem;
+}
+
+.mix-protected {
+  fill: var(--rv-status-protected);
+}
+
+.mix-needs-attention {
+  fill: var(--rv-status-needs-attention);
+}
+
+.mix-not-protected {
+  fill: var(--rv-status-not-protected);
+}
+
+.mix-not-checked {
+  fill: var(--rv-gray);
 }
 
 .signoff {
@@ -258,16 +462,17 @@ td.date {
 }
 
 .page-footer {
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--rv-gray);
-  font-size: 13px;
+  border-top: 1px solid var(--rv-stone);
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--rv-text-secondary);
   background-color: var(--rv-white);
 }
 
 .page-footer p {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
 }
 
 .visually-hidden {
@@ -305,6 +510,34 @@ td.date {
     overflow-wrap: anywhere;
   }
 
+  .cover {
+    min-height: 0;
+  }
+
+  .cover-head {
+    margin: -1.25rem -1rem 1.25rem;
+    padding: 1.5rem 1rem 1.25rem;
+  }
+
+  .cover-msp {
+    margin-bottom: 1.5rem;
+  }
+
+  .cover-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  dl.figures {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  dl.figures > div + div {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--rv-stone);
+  }
+
   .table-scroll {
     max-width: 100%;
     overflow-x: auto;
@@ -322,7 +555,12 @@ td.date {
 <style media="print">
 @page {
   size: A4;
-  margin: 12mm;
+  margin: 12mm 12mm 16mm;
+
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-size: 9pt;
+  }
 }
 
 body {
@@ -332,27 +570,45 @@ body {
 }
 
 .page {
-  min-height: 0;
-  margin: 0;
+  margin: 0 0 10mm;
   padding: 0;
-  border: 0;
-  page-break-after: always;
-  break-after: page;
+  box-shadow: none;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
-.page:last-of-type {
-  page-break-after: auto;
-  break-after: auto;
+.cover {
+  page-break-after: always;
+  break-after: page;
+}
+
+.cover-head {
+  margin: 0 0 12mm;
+}
+
+.page:not([id^="appendix-"]) + [id^="appendix-"],
+#notice {
+  page-break-before: always;
+  break-before: page;
 }
 
 thead {
   display: table-header-group;
 }
 
+.page-head,
+h2,
+h3,
+caption {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
 tr,
-.finding {
+.finding,
+dl.figures,
+.chart,
+.mix {
   page-break-inside: avoid;
   break-inside: avoid;
 }
@@ -366,15 +622,30 @@ tr,
 <symbol id="rv-icon-cross" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
 <symbol id="rv-icon-question" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 6.2a2 2 0 1 1 3 1.7c-.7.4-1 .8-1 1.5M8 11.4v.2" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
 <symbol id="rv-icon-dash" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="rv-icon-dom-acc" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 13.5c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-dev" viewBox="0 0 16 16"><rect x="3" y="3.5" width="10" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 12.5h13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-end" viewBox="0 0 16 16"><path d="M8 1.8l5 1.9v3.8c0 3.2-2.1 5.6-5 6.7-2.9-1.1-5-3.5-5-6.7V3.7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.8 8l1.6 1.6 2.9-3.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-eml" viewBox="0 0 16 16"><rect x="2" y="3.5" width="12" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 4.5l5.5 4.5 5.5-4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-bck" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="5" ry="2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-net" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 8h12M8 2c2.2 2 2.2 10 0 12M8 2c-2.2 2-2.2 10 0 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-log" viewBox="0 0 16 16"><path d="M2 13h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9h2.5l2-5 2.5 7 1.8-4H14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="rv-icon-dom-gov" viewBox="0 0 16 16"><rect x="3.5" y="2.5" width="9" height="11.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6h4M6 8.5h4M6 11h2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 <main>
 
 <section class="page cover" id="cover" aria-labelledby="cover-title">
-<h1 id="cover-title">Harbour IT Services</h1>
-<p class="cover-title">Quarterly security review</p>
+<div class="cover-head">
+<p class="cover-msp">Harbour IT Services</p>
+<h1 id="cover-title">Quarterly security review</h1>
+<p class="cover-client">Birch Logistics</p>
+<p class="cover-period">2026-07-01 to 2026-09-30</p>
+</div>
+<div class="cover-body">
+<div class="cover-score">
+<svg class="dial" role="img" viewBox="0 0 120 104" width="180" height="156" xmlns="http://www.w3.org/2000/svg" aria-labelledby="score-dial-title score-dial-desc"><title id="score-dial-title">Score</title><desc id="score-dial-desc">Score 45.7 (best case 69.0), band Weak, evidence coverage 71 percent.</desc><path class="dial-track" d="M24.645 95.355A50 50 0 1 1 95.355 95.355" pathLength="1000"/><path class="dial-value" d="M24.645 95.355A50 50 0 1 1 95.355 95.355" pathLength="1000" stroke-dasharray="456 1000"/><text class="dial-number" x="60" y="66" text-anchor="middle">45.7</text><text class="dial-caption" x="60" y="82" text-anchor="middle">out of 100</text></svg>
+<p class="cover-rating">Weak</p>
+</div>
 <dl class="facts">
-<dt>Client</dt><dd>Birch Logistics</dd>
-<dt>Period</dt><dd>2026-07-01 to 2026-09-30</dd>
 <dt>Prepared by</dt><dd>Sam Technician</dd>
 <dt>Generated</dt><dd>2026-10-17</dd>
 <dt>Pack date</dt><dd>2026-10-17</dd>
@@ -382,6 +653,7 @@ tr,
 <dd><ul><li>Microsoft Entra registration export</li><li>Intune device export</li><li>Backup report</li><li>Public DNS check</li><li>Technician attestations</li></ul></dd>
 <dt>Snapshot</dt><dd>37cf253988dd3ae8 (rules PC-RULES 0.1)</dd>
 </dl>
+</div>
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
 <p class="generated">Generated with revrook</p>
@@ -401,13 +673,17 @@ tr,
 <p>Of 51 controls, 17 are Protected, 11 need attention, 11 are not protected and 12 were not checked.</p>
 
 </div>
+<dl class="figures">
+<div><dt>Score</dt><dd>45.7 out of 100</dd></div>
+<div><dt>Evidence coverage</dt><dd>71 percent</dd></div>
+<div><dt>Band</dt><dd>Weak</dd></div>
+</dl>
 <dl class="facts">
-<dt>Score</dt><dd>45.7 out of 100</dd>
 <dt>Best case</dt><dd>69.0 if every control that is not checked passed</dd>
-<dt>Evidence coverage</dt><dd>71 percent</dd>
-<dt>Band</dt><dd>Weak</dd>
 </dl>
 
+
+<svg class="mix" role="img" viewBox="0 0 640 22" width="640" height="22" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="status-chart-title status-chart-desc"><title id="status-chart-title">Controls by status</title><desc id="status-chart-desc">One bar split by status. Protected 17, Needs attention 11, Not protected 11, Not checked 12.</desc><rect class="mix-protected" x="0" y="0" width="211" height="22"/><rect class="mix-needs-attention" x="213" y="0" width="136" height="22"/><rect class="mix-not-protected" x="351" y="0" width="136" height="22"/><rect class="mix-not-checked" x="489" y="0" width="151" height="22"/></svg>
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="summary-status-caption">
 <table>
 <caption id="summary-status-caption">Controls by status</caption>
@@ -447,28 +723,28 @@ tr,
 </thead>
 <tbody>
 
-<tr><th scope="row">Identity and MFA</th><td class="num">22</td><td class="num">52.9</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-acc"/></svg>Identity and MFA</th><td class="num">22</td><td class="num">52.9</td>
 <td class="num">3</td><td class="num">2</td><td class="num">2</td><td class="num">1</td></tr>
 
-<tr><th scope="row">Devices and patching</th><td class="num">14</td><td class="num">61.0</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-dev"/></svg>Devices and patching</th><td class="num">14</td><td class="num">61.0</td>
 <td class="num">2</td><td class="num">3</td><td class="num">1</td><td class="num">1</td></tr>
 
-<tr><th scope="row">Endpoint protection</th><td class="num">10</td><td class="num">58.6</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-end"/></svg>Endpoint protection</th><td class="num">10</td><td class="num">58.6</td>
 <td class="num">2</td><td class="num">2</td><td class="num">0</td><td class="num">1</td></tr>
 
-<tr><th scope="row">Email security</th><td class="num">12</td><td class="num">38.5</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-eml"/></svg>Email security</th><td class="num">12</td><td class="num">38.5</td>
 <td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">1</td></tr>
 
-<tr><th scope="row">Backup and recovery</th><td class="num">16</td><td class="num">30.8</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-bck"/></svg>Backup and recovery</th><td class="num">16</td><td class="num">30.8</td>
 <td class="num">2</td><td class="num">0</td><td class="num">1</td><td class="num">3</td></tr>
 
-<tr><th scope="row">Network</th><td class="num">6</td><td class="num">75.0</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-net"/></svg>Network</th><td class="num">6</td><td class="num">75.0</td>
 <td class="num">3</td><td class="num">1</td><td class="num">1</td><td class="num">0</td></tr>
 
-<tr><th scope="row">Logging and monitoring</th><td class="num">8</td><td class="num">27.3</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-log"/></svg>Logging and monitoring</th><td class="num">8</td><td class="num">27.3</td>
 <td class="num">1</td><td class="num">0</td><td class="num">3</td><td class="num">2</td></tr>
 
-<tr><th scope="row">Governance and people</th><td class="num">12</td><td class="num">28.3</td>
+<tr><th scope="row"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-gov"/></svg>Governance and people</th><td class="num">12</td><td class="num">28.3</td>
 <td class="num">2</td><td class="num">1</td><td class="num">1</td><td class="num">3</td></tr>
 
 </tbody>
@@ -490,6 +766,7 @@ tr,
 <article class="finding" aria-labelledby="finding-1">
 <h3 id="finding-1">1. Every active staff account signs in with more than a password.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-ACC-01 &middot; gate control &middot; Identity and MFA</span></p>
+<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
 <dl class="facts">
 <dt>What we did</dt><dd>Registered 28 of 35 people for multi-factor sign-in.</dd>
 <dt>What we recommend</dt><dd>Register the remaining people and then enforce it by policy.</dd>
@@ -502,11 +779,13 @@ tr,
 <article class="finding" aria-labelledby="finding-2">
 <h3 id="finding-2">2. DMARC is published and enforced.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-EML-03 &middot; Email security</span></p>
+<p class="note">Read from: DNS records or our own public DNS check, evidence dated 2026-10-17.</p>
 </article>
 
 <article class="finding" aria-labelledby="finding-3">
 <h3 id="finding-3">3. Legacy sign-in methods that skip MFA are blocked.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-ACC-04 &middot; Identity and MFA</span></p>
+<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
 <dl class="facts">
 
 <dt>What we recommend</dt><dd>Block the legacy sign-in methods that skip multi-factor checks.</dd>
@@ -519,14 +798,51 @@ tr,
 <article class="finding" aria-labelledby="finding-4">
 <h3 id="finding-4">4. Dormant accounts are disabled.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-ACC-06 &middot; Identity and MFA</span></p>
+<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
 </article>
 
 <article class="finding" aria-labelledby="finding-5">
 <h3 id="finding-5">5. Recovery targets and a recovery plan are written down.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-BCK-06 &middot; Backup and recovery</span></p>
+<p class="note">Read from: manual evidence, evidence dated 2026-10-17.</p>
 </article>
 
 
+
+<footer class="page-footer">
+<p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
+<p class="generated">Generated with revrook</p>
+</footer>
+</section>
+
+
+<section class="page" id="unchecked" aria-labelledby="unchecked-title">
+<p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
+<h2 id="unchecked-title">What could not be checked</h2>
+
+<p>12 of the 51 controls could not be checked: no dated evidence covers them, or it is too old to count. They are neither good nor bad news until they are checked.</p>
+<div class="table-scroll" role="region" tabindex="0" aria-labelledby="unchecked-caption">
+<table>
+<caption id="unchecked-caption">The evidence these controls read, the kind most of them wait for first</caption>
+<thead><tr><th scope="col">Evidence</th><th scope="col" class="num">Controls waiting</th><th scope="col">Which</th></tr></thead>
+<tbody>
+
+<tr><td>Manual evidence</td><td class="num">6</td><td>PC-ACC-08, PC-EML-07, PC-LOG-03, PC-LOG-05, PC-GOV-02, PC-GOV-05</td></tr>
+
+<tr><td>Graph read-only JSON</td><td class="num">4</td><td>PC-DEV-06, PC-BCK-01, PC-BCK-02, PC-GOV-04</td></tr>
+
+<tr><td>Backup CSV</td><td class="num">3</td><td>PC-BCK-01, PC-BCK-02, PC-BCK-04</td></tr>
+
+<tr><td>RMM device CSV</td><td class="num">2</td><td>PC-END-04, PC-BCK-01</td></tr>
+
+<tr><td>Exchange Online export produced by the MSP admin</td><td class="num">1</td><td>PC-LOG-03</td></tr>
+
+<tr><td>Leavers CSV</td><td class="num">1</td><td>PC-GOV-04</td></tr>
+
+</tbody>
+</table>
+</div>
+<p class="note">A control that reads two kinds of evidence is listed under both. The appendix lists every control with its status.</p>
 
 <footer class="page-footer">
 <p class="disclaimer">This report summarises security settings observed on the stated date. It is not a certification, audit or attestation and does not confirm compliance with any standard or law. It is not insurance, legal or financial advice. Statuses reflect the evidence listed on each page; items marked Not checked were not verified. You are responsible for the accuracy of answers given to an insurer.</p>
@@ -538,8 +854,8 @@ tr,
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
 <h2 id="roadmap-title">Remediation roadmap and next quarter</h2>
 
-<h3>Roadmap</h3>
 
+<h3>Roadmap</h3>
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="roadmap-caption">
 <table>
 <caption id="roadmap-caption">Actions in order of urgency</caption>
@@ -556,8 +872,8 @@ tr,
 </table>
 </div>
 
-<h3>Plan for next quarter</h3>
 
+<h3>Plan for next quarter</h3>
 <ol><li>Review the evidence that expires first.</li><li>Re-run the public DNS check after any mail change.</li><li>Agree the dates in the table of actions with the client.</li></ol>
 
 
@@ -566,6 +882,7 @@ tr,
 <p class="generated">Generated with revrook</p>
 </footer>
 </section>
+
 
 <section class="page" id="evidence" aria-labelledby="evidence-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
@@ -659,7 +976,7 @@ tr,
 
 <section class="page" id="appendix-acc" aria-labelledby="appendix-acc-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-acc-title">Appendix: Identity and MFA</h2>
+<h2 id="appendix-acc-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-acc"/></svg>Appendix: Identity and MFA</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-acc-caption">
 <table>
@@ -695,7 +1012,7 @@ tr,
 
 <section class="page" id="appendix-dev" aria-labelledby="appendix-dev-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-dev-title">Appendix: Devices and patching</h2>
+<h2 id="appendix-dev-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-dev"/></svg>Appendix: Devices and patching</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-dev-caption">
 <table>
@@ -729,7 +1046,7 @@ tr,
 
 <section class="page" id="appendix-end" aria-labelledby="appendix-end-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-end-title">Appendix: Endpoint protection</h2>
+<h2 id="appendix-end-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-end"/></svg>Appendix: Endpoint protection</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-end-caption">
 <table>
@@ -759,7 +1076,7 @@ tr,
 
 <section class="page" id="appendix-eml" aria-labelledby="appendix-eml-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-eml-title">Appendix: Email security</h2>
+<h2 id="appendix-eml-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-eml"/></svg>Appendix: Email security</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-eml-caption">
 <table>
@@ -793,7 +1110,7 @@ tr,
 
 <section class="page" id="appendix-bck" aria-labelledby="appendix-bck-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-bck-title">Appendix: Backup and recovery</h2>
+<h2 id="appendix-bck-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-bck"/></svg>Appendix: Backup and recovery</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-bck-caption">
 <table>
@@ -825,7 +1142,7 @@ tr,
 
 <section class="page" id="appendix-net" aria-labelledby="appendix-net-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-net-title">Appendix: Network</h2>
+<h2 id="appendix-net-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-net"/></svg>Appendix: Network</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-net-caption">
 <table>
@@ -855,7 +1172,7 @@ tr,
 
 <section class="page" id="appendix-log" aria-labelledby="appendix-log-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-log-title">Appendix: Logging and monitoring</h2>
+<h2 id="appendix-log-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-log"/></svg>Appendix: Logging and monitoring</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-log-caption">
 <table>
@@ -887,7 +1204,7 @@ tr,
 
 <section class="page" id="appendix-gov" aria-labelledby="appendix-gov-title">
 <p class="page-head">Harbour IT Services &middot; Birch Logistics &middot; Quarterly security review</p>
-<h2 id="appendix-gov-title">Appendix: Governance and people</h2>
+<h2 id="appendix-gov-title"><svg class="rv-icon rv-icon-domain" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-dom-gov"/></svg>Appendix: Governance and people</h2>
 
 <div class="table-scroll" role="region" tabindex="0" aria-labelledby="appendix-gov-caption">
 <table>

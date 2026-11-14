@@ -1,14 +1,17 @@
 /*
- * Report stylesheet (phase 8). It is inlined into every report, so a report is one
- * file that loads nothing from outside. Its typeface is Inter, which render.py puts
- * in front of this sheet as a data: font (the system fonts stay behind it for a
- * letter the Latin file does not hold). The brand tokens of
- * app/static/css/revrook.css and its contrast rules:
+ * Report stylesheet (phase 8; redesigned for the look of a document, 2026-11). It is
+ * inlined into every report, so a report is one file that loads nothing from
+ * outside. Its typeface is Inter, which render.py puts in front of this sheet as a
+ * data: font (the system fonts stay behind it for a letter the Latin file does not
+ * hold). The brand tokens of app/static/css/revrook.css and its contrast rules:
  *   - every rule that sets a text colour also sets its background-color, so
  *     tests/test_report_contrast.py reads each foreground and background pair here;
  *   - status colours and secondary text appear on white only, always with an icon
  *     and the words of the status;
  *   - gray is never text; violet-blue is never text on charcoal.
+ * A sheet is white on a stone desk; the cover opens with a charcoal head (white
+ * text), the one dark surface of a report. A surface that carries meaning by its
+ * colour (the head, a table heading, a bar) asks the printer to keep it.
  * No revrook logo appears on a report page (client-facing pages carry the MSP name).
  */
 
@@ -32,60 +35,182 @@ html {
 
 body {
   margin: 0;
-  padding: 1rem;
+  padding: 1.5rem 1rem;
   font-size: 16px;
   line-height: 1.5;
   color: var(--rv-charcoal);
-  background-color: var(--rv-white);
+  background-color: var(--rv-stone);
 }
 
+::selection {
+  color: var(--rv-white);
+  background-color: var(--rv-accent);
+}
+
+/* A section of the report: a sheet as wide as A4 and as tall as what it holds. */
 .page {
   box-sizing: border-box;
   max-width: 210mm;
-  min-height: 250mm;
   margin: 0 auto 1.5rem;
   padding: 14mm 14mm 10mm;
-  border: 1px solid var(--rv-gray);
+  box-shadow: 0 1px 2px rgb(45 47 58 / 0.1), 0 10px 28px rgb(45 47 58 / 0.1);
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
+/* The cover is a whole sheet: its footer stands at the foot. */
+.cover {
+  display: flex;
+  flex-direction: column;
+  min-height: 250mm;
+}
+
+.cover .page-footer {
+  margin-top: auto;
+}
+
+.cover-head {
+  margin: -14mm -14mm 12mm;
+  padding: 16mm 14mm 13mm;
+  border-bottom: 4px solid var(--rv-accent);
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.cover-msp {
+  margin: 0 0 16mm;
+  font-size: 1.125rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.cover-client {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.cover-period {
+  margin: 0.35rem 0 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-white);
+  background-color: var(--rv-charcoal);
+}
+
+.cover-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12mm;
+  align-items: start;
+}
+
+.cover-body > dl:only-child {
+  grid-column: 1 / -1;
+}
+
+.cover-score {
+  text-align: center;
+}
+
+.cover-rating {
+  margin: 0.25rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 650;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
+.dial {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.dial-track,
+.dial-value {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.dial-track {
+  stroke: var(--rv-stone);
+}
+
+.dial-value {
+  stroke: var(--rv-accent);
+}
+
+.dial-number {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: var(--rv-charcoal);
+}
+
+.dial-caption {
+  font-size: 9px;
+  fill: var(--rv-text-secondary);
+}
+
 .page-head {
-  margin: 0 0 1rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid var(--rv-gray);
-  font-size: 13px;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rv-stone);
+  font-size: 12px;
   color: var(--rv-text-secondary);
   background-color: var(--rv-white);
 }
 
-h1 {
-  margin: 0 0 0.5rem;
-  font-size: 2.5rem;
-  line-height: 1.15;
-  font-weight: 700;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-}
-
 h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.5rem;
+  margin: 0 0 1rem;
+  font-size: 1.625rem;
+  line-height: 1.2;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 h3 {
-  margin: 1rem 0 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 700;
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  font-weight: 650;
+  text-wrap: balance;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 p {
   margin: 0 0 0.5rem;
+}
+
+ul,
+ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
 }
 
 .lead {
@@ -97,22 +222,15 @@ p {
   background-color: var(--rv-white);
 }
 
-.cover-title {
-  margin: 0 0 2rem;
-  font-size: 1.5rem;
-  color: var(--rv-charcoal);
-  background-color: var(--rv-white);
-}
-
 dl.facts {
   display: grid;
-  grid-template-columns: 11rem 1fr;
-  gap: 0.35rem 1rem;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 0.4rem 1rem;
   margin: 0 0 1rem;
 }
 
 dl.facts dt {
-  font-weight: 700;
+  font-weight: 650;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
@@ -123,33 +241,84 @@ dl.facts dd {
   background-color: var(--rv-white);
 }
 
+dl.facts ul {
+  margin: 0;
+}
+
+/* The figures of the summary: one row, a rule between two of them. */
+dl.figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1.25rem 0 1rem;
+  border-top: 2px solid var(--rv-charcoal);
+  border-bottom: 1px solid var(--rv-stone);
+}
+
+dl.figures > div {
+  padding: 0.7rem 1rem 0.8rem 0;
+}
+
+dl.figures > div + div {
+  padding-left: 1rem;
+  border-left: 1px solid var(--rv-stone);
+}
+
+dl.figures dt {
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+  background-color: var(--rv-white);
+}
+
+dl.figures dd {
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.25;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
+}
+
 table {
   width: 100%;
   margin: 0 0 1rem;
   border-collapse: collapse;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 caption {
-  padding: 0 0 0.35rem;
+  padding: 0 0 0.4rem;
   text-align: left;
-  font-weight: 700;
+  font-weight: 650;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 th {
-  padding: 0.35rem 0.5rem;
+  padding: 0.45rem 0.5rem;
   text-align: left;
   vertical-align: bottom;
+  font-weight: 650;
   color: var(--rv-charcoal);
   background-color: var(--rv-stone);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* The heading of a row is read with its row, not with the heading of the table. */
+tbody th {
+  vertical-align: top;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rv-stone);
+  color: var(--rv-charcoal);
+  background-color: var(--rv-white);
 }
 
 td {
-  padding: 0.35rem 0.5rem;
+  padding: 0.45rem 0.5rem;
   vertical-align: top;
-  border-bottom: 1px solid var(--rv-gray);
+  border-bottom: 1px solid var(--rv-stone);
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
@@ -204,6 +373,13 @@ td.date {
   vertical-align: -0.2em;
 }
 
+/* The mark of a domain, beside its name in a heading or a row. */
+.rv-icon-domain {
+  margin-right: 0.4em;
+  color: var(--rv-accent);
+  background-color: var(--rv-white);
+}
+
 .note {
   margin: 0.25rem 0 0;
   font-size: 13px;
@@ -211,27 +387,41 @@ td.date {
   background-color: var(--rv-white);
 }
 
+/* A finding is a line of a list: a rule above it, no box round it. */
 .finding {
-  margin: 0 0 1rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rv-gray);
+  padding: 0.85rem 0 0.9rem;
+  border-top: 1px solid var(--rv-stone);
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
 .finding h3 {
-  margin-top: 0;
+  margin: 0 0 0.3rem;
+}
+
+.finding p {
+  margin: 0 0 0.2rem;
+}
+
+.finding dl.facts {
+  margin: 0.6rem 0 0;
 }
 
 .summary-lines p {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
+}
+
+.summary-lines p:first-child {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 650;
 }
 
 .chart {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
 }
 
 .chart-track {
@@ -246,6 +436,30 @@ td.date {
 .chart-value {
   font-size: 13px;
   fill: var(--rv-charcoal);
+}
+
+/* The status bar is as wide as the text; its numbers are the table under it. */
+.mix {
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0 0 0.75rem;
+}
+
+.mix-protected {
+  fill: var(--rv-status-protected);
+}
+
+.mix-needs-attention {
+  fill: var(--rv-status-needs-attention);
+}
+
+.mix-not-protected {
+  fill: var(--rv-status-not-protected);
+}
+
+.mix-not-checked {
+  fill: var(--rv-gray);
 }
 
 .signoff {
@@ -266,16 +480,17 @@ td.date {
 }
 
 .page-footer {
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--rv-gray);
-  font-size: 13px;
+  border-top: 1px solid var(--rv-stone);
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--rv-text-secondary);
   background-color: var(--rv-white);
 }
 
 .page-footer p {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
 }
 
 .visually-hidden {
@@ -323,6 +538,34 @@ td.date {
   dl.facts dd {
     margin-bottom: 0.5rem;
     overflow-wrap: anywhere;
+  }
+
+  .cover {
+    min-height: 0;
+  }
+
+  .cover-head {
+    margin: -1.25rem -1rem 1.25rem;
+    padding: 1.5rem 1rem 1.25rem;
+  }
+
+  .cover-msp {
+    margin-bottom: 1.5rem;
+  }
+
+  .cover-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  dl.figures {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  dl.figures > div + div {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--rv-stone);
   }
 
   .table-scroll {

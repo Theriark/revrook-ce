@@ -1,14 +1,22 @@
 /*
  * Print stylesheet (phase 8): "Save as PDF" from a browser prints a report from the
- * HTML. Every section of a report (one .page) keeps its own footer with the
- * disclaimer, and a section starts on a new sheet. A section that is longer than one
- * sheet has its footer at its end only, so the sheets in between do not carry the
- * disclaimer: the full text is on the last page. Flat rules only, like report.css.
+ * HTML. The cover is a sheet of its own, the appendix and the last page (the notice
+ * in full) start on a new sheet, and the sections between them follow one another,
+ * so a short section does not leave a sheet empty. A section has its
+ * footer at its end only, so a sheet in the middle of a long section does not carry
+ * the disclaimer: the full text is on the last page. The foot of every sheet carries
+ * its number.
+ * Flat rules only, like report.css.
  */
 
 @page {
   size: A4;
-  margin: 12mm;
+  margin: 12mm 12mm 16mm;
+
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-size: 9pt;
+  }
 }
 
 body {
@@ -18,27 +26,45 @@ body {
 }
 
 .page {
-  min-height: 0;
-  margin: 0;
+  margin: 0 0 10mm;
   padding: 0;
-  border: 0;
-  page-break-after: always;
-  break-after: page;
+  box-shadow: none;
   color: var(--rv-charcoal);
   background-color: var(--rv-white);
 }
 
-.page:last-of-type {
-  page-break-after: auto;
-  break-after: auto;
+.cover {
+  page-break-after: always;
+  break-after: page;
+}
+
+.cover-head {
+  margin: 0 0 12mm;
+}
+
+.page:not([id^="appendix-"]) + [id^="appendix-"],
+#notice {
+  page-break-before: always;
+  break-before: page;
 }
 
 thead {
   display: table-header-group;
 }
 
+.page-head,
+h2,
+h3,
+caption {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
 tr,
-.finding {
+.finding,
+dl.figures,
+.chart,
+.mix {
   page-break-inside: avoid;
   break-inside: avoid;
 }
