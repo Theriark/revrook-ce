@@ -215,6 +215,6 @@ def test_the_client_tabs_wrap_from_600px_and_a_phone_gets_a_chevron() -> None:
     assert not any(".rv-nav-strip" in selector for selector in phone)
     assert "padding: 8px 10px;" in phone[".rv-app .rv-header .rv-nav-link"]
     assert "display: none;" in phone[".rv-app .rv-header .rv-nav-link .rv-icon"]
-    # Tokens only: no colour literal in the block (it ends at the next header)
-    block = re.split(r"/\* -{6,} ", CSS.split(SECTION, 1)[1], maxsplit=1)[0]
+    # Tokens only: no colour literal in the block
+    block = CSS.split(SECTION, 1)[1]
     assert not re.search(r"#[0-9a-fA-F]{3,6}\b|rgb\(", block)

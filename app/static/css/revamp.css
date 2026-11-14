@@ -938,6 +938,9 @@ span.rv-status-not-applicable {
 
 .rv-sheet-band .rv-sheet {
   color-scheme: light;
+  --rv-cover-ground: #2d2f3a;
+  --rv-cover-ink: #ffffff;
+  --rv-cover-line: #5a5e6b;
   --rv-surface: #ffffff;
   --rv-canvas: #f4f3ef;
   --rv-text: #2d2f3a;
@@ -2424,14 +2427,15 @@ dialog.rv-drawer[open] {
 /* ---------- Revamp of 2026-11-14: the sheet of Preview and export ---------- */
 
 /* The sheet is drawn as the report is. Its head is the dark head of the cover: the
-   roles take the values of the keep inside it, so the name, the client and the
-   period read white on charcoal; a violet rule closes it, as on the file */
+   roles take the colours of the cover inside it (named on the paper, with its
+   other fixed values), so the name, the client and the period read white on
+   charcoal; a violet rule closes it, as on the file */
 .rv-sheet-band .rv-sheet .rv-sheet-cover {
-  --rv-surface: #2d2f3a;
-  --rv-text: #ffffff;
-  --rv-text-secondary: #ffffff;
-  --rv-gray: #5a5e6b;
-  --rv-plate: #ffffff;
+  --rv-surface: var(--rv-cover-ground);
+  --rv-text: var(--rv-cover-ink);
+  --rv-text-secondary: var(--rv-cover-ink);
+  --rv-gray: var(--rv-cover-line);
+  --rv-plate: var(--rv-cover-ink);
   margin: -32px -36px 24px;
   padding: 28px 36px 22px;
   border-bottom: 3px solid var(--rv-primary);

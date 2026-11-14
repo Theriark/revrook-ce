@@ -577,8 +577,11 @@ def test_the_report_sheet_is_white_paper_on_the_canvas_band() -> None:
         r"\n\.rv-sheet-band \.rv-sheet \.rv-sheet-cover \{([^}]*)\}", revamp
     )
     assert cover is not None
-    assert "--rv-surface: #2d2f3a;" in cover.group(1)
-    assert "--rv-text: #ffffff;" in cover.group(1)
+    assert "--rv-surface: var(--rv-cover-ground);" in cover.group(1)
+    assert "--rv-text: var(--rv-cover-ink);" in cover.group(1)
+    paper = revamp.split(".rv-sheet-band .rv-sheet {", 1)[1].split("}", 1)[0]
+    assert "--rv-cover-ground: #2d2f3a;" in paper
+    assert "--rv-cover-ink: #ffffff;" in paper
     assert "background-color: var(--rv-surface);" in cover.group(1)
     for part in ("rv-sheet-cover", "rv-sheet-top", "rv-sheet-score"):
         assert f'class="{part}"' in report, part
