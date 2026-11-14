@@ -1,9 +1,61 @@
-# PDF spike (phase 8, step 1)
+# PDF: the decision of 2026-11-14 and the spike of phase 8
+
+## Decision of 2026-11-14: a headless Chromium prints the report
+
+**revrook makes the PDF of a report itself.** The founder decided it on 2026-11-14,
+with the two facts below in front of him. The page **Preview and export** offers
+**Download PDF** for each report.
+
+- **How.** `app/reports/pdf.py` hands the HTML file of the report (the bytes the preview
+  shows) to `chromium-headless-shell`, the Debian package the image installs
+  (`Dockerfile`), and returns what it prints. The report was designed for print
+  (`app/reports/print.css`), so the PDF is what "Save as PDF" of a browser gives: A4,
+  the cover on its own sheet, sheet numbers, colours kept. Nothing is drawn a second
+  time, so the PDF cannot drift from the report.
+- **Why not the library this spike named.** WeasyPrint was read in its source at
+  v70.0 on 2026-11-14 (`weasyprint/svg/css.py`, `weasyprint/html.py`): it styles a
+  drawing that sits inside a page only with a stylesheet inside that drawing, never
+  with the stylesheet of the page, and a `<use>` reaches only into its own drawing. The
+  report draws its score dial, its status bar, its chart and its icons (76 in the
+  golden review) with the stylesheet of the page and one shared set of symbols, so each
+  would have needed a second description for the PDF, kept in step by hand. Its Python
+  packages would also have needed changes to the licence rule (check 6). A browser
+  prints the file as it is.
+- **What the browser may do.** It gets one file. A policy written into that file
+  forbids scripts and every address except the `data:` font and logo the report
+  carries; no host name is resolved; its profile and its home are a temporary folder
+  that is removed with the file. It runs without its own sandbox, because a container
+  gives it no user namespace: what it reads is the report revrook wrote, and the logo
+  an administrator uploaded is the only bytes in it that came from outside.
+- **One at a time.** A second request waits for the first (`pdf_turn`), so the memory a
+  browser takes is taken once. After 60 seconds the browser is stopped and the page
+  says to print the preview instead.
+- **Without a browser.** An installation run from source on a machine without a
+  Chromium has no button; the page says how to print the preview, as before.
+
+### What was measured, and what was not
+
+| Point | Result | Evidence |
+| --- | --- | --- |
+| Looks like the report | Yes: the sheets were drawn and compared with the preview | The golden review printed by Chrome on a developer machine on 2026-11-14: 16 A4 sheets, the dark head, the dial, the status bar, the icons, "1 / 16" on each sheet |
+| Render time | Under one second for the golden review (16 sheets) on a developer machine | the same run; not measured in the container |
+| Tagged PDF | Yes: a structure tree and `MarkInfo` | `tests/test_report_pdf.py` |
+| A script in the file | Does not run | the same test: a planted script would leave one sheet |
+| Inside the container (read-only root, `/tmp` as tmpfs, uid 10001) | A report prints | the compose smoke test, `scripts/e2e/phase_00.sh` |
+| Image size increase | **Not measured.** The two Debian packages are 66 MB and 30 MB to download before the libraries they need | packages.debian.org, 2026-11-14 |
+| Peak memory of a print | **Not measured** | |
+
+The licences are recorded in [licences.md](licences.md#system-packages-of-the-image).
+
+## The spike of phase 8, as it was recorded
+
+What follows is the record of the spike as it stood before that decision. It is kept
+because it says what was and was not assessed about WeasyPrint.
 
 Question: can the Community Edition ship PDF reports made by WeasyPrint, with a bundled
 Noto Sans font, inside the `python:3.12-slim` image?
 
-**Decision for now: CE ships HTML with a print stylesheet only, and the PDF code is not
+**Decision at the time: CE ships HTML with a print stylesheet only, and the PDF code is not
 in this repository.** The plan says that if any gate fails, CE ships HTML with print CSS
 only, the PDF code is not merged, and this page records the evidence so that R&D can
 decide the PDF path for a later edition (ReportLab). No gate was shown to fail. Two gates
@@ -61,7 +113,7 @@ introduced it, and no figure is quoted here. Run it, then record the `SPIKE` lin
 date and the machine in this section. The numbers would inform the decision for a later
 edition; the licence and font gates would still need to be assessed.
 
-## What CE ships instead
+## What CE shipped instead, and still ships as the report itself
 
 - HTML, one file with its stylesheet inlined, that loads nothing from outside. Since
   2026-11-13 the file carries its typeface inside itself: the Latin file of Inter

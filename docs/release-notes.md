@@ -203,7 +203,8 @@ These are visible in the product and in the documentation; none is hidden by a l
    Not checked until an importer exists ([controls.md](controls.md#open-points-for-rd),
    [importers.md](importers.md#fields-no-ce-importer-reads)).
 3. **No PDF export.** Both reports are one HTML file with a print stylesheet; print it to
-   PDF from the browser ([pdf-spike.md](pdf-spike.md)).
+   PDF from the browser ([pdf-spike.md](pdf-spike.md)). Closed on 2026-11-14: the
+   application prints the PDF itself (**Download PDF**).
 4. **The copyright holder of the MIT licence is still open.** The [LICENSE](../LICENSE)
    names "Theriark"; the final legal name of the holder is a decision of the founders
    that has not been taken.

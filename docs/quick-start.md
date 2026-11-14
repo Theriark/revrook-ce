@@ -77,7 +77,7 @@ score is made is in [scoring.md](scoring.md).
 4. On the next page (**Preview and export**), open **Preview** to read the report, then
    press **Export the quarterly security review**.
 5. The file is in the **Export history** of the client, with its SHA-256. It is one
-   HTML file: print it to PDF from the browser if you need a PDF.
+   HTML file. For a PDF, press **Download PDF** on the page **Preview and export**.
 
 If **Before you export** lists things to fix, each line says what is missing. The usual
 first one is the business name of step 2.
