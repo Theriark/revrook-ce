@@ -26,7 +26,15 @@ from app.posture import load_live, open_exceptions, view_from
 from app.preferences import get_logo, get_msp_name
 from app.reports.completeness import completeness_problems
 from app.reports.export import ExportRecord, export_report, list_exports, read_export
-from app.reports.render import INSURANCE, KINDS, QBR, REPORT_NAMES, render_report
+from app.reports.render import (
+    INSURANCE,
+    KINDS,
+    QBR,
+    REPORT_NAMES,
+    dial_of,
+    render_report,
+    status_chart_of,
+)
 from app.reports.topics import TOPIC_KEYS, TOPICS, Topic
 from app.reports.view import ReportContext, ReportError, ReportView, iso_date
 from app.scoring.snapshot import SnapshotError, parse_snapshot
@@ -330,6 +338,9 @@ async def report_page(
             "snapshot_id": snapshot_id,
             "crumb_leaf": f"Report of {iso_date(view.snapshot.as_of)}",
             "view": view,
+            # The sheet of the page is drawn with the dial and the bar of the file.
+            "score_dial": dial_of(view),
+            "status_chart": status_chart_of(view),
             "problems": completeness_problems(view),
             "kinds": KIND_LIST,
         }

@@ -2420,3 +2420,147 @@ dialog.rv-drawer[open] {
   max-height: 44px;
   margin: 0 0 10px;
 }
+
+/* ---------- Revamp of 2026-11-14: the sheet of Preview and export ---------- */
+
+/* The sheet is drawn as the report is. Its head is the dark head of the cover: the
+   roles take the values of the keep inside it, so the name, the client and the
+   period read white on charcoal; a violet rule closes it, as on the file */
+.rv-sheet-band .rv-sheet .rv-sheet-cover {
+  --rv-surface: #2d2f3a;
+  --rv-text: #ffffff;
+  --rv-text-secondary: #ffffff;
+  --rv-gray: #5a5e6b;
+  --rv-plate: #ffffff;
+  margin: -32px -36px 24px;
+  padding: 28px 36px 22px;
+  border-bottom: 3px solid var(--rv-primary);
+  /* a faint line round the head: in the light theme the band behind the sheet is
+     the same charcoal, and the edge of the sheet would be lost */
+  box-shadow: inset 0 0 0 1px var(--rv-gray);
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+/* The logo stands on a white plate, so a dark mark is seen on the dark head */
+.rv-sheet-logo {
+  display: block;
+  max-width: 180px;
+  max-height: 48px;
+  margin: 0 0 16px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background-color: var(--rv-plate);
+}
+
+.rv-sheet-cover .rv-sheet-head {
+  margin-bottom: 20px;
+}
+
+.rv-sheet-cover .rv-sheet-subtitle {
+  margin-bottom: 4px;
+}
+
+.rv-sheet-period {
+  margin: 0;
+  font-size: var(--rv-fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+/* The score as the dial of the cover, beside who prepared the report and when */
+.rv-sheet-top {
+  display: grid;
+  gap: 16px 28px;
+  align-items: start;
+}
+
+@media (min-width: 600px) {
+  .rv-sheet-top {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .rv-sheet-top .rv-sheet-facts > div {
+    grid-template-columns: 7rem minmax(0, 1fr);
+  }
+}
+
+.rv-sheet-score {
+  text-align: center;
+}
+
+.rv-sheet-score .dial {
+  display: block;
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.rv-sheet .dial-track,
+.rv-sheet .dial-value {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.rv-sheet .dial-track {
+  stroke: var(--rv-line-strong);
+}
+
+.rv-sheet .dial-value {
+  stroke: var(--rv-primary);
+}
+
+.rv-sheet .dial-number {
+  font-size: var(--rv-fs-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: var(--rv-text);
+}
+
+/* the smallest size of the scale; the drawing is 120 units wide, shown at 150px */
+.rv-sheet .dial-caption {
+  font-size: var(--rv-fs-xs);
+  fill: var(--rv-text-secondary);
+}
+
+.rv-sheet-rating {
+  margin: 2px 0 0;
+  font-size: var(--rv-fs-md);
+  font-weight: 650;
+  color: var(--rv-text);
+  background-color: var(--rv-surface);
+}
+
+/* The controls by status as one bar, above their counts */
+.rv-sheet .mix {
+  display: block;
+  width: 100%;
+  height: 18px;
+  margin: 14px 0 0;
+}
+
+.rv-sheet .mix-protected {
+  fill: var(--rv-status-protected);
+}
+
+.rv-sheet .mix-needs-attention {
+  fill: var(--rv-status-needs-attention);
+}
+
+.rv-sheet .mix-not-protected {
+  fill: var(--rv-status-not-protected);
+}
+
+.rv-sheet .mix-not-checked {
+  fill: var(--rv-gray);
+}
+
+@media (max-width: 599px) {
+  .rv-sheet-band .rv-sheet .rv-sheet-cover {
+    margin: -20px -18px 20px;
+    padding: 20px 18px 18px;
+  }
+}

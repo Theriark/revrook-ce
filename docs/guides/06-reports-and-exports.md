@@ -44,8 +44,11 @@ report.
   exceptions, the data sources and the preparer. **Before you export** lists what
   stops an export, each line saying what is missing; the usual first one is the
   business name.
-- The paper sheet, white in both themes and set in a charcoal frame, is a short reading of the report: the period,
-  the pack date, the summary sentence and the counts by status. The file itself, with its cover, is what **Preview** opens.
+- The paper sheet, white in both themes and set in a charcoal frame, shows the cover and the summary as the client receives them:
+  the dark head with your logo, your business, the client and the period, the score dial with its band, who prepared it and when,
+  the summary sentences and the controls by status as one bar above their counts. The whole file is what **Preview** opens.
+- For a PDF, open the preview and print it from your browser (Ctrl+P, then **Save as PDF**): the cover is a sheet of its own,
+  every sheet carries its number and the colours are kept. revrook itself makes no PDF file ([why](../pdf-spike.md)).
 - **The reports**: for each of the two, **Preview** opens the file as it would be sent,
   and **Export the quarterly security review** or **Export the cyber insurance
   evidence pack** keeps an unchangeable copy and its SHA-256 and opens the export
