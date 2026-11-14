@@ -109,6 +109,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Fixed
 
+- A **picture** chosen on the Account page that was larger than 1 MB got a line of JSON instead of an answer (founder report). A form or a file over the size limit, sent from a page, is now refused with the problem page ("Too large"), and the Account page draws a picture over 512 KB smaller in the browser before it is sent, so a photo straight from a camera can be used. The API keeps its JSON answer.
 - Opening the preview of a report no longer writes an exception to the console: the preview takes no part in a page change, so the page that is left for it cuts the change itself.
 - Nothing shifts between two pages: a page too short to scroll stood 7 px to the right of a long one (the room of the scrollbar is kept on every page now), and the tabs of a client moved 5 px between a page with actions beside its name and one without.
 - The clients table fits again in Inter: between 1024 px and 1099 px the page scrolled sideways by a few pixels, and on a wide window the age of the newest evidence broke under its date and made every row a line taller.

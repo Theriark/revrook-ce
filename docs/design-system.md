@@ -208,7 +208,8 @@ once and, under "system", works out which theme is showing. The account menu is 
 person (picture or initial in a circle, `_avatar.html`), links **Account**,
 **Settings** and **Glossary**, and holds the sign-out form; `revrook.js` closes it on Escape or a click
 outside. The **Account** page (`app/ui/account.py`) sets the display name, the picture
-(PNG, JPEG or WebP up to 512 KB, recognised by its first bytes and served back only as
+(PNG, JPEG or WebP up to 512 KB; `revrook.js` draws a larger one smaller in the browser
+before it is sent; recognised by its first bytes and served back only as
 one of those types from `/account/picture/<id>?v=<version>`), the password (the current
 one is checked first) and the theme. The page title stands on the page itself under the
 bar: there is no band behind it and no battlement edge. The trail is made by

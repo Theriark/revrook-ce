@@ -45,12 +45,14 @@ FRAGMENT = (
     '<p class="rv-errors-title"><span class="rv-status-icon" aria-hidden="true">!'
     "</span> Nothing was saved</p><p>{message}</p></div>"
 )
-TITLES = {404: "Not found", 409: "The copy cannot be used"}
+TITLES = {404: "Not found", 409: "The copy cannot be used", 413: "Too large"}
 DEFAULT_TITLE = "The request was refused"
 # A page address the application does not answer, or answers with another method.
 NO_SUCH_PAGE = "There is no page at this address."
 WRONG_METHOD = "This address does not accept what was sent to it."
-MISSING_MESSAGES = {404: NO_SUCH_PAGE, 405: WRONG_METHOD}
+# A form or a file over the size limit (app/limits.py), refused before it is read.
+TOO_LARGE = "What was sent is larger than revrook accepts here. Choose a smaller file."
+MISSING_MESSAGES = {404: NO_SUCH_PAGE, 405: WRONG_METHOD, 413: TOO_LARGE}
 
 logger = logging.getLogger("revrook.web")
 
@@ -134,8 +136,9 @@ def problem(
 async def missing_page(
     request: Request, status_code: int, headers: Mapping[str, str] | None = None
 ) -> Response:
-    """The problem page for an address no route answers (404) or a method it does
-    not take (405), whether or not someone is signed in.
+    """The problem page for an address no route answers (404), a method it does
+    not take (405) or a body over the size limit (413), whether or not someone
+    is signed in.
 
     No route ran, so the page dependencies did not either: the stale-worker flag
     is set here so the shell can read it. Signed out, the page is drawn in the

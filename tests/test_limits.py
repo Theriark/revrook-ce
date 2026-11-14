@@ -306,3 +306,38 @@ async def test_a_chunked_body_without_a_size_is_refused_over_a_socket() -> None:
         answer = await exchange(port, head, CHUNKED_BODY)
     assert answer.startswith(b"HTTP/1.1 411 "), answer[:80]
     assert not spy.called and spy.bytes_read == 0
+
+
+@pytest.mark.parametrize("taken", [True, False])
+async def test_a_page_refusal_answers_in_place_of_the_json(taken: bool) -> None:
+    """The application may answer a 413 itself (a page for a person); when it does
+    not, the JSON answer stays. The inner application is not called either way."""
+    inner = Recorder()
+    asked: list[str] = []
+
+    async def page_refusal(scope: Scope, receive: Receive, send: Send) -> bool:
+        asked.append(scope["path"])
+        return taken
+
+    middleware = UploadSizeLimitMiddleware(
+        inner, max_file_bytes=LIMIT, page_refusal=page_refusal
+    )
+    sent: list[Message] = []
+
+    async def receive() -> Message:
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message: Message) -> None:
+        sent.append(message)
+
+    scope: dict[str, Any] = {
+        "type": "http",
+        "method": "POST",
+        "path": "/account/picture",
+        "headers": [(b"content-length", str(MAX_BODY_BYTES + 1).encode())],
+    }
+    await middleware(scope, receive, send)
+    assert asked == ["/account/picture"] and not inner.called
+    assert (sent == []) is taken
+    if not taken:
+        assert status_of(sent) == 413

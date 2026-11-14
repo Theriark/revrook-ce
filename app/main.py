@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import DataError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import Receive, Scope, Send
 
 from app import __version__, api, api_ops, metrics
 from app.checks.library import load_library
@@ -40,7 +41,7 @@ from app.ui import reports as ui_reports
 from app.ui import site as ui_site
 from app.ui import system as ui_system
 from app.ui.brand import STATIC_DIR
-from app.ui.common import missing_page
+from app.ui.common import TOO_LARGE, is_htmx, missing_page
 from app.web import clock_of, csrf_protect, session_factory
 from app.worker.heartbeat import read_status
 
@@ -72,6 +73,29 @@ logger = logging.getLogger("revrook.web")
 def is_page_address(path: str) -> bool:
     """Whether a refusal of this address is shown as a page and not as JSON."""
     return path not in NOT_PAGE_PATHS and not path.startswith(NOT_PAGES)
+
+
+async def too_large(scope: Scope, receive: Receive, send: Send) -> bool:
+    """A body over the size limit, sent to a page address, is answered as a page.
+
+    A person who chose a file that is too large must be able to read why nothing
+    was saved: the problem page, or a message for htmx. Every other address keeps
+    the JSON answer of the limit (False). The body is not read either way.
+    """
+    if not is_page_address(scope["path"]):
+        return False
+    request = Request(scope, receive)
+    response: Response
+    if is_htmx(request):
+        response = HTMLResponse(
+            REFUSED_HTML.format(message=html.escape(TOO_LARGE)),
+            status_code=413,
+            headers={"Cache-Control": "no-store"},
+        )
+    else:
+        response = await missing_page(request, 413)
+    await response(scope, receive, send)
+    return True
 
 
 # At most this many sign-ins are checked at once (each holds a database connection
@@ -127,7 +151,9 @@ def create_app(
     app.state.dns_resolver = make_resolver(resolved.dns_resolver)
     # Added first, so the security headers (added next) wrap its refusals too.
     app.add_middleware(
-        UploadSizeLimitMiddleware, max_file_bytes=resolved.import_max_bytes
+        UploadSizeLimitMiddleware,
+        max_file_bytes=resolved.import_max_bytes,
+        page_refusal=too_large,
     )
     app.add_middleware(
         SecurityHeadersMiddleware,

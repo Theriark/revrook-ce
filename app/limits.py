@@ -8,11 +8,14 @@ look at it, so a body is refused by its declared size first.
   files together. It must declare its size (411).
 * Every other POST, PUT, PATCH and DELETE takes at most MAX_BODY_BYTES (1 MiB), which
   is far more than a JSON body or a form of this application needs. Over it is 413.
+  The 413 is JSON, except where the application answers it as a page (a form a
+  person sent from a browser, see `too_large` in app/main.py).
   A body sent in chunks (any Transfer-Encoding, whatever Content-Length says) is 411;
   a request that sends no body passes.
 """
 
 import re
+from collections.abc import Awaitable, Callable
 from typing import Annotated
 
 from fastapi import Path
@@ -34,6 +37,8 @@ BODY_METHODS = UPLOAD_METHODS | {"DELETE"}
 FORM_OVERHEAD_BYTES = 64 * 1024
 # The most any request that is not an upload may send.
 MAX_BODY_BYTES = 1024 * 1024
+# Answers a 413 itself and says True, or says False and leaves it as JSON.
+PageRefusal = Callable[[Scope, Receive, Send], Awaitable[bool]]
 
 
 class UploadSizeLimitMiddleware:
@@ -51,10 +56,12 @@ class UploadSizeLimitMiddleware:
         app: ASGIApp,
         max_file_bytes: int,
         max_body_bytes: int = MAX_BODY_BYTES,
+        page_refusal: PageRefusal | None = None,
     ) -> None:
         self.app = app
         self.upload_limit = max_file_bytes + FORM_OVERHEAD_BYTES
         self.body_limit = max_body_bytes
+        self.page_refusal = page_refusal
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or scope["method"] not in BODY_METHODS:
@@ -83,6 +90,8 @@ class UploadSizeLimitMiddleware:
                 {"detail": "The Content-Length header is not valid."}, status_code=400
             )
         elif int(declared) > limit:
+            if self.page_refusal and await self.page_refusal(scope, receive, send):
+                return
             what = "upload" if upload else "request body"
             refusal = JSONResponse(
                 {"detail": f"The {what} is larger than the limit."}, status_code=413
