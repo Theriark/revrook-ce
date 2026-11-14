@@ -111,6 +111,11 @@ CI run 43613972418): the page **Preview and export** of report 18 of Seed Tidy L
 (synthetic), whose paper sheet is now drawn as the file is. Only the theme of the test
 account was switched for it, and put back.
 
+At 19:20 UTC the same picture was taken once more, on the Development deployment of
+`fd6e0f95f75868d7e38b3261241a61e59377279c` (the merge of pull request #144, image
+`sha256:2c7d242030463a28fb2cdafd4b2d4c96a2e12ec791e544b575a869bda4c45c72`, CI run
+43630759319): the card of the reports now offers **Download PDF** beside Preview.
+
 ## Kept out of the pictures
 
 **Recent changes** on Home and **Users and mappings** in Settings stay out of the
