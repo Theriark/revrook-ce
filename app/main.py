@@ -217,6 +217,7 @@ def create_app(
     app.include_router(ui_profiles.router)
     app.include_router(ui_reports.router)
     app.include_router(ui_site.router)
+    app.include_router(ui_site.files_router)
     app.include_router(ui_system.router)
     app.include_router(api.router)
     app.include_router(api_ops.router)

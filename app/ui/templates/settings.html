@@ -2,7 +2,7 @@
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="rv-page-header">
-<div><h1>Settings</h1><p class="rv-page-purpose">Your business name and reminder address. Everything else here is read-only.</p></div>
+<div><h1>Settings</h1><p class="rv-page-purpose">Your business name, logo and reminder address. Everything else here is read-only.</p></div>
 </div>
 {% if saved %}
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>The settings were saved.</span></p>
@@ -33,12 +33,35 @@
 <figure class="rv-cover-figure" id="cover-preview" aria-labelledby="cover-caption">
 <div class="rv-cover">
 <p class="rv-cover-head">Cover of a report</p>
-<p class="rv-cover-name{% if not msp_name %} rv-cover-empty{% endif %}">{% if msp_name %}{{ msp_name }}{% else %}Your business name goes here{% endif %}</p>
+{% if has_logo %}<img class="rv-cover-logo" src="/settings/logo" alt="Your logo">
+{% endif %}<p class="rv-cover-name{% if not msp_name %} rv-cover-empty{% endif %}">{% if msp_name %}{{ msp_name }}{% else %}Your business name goes here{% endif %}</p>
 <p class="rv-cover-sub">Security review for a client</p>
 <div class="rv-cover-rule" aria-hidden="true"></div>
 </div>
 <figcaption class="rv-cover-note" id="cover-caption">{% if errors %}The name as typed. It is not saved until the form is.{% elif msp_name %}The saved name, as the cover of every report prints it.{% else %}No name is saved yet, so no report can be exported.{% endif %}</figcaption>
 </figure>
+</div>
+{#- The logo: a picture file of the business, printed above its name on the cover
+    of every report. A form of its own, because it sends a file. -#}
+<div class="rv-settings-logo" id="logo">
+<h3 class="rv-card-title" id="logo-title">Your logo</h3>
+<form method="post" action="/settings/logo" enctype="multipart/form-data" id="logo-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div class="rv-field">
+<label for="logo-file">{% if has_logo %}Replace the logo{% else %}Logo file{% endif %}</label>
+<input id="logo-file" name="logo" type="file" accept="image/png,image/jpeg,image/webp" required aria-describedby="logo-help">
+<small id="logo-help" class="rv-help">PNG, JPEG or WebP, up to {{ max_logo_kb }} KB. Printed above your business name on the cover of every report, on a white plate, so a dark logo is seen too. {% if has_logo %}A logo is saved.{% else %}No logo is saved: the cover prints the name alone.{% endif %}</small>
+</div>
+<div class="rv-actions">
+<button type="submit">Upload logo</button>
+</div>
+</form>
+{% if has_logo %}
+<form method="post" action="/settings/logo/remove" class="rv-inline-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button type="submit" class="rv-button-quiet">Remove logo</button>
+</form>
+{% endif %}
 </div>
 </section>
 

@@ -69,6 +69,18 @@ body {
   print-color-adjust: exact;
 }
 
+.cover-mark {
+  display: block;
+  max-width: 60mm;
+  max-height: 18mm;
+  margin: 0 0 5mm;
+  padding: 2mm 3mm;
+  border-radius: 1mm;
+  background-color: var(--rv-white);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 .cover-msp {
   margin: 0 0 16mm;
   font-size: 1.125rem;
@@ -425,7 +437,7 @@ td.date {
   display: block;
   width: 100%;
   height: 22px;
-  margin: 0 0 0.75rem;
+  margin: 0.75rem 0;
 }
 
 .mix-protected {
@@ -766,8 +778,10 @@ dl.figures,
 <article class="finding" aria-labelledby="finding-1">
 <h3 id="finding-1">1. Every active staff account signs in with more than a password.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-ACC-01 &middot; gate control &middot; Identity and MFA</span></p>
-<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
 <dl class="facts">
+
 <dt>What we did</dt><dd>Registered 28 of 35 people for multi-factor sign-in.</dd>
 <dt>What we recommend</dt><dd>Register the remaining people and then enforce it by policy.</dd>
 <dt>What we need from you</dt><dd>Seven people to attend a 15 minute session.</dd>
@@ -779,14 +793,17 @@ dl.figures,
 <article class="finding" aria-labelledby="finding-2">
 <h3 id="finding-2">2. DMARC is published and enforced.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-EML-03 &middot; Email security</span></p>
-<p class="note">Read from: DNS records or our own public DNS check, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Public DNS check, evidence dated 2026-10-17.</p>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-3">
 <h3 id="finding-3">3. Legacy sign-in methods that skip MFA are blocked.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-ACC-04 &middot; Identity and MFA</span></p>
-<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
 <dl class="facts">
+
 
 <dt>What we recommend</dt><dd>Block the legacy sign-in methods that skip multi-factor checks.</dd>
 <dt>What we need from you</dt><dd>A list of the devices that still use them.</dd>
@@ -798,13 +815,15 @@ dl.figures,
 <article class="finding" aria-labelledby="finding-4">
 <h3 id="finding-4">4. Dormant accounts are disabled.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-ACC-06 &middot; Identity and MFA</span></p>
-<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-5">
 <h3 id="finding-5">5. Recovery targets and a recovery plan are written down.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-BCK-06 &middot; Backup and recovery</span></p>
-<p class="note">Read from: manual evidence, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Manual evidence (a dated document or an attestation), evidence dated 2026-10-17.</p>
+
 </article>
 
 
@@ -827,17 +846,17 @@ dl.figures,
 <thead><tr><th scope="col">Evidence</th><th scope="col" class="num">Controls waiting</th><th scope="col">Which</th></tr></thead>
 <tbody>
 
-<tr><td>Manual evidence</td><td class="num">6</td><td>PC-ACC-08, PC-EML-07, PC-LOG-03, PC-LOG-05, PC-GOV-02, PC-GOV-05</td></tr>
+<tr><td>Manual evidence (a dated document or an attestation)</td><td class="num">6</td><td>PC-ACC-08, PC-EML-07, PC-LOG-03, PC-LOG-05, PC-GOV-02, PC-GOV-05</td></tr>
 
-<tr><td>Graph read-only JSON</td><td class="num">4</td><td>PC-DEV-06, PC-BCK-01, PC-BCK-02, PC-GOV-04</td></tr>
+<tr><td>Microsoft 365 export (Entra, Intune, Secure Score)</td><td class="num">4</td><td>PC-DEV-06, PC-BCK-01, PC-BCK-02, PC-GOV-04</td></tr>
 
-<tr><td>Backup CSV</td><td class="num">3</td><td>PC-BCK-01, PC-BCK-02, PC-BCK-04</td></tr>
+<tr><td>Backup jobs export</td><td class="num">3</td><td>PC-BCK-01, PC-BCK-02, PC-BCK-04</td></tr>
 
-<tr><td>RMM device CSV</td><td class="num">2</td><td>PC-END-04, PC-BCK-01</td></tr>
+<tr><td>Device inventory, patch and antivirus export</td><td class="num">2</td><td>PC-END-04, PC-BCK-01</td></tr>
 
-<tr><td>Exchange Online export produced by the MSP admin</td><td class="num">1</td><td>PC-LOG-03</td></tr>
+<tr><td>Exchange Online settings export</td><td class="num">1</td><td>PC-LOG-03</td></tr>
 
-<tr><td>Leavers CSV</td><td class="num">1</td><td>PC-GOV-04</td></tr>
+<tr><td>Leavers list</td><td class="num">1</td><td>PC-GOV-04</td></tr>
 
 </tbody>
 </table>

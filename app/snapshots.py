@@ -7,14 +7,16 @@ plain JSON with sorted keys and no float. The digest in it is checked whenever a
 report is built, so a row that was edited is refused.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.checks.model import ControlResult as CheckResult
 from app.evidence.errors import EvidenceError
-from app.models import Snapshot
+from app.models import ControlResult, Snapshot
 from app.scoring.snapshot import SnapshotInput, document_bytes, snapshot_document
 
 MAX_LISTED = 20
@@ -56,6 +58,45 @@ async def store_snapshot(
     session.add(row)
     await session.flush()
     return row.id
+
+
+async def store_results(
+    session: AsyncSession, snapshot_id: int, results: Iterable[CheckResult]
+) -> None:
+    """Keep what each control was found to be when the snapshot was made.
+
+    The score is made from the snapshot alone; these lines are what a report says
+    beside a finding (the sentence of the check engine and its two numbers).
+    """
+    session.add_all(
+        ControlResult(
+            snapshot_id=snapshot_id,
+            control_id=result.control_id,
+            status=result.status,
+            numerator=result.numerator,
+            denominator=result.denominator,
+            detail={"text": result.detail},
+        )
+        for result in results
+    )
+
+
+async def load_observed(session: AsyncSession, snapshot_id: int) -> dict[str, str]:
+    """The sentence kept for each control of a snapshot, by control id.
+
+    Empty for a snapshot made before the sentences were kept.
+    """
+    found = await session.execute(
+        select(ControlResult.control_id, ControlResult.detail).where(
+            ControlResult.snapshot_id == snapshot_id
+        )
+    )
+    observed: dict[str, str] = {}
+    for control_id, detail in found:
+        text = detail.get("text") if isinstance(detail, dict) else None
+        if isinstance(text, str) and text.strip():
+            observed[control_id] = text.strip()
+    return observed
 
 
 async def recent_twin(

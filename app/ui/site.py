@@ -1,4 +1,5 @@
-"""Settings and the glossary (phase 9), and the reminder address (phase 10)."""
+"""Settings and the glossary (phase 9), the reminder address (phase 10) and the
+logo of the business on the cover of a report."""
 
 import os
 from datetime import UTC
@@ -6,18 +7,24 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from sqlalchemy import select, update
+from starlette.datastructures import UploadFile
 
 from app.devseed import configured_accounts, seed_enabled
 from app.models import AppUser
 from app.preferences import (
+    MAX_LOGO_BYTES,
+    get_logo,
     get_msp_name,
     get_reminder_recipient,
+    remove_logo,
+    set_logo,
     set_msp_name,
     set_reminder_recipient,
 )
 from app.reports.disclaimer import DISCLAIMER
 from app.settings import Settings
 from app.theme import RAILS, THEMES, safe_next
+from app.ui.account import avatar_type_of
 from app.ui.auth import redirect
 from app.ui.common import (
     guarded,
@@ -31,6 +38,8 @@ from app.web import clock_of, session_factory, set_rail_cookie, set_theme_cookie
 from app.worker.mail import mail_configured
 
 router = APIRouter()
+# A file, not a page: the logo as it is kept, for the cover preview of Settings.
+files_router = APIRouter()
 
 
 async def settings_response(
@@ -46,6 +55,7 @@ async def settings_response(
     async with session_factory(request)() as session:
         stored = await get_msp_name(session)
         stored_reminder = await get_reminder_recipient(session)
+        logo = await get_logo(session)
         found = await session.execute(select(AppUser.username).order_by(AppUser.id))
         usernames = list(found.scalars())
     settings: Settings = request.app.state.settings
@@ -59,6 +69,8 @@ async def settings_response(
         "msp_name": stored if msp_name is None else msp_name,
         "reminder_email": reminder,
         "mail_relay": mail_configured(settings),
+        "has_logo": logo is not None,
+        "max_logo_kb": MAX_LOGO_BYTES // 1024,
         "errors": errors,
         "saved": saved,
         "usernames": usernames,
@@ -110,6 +122,66 @@ async def settings_save(
                 request, user, errors, msp_name, False, 422, reminder_email
             )
         return redirect("/settings?saved=1")
+
+    return await guarded(request, handle)
+
+
+@router.post("/settings/logo")
+async def settings_logo(request: Request) -> Response:
+    """Save the logo that the cover of every report prints above the name.
+
+    The file is known by its first bytes (PNG, JPEG or WebP), never by its name
+    or by the type the browser sends, so nothing else is kept or printed.
+    """
+
+    async def handle(user: AppUser) -> Response:
+        form = await request.form(max_files=1, max_fields=4)
+        upload = form.get("logo")
+        if not isinstance(upload, UploadFile):
+            return await settings_response(
+                request, user, ["Choose a logo file first."], status_code=422
+            )
+        data = await upload.read(MAX_LOGO_BYTES + 1)
+        now = clock_of(request)().astimezone(UTC)
+        try:
+            async with session_factory(request)() as session, session.begin():
+                await set_logo(
+                    session, data, avatar_type_of(data), user_id=user.id, now=now
+                )
+        except ValueError as error:
+            return await settings_response(
+                request, user, [sentence(str(error))], status_code=422
+            )
+        return redirect("/settings?saved=1")
+
+    return await guarded(request, handle)
+
+
+@router.post("/settings/logo/remove")
+async def settings_logo_remove(request: Request) -> Response:
+    async def handle(user: AppUser) -> Response:
+        now = clock_of(request)().astimezone(UTC)
+        async with session_factory(request)() as session, session.begin():
+            await remove_logo(session, user_id=user.id, now=now)
+        return redirect("/settings?saved=1")
+
+    return await guarded(request, handle)
+
+
+@files_router.get("/settings/logo")
+async def settings_logo_file(request: Request) -> Response:
+    """The logo as it is kept, for the cover preview of the settings page."""
+
+    async def handle(user: AppUser) -> Response:
+        async with session_factory(request)() as session:
+            logo = await get_logo(session)
+        if logo is None:
+            return Response(status_code=404)
+        return Response(
+            content=logo.data,
+            media_type=logo.media_type,
+            headers={"Cache-Control": "no-store"},
+        )
 
     return await guarded(request, handle)
 

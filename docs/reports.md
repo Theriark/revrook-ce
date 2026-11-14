@@ -58,6 +58,12 @@ and the snapshot; the insurance pack has no dial, because it answers a form. The
 summary prints its three figures (score, evidence coverage, band) as one row and the
 controls by status as one bar above the table of the same numbers. A finding is a line
 of a list and says which evidence it is read from and how that evidence is dated.
+When the snapshot keeps it, a finding also says **what was checked**: the sentence of
+the check engine at the moment the snapshot was made (`control_result`, one row for
+each control, written by `store_results` of `app/snapshots.py`); a snapshot made before
+that prints none, and the recommendation stays what the technician writes. The kinds
+of evidence are named as a client reads them (`PLAIN_SOURCES` of `app/reports/view.py`:
+"Microsoft 365 export", "Backup jobs export"), not by the shorthand of the library.
 **What could not be checked** lists the kinds of evidence the controls that were not
 checked read, the kind most of them wait for first; it is left out when every control
 was checked. The roadmap and the plan are printed only when something was written, so
@@ -77,7 +83,13 @@ The disclaimer of rnd-report-3 section 3.8 (`app/reports/disclaimer.py`) is in t
 of every section of the report (each is one `.page` of the HTML) and in full on the
 last page, with the line "Generated with revrook". A section that is longer than one printed sheet has its footer at its end
 only, so a middle sheet of a long section does not carry the disclaimer; every
-section starts with the report heading, and the last page has the full text. The MSP name is on the cover. No revrook logo is on a client page. The status colours and
+section starts with the report heading, and the last page has the full text. The MSP name is on the cover, under the logo of the MSP when one is set in
+Settings (a PNG, JPEG or WebP file of at most 200 KB, known by its first bytes, never
+SVG; it travels inside the report as a `data:` picture, on a white plate so that a
+dark mark is seen on the dark head, and the preview policy allows `img-src data:` and
+nothing else). **Prepared by** is the name the person chose on the Account page, or
+the sign-in name when none is set, unless the report builder says otherwise. No
+revrook logo is on a client page. The status colours and
 the secondary text are the approved brand tokens and appear on white only;
 `tests/test_report_contrast.py` reads every foreground and background pair of the report
 stylesheets, as `tests/test_brand_contrast.py` does for the application.

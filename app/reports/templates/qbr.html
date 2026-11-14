@@ -54,9 +54,12 @@
 <h3 id="finding-{{ item.rank }}">{{ item.rank }}. {{ item.row.title }}</h3>
 <p>{{ m.status(item.row.label) }} <span class="secondary">{{ item.row.control_id }}{% if item.row.gate %} &middot; gate control{% endif %} &middot; {{ item.row.domain_name }}</span></p>
 <p class="note">Read from: {{ item.row.sources|join(", ") }}{% if item.row.evidence_at %}, evidence dated {{ item.row.evidence_at|day }}{% endif %}.</p>
-{#- Only the notes that were written: a client never reads an empty placeholder. -#}
-{% if item.finding.did or item.finding.recommend or item.finding.need or item.finding.by_when %}
+{#- What the check found when the snapshot was made, then only the notes that were
+    written: a client never reads an empty placeholder. -#}
+{% set seen = ctx.observed.get(item.row.control_id) %}
+{% if seen or item.finding.did or item.finding.recommend or item.finding.need or item.finding.by_when %}
 <dl class="facts">
+{% if seen %}<dt>What was checked</dt><dd>{{ seen }}</dd>{% endif %}
 {% if item.finding.did %}<dt>What we did</dt><dd>{{ item.finding.did }}</dd>{% endif %}
 {% if item.finding.recommend %}<dt>What we recommend</dt><dd>{{ item.finding.recommend }}</dd>{% endif %}
 {% if item.finding.need %}<dt>What we need from you</dt><dd>{{ item.finding.need }}</dd>{% endif %}

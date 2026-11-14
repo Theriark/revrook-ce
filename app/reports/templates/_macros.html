@@ -49,7 +49,8 @@
 {% macro cover(subtitle) -%}
 <section class="page cover" id="cover" aria-labelledby="cover-title">
 <div class="cover-head">
-{% if ctx.msp_name %}<p class="cover-msp">{{ ctx.msp_name }}</p>{% endif %}
+{% if ctx.logo %}<img class="cover-mark" src="data:{{ ctx.logo[0] }};base64,{{ ctx.logo[1] }}" alt="">
+{% endif %}{% if ctx.msp_name %}<p class="cover-msp">{{ ctx.msp_name }}</p>{% endif %}
 <h1 id="cover-title">{{ subtitle }}</h1>
 <p class="cover-client">{{ ctx.client_name }}</p>
 <p class="cover-period">{{ ctx.period_start.isoformat() }} to {{ ctx.period_end.isoformat() }}</p>

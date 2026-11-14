@@ -105,6 +105,7 @@ EVENT_WORDS = {
     "exception.added": "Exception added",
     "exception.closed": "Exception closed",
     "settings.msp_name": "MSP name changed",
+    "settings.msp_logo": "Logo changed",
     "settings.reminder_recipient": "Reminder address changed",
 }
 EVENT_PAGES = {

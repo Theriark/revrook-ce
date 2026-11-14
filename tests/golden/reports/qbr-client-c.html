@@ -69,6 +69,18 @@ body {
   print-color-adjust: exact;
 }
 
+.cover-mark {
+  display: block;
+  max-width: 60mm;
+  max-height: 18mm;
+  margin: 0 0 5mm;
+  padding: 2mm 3mm;
+  border-radius: 1mm;
+  background-color: var(--rv-white);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 .cover-msp {
   margin: 0 0 16mm;
   font-size: 1.125rem;
@@ -425,7 +437,7 @@ td.date {
   display: block;
   width: 100%;
   height: 22px;
-  margin: 0 0 0.75rem;
+  margin: 0.75rem 0;
 }
 
 .mix-protected {
@@ -766,8 +778,10 @@ dl.figures,
 <article class="finding" aria-labelledby="finding-1">
 <h3 id="finding-1">1. Every administrator uses MFA.</h3>
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-ACC-02 &middot; gate control &middot; Identity and MFA</span></p>
-<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
 <dl class="facts">
+
 <dt>What we did</dt><dd>Found one administrator without multi-factor sign-in.</dd>
 <dt>What we recommend</dt><dd>Enrol that administrator today.</dd>
 <dt>What we need from you</dt><dd>Fifteen minutes with the administrator.</dd>
@@ -779,25 +793,29 @@ dl.figures,
 <article class="finding" aria-labelledby="finding-2">
 <h3 id="finding-2">2. DMARC is published and enforced.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-EML-03 &middot; Email security</span></p>
-<p class="note">Read from: DNS records or our own public DNS check, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Public DNS check, evidence dated 2026-10-17.</p>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-3">
 <h3 id="finding-3">3. Dormant accounts are disabled.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-ACC-06 &middot; Identity and MFA</span></p>
-<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-4">
 <h3 id="finding-4">4. At least one backup copy is out of reach of a compromised admin account.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-BCK-04 &middot; Backup and recovery</span></p>
-<p class="note">Read from: backup CSV, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Backup jobs export, evidence dated 2026-10-17.</p>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-5">
 <h3 id="finding-5">5. Devices meet a managed compliance baseline.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-DEV-05 &middot; Devices and patching</span></p>
-<p class="note">Read from: Graph read-only JSON, evidence dated 2026-10-17.</p>
+<p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
 </article>
 
 
