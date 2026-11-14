@@ -61,7 +61,11 @@ of a list and says which evidence it is read from and how that evidence is dated
 When the snapshot keeps it, a finding also says **what was checked**: the sentence of
 the check engine at the moment the snapshot was made (`control_result`, one row for
 each control, written by `store_results` of `app/snapshots.py`); a snapshot made before
-that prints none, and the recommendation stays what the technician writes. The kinds
+that prints none. Where the technician wrote no recommendation, a finding prints the
+**usual next step** of its control (`app/reports/advice.py`: one general sentence for
+each of the 51 controls, outside the ruleset; a control that passes on evidence grown
+old asks for a fresh export instead); what the technician recommends takes its place.
+The kinds
 of evidence are named as a client reads them (`PLAIN_SOURCES` of `app/reports/view.py`:
 "Microsoft 365 export", "Backup jobs export"), not by the shorthand of the library.
 **What could not be checked** lists the kinds of evidence the controls that were not

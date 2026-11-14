@@ -25,6 +25,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markupsafe import Markup
 
+from app.reports.advice import NEXT_STEPS, REFRESH_EVIDENCE
 from app.reports.charts import Bar, bar_chart, score_dial, status_bar
 from app.reports.disclaimer import DISCLAIMER, GENERATED_WITH
 from app.reports.status import NOT_APPLICABLE, NOT_CHECKED, NOT_PROTECTED
@@ -227,6 +228,22 @@ def _waiting(view: ReportView) -> list[Waiting]:
     return [Waiting(source, tuple(ids)) for source, ids in ordered]
 
 
+def _next_steps(view: ReportView) -> dict[str, str]:
+    """The usual next step of each top finding the technician wrote no
+    recommendation for. A control that passes on evidence grown old needs fresh
+    evidence, not the fix of the control.
+    """
+    steps: dict[str, str] = {}
+    for item in view.top_findings:
+        if item.finding.recommend.strip():
+            continue
+        if item.row.status == "pass":
+            steps[item.row.control_id] = REFRESH_EVIDENCE
+        elif item.row.control_id in NEXT_STEPS:
+            steps[item.row.control_id] = NEXT_STEPS[item.row.control_id]
+    return steps
+
+
 def _roadmap(view: ReportView) -> list[RoadmapItem]:
     items: list[RoadmapItem] = []
     for item in view.ranked:
@@ -258,6 +275,7 @@ def render_qbr(view: ReportView) -> bytes:
         score_dial=_score_dial(view),
         status_chart=_status_chart(view),
         waiting=_waiting(view),
+        next_steps=_next_steps(view),
         not_checked=sum(1 for row in view.rows if row.label == NOT_CHECKED),
         domain_chart=_domain_chart(view),
         roadmap=_roadmap(view),

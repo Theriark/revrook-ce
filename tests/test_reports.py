@@ -22,6 +22,7 @@ from markupsafe import escape
 from app.checks.library import load_library
 from app.checks.model import NaReview
 from app.exceptions import ExceptionEntry
+from app.reports.advice import NEXT_STEPS, REFRESH_EVIDENCE
 from app.reports.charts import DIAL_LENGTH, MIX_GAP, WIDTH, dial_dash, segment_widths
 from app.reports.completeness import (
     MAX_NAME,
@@ -303,6 +304,38 @@ def test_a_finding_says_what_the_check_found_when_the_snapshot_keeps_it() -> Non
     # A snapshot made before the sentences were kept prints none.
     plain = section_of(html_of(QBR, "B"), "findings")
     assert plain is not None and "What was checked" not in plain
+
+
+def test_every_control_has_a_usual_next_step_of_one_sentence() -> None:
+    assert set(NEXT_STEPS) == {control.id for control in LIBRARY.controls}
+    for control_id, step in NEXT_STEPS.items():
+        assert step == step.strip() and step.endswith("."), control_id
+        assert 30 <= len(step) <= 180, control_id
+
+
+def test_a_finding_without_a_recommendation_prints_the_usual_next_step() -> None:
+    view = view_of("B")
+    written = [item for item in view.top_findings if item.finding.recommend]
+    bare = [item for item in view.top_findings if not item.finding.recommend]
+    assert written and bare
+    section = section_of(render_report(QBR, view).decode("utf-8"), "findings")
+    assert section is not None
+    for item in bare:
+        step = str(escape(NEXT_STEPS[item.row.control_id]))
+        assert f"<dt>Usual next step</dt><dd>{step}</dd>" in section
+    # What the technician recommends takes its place.
+    for item in written:
+        assert str(escape(NEXT_STEPS[item.row.control_id])) not in section
+    assert section.count("<dt>Usual next step</dt>") == len(bare)
+    # A control that passes on old evidence asks for fresh evidence, not a fix.
+    first = bare[0]
+    old = replace(first, row=replace(first.row, status="pass"))
+    ranked = tuple(old if item is first else item for item in view.ranked)
+    text = render_report(QBR, replace(view, ranked=ranked)).decode("utf-8")
+    stale = section_of(text, "findings")
+    assert stale is not None
+    assert f"<dt>Usual next step</dt><dd>{REFRESH_EVIDENCE}</dd>" in stale
+    assert str(escape(NEXT_STEPS[first.row.control_id])) not in stale
 
 
 def test_the_evidence_is_named_as_a_client_reads_it() -> None:

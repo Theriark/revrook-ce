@@ -226,7 +226,7 @@ ol {
 
 dl.facts {
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
+  grid-template-columns: 11.5rem minmax(0, 1fr);
   gap: 0.4rem 1rem;
   margin: 0 0 1rem;
 }
@@ -780,6 +780,7 @@ dl.figures,
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-EML-03 &middot; Email security</span></p>
 <p class="note">Read from: Public DNS check, evidence dated 2026-10-17.</p>
 
+
 <dl class="facts">
 
 <dt>What we did</dt><dd>Published a DMARC record in monitoring mode.</dd>
@@ -795,10 +796,11 @@ dl.figures,
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-ACC-06 &middot; Identity and MFA</span></p>
 <p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
 
+
 <dl class="facts">
 
 <dt>What we did</dt><dd>Disabled two dormant accounts.</dd>
-
+<dt>Usual next step</dt><dd>Disable the accounts that have not signed in for more than 90 days, once the business confirms they are no longer needed.</dd>
 
 
 </dl>
@@ -809,6 +811,7 @@ dl.figures,
 <h3 id="finding-3">3. At least one backup copy is out of reach of a compromised admin account.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-BCK-04 &middot; Backup and recovery</span></p>
 <p class="note">Read from: Backup jobs export, evidence dated 2026-10-17.</p>
+
 
 <dl class="facts">
 
@@ -825,12 +828,30 @@ dl.figures,
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-DEV-05 &middot; Devices and patching</span></p>
 <p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
 
+
+<dl class="facts">
+
+
+<dt>Usual next step</dt><dd>Bring the devices that are not compliant back into the compliance baseline, or retire them.</dd>
+
+
+</dl>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-5">
 <h3 id="finding-5">5. An incident response plan with contacts exists and was exercised.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-GOV-05 &middot; Governance and people</span></p>
 <p class="note">Read from: Manual evidence (a dated document or an attestation), evidence dated 2026-10-17.</p>
+
+
+<dl class="facts">
+
+
+<dt>Usual next step</dt><dd>Write an incident response plan with the contacts to call, and run one exercise of it.</dd>
+
+
+</dl>
 
 </article>
 
