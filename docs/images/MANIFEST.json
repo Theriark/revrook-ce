@@ -3,7 +3,7 @@
   "schemaNote": "Schema 4 (introduced with pull request #63 and kept by every recapture since): one capture set, taken on one candidate; fields common to every picture are given once at the top. Schema 3 and earlier, with several capture identities, are history (see history).",
   "product": "revrook-ce",
   "repository": "Theriark/revrook-ce",
-  "documentationRevision": "docs/report-page-picture, branched from development at af35cfa59234ffafd435deaeecc0058fb2ab18de (the merge of pull request #141): the set of 2026-11-13, with six pictures captured again on 2026-11-14 on Development (Settings and the four pictures of the rendered review on 56e697d, the page Preview and export on af35cfa)",
+  "documentationRevision": "docs/report-page-picture-pdf, branched from development at fd6e0f95f75868d7e38b3261241a61e59377279c (the merge of pull request #144): the set of 2026-11-13, with six pictures captured again on 2026-11-14 on Development (Settings and the four pictures of the rendered review on 56e697d, the page Preview and export on fd6e0f9, after an earlier one on af35cfa)",
   "candidate": {
     "source": "development 0f705ca, the Development deployment",
     "commit": "0f705cace6f1d91c950693a2f1d67552904a2744",
@@ -36,25 +36,25 @@
       ]
     },
     "latest": {
-      "source": "development af35cfa, the Development deployment",
-      "commit": "af35cfa59234ffafd435deaeecc0058fb2ab18de",
-      "imageDigest": "sha256:51ec1759636f6c8d7c3f8c6716a98c497804ce91813fe27e7223c3efdb0d3783",
-      "image": "ghcr.io/theriark/revrook-ce@sha256:51ec1759636f6c8d7c3f8c6716a98c497804ce91813fe27e7223c3efdb0d3783",
-      "ciRun": 43613972418,
+      "source": "development fd6e0f9, the Development deployment",
+      "commit": "fd6e0f95f75868d7e38b3261241a61e59377279c",
+      "imageDigest": "sha256:2c7d242030463a28fb2cdafd4b2d4c96a2e12ec791e544b575a869bda4c45c72",
+      "image": "ghcr.io/theriark/revrook-ce@sha256:2c7d242030463a28fb2cdafd4b2d4c96a2e12ec791e544b575a869bda4c45c72",
+      "ciRun": 43630759319,
       "target": "the Development site, https://ce-dev-revrook.theriark.dev",
-      "evidence": "the System page of the site showed revrook 27.0.0.dev0, build af35cfa59234, after the picture was taken",
+      "evidence": "the System page of the site showed revrook 27.0.0.dev0, build fd6e0f95f758, before the picture was taken",
       "pictures": [
         "report-preview-1440.png"
       ]
     }
   },
   "releaseCandidate": "not set by this documentation: the prepare-rc job mints the next v27.<minor>.<patch>-rc.<n> tag; v27.0.0-rc.1 to v27.0.0-rc.10 name earlier candidates (rc.10 is this application commit, 0f705cac, with the earlier pictures)",
-  "applicationVersionShown": "27.0.0.dev0, build 0f705cace6f1 (the System page, pictured); build 56e697d499ef for the five pictures of 2026-11-14; build af35cfa59234 for report-preview-1440.png",
+  "applicationVersionShown": "27.0.0.dev0, build 0f705cace6f1 (the System page, pictured); build 56e697d499ef for the five pictures of 2026-11-14; build af35cfa59234 for report-preview-1440.png; build fd6e0f95f758 for the second report-preview-1440.png of 2026-11-14",
   "environment": "Development: https://ce-dev-revrook.theriark.dev, the Development deployment of revrook CE (web and worker in one process, role all) with the installation's own PostgreSQL and its synthetic test data; reached from the operator's Windows computer over the public address",
   "role": "administrator: revrook-admin (user id 1), the test administrator of the Development seed, signed in with a session cookie (revrook_session) made on the Development server with SessionCodec.encode of app/security.py; no password was typed anywhere and none is in any frame",
   "browser": "Playwright for Python 1.65.1 driving the installed Google Chrome 157.0.8103.78 (channel chrome), headless, CSS-pixel scale (deviceScaleFactor 1), locale en-GB; WebGL UNMASKED_RENDERER: ANGLE (NVIDIA, NVIDIA GeForce RTX 2080 SUPER (0x00001E81) Direct3D11 vs_5_0 ps_5_0, D3D11), a hardware GPU (not SwiftShader)",
   "timezone": "Europe/Lisbon, UTC+00:00 in November, so the capture times equal UTC",
-  "captureWindow": "2026-11-13 22:40:23 to 22:44:20 Europe/Lisbon (UTC+00:00, so the same as UTC), in one run of one capture script on one persistent browser profile (so rv-scenes, the theme and the rail carried over as in one browser), plus a context without a session for the two sign-in pictures; five pictures on 2026-11-14 04:16:19 to 04:16:29 (see candidate.later); report-preview-1440.png on 2026-11-14 16:17:21 (see candidate.latest)",
+  "captureWindow": "2026-11-13 22:40:23 to 22:44:20 Europe/Lisbon (UTC+00:00, so the same as UTC), in one run of one capture script on one persistent browser profile (so rv-scenes, the theme and the rail carried over as in one browser), plus a context without a session for the two sign-in pictures; five pictures on 2026-11-14 04:16:19 to 04:16:29 (see candidate.later); report-preview-1440.png on 2026-11-14 16:17:21 (see candidate.latest); report-preview-1440.png once more on 2026-11-14 19:20:30 (see candidate.latest)",
   "data": "synthetic test data of the Development installation only: the four Seed clients (Seed Tidy, Seed Gaps, Seed Stale and Seed Empty Ltd (synthetic), ids 20 to 23) and eight Mock clients (ids 30 to 37) whose evidence is the synthetic export packs of the Mock Platform; the business name Sample MSP and the reminder address reminders@example.test (a reserved test domain); one open exception and one kept export of Seed Tidy; 26 test clients deleted earlier, whose hash chains remain by design. The files imported on the import page are invented (two leavers at seed.example.invalid and a Conditional Access and an Intune export written by the Development seed builders of app/devdata.py for the tidy profile at 22:40:16, so that they are new revisions, and a help-desk CSV that matches no source); the profile editor read the same two leavers under a vendor's own column names; the DNS check was run for example.com, a reserved documentation domain",
   "privacy": {
     "checked": "before every capture the visible text of the frame was read for an e-mail address and for ticket-style identifiers (a project key, a hyphen and a number; control ids such as PC-ACC-01 aside): none was found in any frame (SHA-256 is the only other match); after the run the pictures were opened and judged. The one address in a picture is reminders@example.test in the reminder field of Settings, a reserved test domain. The account named in the top bar, in Recent changes of the client overview and as Prepared by is revrook-admin",
@@ -84,7 +84,8 @@
     "2026-11-14: two reports of Seed Gaps Ltd (synthetic) were made as revrook-admin for the period 2026-07-01 to 2026-09-30: report 19 while pull request #138 was checked on Development, report 20 after pull request #139 was deployed; report 20 is the one the four pictures of the rendered review show",
     "2026-11-14: while pull request #138 was checked, a made-up test logo was uploaded on Settings and removed again in the same session; Settings holds no logo, as before",
     "2026-11-14: the theme of revrook-admin was switched to Light for the picture of Settings and put back to Dark afterwards",
-    "2026-11-14 16:17: the theme of revrook-admin was switched to Light for the picture of Preview and export and put back to Dark afterwards; a new session of that test account was made on the Development server, because a session lasts twelve hours; nothing else was changed"
+    "2026-11-14 16:17: the theme of revrook-admin was switched to Light for the picture of Preview and export and put back to Dark afterwards; a new session of that test account was made on the Development server, because a session lasts twelve hours; nothing else was changed",
+    "2026-11-14 19:20: the theme of revrook-admin was switched to Light for the picture of Preview and export and put back to Dark afterwards; earlier that evening a picture was set on that account and removed again, to check pull request #143; nothing else was changed"
   ],
   "notCaptured": [
     {
@@ -475,7 +476,7 @@
     "F": "full-page capture of the browser"
   },
   "perPictureDetail": "capture is the file name the capture script wrote (each picture was written straight into docs/images, with no separate browser capture); shows says what the frame holds; usedBy lists every Markdown file of the repository that links the picture",
-  "replacesNote": "replaces is the sha256 of the picture of the same name at 0f705cace6f1d91c950693a2f1d67552904a2744 (the set captured on 544b166); for the five pictures of 2026-11-14, of the picture of the same name at 56e697d499efc101c1013079f32b0594c5fc97e4 (the picture of 2026-11-13); for report-preview-1440.png, of the picture of the same name at af35cfa59234ffafd435deaeecc0058fb2ab18de (the picture of 2026-11-13)",
+  "replacesNote": "replaces is the sha256 of the picture of the same name at 0f705cace6f1d91c950693a2f1d67552904a2744 (the set captured on 544b166); for the five pictures of 2026-11-14, of the picture of the same name at 56e697d499efc101c1013079f32b0594c5fc97e4 (the picture of 2026-11-13); for report-preview-1440.png, of the picture of the same name at af35cfa59234ffafd435deaeecc0058fb2ab18de (the picture of 2026-11-13); for report-preview-1440.png, a second time, of the picture of the same name at fd6e0f95f75868d7e38b3261241a61e59377279c (the picture of 16:17)",
   "recapture": {
     "date": "2026-11-13",
     "reason": "pull requests #127 to #135 revamped the interface in place after the set of 544b166: Inter, shipped with the installation, as the typeface of every page and of the exported reports; the 28 px page title; motion (a page change that keeps the rail and the top bar still, lists and arcs that arrive); the attention list read as text; the clients table fitted to the wider typeface; on the client overview, How fresh is the evidence and Recent changes in a column beside Coverage by domain; one page frame, so nothing shifts between two pages. All 62 pictures were therefore captured again, this time on the Development site with the 3D view shown, so that they show the product as it is deployed, with its scenes",
@@ -630,6 +631,27 @@
         "report-preview-1440.png"
       ],
       "unchanged": "the other 61 pictures are as they were at the base, byte for byte"
+    },
+    "partial20261114c": {
+      "date": "2026-11-14",
+      "reason": "pull request #144 adds Download PDF to the card of the reports and takes away the sentence on printing the preview, so the picture of 16:17 showed a card that is no longer there",
+      "candidate": {
+        "source": "development fd6e0f9, the Development deployment",
+        "commit": "fd6e0f95f75868d7e38b3261241a61e59377279c",
+        "imageDigest": "sha256:2c7d242030463a28fb2cdafd4b2d4c96a2e12ec791e544b575a869bda4c45c72",
+        "image": "ghcr.io/theriark/revrook-ce@sha256:2c7d242030463a28fb2cdafd4b2d4c96a2e12ec791e544b575a869bda4c45c72",
+        "ciRun": 43630759319,
+        "target": "the Development site, https://ce-dev-revrook.theriark.dev",
+        "evidence": "the System page of the site showed revrook 27.0.0.dev0, build fd6e0f95f758, before the picture was taken",
+        "pictures": [
+          "report-preview-1440.png"
+        ]
+      },
+      "captureWindow": "2026-11-14 19:20:30 Europe/Lisbon (UTC+00:00)",
+      "pictures": [
+        "report-preview-1440.png"
+      ],
+      "unchanged": "the other 61 pictures are as they were at the base, byte for byte"
     }
   },
   "screenshots": [
@@ -676,7 +698,7 @@
     {"file": "control-1440.png", "sha256": "39c212e18c4bc61a56d08069dc0be4a9c19ea81a79cced734f8c1667a6d2583e", "bytes": 196023, "px": "1440x1334", "page": "/clients/21/controls/PC-ACC-01", "window": "1440x1334", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-11-13T22:43:21+00:00", "capture": "control-1440.png", "usedBy": ["docs/guides/04-checklist-and-control-notes.md", "docs/guides/09-top-bar-filters-and-bulk-actions.md"], "replaces": "72295b26d35d9edff7eb19a6eacf2a49d6ca87c3ef521a5b087a87e8d8d4d34f", "shows": "the page of a control (PC-ACC-01, 8 of 11 pass), whole page", "candidate": "development 0f705ca, the Development deployment"},
     {"file": "exceptions-1440.png", "sha256": "75b7e9cc4f4455c182a7ed2bdad203f781865f762a51ff9092e68698eba6e8a1", "bytes": 183705, "px": "1440x1379", "page": "/clients/20/exceptions", "window": "1440x1379", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-11-13T22:43:23+00:00", "capture": "exceptions-1440.png", "usedBy": ["docs/guides/05-exceptions.md"], "replaces": "434389689a2ee088187ae487d860dd1a466b40689fb5e8b3f39311307c128ba4", "shows": "the exceptions register of Seed Tidy Ltd (synthetic), whole page: one open exception (PC-BCK-01, review date 2027-01-31), the reviews of the coming year and Add an exception", "candidate": "development 0f705ca, the Development deployment"},
     {"file": "report-builder-1440.png", "sha256": "bf5f458d97c5e07b49819cafdb99bdf1e1a97c6d2838bc6663a690ad91f710d8", "bytes": 297795, "px": "1440x2381", "page": "/clients/20/reports", "window": "1440x2381", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-11-13T22:43:25+00:00", "capture": "report-builder-1440.png", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "bfea986d277027671b2e6538da33180a9df4b59d780c1d18baf5c6e14aa4c70e", "shows": "the report builder of Seed Tidy Ltd (synthetic), whole page; Prepared by reads revrook-admin", "candidate": "development 0f705ca, the Development deployment"},
-    {"file": "report-preview-1440.png", "sha256": "105b240e429186f9e14f3a04f8360f7382ec11e29a2f8d8f081ddd05df360a71", "bytes": 285837, "px": "1440x1584", "page": "/clients/20/reports/18", "window": "1440x1584", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-11-14T16:17:21+00:00", "capture": "report-preview-1440.png", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "ab12495290bad6d64788f02438b3bee5a2c64db0425f3b7fdd8268eb3132ddc8", "shows": "the preview and export page of the newest report of Seed Tidy Ltd (synthetic) (report 18), whole page: Ready to export, and the paper sheet drawn as the file is: the dark head (Sample MSP, the client, the period), the score dial (72.3 out of 100, Good) beside who prepared it and the data sources, the summary and the controls by status as one bar above their counts; the card of the reports says how to get a PDF", "candidate": "development af35cfa, the Development deployment"},
+    {"file": "report-preview-1440.png", "sha256": "d03a014ab169639d551246381ce4703908cd5fab8ae7cff1cb7a23c1e104ddf6", "bytes": 282339, "px": "1440x1584", "page": "/clients/20/reports/18", "window": "1440x1584", "theme": "light", "rail": "open", "frame": "P", "capturedAt": "2026-11-14T19:20:30+00:00", "capture": "report-preview-1440.png", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "105b240e429186f9e14f3a04f8360f7382ec11e29a2f8d8f081ddd05df360a71", "shows": "the preview and export page of the newest report of Seed Tidy Ltd (synthetic) (report 18), whole page: Ready to export, and the paper sheet drawn as the file is: the dark head (Sample MSP, the client, the period), the score dial (72.3 out of 100, Good) beside who prepared it and the data sources, the summary and the controls by status as one bar above their counts; the card of the reports offers Preview, Download PDF and the export for each of the two reports", "candidate": "development fd6e0f9, the Development deployment"},
     {"file": "report-preview-file-1440.png", "sha256": "39c29afc0a2cbbc82b65e9e0151a9090c10a385af6ded8ddadb53cfdf5c08ab5", "bytes": 93245, "px": "1440x900", "page": "/clients/21/reports/20/preview/qbr", "window": "1440x900", "theme": "light", "rail": "-", "frame": "W", "capturedAt": "2026-11-14T04:16:23+00:00", "capture": "report-preview-file-1440.png", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "d651e294a0e626a836c25170d17eec74fe061ad9cf6c303b9fc4925822e9c1ba", "shows": "the cover of the rendered quarterly security review of Seed Gaps Ltd (synthetic), report 20: the charcoal head (Sample MSP, the report, the client, the period) and under it the score dial (18.8 out of 100, Critical) beside who prepared it, the dates and the data sources", "candidate": "development 56e697d, the Development deployment"},
     {"file": "report-preview-file-full-1440.png", "sha256": "ca6515c4d578b0880d3a37cf7e3b1bb22a6e5fa6fef251350b50f09cc731be47", "bytes": 1865736, "px": "1440x14461", "page": "/clients/21/reports/20/preview/qbr", "window": "1440x900", "theme": "light", "rail": "-", "frame": "F", "capturedAt": "2026-11-14T04:16:25+00:00", "capture": "report-preview-file-full-1440.png", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "dd063507e711281702f54f784523fdf91f91103e665f17dd1e49848a3114bbeb", "shows": "the whole rendered quarterly security review of Seed Gaps Ltd (synthetic), report 20 (full-page capture): the cover, the summary with the status bar, the coverage by domain, five top findings each with What was checked and Usual next step, What could not be checked, the evidence, the exceptions, the appendix of each domain and the notice", "candidate": "development 56e697d, the Development deployment"},
     {"file": "export-history-1440.png", "sha256": "a325034bc134d387b7e87267f9c4a65a12d22a66e3d139ef3f0ac58e538c54f1", "bytes": 111793, "px": "1440x900", "page": "/clients/20/exports", "window": "1440x900", "theme": "light", "rail": "open", "frame": "W", "capturedAt": "2026-11-13T22:43:34+00:00", "capture": "export-history-1440.png", "usedBy": ["docs/guides/06-reports-and-exports.md"], "replaces": "9c5dda0da54dbd35627e06274edbf1330f4baed3ff28daa637ef9e9fe3f9c402", "shows": "the export history of Seed Tidy Ltd (synthetic): one kept file, the quarterly review exported on 2026-10-24 by revrook-admin", "candidate": "development 0f705ca, the Development deployment"},

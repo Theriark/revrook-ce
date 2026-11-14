@@ -41,8 +41,8 @@ with the two facts below in front of him. The page **Preview and export** offers
 | Render time | Under one second for the golden review (16 sheets) on a developer machine | the same run; not measured in the container |
 | Tagged PDF | Yes: a structure tree and `MarkInfo` | `tests/test_report_pdf.py` |
 | A script in the file | Does not run | the same test: a planted script would leave one sheet |
-| Inside the container (read-only root, `/tmp` as tmpfs, uid 10001) | A report prints | the compose smoke test, `scripts/e2e/phase_00.sh` |
-| Image size increase | **Not measured.** The two Debian packages are 66 MB and 30 MB to download before the libraries they need | packages.debian.org, 2026-11-14 |
+| Inside the container (read-only root, `/tmp` as tmpfs, uid 10001) | A report prints | the compose smoke test, `scripts/e2e/phase_00.sh`; on the Development site the two reports of a seeded client came down as PDFs of 14 and 15 A4 sheets, set in the typeface of the report |
+| Image size increase | **785 MB on disk** (335 MB to 1.12 GB) and **223 MB to download** (78.6 MB to 301.7 MB), in one layer that every later version shares, so a host pays it once. The browser is 230 MB, its shared files 67 MB; LLVM, Mesa and Z3, which `libgbm1` pulls in and a browser with its GPU off never uses, are 196 MB. This is over the 250 MB the plan of phase 8 allowed and over the 250 to 300 MB the decision was taken with; the founder was told the same day | the image of `fd6e0f9` on the Development host (`docker image ls`, `dpkg-query` inside it) and its manifest in the registry, 2026-11-14 |
 | Peak memory of a print | **Not measured** | |
 
 The licences are recorded in [licences.md](licences.md#system-packages-of-the-image).

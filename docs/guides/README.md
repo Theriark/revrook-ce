@@ -6,7 +6,7 @@ in the order a new installation meets them. Every picture is a live capture, tak
 (the merge of pull request #135), with the 3D view shown and the synthetic test data of
 that installation (see the [capture manifest](../images/README.md)); the picture of
 Settings, the four pictures of the rendered report and the picture of Preview and export
-were taken again on 2026-11-14, on commits `56e697d4` and `af35cfa5`. Pictures at 1440 px are the desktop view; pictures at 768 px
+were taken again on 2026-11-14, on commits `56e697d4` and `fd6e0f95`. Pictures at 1440 px are the desktop view; pictures at 768 px
 and 390 px are labelled as tablet and phone views in their captions. The pictures
 are in [docs/images](../images/README.md) with a capture manifest (file, SHA-256, page,
 viewport, theme, capture time and the guide that uses each). What the output is, and is
