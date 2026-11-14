@@ -84,6 +84,26 @@ A full-page capture is used only where the rail does not need to reach the foot 
 sign-in page, the narrow layouts, the rendered report). The manifest names the frame
 of each picture.
 
+### Five pictures of 2026-11-14
+
+On 2026-11-14 at 04:16 UTC five pictures were captured again, on the Development
+deployment of `56e697d499efc101c1013079f32b0594c5fc97e4` (the merge of pull request #139, image
+`sha256:a883ae686ad2ccdbc59b2d6455338ea103b1a8fdc4b9e9a5f03dca2a337d7671`, CI run
+43555212041): `settings-1440.png` and the four pictures of the rendered review
+(`report-preview-file-1440.png`, `report-preview-file-full-1440.png`,
+`report-preview-file-390.png`, `report-preview-file-390-table.png`). Pull requests
+#137 to #139 gave the reports the look of a document (a cover with a dark head and
+the score dial, a status bar, findings that say what was checked and the usual next
+step, a section for what could not be checked, a mark for each domain) and Settings
+a block for the logo of the business. The review pictured is now the one of Seed Gaps
+Ltd (synthetic), report 20, a client with open findings, so that the findings are
+seen; the pictures of the report builder, of Preview and export and of the export
+history still show Seed Tidy Ltd (synthetic). The other 57 pictures are those of
+2026-11-13, byte for byte. For these five, two reports of Seed Gaps were made on
+Development that day (19 and 20), a made-up test logo was uploaded on Settings and
+removed again while pull request #138 was checked (no logo is saved there, as the
+picture shows), and the theme of the test account was switched to Light and back.
+
 ## Kept out of the pictures
 
 **Recent changes** on Home and **Users and mappings** in Settings stay out of the
@@ -134,7 +154,7 @@ was switched for the dark and the light pictures and put back to dark, as it was
   beyond ([design system](../design-system.md)).
 - The Evidence Explorer turns by itself until a person touches it, so each of its
   pictures shows the scene at the angle of that moment.
-- `report-preview-file-full-1440.png` is the whole rendered review, 15,928 px tall; it
+- `report-preview-file-full-1440.png` is the whole rendered review, 14,461 px tall; it
   was judged by its structure and the text of the page.
 
 ## Known limits of this set

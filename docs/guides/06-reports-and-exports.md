@@ -44,8 +44,8 @@ report.
   exceptions, the data sources and the preparer. **Before you export** lists what
   stops an export, each line saying what is missing; the usual first one is the
   business name.
-- The paper sheet, white in both themes and set in a charcoal frame, shows the cover and the summary as the client receives them: the period,
-  the pack date, the summary sentence and the counts by status.
+- The paper sheet, white in both themes and set in a charcoal frame, is a short reading of the report: the period,
+  the pack date, the summary sentence and the counts by status. The file itself, with its cover, is what **Preview** opens.
 - **The reports**: for each of the two, **Preview** opens the file as it would be sent,
   and **Export the quarterly security review** or **Export the cyber insurance
   evidence pack** keeps an unchangeable copy and its SHA-256 and opens the export
@@ -60,16 +60,26 @@ report.
 ## The rendered report
 
 **Preview** of the quarterly security review opens the file itself, as the client
-receives it: one HTML page laid out as paper. The cover carries the name of your
-business (from Settings), the client, the period, who prepared it, the date it was
-generated, the pack date, the data sources and the id of the snapshot it was made
-from, followed by the disclaimer that every report prints.
+receives it: one HTML file laid out as sheets of paper. The cover opens with a dark
+head: your logo when one is set in Settings, the name of your business, the report,
+the client and the period. Under it stand the score as a dial with its band, who
+prepared it (the name you chose on the Account page), the date it was generated, the
+pack date, the data sources and the id of the snapshot it was made from, followed by
+the disclaimer that every report prints.
 
 ![The cover of the rendered quarterly security review at 1440 px](../images/report-preview-file-1440.png)
 
-The whole file, from the cover through the summary, the findings, the plan for next
-quarter, the evidence, the exceptions register and the appendix of each domain to the
-important notice, is one tall picture in
+After the cover come the summary (score, evidence coverage and band in one row, and
+the controls by status as one bar above their table), the coverage by domain, and the
+**top findings**. A finding names the control and its status, the evidence it was read
+from and its date, **what was checked** (what the check found when the report was
+made) and, when you wrote no recommendation for it, the **usual next step** of that
+control; what you write under **What we recommend** takes its place. **What could not
+be checked** lists the kinds of evidence the unchecked controls wait for. The roadmap
+and the plan for next quarter are printed only when you wrote them.
+
+The whole file, from the cover to the appendix of each domain and the important
+notice, is one tall picture in
 [report-preview-file-full-1440.png](../images/report-preview-file-full-1440.png); its
 sections are described in [reports](../reports.md). The cyber insurance evidence pack
 opens the same way from its own **Preview** and is not pictured here.
@@ -77,11 +87,13 @@ opens the same way from its own **Preview** and is not pictured here.
 ## A report on a phone
 
 The file fits a narrow screen as well as paper. Below about 640 px it has less padding,
-the facts of the cover in one column and a smaller title, and the page never scrolls
+the dial above the facts of the cover, a smaller title, and the page never scrolls
 sideways. A table that is still wider than the screen scrolls inside its own frame:
 swipe it, or give it focus with Tab and use the arrow keys. Its caption stays whole at
 the left edge while the columns move, and a date in a table is never broken across
-lines. Printing keeps the A4 layout.
+lines. Printed, or saved as a PDF from the browser, the report keeps the A4 layout:
+the cover is a sheet of its own, short sections follow one another, every sheet
+carries its number and the colours print without the background option.
 
 ![The cover of the quarterly security review on a phone at 390 px](../images/report-preview-file-390.png)
 
