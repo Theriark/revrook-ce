@@ -84,7 +84,7 @@ A full-page capture is used only where the rail does not need to reach the foot 
 sign-in page, the narrow layouts, the rendered report). The manifest names the frame
 of each picture.
 
-### Five pictures of 2026-11-14
+### Six pictures of 2026-11-14
 
 On 2026-11-14 at 04:16 UTC five pictures were captured again, on the Development
 deployment of `56e697d499efc101c1013079f32b0594c5fc97e4` (the merge of pull request #139, image
@@ -103,6 +103,13 @@ history still show Seed Tidy Ltd (synthetic). The other 57 pictures are those of
 Development that day (19 and 20), a made-up test logo was uploaded on Settings and
 removed again while pull request #138 was checked (no logo is saved there, as the
 picture shows), and the theme of the test account was switched to Light and back.
+
+At 16:17 UTC the same day a sixth picture followed, `report-preview-1440.png`, on the
+Development deployment of `af35cfa59234ffafd435deaeecc0058fb2ab18de` (the merge of pull request
+#141, image `sha256:51ec1759636f6c8d7c3f8c6716a98c497804ce91813fe27e7223c3efdb0d3783`,
+CI run 43613972418): the page **Preview and export** of report 18 of Seed Tidy Ltd
+(synthetic), whose paper sheet is now drawn as the file is. Only the theme of the test
+account was switched for it, and put back.
 
 ## Kept out of the pictures
 
