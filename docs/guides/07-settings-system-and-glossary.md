@@ -9,8 +9,8 @@ Open **Settings** in the Administration group.
 Under the name and the reminder address, **Your logo** takes a picture file of your
 business (PNG, JPEG or WebP, up to 200 KB). **Upload logo** saves it: the cover of
 every report then prints it above your business name, on a white plate, and the
-cover preview beside the form shows it. **Remove logo** takes it away again. The
-picture above was taken before the logo was added to the page.
+cover preview beside the form shows it. **Remove logo** takes it away again. No logo
+is saved on the installation pictured.
 
 - **Your business**: the name printed on every report and the address the evidence
   expiry reminders go to. These two are the only settings of the page; **Save** stores
