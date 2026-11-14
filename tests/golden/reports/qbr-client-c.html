@@ -226,7 +226,7 @@ ol {
 
 dl.facts {
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
+  grid-template-columns: 11.5rem minmax(0, 1fr);
   gap: 0.4rem 1rem;
   margin: 0 0 1rem;
 }
@@ -780,6 +780,7 @@ dl.figures,
 <p><span class="status status-not-protected"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-cross"/></svg>Not protected</span> <span class="secondary">PC-ACC-02 &middot; gate control &middot; Identity and MFA</span></p>
 <p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
 
+
 <dl class="facts">
 
 <dt>What we did</dt><dd>Found one administrator without multi-factor sign-in.</dd>
@@ -795,12 +796,30 @@ dl.figures,
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-EML-03 &middot; Email security</span></p>
 <p class="note">Read from: Public DNS check, evidence dated 2026-10-17.</p>
 
+
+<dl class="facts">
+
+
+<dt>Usual next step</dt><dd>Publish a DMARC record with a reporting address, then move its policy from none to quarantine or reject once the reports are clean.</dd>
+
+
+</dl>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-3">
 <h3 id="finding-3">3. Dormant accounts are disabled.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-ACC-06 &middot; Identity and MFA</span></p>
 <p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
+
+<dl class="facts">
+
+
+<dt>Usual next step</dt><dd>Disable the accounts that have not signed in for more than 90 days, once the business confirms they are no longer needed.</dd>
+
+
+</dl>
 
 </article>
 
@@ -809,12 +828,30 @@ dl.figures,
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-BCK-04 &middot; Backup and recovery</span></p>
 <p class="note">Read from: Backup jobs export, evidence dated 2026-10-17.</p>
 
+
+<dl class="facts">
+
+
+<dt>Usual next step</dt><dd>Keep at least one backup copy immutable or offline, where a compromised administrator account cannot delete it.</dd>
+
+
+</dl>
+
 </article>
 
 <article class="finding" aria-labelledby="finding-5">
 <h3 id="finding-5">5. Devices meet a managed compliance baseline.</h3>
 <p><span class="status status-needs-attention"><svg class="rv-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#rv-icon-alert"/></svg>Needs attention</span> <span class="secondary">PC-DEV-05 &middot; Devices and patching</span></p>
 <p class="note">Read from: Microsoft 365 export (Entra, Intune, Secure Score), evidence dated 2026-10-17.</p>
+
+
+<dl class="facts">
+
+
+<dt>Usual next step</dt><dd>Bring the devices that are not compliant back into the compliance baseline, or retire them.</dd>
+
+
+</dl>
 
 </article>
 

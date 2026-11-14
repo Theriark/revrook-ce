@@ -8,6 +8,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Added
 
+- A **finding** of the quarterly review prints the **usual next step** of its control when no recommendation was written for it: one general sentence for each of the 51 controls (`app/reports/advice.py`). What the technician recommends takes its place, and a control that passes on evidence grown old asks for a fresh export instead.
 - A **logo of your business** on the cover of every report: upload a PNG, JPEG or WebP file (up to 200 KB) in Settings; it travels inside the report file. A **finding** now says what the check found when the report was made (for reports made from now on), and the cover prints the name you chose on the Account page as **Prepared by**. The kinds of evidence in a report are named in plain words ("Microsoft 365 export", "Backup jobs export") ([docs/reports.md](docs/reports.md)).
 - On the **clients list** a sort, a search, a band or a page of the list moves the rows that stay, as on the checklist. The control drawer arrives on the arrival curve. Signed out, the words of the panel stand in the middle of it.
 - The **overview of a client** fills its last row: the recent changes stand beside the domains, under the freshness line, instead of leaving half the row empty; the status bars grow from their left end when the page opens.

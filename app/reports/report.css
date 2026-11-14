@@ -237,7 +237,7 @@ ol {
 
 dl.facts {
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
+  grid-template-columns: 11.5rem minmax(0, 1fr);
   gap: 0.4rem 1rem;
   margin: 0 0 1rem;
 }
