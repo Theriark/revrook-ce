@@ -4,23 +4,24 @@ name: Release
 # development with no inputs. It releases exactly what Stage runs and never rebuilds:
 # the stage branch head, the digest the Stage application runs and the release
 # candidate tag that seals both. In this order it makes (or finds, when a re-run
-# meets them already there) a merge commit of stage into main, the GHCR tag <version>
-# on the same digest, the annotated stable tag v<version> (the candidate tag without
-# -rc.N) and the GitHub Release with notes from the pull requests merged since the
-# last stable release. main moves first: if GitHub refuses that, nothing is published.
-# CE has no Production deployment. main is never merged into development. A re-run
-# when everything exists succeeds and changes nothing.
+# meets them already there) the GHCR tag <version> on the same digest, the annotated
+# stable tag v<version> (the candidate tag without -rc.N) and the GitHub Release with
+# notes from the pull requests merged since the last stable release. CE has no
+# Production deployment. A re-run when everything exists succeeds and changes nothing.
 #
-# dry_run=true checks every precondition, including the branch protection and the
-# ruleset rules of main, builds the merge commit on GitHub as an unreferenced object,
-# prints the version, commit, digest, notes and merge, and moves no ref and creates no
-# tag, image tag or release. See docs/ci-cd.md.
+# It never moves the stage or main branch: the Actions token may not move a branch to
+# a commit that changes workflow files. The gate script merges stage into main with
+# the operator token right before it dispatches this workflow. main is never merged
+# into development.
+#
+# dry_run=true checks every precondition, prints the version, commit, digest and
+# notes, and creates no tag, image tag or release. See docs/ci-cd.md.
 
 on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Check everything and print the release, but create no tag, image tag or release and do not move main (the merge commit is built unreferenced)."
+        description: "Check everything and print the release, but create no tag, image tag or release."
         required: false
         default: false
         type: boolean
@@ -117,11 +118,17 @@ jobs:
               (if has("config") then .config else ([.[]] | first | .config) end)
               | .Labels["org.opencontainers.image.revision"] // empty')"
           [[ "${revision}" == "${commit}" ]] || { echo "::error::the Stage image revision is '${revision}', not ${commit}"; exit 1; }
+          # For the summary only: the gate merges stage into main before a real run, so
+          # a dry run before that merge reports false and still passes.
+          in_main=false
+          if git merge-base --is-ancestor "${commit}" refs/remotes/origin/main; then in_main=true; fi
           {
             echo "commit=${commit}"
             echo "digest=${digest}"
+            echo "main_sha=$(git rev-parse refs/remotes/origin/main)"
+            echo "in_main=${in_main}"
           } >> "${GITHUB_OUTPUT}"
-          echo "Stage runs ${IMAGE}@${digest} = ${commit}"
+          echo "Stage runs ${IMAGE}@${digest} = ${commit}; in main: ${in_main}"
 
       - name: Find the candidate and the stable release
         id: rel
@@ -222,122 +229,36 @@ jobs:
           } > "${NOTES}"
           echo "previous=${previous:-none}" >> "${GITHUB_OUTPUT}"
 
-      - name: Plan the merge of stage into main and read main's rules
-        id: merge
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          COMMIT: ${{ steps.stage.outputs.commit }}
-          STABLE: ${{ steps.rel.outputs.stable }}
-        run: |
-          set -euo pipefail
-          main_sha="$(git rev-parse refs/remotes/origin/main)"
-          mkdir -p "${RUNNER_TEMP}/merge"
-          bash .github/scripts/release_merge.sh "${main_sha}" "${COMMIT}" \
-            "Release ${STABLE}: merge stage ${COMMIT} into main" "${RUNNER_TEMP}/merge" > merge.env
-          # shellcheck disable=SC1091
-          source merge.env
-          rm -f merge.env
-          rules=none
-          if [[ "${merged}" == "false" ]]; then
-            echo "Files main gains or changes (main ${main_sha} -> stage ${COMMIT}, workflows kept):"
-            git diff --stat "${main_sha}" "${tree}" | tail -n 1
-            # Moving main is the first write of a real run, so whatever could refuse it
-            # is read here, in the dry run too. This token cannot read the details of a
-            # branch protection, so any protection on main fails the run.
-            protected="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main" --jq '.protected')"
-            [[ "${protected}" == "false" ]] || {
-              echo "::error::main has branch protection (protected=${protected}); the Actions token cannot prove it may move main. Settle the protection before the release."
-              exit 1
-            }
-            # The ruleset rules that apply to main. Only rules that cannot refuse a
-            # fast-forward of main by the Actions token are accepted.
-            rules="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/rules/branches/main" --jq '.[].type' | sort -u | paste -sd, -)"
-            refusing="$(tr ',' '\n' <<<"${rules}" | grep -vxE 'creation|deletion|non_fast_forward|' || true)"
-            [[ -z "${refusing}" ]] || {
-              echo "::error::rules on main would refuse the update by the Actions token: ${refusing//$'\n'/, }"
-              exit 1
-            }
-            rules="${rules:-none}"
-          fi
-          {
-            echo "main_sha=${main_sha}"
-            echo "merged=${merged}"
-            echo "tree=${tree:-}"
-            echo "workflow_commits=${workflow_commits:-0}"
-            echo "rules=${rules}"
-          } >> "${GITHUB_OUTPUT}"
-
-      - name: Build the merge commit on GitHub, unreferenced
-        id: build
-        if: steps.merge.outputs.merged == 'false'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          COMMIT: ${{ steps.stage.outputs.commit }}
-          MAIN_SHA: ${{ steps.merge.outputs.main_sha }}
-          TREE: ${{ steps.merge.outputs.tree }}
-        run: |
-          set -euo pipefail
-          # Git objects only, in the dry run too: no ref is created or moved, nothing
-          # points at them and GitHub prunes them. A real run moves main to this commit
-          # as its first write.
-          [[ "${TREE}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::no planned tree"; exit 1; }
-          made="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/trees" --input "${RUNNER_TEMP}/merge/tree.json" --jq '.sha')"
-          [[ "${made}" == "${TREE}" ]] || { echo "::error::GitHub built tree ${made}, planned ${TREE}; refusing"; exit 1; }
-          merge="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/commits" --input "${RUNNER_TEMP}/merge/commit.json" --jq '.sha')"
-          [[ "${merge}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the merge commit was not created"; exit 1; }
-          jq -e --arg tree "${TREE}" --arg main "${MAIN_SHA}" --arg stage "${COMMIT}" '
-              .tree.sha == $tree and [.parents[].sha] == [$main, $stage]' \
-            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/git/commits/${merge}")" >/dev/null || {
-            echo "::error::the merge commit ${merge} does not have the tree ${TREE} and the parents [main, stage]"
-            exit 1
-          }
-          echo "merge=${merge}" >> "${GITHUB_OUTPUT}"
-          echo "Unreferenced merge commit ${merge} (tree ${TREE}, parents ${MAIN_SHA} ${COMMIT}); no ref was created or moved"
-
       - name: Summary of what this run does
         shell: bash
         env:
           DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           COMMIT: ${{ steps.stage.outputs.commit }}
           DIGEST: ${{ steps.stage.outputs.digest }}
+          MAIN_SHA: ${{ steps.stage.outputs.main_sha }}
+          IN_MAIN: ${{ steps.stage.outputs.in_main }}
           VERSION: ${{ steps.rel.outputs.version }}
           RC_TAG: ${{ steps.rel.outputs.rc_tag }}
           STABLE: ${{ steps.rel.outputs.stable }}
           TAG_EXISTS: ${{ steps.rel.outputs.tag_exists }}
           IMAGE_EXISTS: ${{ steps.rel.outputs.image_exists }}
           RELEASE_EXISTS: ${{ steps.rel.outputs.release_exists }}
-          MAIN_SHA: ${{ steps.merge.outputs.main_sha }}
-          MERGED: ${{ steps.merge.outputs.merged }}
-          RULES: ${{ steps.merge.outputs.rules }}
-          WORKFLOW_COMMITS: ${{ steps.merge.outputs.workflow_commits }}
-          MERGE: ${{ steps.build.outputs.merge }}
         run: |
           set -euo pipefail
           action() { if [[ "$1" == "true" ]]; then echo "exists, kept as it is"; else echo "create"; fi; }
           {
             if [[ "${DRY_RUN}" == "true" ]]; then
-              echo "## revrook-ce Release ${STABLE}: DRY RUN (no ref, tag, image tag or release is changed)"
+              echo "## revrook-ce Release ${STABLE}: DRY RUN (no tag, image tag or release is changed)"
             else
               echo "## revrook-ce Release ${STABLE}: plan"
             fi
             echo
             echo "- What Stage runs: commit \`${COMMIT}\` (stage branch head), image \`${IMAGE}@${DIGEST}\`"
             echo "- Candidate: \`${RC_TAG}\`; version \`${VERSION}\`; no rebuild"
-            if [[ "${MERGED}" == "true" ]]; then
-              echo "- 1. Merge stage into main: already merged (main \`${MAIN_SHA}\`), nothing to do"
-            else
-              echo "- 1. Merge stage into main, the first write: move main \`${MAIN_SHA}\` (fast-forward only) to the merge commit \`${MERGE}\`, parents main and \`${COMMIT}\`; main takes Stage's files and keeps its own workflow definitions"
-              echo "  - main: no branch protection; ruleset rules: ${RULES} (none refuses the update)"
-              echo "  - ${WORKFLOW_COMMITS} commit(s) of stage that main lacks touch \`.github/workflows\`; whether GitHub lets the Actions token move main across them is only known when main moves. If it refuses, nothing below is published."
-              if [[ "${DRY_RUN}" == "true" ]]; then
-                echo "  - This dry run built the tree and the merge commit \`${MERGE}\` on GitHub as unreferenced objects: no ref was created or moved."
-              fi
-            fi
-            echo "- 2. GHCR tag \`${IMAGE}:${VERSION}\` on that digest: $(action "${IMAGE_EXISTS}")"
-            echo "- 3. Annotated tag \`${STABLE}\` on \`${COMMIT}\`: $(action "${TAG_EXISTS}")"
-            echo "- 4. GitHub Release \`${STABLE}\`: $(action "${RELEASE_EXISTS}")"
+            echo "- 1. GHCR tag \`${IMAGE}:${VERSION}\` on that digest: $(action "${IMAGE_EXISTS}")"
+            echo "- 2. Annotated tag \`${STABLE}\` on \`${COMMIT}\`: $(action "${TAG_EXISTS}")"
+            echo "- 3. GitHub Release \`${STABLE}\`: $(action "${RELEASE_EXISTS}")"
+            echo "- Branches: this workflow moves none. main \`${MAIN_SHA}\` contains the stage head: ${IN_MAIN} (the gate merges stage into main before a real run)"
             echo "- No Production deployment (CE). development is not touched."
             echo
             echo "### Release notes"
@@ -345,8 +266,8 @@ jobs:
             cat "${NOTES}"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      # Every step below writes a ref, a tag, an image tag or a release. Each is skipped
-      # in a dry run; the first refuses again itself.
+      # Every step below writes a tag, an image tag or a release. Each is skipped in a
+      # dry run; the first refuses again itself. A re-run skips whatever already exists.
 
       - name: Refuse to write in a dry run and re-check stage
         if: steps.mode.outputs.dry_run == 'false'
@@ -360,33 +281,6 @@ jobs:
           [[ "${DRY_RUN}" == "false" ]] || { echo "::error::dry run: no step may write"; exit 1; }
           now="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
           [[ "${now}" == "${COMMIT}" ]] || { echo "::error::stage moved to ${now} during the run"; exit 1; }
-
-      # main moves first: it is the write GitHub is most likely to refuse, and a refusal
-      # here leaves nothing published. A re-run skips whatever already exists.
-      - name: Merge stage into main
-        if: steps.mode.outputs.dry_run == 'false' && steps.merge.outputs.merged == 'false'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          COMMIT: ${{ steps.stage.outputs.commit }}
-          MAIN_SHA: ${{ steps.merge.outputs.main_sha }}
-          MERGE: ${{ steps.build.outputs.merge }}
-        run: |
-          set -euo pipefail
-          [[ "${MERGE}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::no merge commit was built"; exit 1; }
-          # Fast-forward only: if main moved since the plan, this fails and nothing changes.
-          if ! gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/main" \
-              -f sha="${MERGE}" -F force=false >/dev/null; then
-            # Uncertain result: read main back before deciding.
-            now="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha' || true)"
-            [[ "${now}" == "${MERGE}" ]] || {
-              echo "::error::GitHub refused to move main from ${MAIN_SHA} to the merge commit ${MERGE} (main is ${now:-unknown}). Nothing is published: no image tag, stable tag or Release. See docs/ci-cd.md, Known gaps."
-              exit 1
-            }
-          fi
-          now="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
-          [[ "${now}" == "${MERGE}" ]] || { echo "::error::main is ${now}, expected ${MERGE}"; exit 1; }
-          echo "main is ${MERGE} (merge of stage ${COMMIT})"
 
       - name: Tag the image with the version
         if: steps.mode.outputs.dry_run == 'false' && steps.rel.outputs.image_exists == 'false'
@@ -452,5 +346,5 @@ jobs:
             echo
             echo "- Commit: \`${COMMIT}\`; image \`${IMAGE}@${DIGEST}\` (tag \`${VERSION}\`), not rebuilt"
             echo "- Release: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${STABLE}"
-            echo "- main contains stage; development untouched; no Production deployment"
+            echo "- No branch moved by this run; development untouched; no Production deployment"
           } >> "${GITHUB_STEP_SUMMARY}"
