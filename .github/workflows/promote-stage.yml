@@ -178,9 +178,11 @@ jobs:
           }
           # GITHUB_TOKEN has no workflows permission: GitHub refuses to move a branch
           # when the move changes a file under .github/workflows. Fail before any write.
+          # Never commit workflow files onto stage: stage would diverge from development
+          # and the forward-only check above would refuse every promotion.
           changed="$(git diff --name-only "${stage_sha}" "${COMMIT}" -- .github/workflows)"
           if [[ -n "${changed}" ]]; then
-            echo "::error::moving stage from ${stage_sha} to ${COMMIT} changes workflow files (${changed//$'\n'/, }); GITHUB_TOKEN cannot do that. The workflow-only route must first bring stage to the same workflow files."
+            echo "::error::moving stage from ${stage_sha} to ${COMMIT} changes workflow files (${changed//$'\n'/, }); GITHUB_TOKEN cannot do that. An operator with workflows permission first fast-forwards stage to exactly ${COMMIT} (never commits onto stage), then promotes again: see docs/ci-cd.md, 'How stage gets new workflow files'."
             exit 1
           fi
           stage_image="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \

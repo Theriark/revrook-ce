@@ -3,8 +3,8 @@
 The repository has three workflows: CI, Promote - Stage and Release. Gate 2 dispatches
 promote-stage.yml and Gate 3 dispatches release.yml, both on development with no
 inputs, so each takes only the optional boolean dry_run. The tests read the workflow
-files and run the release tag script on a throwaway git repository; nothing is
-dispatched and nothing needs a network.
+files and run the release tag and merge scripts on throwaway git repositories;
+nothing is dispatched and nothing needs a network.
 """
 
 import json
@@ -20,6 +20,8 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOWS = ROOT / ".github" / "workflows"
 TAGS_SCRIPT = ROOT / ".github" / "scripts" / "release_tags.sh"
+MERGE_SCRIPT = ROOT / ".github" / "scripts" / "release_merge.sh"
+BUILD_STEP = "Build the merge commit on GitHub, unreferenced"
 GROUP = "revrook-ce-delivery"
 DEVELOPMENT_JOB = "Deploy Development (build once, deploy the digest)"
 ONE_BUTTON = ("promote-stage.yml", "release.yml")
@@ -115,8 +117,41 @@ def test_only_release_moves_main_and_only_forward() -> None:
     assert '"repos/${GITHUB_REPOSITORY}/git/refs/heads/main"' in source
     assert "-F force=false" in source
     # A merge commit of main and stage, never a merge into development.
-    assert "parents: [$main, $stage]" in source
+    assert "bash .github/scripts/release_merge.sh" in source
+    assert "parents: [$main, $stage]" in MERGE_SCRIPT.read_text(encoding="utf-8")
+    assert "[.parents[].sha] == [$main, $stage]" in source
     assert "/merges" not in source
+
+
+def test_release_moves_main_before_it_publishes_anything() -> None:
+    steps = load("release.yml")["jobs"]["release"]["steps"]
+    names = [step.get("name") for step in steps]
+    assert (
+        names.index("Refuse to write in a dry run and re-check stage")
+        < names.index("Merge stage into main")
+        < names.index("Tag the image with the version")
+        < names.index("Create the annotated stable tag")
+        < names.index("Create the GitHub Release")
+    )
+
+
+def test_every_release_run_reads_what_could_refuse_the_move_of_main() -> None:
+    steps = {s.get("name"): s for s in load("release.yml")["jobs"]["release"]["steps"]}
+    plan = steps["Plan the merge of stage into main and read main's rules"]
+    # Runs in the dry run too, and fails it on a protection or a refusing rule.
+    assert "if" not in plan
+    protection = '"repos/${GITHUB_REPOSITORY}/branches/main" --jq \'.protected\''
+    assert protection in plan["run"]
+    assert '[[ "${protected}" == "false" ]]' in plan["run"]
+    assert '"repos/${GITHUB_REPOSITORY}/rules/branches/main"' in plan["run"]
+    assert "grep -vxE 'creation|deletion|non_fast_forward|'" in plan["run"]
+    # The merge commit is built on GitHub in the dry run too, and never referenced.
+    build = steps[BUILD_STEP]
+    assert build["if"] == "steps.merge.outputs.merged == 'false'"
+    call = r'--method (\w+) "repos/\$\{GITHUB_REPOSITORY\}/([\w/]+)"'
+    posts = re.findall(call, build["run"])
+    assert posts == [("POST", "git/trees"), ("POST", "git/commits")]
+    assert "git/refs" not in build["run"]
 
 
 @pytest.mark.parametrize("name", ONE_BUTTON)
@@ -194,8 +229,12 @@ def test_promote_deploys_the_registered_stage_application() -> None:
 def test_every_release_write_is_skipped_in_a_dry_run() -> None:
     job = load("release.yml")["jobs"]["release"]
     guard = "steps.mode.outputs.dry_run == 'false'"
+    # The unreferenced merge commit is the only object a dry run creates (see above).
     writers = [
-        step for step in job["steps"] if any(w in step_source(step) for w in WRITES)
+        step
+        for step in job["steps"]
+        if step.get("name") != BUILD_STEP
+        and any(w in step_source(step) for w in WRITES)
     ]
     assert len(writers) == 4
     for step in writers:
@@ -244,9 +283,10 @@ def test_every_script_is_valid_bash(name: str, tmp_path: Path) -> None:
         assert result.returncode == 0, (name, index, result.stderr)
 
 
-def test_the_tag_script_is_valid_bash() -> None:
+@pytest.mark.parametrize("script", (TAGS_SCRIPT, MERGE_SCRIPT), ids=lambda p: p.name)
+def test_the_pipeline_scripts_are_valid_bash(script: Path) -> None:
     result = subprocess.run(
-        ["bash", "-n", str(TAGS_SCRIPT)], capture_output=True, text=True, check=False
+        ["bash", "-n", str(script)], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stderr
 
@@ -350,6 +390,16 @@ def test_a_line_below_the_last_release_is_ignored(repo: Path) -> None:
     assert tags(repo, "next", commit(repo), DIGEST_B)["tag"] == "v27.2.0-rc.1"
 
 
+def test_a_released_commit_is_not_promoted_again(repo: Path) -> None:
+    released = commit(repo)
+    tag(repo, "v27.0.0-rc.1", released, DIGEST_A)
+    tag(repo, "v27.0.0", released)
+    # Without the guard this minted v27.1.0-rc.1 for the same code.
+    error = tags(repo, "next", released, DIGEST_A)["error"]
+    assert "already released as v27.0.0" in error
+    assert "error" in tags(repo, "next", released, DIGEST_B)
+
+
 def test_a_lightweight_candidate_stops_the_run(repo: Path) -> None:
     sha = commit(repo)
     git(repo, "tag", "v27.0.0-rc.1", sha)
@@ -367,3 +417,99 @@ def test_the_current_candidate_is_the_highest_that_seals_stage(repo: Path) -> No
         "exists": "true",
     }
     assert "error" in tags(repo, "current", commit(repo), DIGEST_A)
+
+
+# --- the merge of stage into main on a throwaway repository ---------------------
+
+
+def write(repo: Path, path: str, content: str) -> None:
+    target = repo / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8")
+
+
+def snapshot(repo: Path, message: str) -> str:
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", message)
+    return git(repo, "rev-parse", "HEAD")
+
+
+def plan_merge(repo: Path, main: str, stage: str) -> dict[str, str]:
+    out = repo / ".merge"
+    out.mkdir(exist_ok=True)
+    result = subprocess.run(
+        ["bash", str(MERGE_SCRIPT), main, stage, "Release v27.0.0", str(out)],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return dict(line.split("=", 1) for line in result.stdout.splitlines())
+
+
+def payload(repo: Path, name: str) -> dict[str, Any]:
+    content = (repo / ".merge" / name).read_text(encoding="utf-8")
+    return json.loads(content)  # type: ignore[no-any-return]
+
+
+@pytest.fixture
+def diverged(repo: Path) -> tuple[Path, str, str]:
+    """main has a commit of its own (a workflow registration) that stage lacks."""
+    write(repo, "README.md", "root\n")
+    root = snapshot(repo, "root")
+    write(repo, ".github/workflows/ci.yml", "registered on main\n")
+    main = snapshot(repo, "register ci.yml on main")
+    git(repo, "checkout", "-q", "--detach", root)
+    write(repo, "app.py", "print('stage')\n")
+    write(repo, ".github/workflows/ci.yml", "changed on development\n")
+    write(repo, ".github/workflows/release.yml", "new on development\n")
+    stage = snapshot(repo, "the product")
+    return repo, main, stage
+
+
+def test_the_merge_commit_has_the_parents_main_then_stage(
+    diverged: tuple[Path, str, str],
+) -> None:
+    repo, main, stage = diverged
+    planned = plan_merge(repo, main, stage)
+    assert planned["merged"] == "false"
+    assert planned["workflow_commits"] == "1"
+    commit_payload = payload(repo, "commit.json")
+    assert commit_payload["parents"] == [main, stage]
+    assert commit_payload["tree"] == planned["tree"]
+    # A real merge commit: main is not fast-forwarded to stage, and both histories stay.
+    tree = planned["tree"]
+    merge = git(repo, "commit-tree", tree, "-p", main, "-p", stage, "-m", "merge")
+    parents = git(repo, "rev-list", "--parents", "-n", "1", merge).split()[1:]
+    assert parents == [main, stage]
+    assert merge != stage
+    # Once main holds the merge, stage is in main and a re-run merges nothing.
+    assert plan_merge(repo, merge, stage) == {"merged": "true"}
+
+
+def test_the_planned_tree_keeps_mains_workflows_and_takes_stages_files(
+    diverged: tuple[Path, str, str],
+) -> None:
+    repo, main, stage = diverged
+    tree = plan_merge(repo, main, stage)["tree"]
+    workflows = git(repo, "rev-parse", f"{main}:.github/workflows")
+    assert git(repo, "rev-parse", f"{tree}:.github/workflows") == workflows
+    app = git(repo, "rev-parse", f"{stage}:app.py")
+    assert git(repo, "rev-parse", f"{tree}:app.py") == app
+    assert git(repo, "diff", "--name-only", main, tree, "--", ".github/workflows") == ""
+    # GitHub builds the same tree: stage's tree with main's workflow subtree.
+    entry = {"path": ".github/workflows", "mode": "040000", "type": "tree"}
+    assert payload(repo, "tree.json") == {
+        "base_tree": git(repo, "rev-parse", f"{stage}^{{tree}}"),
+        "tree": [{**entry, "sha": workflows}],
+    }
+
+
+def test_a_main_without_workflows_drops_stages_workflows(repo: Path) -> None:
+    write(repo, "README.md", "root\n")
+    main = snapshot(repo, "root")
+    write(repo, ".github/workflows/ci.yml", "on development\n")
+    stage = snapshot(repo, "the product")
+    tree = plan_merge(repo, main, stage)["tree"]
+    assert git(repo, "ls-tree", "-r", "--name-only", tree) == "README.md"
+    assert payload(repo, "tree.json")["tree"][0]["sha"] is None

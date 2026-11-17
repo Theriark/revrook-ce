@@ -8,7 +8,8 @@
 #     last stable tag that has -rc.N tags and no stable tag. With none open it is 27.0.0
 #     before the first release, otherwise the next feature version 27.<minor+1>.0.
 #     A candidate of the open line that is already on <commit> and seals <digest> is
-#     reused; otherwise the next number of the line is minted.
+#     reused; otherwise the next number of the line is minted. A <commit> that a
+#     stable tag already points at fails.
 #   release_tags.sh current <commit> <digest>
 #     The candidate Stage runs: the highest -rc.N tag on <commit> that seals <digest>.
 #
@@ -59,6 +60,13 @@ if [[ "${mode}" == "current" ]]; then
   echo "exists=true"
   exit 0
 fi
+
+# A released commit is never promoted again: it would open the next feature line with
+# the same code, and a second Gate 3 would publish a duplicate release.
+for tag in "${stables[@]}"; do
+  [[ "$(git rev-parse "refs/tags/${tag}^{commit}")" != "${commit}" ]] ||
+    fail "${commit} is already released as ${tag}; promote a newer commit of development"
+done
 
 last_stable=""
 if ((${#stables[@]} > 0)); then
