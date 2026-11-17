@@ -2,9 +2,10 @@
 
 The repository has three workflows: CI, Promote - Stage and Release. Gate 2 dispatches
 promote-stage.yml and Gate 3 dispatches release.yml, both on development with no
-inputs, so each takes only the optional boolean dry_run. The tests read the workflow
-files and run the release tag and merge scripts on throwaway git repositories;
-nothing is dispatched and nothing needs a network.
+inputs, so each takes only the optional boolean dry_run. No workflow moves the stage
+or main branch: the gate script does that with the operator token. The tests read the
+workflow files and run the release tag script on throwaway git repositories; nothing
+is dispatched and nothing needs a network.
 """
 
 import json
@@ -20,8 +21,6 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOWS = ROOT / ".github" / "workflows"
 TAGS_SCRIPT = ROOT / ".github" / "scripts" / "release_tags.sh"
-MERGE_SCRIPT = ROOT / ".github" / "scripts" / "release_merge.sh"
-BUILD_STEP = "Build the merge commit on GitHub, unreferenced"
 GROUP = "revrook-ce-delivery"
 DEVELOPMENT_JOB = "Deploy Development (build once, deploy the digest)"
 ONE_BUTTON = ("promote-stage.yml", "release.yml")
@@ -109,49 +108,24 @@ def test_no_workflow_deploys_production_or_writes_development(name: str) -> None
     assert "force=true" not in source
 
 
-def test_only_release_moves_main_and_only_forward() -> None:
-    assert "heads/main" not in text("ci.yml")
-    assert "heads/main" not in text("promote-stage.yml")
-    source = text("release.yml")
-    assert source.count("--method PATCH") == 1
-    assert '"repos/${GITHUB_REPOSITORY}/git/refs/heads/main"' in source
-    assert "-F force=false" in source
-    # A merge commit of main and stage, never a merge into development.
-    assert "bash .github/scripts/release_merge.sh" in source
-    assert "parents: [$main, $stage]" in MERGE_SCRIPT.read_text(encoding="utf-8")
-    assert "[.parents[].sha] == [$main, $stage]" in source
+@pytest.mark.parametrize("name", ONE_BUTTON)
+def test_the_buttons_never_move_stage_or_main(name: str) -> None:
+    # The Actions token may not move a branch to a commit that changes workflow
+    # files; the gate script moves stage and main with the operator token.
+    source = text(name)
+    assert "git/refs/heads/" not in source
+    assert "--method PATCH" not in source
     assert "/merges" not in source
+    assert not re.search(r"\bgit\s+push\b", source)
+    # No guard refuses a run because a branch move would cross workflow files.
+    assert "-- .github/workflows" not in source
+    assert "GITHUB_TOKEN cannot" not in source
 
 
-def test_release_moves_main_before_it_publishes_anything() -> None:
-    steps = load("release.yml")["jobs"]["release"]["steps"]
-    names = [step.get("name") for step in steps]
-    assert (
-        names.index("Refuse to write in a dry run and re-check stage")
-        < names.index("Merge stage into main")
-        < names.index("Tag the image with the version")
-        < names.index("Create the annotated stable tag")
-        < names.index("Create the GitHub Release")
-    )
-
-
-def test_every_release_run_reads_what_could_refuse_the_move_of_main() -> None:
-    steps = {s.get("name"): s for s in load("release.yml")["jobs"]["release"]["steps"]}
-    plan = steps["Plan the merge of stage into main and read main's rules"]
-    # Runs in the dry run too, and fails it on a protection or a refusing rule.
-    assert "if" not in plan
-    protection = "\"repos/${GITHUB_REPOSITORY}/branches/main\" --jq '.protected'"
-    assert protection in plan["run"]
-    assert '[[ "${protected}" == "false" ]]' in plan["run"]
-    assert '"repos/${GITHUB_REPOSITORY}/rules/branches/main"' in plan["run"]
-    assert "grep -vxE 'creation|deletion|non_fast_forward|'" in plan["run"]
-    # The merge commit is built on GitHub in the dry run too, and never referenced.
-    build = steps[BUILD_STEP]
-    assert build["if"] == "steps.merge.outputs.merged == 'false'"
-    call = r'--method (\w+) "repos/\$\{GITHUB_REPOSITORY\}/([\w/]+)"'
-    posts = re.findall(call, build["run"])
-    assert posts == [("POST", "git/trees"), ("POST", "git/commits")]
-    assert "git/refs" not in build["run"]
+def test_ci_never_touches_stage_or_main() -> None:
+    source = text("ci.yml")
+    assert "heads/main" not in source
+    assert "git/refs/heads/stage" not in source
 
 
 @pytest.mark.parametrize("name", ONE_BUTTON)
@@ -207,10 +181,15 @@ def test_promote_writes_in_the_standard_order() -> None:
         < source.index("uses: ./.github/actions/dokploy-deploy")
         < source.index("Verify Stage health, digest and revision")
         < source.index("Tag the promoted image as stage")
-        < source.index("Point the stage branch at the deployed commit")
     )
-    assert source.count("--method PATCH") == 1
-    assert '"repos/${GITHUB_REPOSITORY}/git/refs/heads/stage"' in source
+
+
+def test_promote_reads_the_stage_branch_only_for_the_summary() -> None:
+    plan = load("promote-stage.yml")["jobs"]["plan"]
+    steps = {step.get("name"): step for step in plan["steps"]}
+    read = steps["Read what Stage runs now"]["run"]
+    assert "exit 1" not in read
+    assert "merge-base" not in read
 
 
 def test_promote_deploys_the_registered_stage_application() -> None:
@@ -220,23 +199,32 @@ def test_promote_deploys_the_registered_stage_application() -> None:
     assert "STAGE_HOST: ce-stg-revrook.theriark.dev" in source
     assert "DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT" in source
     assert DEVELOPMENT_JOB in source
-    # Stage moves only forward and never across a workflow-file change.
-    assert '-- .github/workflows)"' in source
     action = (ROOT / ".github/actions/dokploy-deploy/action.yml").read_text("utf-8")
     assert "revrook-ce GitHub Actions run ${GITHUB_RUN_ID}" in action
+
+
+def test_release_publishes_in_the_standard_order() -> None:
+    steps = load("release.yml")["jobs"]["release"]["steps"]
+    names = [step.get("name") for step in steps]
+    assert (
+        names.index("Refuse to write in a dry run and re-check stage")
+        < names.index("Tag the image with the version")
+        < names.index("Create the annotated stable tag")
+        < names.index("Create the GitHub Release")
+    )
 
 
 def test_every_release_write_is_skipped_in_a_dry_run() -> None:
     job = load("release.yml")["jobs"]["release"]
     guard = "steps.mode.outputs.dry_run == 'false'"
-    # The unreferenced merge commit is the only object a dry run creates (see above).
     writers = [
-        step
-        for step in job["steps"]
-        if step.get("name") != BUILD_STEP
-        and any(w in step_source(step) for w in WRITES)
+        step for step in job["steps"] if any(w in step_source(step) for w in WRITES)
     ]
-    assert len(writers) == 4
+    assert [step["name"] for step in writers] == [
+        "Tag the image with the version",
+        "Create the annotated stable tag",
+        "Create the GitHub Release",
+    ]
     for step in writers:
         assert str(step.get("if", "")).startswith(guard), step["name"]
     names = [step.get("name") for step in job["steps"]]
@@ -283,12 +271,16 @@ def test_every_script_is_valid_bash(name: str, tmp_path: Path) -> None:
         assert result.returncode == 0, (name, index, result.stderr)
 
 
-@pytest.mark.parametrize("script", (TAGS_SCRIPT, MERGE_SCRIPT), ids=lambda p: p.name)
-def test_the_pipeline_scripts_are_valid_bash(script: Path) -> None:
+def test_the_tag_script_is_valid_bash() -> None:
     result = subprocess.run(
-        ["bash", "-n", str(script)], capture_output=True, text=True, check=False
+        ["bash", "-n", str(TAGS_SCRIPT)], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_the_merge_script_is_gone() -> None:
+    # Merging stage into main is the gate's job; no workflow plans or builds it.
+    assert not (ROOT / ".github" / "scripts" / "release_merge.sh").exists()
 
 
 # --- the release tag script on a throwaway repository ---------------------------
@@ -417,99 +409,3 @@ def test_the_current_candidate_is_the_highest_that_seals_stage(repo: Path) -> No
         "exists": "true",
     }
     assert "error" in tags(repo, "current", commit(repo), DIGEST_A)
-
-
-# --- the merge of stage into main on a throwaway repository ---------------------
-
-
-def write(repo: Path, path: str, content: str) -> None:
-    target = repo / path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
-
-
-def snapshot(repo: Path, message: str) -> str:
-    git(repo, "add", "-A")
-    git(repo, "commit", "-q", "-m", message)
-    return git(repo, "rev-parse", "HEAD")
-
-
-def plan_merge(repo: Path, main: str, stage: str) -> dict[str, str]:
-    out = repo / ".merge"
-    out.mkdir(exist_ok=True)
-    result = subprocess.run(
-        ["bash", str(MERGE_SCRIPT), main, stage, "Release v27.0.0", str(out)],
-        cwd=repo,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return dict(line.split("=", 1) for line in result.stdout.splitlines())
-
-
-def payload(repo: Path, name: str) -> dict[str, Any]:
-    content = (repo / ".merge" / name).read_text(encoding="utf-8")
-    return json.loads(content)  # type: ignore[no-any-return]
-
-
-@pytest.fixture
-def diverged(repo: Path) -> tuple[Path, str, str]:
-    """main has a commit of its own (a workflow registration) that stage lacks."""
-    write(repo, "README.md", "root\n")
-    root = snapshot(repo, "root")
-    write(repo, ".github/workflows/ci.yml", "registered on main\n")
-    main = snapshot(repo, "register ci.yml on main")
-    git(repo, "checkout", "-q", "--detach", root)
-    write(repo, "app.py", "print('stage')\n")
-    write(repo, ".github/workflows/ci.yml", "changed on development\n")
-    write(repo, ".github/workflows/release.yml", "new on development\n")
-    stage = snapshot(repo, "the product")
-    return repo, main, stage
-
-
-def test_the_merge_commit_has_the_parents_main_then_stage(
-    diverged: tuple[Path, str, str],
-) -> None:
-    repo, main, stage = diverged
-    planned = plan_merge(repo, main, stage)
-    assert planned["merged"] == "false"
-    assert planned["workflow_commits"] == "1"
-    commit_payload = payload(repo, "commit.json")
-    assert commit_payload["parents"] == [main, stage]
-    assert commit_payload["tree"] == planned["tree"]
-    # A real merge commit: main is not fast-forwarded to stage, and both histories stay.
-    tree = planned["tree"]
-    merge = git(repo, "commit-tree", tree, "-p", main, "-p", stage, "-m", "merge")
-    parents = git(repo, "rev-list", "--parents", "-n", "1", merge).split()[1:]
-    assert parents == [main, stage]
-    assert merge != stage
-    # Once main holds the merge, stage is in main and a re-run merges nothing.
-    assert plan_merge(repo, merge, stage) == {"merged": "true"}
-
-
-def test_the_planned_tree_keeps_mains_workflows_and_takes_stages_files(
-    diverged: tuple[Path, str, str],
-) -> None:
-    repo, main, stage = diverged
-    tree = plan_merge(repo, main, stage)["tree"]
-    workflows = git(repo, "rev-parse", f"{main}:.github/workflows")
-    assert git(repo, "rev-parse", f"{tree}:.github/workflows") == workflows
-    app = git(repo, "rev-parse", f"{stage}:app.py")
-    assert git(repo, "rev-parse", f"{tree}:app.py") == app
-    assert git(repo, "diff", "--name-only", main, tree, "--", ".github/workflows") == ""
-    # GitHub builds the same tree: stage's tree with main's workflow subtree.
-    entry = {"path": ".github/workflows", "mode": "040000", "type": "tree"}
-    assert payload(repo, "tree.json") == {
-        "base_tree": git(repo, "rev-parse", f"{stage}^{{tree}}"),
-        "tree": [{**entry, "sha": workflows}],
-    }
-
-
-def test_a_main_without_workflows_drops_stages_workflows(repo: Path) -> None:
-    write(repo, "README.md", "root\n")
-    main = snapshot(repo, "root")
-    write(repo, ".github/workflows/ci.yml", "on development\n")
-    stage = snapshot(repo, "the product")
-    tree = plan_merge(repo, main, stage)["tree"]
-    assert git(repo, "ls-tree", "-r", "--name-only", tree) == "README.md"
-    assert payload(repo, "tree.json")["tree"][0]["sha"] is None
