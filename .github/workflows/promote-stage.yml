@@ -5,11 +5,15 @@ name: Promote - Stage
 # Development runs, runs the test suite on that commit, tags the next annotated
 # release candidate v27.<minor>.<patch>-rc.<n> (or reuses the one that already seals
 # this commit and digest), tags the same digest as that candidate version in GHCR
-# (never rebuilt), deploys the digest to the Stage application, verifies health,
-# digest and revision, and moves the stage branch to the commit.
+# (never rebuilt), deploys the digest to the Stage application and verifies health,
+# digest and revision.
+#
+# It never moves the stage or main branch: the Actions token may not move a branch
+# to a commit that changes workflow files. After a successful run the gate script
+# fast-forwards stage to the new candidate tag with the operator token.
 #
 # dry_run=true checks every precondition and runs the tests, then stops: no tag, no
-# image tag, no deployment, no branch move. The plan job prints what a real run does.
+# image tag, no deployment. The plan job prints what a real run does.
 #
 # Rollback is not a button: revert on development, let it deploy to Development,
 # then promote again. The database is never downgraded. See docs/ci-cd.md.
@@ -18,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Check everything and run the tests, but create no tag, push no image tag, deploy nothing and move no branch."
+        description: "Check everything and run the tests, but create no tag, push no image tag and deploy nothing."
         required: false
         default: false
         type: boolean
@@ -42,7 +46,7 @@ env:
 
 jobs:
   plan:
-    name: Plan - what Development runs, the candidate and the Stage preconditions
+    name: Plan - what Development runs, the candidate and what Stage runs now
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Read only. The stage environment holds the Dokploy read credentials.
@@ -155,35 +159,21 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
           echo "Development runs ${IMAGE}@${digest} = ${commit} (CI run ${run})"
 
-      - name: Check that stage can move to the commit
+      - name: Read what Stage runs now
         id: stage
         shell: bash
         env:
-          COMMIT: ${{ steps.dev.outputs.commit }}
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
-            echo "::error::the stage branch does not exist"
-            exit 1
-          }
-          stage_sha="$(git rev-parse refs/remotes/origin/stage)"
-          # Forward only (or already there): a one-button promotion never rolls back.
-          git merge-base --is-ancestor "${stage_sha}" "${COMMIT}" || {
-            echo "::error::stage (${stage_sha}) is ahead of or diverged from ${COMMIT}; refusing to move it"
-            exit 1
-          }
-          # GITHUB_TOKEN has no workflows permission: GitHub refuses to move a branch
-          # when the move changes a file under .github/workflows. Fail before any write.
-          # Never commit workflow files onto stage: stage would diverge from development
-          # and the forward-only check above would refuse every promotion.
-          changed="$(git diff --name-only "${stage_sha}" "${COMMIT}" -- .github/workflows)"
-          if [[ -n "${changed}" ]]; then
-            echo "::error::moving stage from ${stage_sha} to ${COMMIT} changes workflow files (${changed//$'\n'/, }); GITHUB_TOKEN cannot do that. An operator with workflows permission first fast-forwards stage to exactly ${COMMIT} (never commits onto stage), then promotes again: see docs/ci-cd.md, 'How stage gets new workflow files'."
-            exit 1
+          # For the summary only. The stage branch is moved by the gate script after a
+          # successful run, never by this workflow, so nothing here refuses the run.
+          stage_sha=none
+          if git fetch origin +refs/heads/stage:refs/remotes/origin/stage; then
+            stage_sha="$(git rev-parse refs/remotes/origin/stage)"
           fi
           stage_image="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
             --header "CF-Access-Client-Id: ${CF_ID}" \
@@ -195,6 +185,7 @@ jobs:
             echo "sha=${stage_sha}"
             echo "image=${stage_image}"
           } >> "${GITHUB_OUTPUT}"
+          echo "stage branch ${stage_sha}; Stage runs ${stage_image:-unknown}"
 
       - name: Work out the release candidate tag
         id: rc
@@ -250,10 +241,10 @@ jobs:
             echo "- Release candidate: ${rc_line}"
             echo "- GHCR tags on the same digest: \`${RC_TAG#v}\` and \`stage\`"
             echo "- Stage application: \`${STAGE_IMAGE:-unknown}\` -> \`${IMAGE}@${DIGEST}\` on https://${STAGE_HOST}/ (health, digest and revision verified)"
-            echo "- stage branch: \`${STAGE_SHA}\` -> \`${COMMIT}\` (fast-forward, no workflow file changes)"
+            echo "- stage branch: \`${STAGE_SHA}\` now; this workflow does not move it, the gate fast-forwards it to \`${RC_TAG}\` after a successful run"
             if [[ "${DRY_RUN}" == "true" ]]; then
               echo
-              echo "Dry run: every precondition above was checked and the tests run; no tag, image tag, deployment or branch move is made."
+              echo "Dry run: every precondition above was checked and the tests run; no tag, image tag or deployment is made."
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -360,9 +351,9 @@ jobs:
             --include='app/checks/**,app/scoring/**,app/evidence/**,app/importers/**'
 
   promote:
-    name: Promote to Stage - tag, deploy the digest, move stage
+    name: Promote to Stage - tag and deploy the digest
     needs: [plan, test, coverage]
-    # The only job that writes. Skipped in a dry run.
+    # The only job that writes. Skipped in a dry run. It never moves a branch.
     if: needs.plan.outputs.dry_run == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -404,9 +395,6 @@ jobs:
             --get "${DOKPLOY_URL%/}/api/application.one" \
             --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
           [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || { echo "::error::Development now runs '${running}', not ${IMAGE}@${DIGEST}"; exit 1; }
-          git fetch origin +refs/heads/stage:refs/remotes/origin/stage
-          git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}" || { echo "::error::stage moved since the plan"; exit 1; }
-          [[ -z "$(git diff --name-only refs/remotes/origin/stage "${SOURCE_SHA}" -- .github/workflows)" ]] || { echo "::error::stage workflow files differ since the plan"; exit 1; }
 
       - name: Create or reuse the annotated release candidate tag
         shell: bash
@@ -505,20 +493,6 @@ jobs:
           tagged="$(docker buildx imagetools inspect "${IMAGE}:stage" --format '{{.Manifest.Digest}}')"
           [[ "${tagged}" == "${DIGEST}" ]] || { echo "::error::${IMAGE}:stage is ${tagged}, not ${DIGEST}"; exit 1; }
 
-      - name: Point the stage branch at the deployed commit
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          current="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
-          if [[ "${current}" != "${SOURCE_SHA}" ]]; then
-            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stage" \
-              -f sha="${SOURCE_SHA}" -F force=false >/dev/null
-          fi
-          stage_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
-          [[ "${stage_sha}" == "${SOURCE_SHA}" ]] || { echo "::error::stage is ${stage_sha}, expected ${SOURCE_SHA}"; exit 1; }
-
       - name: Record the Stage result
         shell: bash
         env:
@@ -533,5 +507,5 @@ jobs:
             echo "- Release candidate: \`${RC_TAG}\`; Stage run: \`${GITHUB_RUN_ID}\`"
             echo "- Previous Stage image: \`${PREVIOUS:-none}\`"
             echo "- URL: https://${STAGE_HOST}/"
-            echo "- stage branch: \`${SOURCE_SHA}\`; main is unchanged"
+            echo "- Branches: none moved by this run; the gate fast-forwards stage to \`${RC_TAG}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
