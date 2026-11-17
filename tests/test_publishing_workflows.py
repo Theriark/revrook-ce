@@ -120,6 +120,11 @@ def test_the_buttons_never_move_stage_or_main(name: str) -> None:
     # No guard refuses a run because a branch move would cross workflow files.
     assert "-- .github/workflows" not in source
     assert "GITHUB_TOKEN cannot" not in source
+    # refs/heads/stage and refs/heads/main appear only as fetch sources.
+    rest = re.sub(r"\+refs/heads/(stage|main):refs/remotes/origin/\1", "", source)
+    assert "refs/heads/stage" not in rest
+    assert "refs/heads/main" not in rest
+    assert not re.search(r"heads/(stage|main)\b[^\n]*(-f sha=|--method)", source)
 
 
 def test_ci_never_touches_stage_or_main() -> None:
@@ -184,12 +189,27 @@ def test_promote_writes_in_the_standard_order() -> None:
     )
 
 
-def test_promote_reads_the_stage_branch_only_for_the_summary() -> None:
-    plan = load("promote-stage.yml")["jobs"]["plan"]
-    steps = {step.get("name"): step for step in plan["steps"]}
-    read = steps["Read what Stage runs now"]["run"]
-    assert "exit 1" not in read
-    assert "merge-base" not in read
+def test_promote_checks_read_only_that_the_gate_can_fast_forward_stage() -> None:
+    jobs = load("promote-stage.yml")["jobs"]
+    plan = {step.get("name"): step for step in jobs["plan"]["steps"]}
+    check = plan["Check that the gate can fast-forward stage to the commit"]["run"]
+    assert 'git merge-base --is-ancestor "${stage_sha}" "${COMMIT}"' in check
+    assert "is not an ancestor of the commit Development runs" in check
+    assert not any(write in check for write in WRITES)
+    # Checked again before the first write of the promote job.
+    refuse = jobs["promote"]["steps"][1]["run"]
+    assert (
+        'git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}"'
+        in refuse
+    )
+
+
+def test_promote_prints_the_candidate_and_commit_for_the_gate() -> None:
+    source = text("promote-stage.yml")
+    # The plan summary and the result summary both name the tag and its commit.
+    line = "fast-forward stage to candidate \\`${RC_TAG}\\` = commit \\`"
+    assert line + "${COMMIT}\\`" in source
+    assert line + "${SOURCE_SHA}\\`" in source
 
 
 def test_promote_deploys_the_registered_stage_application() -> None:
@@ -244,6 +264,28 @@ def test_release_reads_what_stage_runs_and_never_deploys() -> None:
     assert "--verify-tag" in source
     assert "--prerelease" not in source
     assert load("release.yml")["jobs"]["release"]["environment"] == "stage"
+
+
+def test_a_real_release_refuses_before_any_write_when_main_lacks_stage() -> None:
+    steps = load("release.yml")["jobs"]["release"]["steps"]
+    names = [step.get("name") for step in steps]
+    read = steps[names.index("Read what Stage runs")]
+    assert read["env"]["DRY_RUN"] == "${{ steps.mode.outputs.dry_run }}"
+    assert (
+        'git merge-base --is-ancestor "${commit}" refs/remotes/origin/main'
+        in read["run"]
+    )
+    assert '[[ "${in_main}" != "true" && "${DRY_RUN}" == "false" ]]' in read["run"]
+    assert not any(write in read["run"] for write in WRITES)
+    first_write = min(
+        index
+        for index, step in enumerate(steps)
+        if any(write in step_source(step) for write in WRITES)
+    )
+    assert names.index("Read what Stage runs") < first_write
+    refuse = steps[names.index("Refuse to write in a dry run and re-check stage")]
+    assert "compare/${COMMIT}...main" in refuse["run"]
+    assert '"${status}" == "identical" || "${status}" == "ahead"' in refuse["run"]
 
 
 def test_the_job_names_that_other_workflows_grep_for_exist() -> None:
@@ -409,3 +451,99 @@ def test_the_current_candidate_is_the_highest_that_seals_stage(repo: Path) -> No
         "exists": "true",
     }
     assert "error" in tags(repo, "current", commit(repo), DIGEST_A)
+
+
+# --- the read-only branch checks on a throwaway repository -----------------------
+
+
+def snippet(name: str, step_name: str, start: str, end: str) -> str:
+    """The lines of a step's script from the one containing start to the line end."""
+    for job in load(name)["jobs"].values():
+        for step in job["steps"]:
+            if step.get("name") != step_name:
+                continue
+            lines = step["run"].splitlines()
+            first = next(i for i, line in enumerate(lines) if start in line)
+            last = next(i for i in range(first, len(lines)) if lines[i].strip() == end)
+            return "\n".join(lines[first : last + 1])
+    raise AssertionError(step_name)
+
+
+def run_check(repo: Path, script: str, **env: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["bash", "-euo", "pipefail", "-c", script],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        check=False,
+        env={
+            "PATH": os.environ["PATH"],
+            "HOME": str(repo),
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            **env,
+        },
+    )
+
+
+def forward_only(
+    repo: Path, stage: str, target: str
+) -> subprocess.CompletedProcess[str]:
+    git(repo, "update-ref", "refs/remotes/origin/stage", stage)
+    script = snippet(
+        "promote-stage.yml",
+        "Check that the gate can fast-forward stage to the commit",
+        'stage_sha="$(git rev-parse refs/remotes/origin/stage)"',
+        "}",
+    )
+    return run_check(repo, script, COMMIT=target)
+
+
+def test_promote_passes_when_stage_can_fast_forward(repo: Path) -> None:
+    stage = commit(repo)
+    target = commit(repo)
+    assert forward_only(repo, stage, target).returncode == 0
+    assert forward_only(repo, target, target).returncode == 0
+
+
+def test_promote_refuses_when_stage_is_ahead_or_diverged(repo: Path) -> None:
+    base = commit(repo)
+    target = commit(repo)
+    ahead = forward_only(repo, target, base)
+    assert ahead.returncode == 1
+    assert "is not an ancestor of the commit Development runs" in ahead.stdout
+    git(repo, "checkout", "-q", "-b", "side", base)
+    # Its own message: an empty commit on base made in the same second as target
+    # would otherwise be target itself.
+    git(repo, "commit", "-q", "--allow-empty", "-m", "side")
+    diverged = git(repo, "rev-parse", "HEAD")
+    assert diverged != target
+    assert forward_only(repo, diverged, target).returncode == 1
+
+
+def main_check(
+    repo: Path, main: str, head: str, dry_run: str
+) -> subprocess.CompletedProcess[str]:
+    git(repo, "update-ref", "refs/remotes/origin/main", main)
+    script = snippet("release.yml", "Read what Stage runs", "in_main=false", "fi")
+    script += '\necho "in_main=${in_main}"'
+    return run_check(repo, script, commit=head, DRY_RUN=dry_run)
+
+
+def test_a_real_release_needs_main_to_contain_the_stage_head(repo: Path) -> None:
+    before = commit(repo)
+    head = commit(repo)
+    merged = main_check(repo, head, head, "false")
+    assert merged.returncode == 0
+    assert "in_main=true" in merged.stdout
+    missing = main_check(repo, before, head, "false")
+    assert missing.returncode == 1
+    assert "does not contain the stage head" in missing.stdout
+
+
+def test_a_dry_release_only_reports_whether_main_contains_stage(repo: Path) -> None:
+    before = commit(repo)
+    head = commit(repo)
+    result = main_check(repo, before, head, "true")
+    assert result.returncode == 0
+    assert "in_main=false" in result.stdout
