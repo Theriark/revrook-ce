@@ -513,7 +513,11 @@ def test_promote_refuses_when_stage_is_ahead_or_diverged(repo: Path) -> None:
     assert ahead.returncode == 1
     assert "is not an ancestor of the commit Development runs" in ahead.stdout
     git(repo, "checkout", "-q", "-b", "side", base)
-    diverged = commit(repo)
+    # Its own message: an empty commit on base made in the same second as target
+    # would otherwise be target itself.
+    git(repo, "commit", "-q", "--allow-empty", "-m", "side")
+    diverged = git(repo, "rev-parse", "HEAD")
+    assert diverged != target
     assert forward_only(repo, diverged, target).returncode == 1
 
 
