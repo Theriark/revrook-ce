@@ -140,7 +140,7 @@ def test_every_release_run_reads_what_could_refuse_the_move_of_main() -> None:
     plan = steps["Plan the merge of stage into main and read main's rules"]
     # Runs in the dry run too, and fails it on a protection or a refusing rule.
     assert "if" not in plan
-    protection = '"repos/${GITHUB_REPOSITORY}/branches/main" --jq \'.protected\''
+    protection = "\"repos/${GITHUB_REPOSITORY}/branches/main\" --jq '.protected'"
     assert protection in plan["run"]
     assert '[[ "${protected}" == "false" ]]' in plan["run"]
     assert '"repos/${GITHUB_REPOSITORY}/rules/branches/main"' in plan["run"]
