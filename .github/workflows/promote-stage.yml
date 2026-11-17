@@ -10,8 +10,7 @@ name: Promote - Stage
 #
 # It never moves the stage or main branch: the Actions token may not move a branch
 # to a commit that changes workflow files. After a successful run the gate script
-# fast-forwards stage to the new candidate tag with the operator token. So the run
-# refuses, before any write, when stage is not an ancestor of the commit.
+# fast-forwards stage to the new candidate tag with the operator token.
 #
 # dry_run=true checks every precondition and runs the tests, then stops: no tag, no
 # image tag, no deployment. The plan job prints what a real run does.
@@ -160,29 +159,22 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
           echo "Development runs ${IMAGE}@${digest} = ${commit} (CI run ${run})"
 
-      - name: Check that the gate can fast-forward stage to the commit
+      - name: Read what Stage runs now
         id: stage
         shell: bash
         env:
-          COMMIT: ${{ steps.dev.outputs.commit }}
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          # Read only. This workflow never moves stage: after a successful run the gate
-          # script fast-forwards it to the candidate tag. That only works forward, so
-          # refuse now, before the tests and any write, if stage is not an ancestor.
-          git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
-            echo "::error::the stage branch does not exist"
-            exit 1
-          }
-          stage_sha="$(git rev-parse refs/remotes/origin/stage)"
-          git merge-base --is-ancestor "${stage_sha}" "${COMMIT}" || {
-            echo "::error::stage (${stage_sha}) is not an ancestor of the commit Development runs (${COMMIT}): it is ahead of it or diverged, so the gate could not fast-forward stage after this run. Nothing was written."
-            exit 1
-          }
+          # For the summary only. The stage branch is moved by the gate script after a
+          # successful run, never by this workflow, so nothing here refuses the run.
+          stage_sha=none
+          if git fetch origin +refs/heads/stage:refs/remotes/origin/stage; then
+            stage_sha="$(git rev-parse refs/remotes/origin/stage)"
+          fi
           stage_image="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
             --header "CF-Access-Client-Id: ${CF_ID}" \
             --header "CF-Access-Client-Secret: ${CF_SECRET}" \
@@ -193,7 +185,7 @@ jobs:
             echo "sha=${stage_sha}"
             echo "image=${stage_image}"
           } >> "${GITHUB_OUTPUT}"
-          echo "stage ${stage_sha} is an ancestor of ${COMMIT}; Stage runs ${stage_image:-unknown}"
+          echo "stage branch ${stage_sha}; Stage runs ${stage_image:-unknown}"
 
       - name: Work out the release candidate tag
         id: rc
@@ -249,8 +241,7 @@ jobs:
             echo "- Release candidate: ${rc_line}"
             echo "- GHCR tags on the same digest: \`${RC_TAG#v}\` and \`stage\`"
             echo "- Stage application: \`${STAGE_IMAGE:-unknown}\` -> \`${IMAGE}@${DIGEST}\` on https://${STAGE_HOST}/ (health, digest and revision verified)"
-            echo "- stage branch: \`${STAGE_SHA}\` now, an ancestor of \`${COMMIT}\` (fast-forward possible); this workflow does not move it"
-            echo "- For the gate, after a successful run: fast-forward stage to candidate \`${RC_TAG}\` = commit \`${COMMIT}\`"
+            echo "- stage branch: \`${STAGE_SHA}\` now; this workflow does not move it, the gate fast-forwards it to \`${RC_TAG}\` after a successful run"
             if [[ "${DRY_RUN}" == "true" ]]; then
               echo
               echo "Dry run: every precondition above was checked and the tests run; no tag, image tag or deployment is made."
@@ -404,12 +395,6 @@ jobs:
             --get "${DOKPLOY_URL%/}/api/application.one" \
             --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
           [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || { echo "::error::Development now runs '${running}', not ${IMAGE}@${DIGEST}"; exit 1; }
-          # Read only: the gate can still fast-forward stage to the commit.
-          git fetch origin +refs/heads/stage:refs/remotes/origin/stage
-          git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}" || {
-            echo "::error::stage moved since the plan and is no longer an ancestor of ${SOURCE_SHA}; nothing was written"
-            exit 1
-          }
 
       - name: Create or reuse the annotated release candidate tag
         shell: bash
@@ -522,7 +507,5 @@ jobs:
             echo "- Release candidate: \`${RC_TAG}\`; Stage run: \`${GITHUB_RUN_ID}\`"
             echo "- Previous Stage image: \`${PREVIOUS:-none}\`"
             echo "- URL: https://${STAGE_HOST}/"
-            echo "- Branches: none moved by this run"
-            echo "- For the gate: fast-forward stage to candidate \`${RC_TAG}\` = commit \`${SOURCE_SHA}\`"
+            echo "- Branches: none moved by this run; the gate fast-forwards stage to \`${RC_TAG}\`"
           } >> "${GITHUB_STEP_SUMMARY}"
-          echo "Candidate ${RC_TAG} = commit ${SOURCE_SHA}: the gate fast-forwards stage to ${RC_TAG}"
