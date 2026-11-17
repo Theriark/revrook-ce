@@ -11,8 +11,9 @@ name: Release
 #
 # It never moves the stage or main branch: the Actions token may not move a branch to
 # a commit that changes workflow files. The gate script merges stage into main with
-# the operator token right before it dispatches this workflow. main is never merged
-# into development.
+# the operator token right before it dispatches this workflow, so a real run refuses,
+# before any write, when main lacks the stage head (a dry run only reports it). main
+# is never merged into development.
 #
 # dry_run=true checks every precondition, prints the version, commit, digest and
 # notes, and creates no tag, image tag or release. See docs/ci-cd.md.
@@ -84,6 +85,7 @@ jobs:
         id: stage
         shell: bash
         env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
@@ -118,10 +120,15 @@ jobs:
               (if has("config") then .config else ([.[]] | first | .config) end)
               | .Labels["org.opencontainers.image.revision"] // empty')"
           [[ "${revision}" == "${commit}" ]] || { echo "::error::the Stage image revision is '${revision}', not ${commit}"; exit 1; }
-          # For the summary only: the gate merges stage into main before a real run, so
-          # a dry run before that merge reports false and still passes.
+          # The gate merges stage into main right before a real run, and this workflow
+          # never does. A real run refuses here, before any write, if main lacks the
+          # stage head; a dry run (before Gate 3, so before that merge) only reports it.
           in_main=false
           if git merge-base --is-ancestor "${commit}" refs/remotes/origin/main; then in_main=true; fi
+          if [[ "${in_main}" != "true" && "${DRY_RUN}" == "false" ]]; then
+            echo "::error::main ($(git rev-parse refs/remotes/origin/main)) does not contain the stage head ${commit}. The gate script merges stage into main before it runs this workflow; this workflow never moves main. Nothing was written."
+            exit 1
+          fi
           {
             echo "commit=${commit}"
             echo "digest=${digest}"
@@ -281,6 +288,12 @@ jobs:
           [[ "${DRY_RUN}" == "false" ]] || { echo "::error::dry run: no step may write"; exit 1; }
           now="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
           [[ "${now}" == "${COMMIT}" ]] || { echo "::error::stage moved to ${now} during the run"; exit 1; }
+          # main must still contain the stage head (read only; the gate merged it).
+          status="$(gh api "repos/${GITHUB_REPOSITORY}/compare/${COMMIT}...main" --jq '.status')"
+          [[ "${status}" == "identical" || "${status}" == "ahead" ]] || {
+            echo "::error::main no longer contains the stage head ${COMMIT} (compare: ${status}); nothing was written"
+            exit 1
+          }
 
       - name: Tag the image with the version
         if: steps.mode.outputs.dry_run == 'false' && steps.rel.outputs.image_exists == 'false'
