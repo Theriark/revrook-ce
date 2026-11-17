@@ -2,8 +2,7 @@ name: CI
 
 # Merge gate for revrook-ce (the nine required checks from phase-plan-3), the
 # Development deployment job and the lock-file job, in ONE workflow. This repository
-# has exactly three workflows: CI, Release candidate (prepare-rc.yml) and
-# Promote - Stage.
+# has exactly three workflows: CI, Promote - Stage and Release.
 # STRICT is "true" since phase 0 added the application: every check must run and
 # succeed, and a skipped check fails the gate. (With STRICT "false" checks whose
 # inputs do not exist are SKIPPED and reported as skipped, never as a pass.)
@@ -14,8 +13,8 @@ name: CI
 # the label "ci-go", which the CI request broker sets (one request per commit, at
 # most one per pull request every 3 minutes and 12 a day). A push to development
 # (a merge) runs the gate and then the deploy-development job. workflow_dispatch
-# with mode=ci runs the gate by hand; mode=lock runs ONLY the lock job. The release
-# candidate has its own workflow, prepare-rc.yml.
+# with mode=ci runs the gate by hand; mode=lock runs ONLY the lock job. Release
+# candidates are tagged by Promote - Stage.
 # pull_request (not pull_request_target) has a read-only token and no secrets, so
 # it is safe for every base branch, including stacked pull requests.
 on:
@@ -41,8 +40,8 @@ permissions:
 # Pull request runs: one group per ref, superseded runs are cancelled, and a label
 # other than ci-go gets its own unique group (all its jobs are skipped), so it can
 # never cancel a ci-go run. Every other event (merge to development, manual gate,
-# lock) uses the single repository group shared with Release candidate and
-# Promote - Stage: those runs never overlap and a live deployment is never cancelled.
+# lock) uses the single repository group shared with Promote - Stage and
+# Release: those runs never overlap and a live deployment is never cancelled.
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('ci-{0}-{1}', github.ref, github.event.label.name == 'ci-go' && 'run' || github.run_id) || 'revrook-ce-delivery' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

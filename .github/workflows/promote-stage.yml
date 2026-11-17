@@ -1,161 +1,86 @@
 name: Promote - Stage
 
-# Promote an already built image to the Stage Dokploy application. Never rebuilds.
+# One button (release standard): Gate 2 approval dispatches this workflow on
+# development with no inputs. It takes the exact commit and image digest that
+# Development runs, runs the test suite on that commit, tags the next annotated
+# release candidate v27.<minor>.<patch>-rc.<n> (or reuses the one that already seals
+# this commit and digest), tags the same digest as that candidate version in GHCR
+# (never rebuilt), deploys the digest to the Stage application, verifies health,
+# digest and revision, and moves the stage branch to the commit.
 #
-# The private publisher dispatches this workflow with the seven inputs of the publishing
-# contract (revision 2). The run name is exactly publishing:<request_id> so the
-# publisher can find the run it started. Before ANY write the workflow verifies the
-# source commit, the image digest, the Development run and the existing release
-# candidate:
-#   - source_commit is a commit of development and the stage branch can move to it
-#     without force (promote) or is an earlier commit of stage (rollback);
-#   - image is the digest CI published for sha-<source_commit>;
-#   - development_run_id is the successful CI run on development for that commit whose
-#     deploy-development job succeeded;
-#   - rc_tag is an existing annotated release candidate prepared earlier on
-#     Development (the Release candidate workflow, prepare-rc.yml; candidates made
-#     before it by the prepare-rc mode of ci.yml are accepted too). It is verified and
-#     CONSUMED: it must
-#     point at source_commit and seal the same digest, development run, documentation
-#     manifest and an integer gateCycle, and the run that produced it must be a
-#     successful run on development. This workflow never mints, moves or deletes an
-#     RC tag;
-#   - on a promotion, Development runs exactly that digest right now.
-# Then the digest is deployed to the registered Stage application (title
-# "Stage <full SHA>", description "revrook-ce GitHub Actions run <run ID>"), the image
-# is tagged `stage` and the `stage` branch is moved to the commit. This Stage run is
-# recorded separately from the RC-producing run.
+# dry_run=true checks every precondition and runs the tests, then stops: no tag, no
+# image tag, no deployment, no branch move. The plan job prints what a real run does.
 #
-# Rollback is this same workflow with an earlier approved commit, its digest and its
-# own earlier RC tag; there is no separate rollback workflow and no tag is created.
-# The database is not downgraded: name any irreversible migration before rolling back.
-#
-# The human Stage decision is the native Paperclip approval that precedes the dispatch.
-# No second GitHub approval is added. See docs/ci-cd.md.
-
-run-name: publishing:${{ inputs.request_id }}
+# Rollback is not a button: revert on development, let it deploy to Development,
+# then promote again. The database is never downgraded. See docs/ci-cd.md.
 
 on:
   workflow_dispatch:
     inputs:
-      request_id:
-        description: "Publisher request identifier (run name publishing:<request_id>)."
-        required: true
-        type: string
-      version:
-        description: "Stable version this candidate belongs to, 27.<minor>.<patch> (a leading v is accepted)."
-        required: true
-        type: string
-      source_commit:
-        description: "Exact approved commit (full 40-character SHA)."
-        required: true
-        type: string
-      image:
-        description: "Immutable image digest published for the commit: ghcr.io/theriark/revrook-ce@sha256:<64 hex> or sha256:<64 hex>."
-        required: true
-        type: string
-      development_run_id:
-        description: "Run ID of the CI run on development that built and deployed the commit."
-        required: true
-        type: string
-      documentation_manifest_sha256:
-        description: "Reviewed documentation manifest hash (64 hex), sealed into the RC tag."
-        required: true
-        type: string
-      rc_tag:
-        description: "Existing annotated release candidate tag of this candidate, v27.<minor>.<patch>-rc.<n>."
-        required: true
-        type: string
+      dry_run:
+        description: "Check everything and run the tests, but create no tag, push no image tag, deploy nothing and move no branch."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
-  actions: read
-  contents: write
-  packages: write
+  contents: read
 
 # One delivery run at a time per repository (shared with CI on development and
-# Release candidate); a live run is never cancelled.
+# Release); a live run is never cancelled.
 concurrency:
   group: revrook-ce-delivery
   cancel-in-progress: false
 
+env:
+  IMAGE: ghcr.io/theriark/revrook-ce
+  PYTHON_VERSION: "3.12"
+  DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
+  DEV_HOST: ce-dev-revrook.theriark.dev
+  STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
+  STAGE_HOST: ce-stg-revrook.theriark.dev
+
 jobs:
-  promote:
-    name: Promote or roll back Stage to an immutable digest
+  plan:
+    name: Plan - what Development runs, the candidate and the Stage preconditions
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
+    # Read only. The stage environment holds the Dokploy read credentials.
     environment: stage
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+    outputs:
+      dry_run: ${{ steps.mode.outputs.dry_run }}
+      commit: ${{ steps.dev.outputs.commit }}
+      digest: ${{ steps.dev.outputs.digest }}
+      dev_run: ${{ steps.dev.outputs.run }}
+      version: ${{ steps.rc.outputs.version }}
+      rc_tag: ${{ steps.rc.outputs.tag }}
+      rc_exists: ${{ steps.rc.outputs.exists }}
     env:
-      IMAGE: ghcr.io/theriark/revrook-ce
-      REQUEST_ID: ${{ inputs.request_id }}
-      VERSION_INPUT: ${{ inputs.version }}
-      SOURCE_SHA: ${{ inputs.source_commit }}
-      IMAGE_INPUT: ${{ inputs.image }}
-      DEV_RUN_ID: ${{ inputs.development_run_id }}
-      MANIFEST_SHA256: ${{ inputs.documentation_manifest_sha256 }}
-      RC_TAG: ${{ inputs.rc_tag }}
-      DEV_APPLICATION_ID: zsYpMEYIAGHbJQZuh_1RT
-      DEV_HOST: ce-dev-revrook.theriark.dev
-      STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
-      STAGE_HOST: ce-stg-revrook.theriark.dev
+      DRY_RUN_INPUT: ${{ inputs.dry_run }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
-      - name: Validate the inputs and the promotion source
+      - name: Read the run mode and the execution ref
         id: mode
         shell: bash
         run: |
           set -euo pipefail
-          [[ "${REQUEST_ID}" =~ ^[A-Za-z0-9._:-]{1,128}$ ]] || { echo "::error::request_id must be 1 to 128 letters, digits or . _ : -"; exit 1; }
-          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::source_commit must be a full 40-character commit SHA"; exit 1; }
-          [[ "${VERSION_INPUT}" =~ ^v?(27\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]] || { echo "::error::version must look like 27.<minor>.<patch>"; exit 1; }
-          base_version="${BASH_REMATCH[1]}"
-          [[ "${DEV_RUN_ID}" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::development_run_id must be a run ID (integer)"; exit 1; }
-          [[ "${MANIFEST_SHA256}" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::documentation_manifest_sha256 must be 64 lowercase hex characters"; exit 1; }
-          [[ "${RC_TAG}" == "v${base_version}-rc."* && "${RC_TAG##*-rc.}" =~ ^[0-9]+$ ]] || { echo "::error::rc_tag must look like v${base_version}-rc.<n>"; exit 1; }
-          digest="${IMAGE_INPUT#"${IMAGE}@"}"
-          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::image must be ${IMAGE}@sha256:<64 hex> or sha256:<64 hex>"; exit 1; }
-          case "${GITHUB_REF}" in
-            refs/heads/development | refs/heads/stage) ;;
-            *) echo "::error::Promote - Stage runs from development or stage, got ${GITHUB_REF}"; exit 1 ;;
+          # Only the literal false is a real run; anything else is refused.
+          case "${DRY_RUN_INPUT}" in
+            true | false) ;;
+            *) echo "::error::dry_run must be true or false, got '${DRY_RUN_INPUT}'"; exit 1 ;;
           esac
-          git fetch origin +refs/heads/development:refs/remotes/origin/development
-          git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/development || {
-            echo "::error::${SOURCE_SHA} is not a commit of development"
+          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || {
+            echo "::error::Promote - Stage runs from development, got ${GITHUB_REF}"
             exit 1
           }
-          # The stage branch must exist and the move must be allowed BEFORE anything
-          # is written to Stage, so a branch problem cannot fail the run after the
-          # deployment. Promote: stage must be an ancestor of source_commit (a
-          # fast-forward, also when it already equals it). Rollback: source_commit
-          # must be an earlier commit of stage.
-          git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
-            echo "::error::the stage branch does not exist; create it before promoting"
-            exit 1
-          }
-          if git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}"; then
-            rollback=false
-            changed="$(git diff --name-only refs/remotes/origin/stage "${SOURCE_SHA}" -- .github/workflows)"
-          elif git merge-base --is-ancestor "${SOURCE_SHA}" refs/remotes/origin/stage; then
-            rollback=true
-            changed="$(git diff --name-only "${SOURCE_SHA}" refs/remotes/origin/stage -- .github/workflows)"
-          else
-            echo "::error::stage and ${SOURCE_SHA} have diverged; refusing to move the stage branch"
-            exit 1
-          fi
-          # GITHUB_TOKEN has no `workflows` permission: GitHub refuses to move a branch
-          # when the move changes a file under .github/workflows. Fail now, before the
-          # Stage deployment, rather than after it.
-          if [[ -n "${changed}" ]]; then
-            echo "::error::moving stage would change workflow files (${changed//$'\n'/, }); GITHUB_TOKEN cannot do that. A reviewed workflow-only route must first bring stage to a commit with identical workflow files."
-            exit 1
-          fi
-          {
-            echo "rollback=${rollback}"
-            echo "digest=${digest}"
-            echo "base_version=${base_version}"
-          } >> "${GITHUB_OUTPUT}"
+          echo "dry_run=${DRY_RUN_INPUT}" >> "${GITHUB_OUTPUT}"
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -164,104 +89,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - name: Verify the image digest published for this commit
-        shell: bash
-        env:
-          DIGEST: ${{ steps.mode.outputs.digest }}
-        run: |
-          set -euo pipefail
-          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${SOURCE_SHA}" --format '{{.Manifest.Digest}}')"
-          [[ "${published}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no image published for ${SOURCE_SHA}"; exit 1; }
-          [[ "${published}" == "${DIGEST}" ]] || {
-            echo "::error::${IMAGE}:sha-${SOURCE_SHA} is ${published}, not the requested ${DIGEST}; refusing"
-            exit 1
-          }
-          echo "Verified ${IMAGE}@${DIGEST}"
-
-      - name: Verify the Development run
+      - name: Find the commit and digest Development runs
+        id: dev
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}")"
-          jq -e --arg sha "${SOURCE_SHA}" '
-              .path == ".github/workflows/ci.yml"
-              and .event == "push"
-              and .head_branch == "development"
-              and .head_sha == $sha
-              and .status == "completed"
-              and .conclusion == "success"' <<<"${run}" >/dev/null || {
-            echo "::error::run ${DEV_RUN_ID} is not a successful CI push run on development for ${SOURCE_SHA}"
-            exit 1
-          }
-          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${DEV_RUN_ID}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > jobs.tsv
-          grep -Fq $'Deploy Development (build once, deploy the digest)\tsuccess' jobs.tsv || {
-            echo "::error::run ${DEV_RUN_ID} has no successful Development deployment job"
-            exit 1
-          }
-          rm -f jobs.tsv
-          echo "Verified Development run ${DEV_RUN_ID} for ${SOURCE_SHA}"
-
-      - name: Verify and consume the existing RC tag
-        id: rc
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DIGEST: ${{ steps.mode.outputs.digest }}
-        run: |
-          set -euo pipefail
-          # Read only: this workflow never creates, moves or deletes a tag.
-          ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}")" || { echo "::error::${RC_TAG} does not exist; prepare the release candidate on Development first"; exit 1; }
-          [[ "$(jq -r '.object.type' <<<"${ref}")" == "tag" ]] || { echo "::error::${RC_TAG} is not an annotated tag"; exit 1; }
-          object="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/$(jq -r '.object.sha' <<<"${ref}")")"
-          jq -e --arg t "${RC_TAG}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" --arg m "${MANIFEST_SHA256}" \
-              --argjson dev "${DEV_RUN_ID}" '
-              .tag == $t and .object.type == "commit" and .object.sha == $c
-              and ((.message | fromjson) as $j
-                | ($j | type) == "object"
-                and $j.sourceCommit == $c and $j.imageDigest == $d
-                and $j.developmentRunId == $dev
-                and ($j.workflowRunId | type) == "number" and $j.workflowRunId >= 1 and $j.workflowRunId == ($j.workflowRunId | floor)
-                and $j.documentationManifestSha256 == $m
-                and ($j.gateCycle | type) == "number" and $j.gateCycle >= 1 and $j.gateCycle == ($j.gateCycle | floor))' <<<"${object}" >/dev/null || {
-            echo "::error::${RC_TAG} does not seal this commit, digest, development run, documentation manifest and an integer gateCycle"
-            exit 1
-          }
-          rc_run="$(jq -r '(.message | fromjson).workflowRunId' <<<"${object}")"
-          gate_cycle="$(jq -r '(.message | fromjson).gateCycle' <<<"${object}")"
-          # The run that produced the RC: a successful Release candidate run of this
-          # repository on development (or the former prepare-rc mode of CI),
-          # separate from this Stage run.
-          jq -e --arg repo "${GITHUB_REPOSITORY}" '
-              .repository.full_name == $repo
-              and (.path == ".github/workflows/prepare-rc.yml" or .path == ".github/workflows/ci.yml")
-              and .event == "workflow_dispatch"
-              and .head_branch == "development"
-              and .status == "completed"
-              and .conclusion == "success"' <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}")" >/dev/null || {
-            echo "::error::run ${rc_run} is not a successful Release candidate run on development that prepared ${RC_TAG}"
-            exit 1
-          }
-          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${rc_run}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > rc-jobs.tsv
-          grep -Fq $'Prepare RC (tag the tested Development image)\tsuccess' rc-jobs.tsv || {
-            echo "::error::run ${rc_run} has no successful RC preparation job"
-            exit 1
-          }
-          rm -f rc-jobs.tsv
-          [[ "${rc_run}" != "${GITHUB_RUN_ID}" ]] || { echo "::error::the RC-producing run must not be this Stage run"; exit 1; }
-          {
-            echo "tag=${RC_TAG}"
-            echo "run=${rc_run}"
-            echo "gate_cycle=${gate_cycle}"
-          } >> "${GITHUB_OUTPUT}"
-          echo "Verified ${RC_TAG} (RC-producing run ${rc_run}, gate cycle ${gate_cycle})"
-
-      - name: Confirm Development runs exactly this digest
-        if: steps.mode.outputs.rollback != 'true'
-        shell: bash
-        env:
-          DIGEST: ${{ steps.mode.outputs.digest }}
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
           CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
@@ -277,82 +109,427 @@ jobs:
             --header "x-api-key: ${DOKPLOY_API_KEY}" \
             --get "${DOKPLOY_URL%/}/api/application.one" \
             --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
-          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || {
-            echo "::error::Development runs '${running}', not ${IMAGE}@${DIGEST}"
+          digest="${running#"${IMAGE}@"}"
+          [[ "${running}" == "${IMAGE}@${digest}" && "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::Development runs '${running}', not an immutable ${IMAGE}@sha256 digest"
             exit 1
           }
+          # The commit is the revision label baked into that exact image.
+          commit="$(docker buildx imagetools inspect "${IMAGE}@${digest}" --format '{{json .Image}}' | jq -r '
+              (if has("config") then .config else ([.[]] | first | .config) end)
+              | .Labels["org.opencontainers.image.revision"] // empty')"
+          [[ "${commit}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::${IMAGE}@${digest} carries no revision label"; exit 1; }
+          git merge-base --is-ancestor "${commit}" "${GITHUB_SHA}" || {
+            echo "::error::Development runs ${commit}, which is not a commit of development"
+            exit 1
+          }
+          # CI built that digest for that commit (sha-<commit> tag, built once).
+          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${commit}" --format '{{.Manifest.Digest}}')"
+          [[ "${published}" == "${digest}" ]] || {
+            echo "::error::${IMAGE}:sha-${commit} is ${published}, not the ${digest} Development runs"
+            exit 1
+          }
+          # The successful CI push run on development that built and deployed it.
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?branch=development&event=push&status=success&head_sha=${commit}&per_page=10" \
+            --jq '[.workflow_runs[].id] | max // empty')"
+          [[ "${run}" =~ ^[1-9][0-9]*$ ]] || { echo "::error::no successful CI push run on development for ${commit}"; exit 1; }
+          jq -e --arg sha "${commit}" '
+              .path == ".github/workflows/ci.yml" and .event == "push"
+              and .head_branch == "development" and .head_sha == $sha
+              and .status == "completed" and .conclusion == "success"' \
+            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run}")" >/dev/null || {
+            echo "::error::run ${run} is not a successful CI push run on development for ${commit}"
+            exit 1
+          }
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run}/jobs" --jq '.jobs[] | [.name, .conclusion] | @tsv' > jobs.tsv
+          grep -Fq $'Deploy Development (build once, deploy the digest)\tsuccess' jobs.tsv || {
+            echo "::error::CI run ${run} has no successful Development deployment job"
+            exit 1
+          }
+          rm -f jobs.tsv
           curl --fail --silent --show-error --max-time 15 "https://${DEV_HOST}/healthz" >/dev/null
+          {
+            echo "commit=${commit}"
+            echo "digest=${digest}"
+            echo "run=${run}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Development runs ${IMAGE}@${digest} = ${commit} (CI run ${run})"
+
+      - name: Check that stage can move to the commit
+        id: stage
+        shell: bash
+        env:
+          COMMIT: ${{ steps.dev.outputs.commit }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/stage:refs/remotes/origin/stage || {
+            echo "::error::the stage branch does not exist"
+            exit 1
+          }
+          stage_sha="$(git rev-parse refs/remotes/origin/stage)"
+          # Forward only (or already there): a one-button promotion never rolls back.
+          git merge-base --is-ancestor "${stage_sha}" "${COMMIT}" || {
+            echo "::error::stage (${stage_sha}) is ahead of or diverged from ${COMMIT}; refusing to move it"
+            exit 1
+          }
+          # GITHUB_TOKEN has no workflows permission: GitHub refuses to move a branch
+          # when the move changes a file under .github/workflows. Fail before any write.
+          changed="$(git diff --name-only "${stage_sha}" "${COMMIT}" -- .github/workflows)"
+          if [[ -n "${changed}" ]]; then
+            echo "::error::moving stage from ${stage_sha} to ${COMMIT} changes workflow files (${changed//$'\n'/, }); GITHUB_TOKEN cannot do that. The workflow-only route must first bring stage to the same workflow files."
+            exit 1
+          fi
+          stage_image="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${STAGE_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          {
+            echo "sha=${stage_sha}"
+            echo "image=${stage_image}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Work out the release candidate tag
+        id: rc
+        shell: bash
+        env:
+          COMMIT: ${{ steps.dev.outputs.commit }}
+          DIGEST: ${{ steps.dev.outputs.digest }}
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          bash .github/scripts/release_tags.sh next "${COMMIT}" "${DIGEST}" > rc.env
+          cat rc.env
+          # shellcheck disable=SC1091
+          source rc.env
+          # The candidate version tag in GHCR is absent or already this digest.
+          if existing="$(docker buildx imagetools inspect "${IMAGE}:${tag#v}" --format '{{.Manifest.Digest}}' 2>/dev/null)"; then
+            [[ "${existing}" == "${DIGEST}" ]] || {
+              echo "::error::${IMAGE}:${tag#v} already points at ${existing}, not ${DIGEST}"
+              exit 1
+            }
+          fi
+          cat rc.env >> "${GITHUB_OUTPUT}"
+          rm -f rc.env
+
+      - name: Summary of what this run does
+        shell: bash
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          COMMIT: ${{ steps.dev.outputs.commit }}
+          DIGEST: ${{ steps.dev.outputs.digest }}
+          DEV_RUN: ${{ steps.dev.outputs.run }}
+          STAGE_SHA: ${{ steps.stage.outputs.sha }}
+          STAGE_IMAGE: ${{ steps.stage.outputs.image }}
+          RC_TAG: ${{ steps.rc.outputs.tag }}
+          RC_EXISTS: ${{ steps.rc.outputs.exists }}
+        run: |
+          set -euo pipefail
+          if [[ "${RC_EXISTS}" == "true" ]]; then
+            rc_line="reuse the existing annotated tag \`${RC_TAG}\` (it already seals this commit and digest)"
+          else
+            rc_line="create the annotated tag \`${RC_TAG}\` on \`${COMMIT}\`"
+          fi
+          {
+            if [[ "${DRY_RUN}" == "true" ]]; then
+              echo "## revrook-ce Promote - Stage: DRY RUN (nothing is changed)"
+            else
+              echo "## revrook-ce Promote - Stage: plan"
+            fi
+            echo
+            echo "- Commit Development runs: \`${COMMIT}\` (CI run \`${DEV_RUN}\`)"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
+            echo "- Test suite: runs on \`${COMMIT}\` before any write"
+            echo "- Release candidate: ${rc_line}"
+            echo "- GHCR tags on the same digest: \`${RC_TAG#v}\` and \`stage\`"
+            echo "- Stage application: \`${STAGE_IMAGE:-unknown}\` -> \`${IMAGE}@${DIGEST}\` on https://${STAGE_HOST}/ (health, digest and revision verified)"
+            echo "- stage branch: \`${STAGE_SHA}\` -> \`${COMMIT}\` (fast-forward, no workflow file changes)"
+            if [[ "${DRY_RUN}" == "true" ]]; then
+              echo
+              echo "Dry run: every precondition above was checked and the tests run; no tag, image tag, deployment or branch move is made."
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  test:
+    name: Test suite on the commit Development runs (shard ${{ matrix.shard }} of 4)
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    services:
+      postgres:
+        image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657 # 16, pinned (2026-11-07)
+        env:
+          POSTGRES_USER: revrook
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+          POSTGRES_DB: revrook_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U revrook -d revrook_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql+asyncpg://revrook:ci-only-not-a-secret@localhost:5432/revrook_test
+      SECRET_KEY: ci-only-secret-key-not-for-deployment
+      TEST_SHARD: ${{ matrix.shard }}/4
+      COVERAGE_FILE: .coverage.shard${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.plan.outputs.commit }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          python tools/fetch_three.py
+          python tools/fetch_three.py --check
+          FERNET_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          echo "::add-mask::${FERNET_KEY}"
+          export FERNET_KEY
+          pytest -q --cov=app --cov-report= \
+            --junitxml="${RUNNER_TEMP}/pytest-junit.xml"
+          # No test may skip (a lost DATABASE_URL must not turn into a silent pass).
+          python - "${RUNNER_TEMP}/pytest-junit.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.argv[1]).getroot()
+          suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
+          tests = sum(int(s.get("tests", 0)) for s in suites)
+          skipped = sum(int(s.get("skipped", 0)) for s in suites)
+          print(f"pytest: {tests} tests, {skipped} skipped")
+          if skipped:
+              print(f"::error::{skipped} test(s) were skipped; zero skips are required")
+              sys.exit(1)
+          if not tests:
+              print("::error::this shard ran no test")
+              sys.exit(1)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .coverage.shard${{ matrix.shard }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  coverage:
+    name: Coverage thresholds on the commit Development runs
+    needs: [plan, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.plan.outputs.commit }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r requirements-dev.txt
+          shards="$(ls .coverage.shard* | wc -l)"
+          [[ "${shards}" -eq 4 ]] || { echo "::error::expected the coverage of 4 shards, found ${shards}"; exit 1; }
+          coverage combine .coverage.shard*
+          coverage report --show-missing --fail-under=80
+          coverage report --fail-under=95 \
+            --include='app/checks/**,app/scoring/**,app/evidence/**,app/importers/**'
+
+  promote:
+    name: Promote to Stage - tag, deploy the digest, move stage
+    needs: [plan, test, coverage]
+    # The only job that writes. Skipped in a dry run.
+    if: needs.plan.outputs.dry_run == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: stage
+    permissions:
+      actions: read
+      contents: write
+      packages: write
+    env:
+      DRY_RUN: ${{ needs.plan.outputs.dry_run }}
+      SOURCE_SHA: ${{ needs.plan.outputs.commit }}
+      DIGEST: ${{ needs.plan.outputs.digest }}
+      DEV_RUN_ID: ${{ needs.plan.outputs.dev_run }}
+      RC_TAG: ${{ needs.plan.outputs.rc_tag }}
+      RC_EXISTS: ${{ needs.plan.outputs.rc_exists }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Refuse to write in a dry run and re-check the plan
+        shell: bash
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          [[ "${DRY_RUN}" == "false" ]] || { echo "::error::dry run: this job must not write"; exit 1; }
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ && "${DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::plan outputs missing"; exit 1; }
+          [[ "${RC_TAG}" =~ ^v27\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-rc\.[1-9][0-9]*$ ]] || { echo "::error::unexpected candidate tag '${RC_TAG}'"; exit 1; }
+          # Nothing moved while the tests ran (the concurrency group serializes
+          # deployments, so this only catches a change by hand).
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${DEV_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || { echo "::error::Development now runs '${running}', not ${IMAGE}@${DIGEST}"; exit 1; }
+          git fetch origin +refs/heads/stage:refs/remotes/origin/stage
+          git merge-base --is-ancestor refs/remotes/origin/stage "${SOURCE_SHA}" || { echo "::error::stage moved since the plan"; exit 1; }
+          [[ -z "$(git diff --name-only refs/remotes/origin/stage "${SOURCE_SHA}" -- .github/workflows)" ]] || { echo "::error::stage workflow files differ since the plan"; exit 1; }
+
+      - name: Create or reuse the annotated release candidate tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          seals() {
+            jq -e --arg t "${RC_TAG}" --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" '
+                .tag == $t and .object.type == "commit" and .object.sha == $c
+                and ((.message | fromjson? // {}) | .imageDigest == $d)' >/dev/null
+          }
+          if ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}" 2>/dev/null)"; then
+            [[ "$(jq -r '.object.type' <<<"${ref}")" == "tag" ]] || { echo "::error::${RC_TAG} is not an annotated tag"; exit 1; }
+            gh api "repos/${GITHUB_REPOSITORY}/git/tags/$(jq -r '.object.sha' <<<"${ref}")" | seals || {
+              echo "::error::${RC_TAG} exists but does not seal ${SOURCE_SHA} and ${DIGEST}"
+              exit 1
+            }
+            echo "Reusing ${RC_TAG}"
+          else
+            [[ "${RC_EXISTS}" == "false" ]] || { echo "::error::${RC_TAG} was planned as existing but is gone"; exit 1; }
+            message="$(jq -cn --arg c "${SOURCE_SHA}" --arg d "${DIGEST}" \
+              --argjson dev "${DEV_RUN_ID}" --argjson run "${GITHUB_RUN_ID}" \
+              '{sourceCommit: $c, imageDigest: $d, developmentRunId: $dev, workflowRunId: $run}')"
+            tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+              -f tag="${RC_TAG}" -f message="${message}" -f object="${SOURCE_SHA}" -f type=commit --jq '.sha')"
+            [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
+            if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${RC_TAG}" -f sha="${tag_sha}" >/dev/null; then
+              # Uncertain result: read the ref back, never create twice.
+              existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RC_TAG}" --jq '.object.sha' || true)"
+              [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${RC_TAG}"; exit 1; }
+            fi
+            gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}" | seals || { echo "::error::${RC_TAG} did not read back"; exit 1; }
+            echo "Created ${RC_TAG}"
+          fi
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Tag the immutable image as the candidate version
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --prefer-index=false --tag "${IMAGE}:${RC_TAG#v}" "${IMAGE}@${DIGEST}"
+          tagged="$(docker buildx imagetools inspect "${IMAGE}:${RC_TAG#v}" --format '{{.Manifest.Digest}}')"
+          [[ "${tagged}" == "${DIGEST}" ]] || { echo "::error::${IMAGE}:${RC_TAG#v} is ${tagged}, not ${DIGEST}"; exit 1; }
 
       - id: deploy
         uses: ./.github/actions/dokploy-deploy
         with:
           application-id: ${{ env.STAGE_APPLICATION_ID }}
           expected-host: ${{ env.STAGE_HOST }}
-          image: ${{ env.IMAGE }}@${{ steps.mode.outputs.digest }}
+          image: ${{ env.IMAGE }}@${{ env.DIGEST }}
           health-url: https://${{ env.STAGE_HOST }}/healthz
           expected-revision: ${{ env.SOURCE_SHA }}
           title: Stage ${{ env.SOURCE_SHA }}
-          # A failed rollback is not rolled forward again automatically.
-          restore-on-failure: ${{ steps.mode.outputs.rollback == 'true' && 'false' || 'true' }}
+          restore-on-failure: "true"
           dokploy-url: ${{ secrets.DOKPLOY_URL }}
           dokploy-api-key: ${{ secrets.DOKPLOY_API_KEY }}
           cf-access-client-id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           cf-access-client-secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
 
-      - name: Tag the promoted image as stage
+      - name: Verify Stage health, digest and revision
         shell: bash
         env:
-          DIGEST: ${{ steps.mode.outputs.digest }}
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          docker buildx imagetools create --tag "${IMAGE}:stage" "${IMAGE}@${DIGEST}"
+          curl --fail --silent --show-error --max-time 15 "https://${STAGE_HOST}/healthz" >/dev/null
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${STAGE_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          [[ "${running}" == "${IMAGE}@${DIGEST}" ]] || { echo "::error::Stage runs '${running}', not ${IMAGE}@${DIGEST}"; exit 1; }
+          # /healthz reports no revision; the version is the revision label of the
+          # exact digest Stage runs.
+          revision="$(docker buildx imagetools inspect "${IMAGE}@${DIGEST}" --format '{{json .Image}}' | jq -r '
+              (if has("config") then .config else ([.[]] | first | .config) end)
+              | .Labels["org.opencontainers.image.revision"] // empty')"
+          [[ "${revision}" == "${SOURCE_SHA}" ]] || { echo "::error::Stage image revision is '${revision}', not ${SOURCE_SHA}"; exit 1; }
+
+      - name: Tag the promoted image as stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --prefer-index=false --tag "${IMAGE}:stage" "${IMAGE}@${DIGEST}"
+          tagged="$(docker buildx imagetools inspect "${IMAGE}:stage" --format '{{.Manifest.Digest}}')"
+          [[ "${tagged}" == "${DIGEST}" ]] || { echo "::error::${IMAGE}:stage is ${tagged}, not ${DIGEST}"; exit 1; }
 
       - name: Point the stage branch at the deployed commit
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          ROLLBACK: ${{ steps.mode.outputs.rollback }}
         run: |
           set -euo pipefail
-          force=false
-          # Moving backwards was already validated before the deployment (the
-          # current stage head descends from the commit being restored).
-          if [[ "${ROLLBACK}" == "true" ]]; then
-            force=true
+          current="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
+          if [[ "${current}" != "${SOURCE_SHA}" ]]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stage" \
+              -f sha="${SOURCE_SHA}" -F force=false >/dev/null
           fi
-          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/stage" \
-            -f sha="${SOURCE_SHA}" -F force="${force}" >/dev/null
           stage_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
           [[ "${stage_sha}" == "${SOURCE_SHA}" ]] || { echo "::error::stage is ${stage_sha}, expected ${SOURCE_SHA}"; exit 1; }
 
       - name: Record the Stage result
         shell: bash
         env:
-          DIGEST: ${{ steps.mode.outputs.digest }}
           PREVIOUS: ${{ steps.deploy.outputs.previous-image }}
-          ROLLBACK: ${{ steps.mode.outputs.rollback }}
-          RC_RUN: ${{ steps.rc.outputs.run }}
-          GATE_CYCLE: ${{ steps.rc.outputs.gate_cycle }}
         run: |
           set -euo pipefail
           {
-            if [[ "${ROLLBACK}" == "true" ]]; then
-              echo "## revrook-ce Stage rolled back"
-            else
-              echo "## revrook-ce promoted to Stage"
-            fi
+            echo "## revrook-ce promoted to Stage"
             echo
-            echo "- Request: \`${REQUEST_ID}\`"
-            echo "- Source commit: \`${SOURCE_SHA}\`"
-            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild)"
-            echo "- Development run: \`${DEV_RUN_ID}\`; RC-producing run: \`${RC_RUN}\`; Stage run: \`${GITHUB_RUN_ID}\`"
-            echo "- RC tag consumed (not created here): \`${RC_TAG}\`; gate cycle: \`${GATE_CYCLE}\`; documentation manifest: \`${MANIFEST_SHA256}\`"
-            echo "- Previous Stage image (rollback target): \`${PREVIOUS:-none}\`"
+            echo "- Source commit: \`${SOURCE_SHA}\` (Development CI run \`${DEV_RUN_ID}\`)"
+            echo "- Immutable image: \`${IMAGE}@${DIGEST}\` (no rebuild), also tagged \`${RC_TAG#v}\` and \`stage\`"
+            echo "- Release candidate: \`${RC_TAG}\`; Stage run: \`${GITHUB_RUN_ID}\`"
+            echo "- Previous Stage image: \`${PREVIOUS:-none}\`"
             echo "- URL: https://${STAGE_HOST}/"
-            echo "- Stage branch: \`${SOURCE_SHA}\`; main is unchanged"
-            if [[ "${ROLLBACK}" == "true" ]]; then
-              echo "- The database was not downgraded. Check release notes for irreversible migrations."
-            else
-              echo "- Next: human QA in Jira"
-            fi
+            echo "- stage branch: \`${SOURCE_SHA}\`; main is unchanged"
           } >> "${GITHUB_STEP_SUMMARY}"

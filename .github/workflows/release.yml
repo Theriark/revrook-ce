@@ -1,0 +1,418 @@
+name: Release
+
+# One button (release standard): Gate 3 approval dispatches this workflow on
+# development with no inputs. It releases exactly what Stage runs and never rebuilds:
+# the stage branch head, the digest the Stage application runs and the release
+# candidate tag that seals both. In this order it creates (or finds, when a re-run
+# meets them already there) the GHCR tag <version> on the same digest, the annotated
+# stable tag v<version> (the candidate tag without -rc.N), the GitHub Release with
+# notes from the pull requests merged since the last stable release, and a merge
+# commit of stage into main. CE has no Production deployment. main is never merged
+# into development. A re-run when everything exists succeeds and changes nothing.
+#
+# dry_run=true checks every precondition, prints the version, commit, digest, notes
+# and merge, and changes nothing. See docs/ci-cd.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Check everything and print the release, but create no tag, image tag or release and do not touch main."
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# One delivery run at a time per repository (shared with CI on development and
+# Promote - Stage); a live run is never cancelled.
+concurrency:
+  group: revrook-ce-delivery
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release what Stage runs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Only to read the Stage application from Dokploy; nothing is deployed.
+    environment: stage
+    permissions:
+      actions: read
+      contents: write
+      packages: write
+    env:
+      IMAGE: ghcr.io/theriark/revrook-ce
+      STAGE_APPLICATION_ID: 7QVBrkTn6rzEcICxV9GTj
+      STAGE_HOST: ce-stg-revrook.theriark.dev
+      DRY_RUN_INPUT: ${{ inputs.dry_run }}
+      # In the workspace: runner.temp is not available at job level.
+      NOTES: release-notes.md
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Read the run mode and the execution ref
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${DRY_RUN_INPUT}" in
+            true | false) ;;
+            *) echo "::error::dry_run must be true or false, got '${DRY_RUN_INPUT}'"; exit 1 ;;
+          esac
+          [[ "${GITHUB_REF}" == "refs/heads/development" ]] || {
+            echo "::error::Release runs from development, got ${GITHUB_REF}"
+            exit 1
+          }
+          echo "dry_run=${DRY_RUN_INPUT}" >> "${GITHUB_OUTPUT}"
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Read what Stage runs
+        id: stage
+        shell: bash
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          CF_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          for required in DOKPLOY_URL DOKPLOY_API_KEY CF_ID CF_SECRET; do
+            [[ -n "${!required}" ]] || { echo "::error::${required} is missing from the stage environment"; exit 1; }
+          done
+          git fetch origin +refs/heads/stage:refs/remotes/origin/stage +refs/heads/main:refs/remotes/origin/main
+          commit="$(git rev-parse refs/remotes/origin/stage)"
+          running="$(curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors --max-time 30 \
+            --header "CF-Access-Client-Id: ${CF_ID}" \
+            --header "CF-Access-Client-Secret: ${CF_SECRET}" \
+            --header "x-api-key: ${DOKPLOY_API_KEY}" \
+            --get "${DOKPLOY_URL%/}/api/application.one" \
+            --data-urlencode "applicationId=${STAGE_APPLICATION_ID}" | jq -r '.dockerImage // empty')"
+          digest="${running#"${IMAGE}@"}"
+          [[ "${running}" == "${IMAGE}@${digest}" && "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::Stage runs '${running}', not an immutable ${IMAGE}@sha256 digest"
+            exit 1
+          }
+          curl --fail --silent --show-error --max-time 15 "https://${STAGE_HOST}/healthz" >/dev/null
+          # The digest is the one CI built once for the stage head, and the image
+          # says so itself.
+          published="$(docker buildx imagetools inspect "${IMAGE}:sha-${commit}" --format '{{.Manifest.Digest}}')"
+          [[ "${published}" == "${digest}" ]] || {
+            echo "::error::${IMAGE}:sha-${commit} is ${published}, but Stage runs ${digest}; stage and the Stage application disagree"
+            exit 1
+          }
+          revision="$(docker buildx imagetools inspect "${IMAGE}@${digest}" --format '{{json .Image}}' | jq -r '
+              (if has("config") then .config else ([.[]] | first | .config) end)
+              | .Labels["org.opencontainers.image.revision"] // empty')"
+          [[ "${revision}" == "${commit}" ]] || { echo "::error::the Stage image revision is '${revision}', not ${commit}"; exit 1; }
+          {
+            echo "commit=${commit}"
+            echo "digest=${digest}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Stage runs ${IMAGE}@${digest} = ${commit}"
+
+      - name: Find the candidate and the stable release
+        id: rel
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.stage.outputs.commit }}
+          DIGEST: ${{ steps.stage.outputs.digest }}
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          bash .github/scripts/release_tags.sh current "${COMMIT}" "${DIGEST}" > rc.env
+          # shellcheck disable=SC1091
+          source rc.env
+          rm -f rc.env
+          stable="v${version}"
+          tag_exists=false
+          if git rev-parse -q --verify "refs/tags/${stable}" >/dev/null; then
+            [[ "$(git cat-file -t "refs/tags/${stable}")" == "tag" ]] || { echo "::error::${stable} exists but is not an annotated tag"; exit 1; }
+            [[ "$(git rev-parse "refs/tags/${stable}^{commit}")" == "${COMMIT}" ]] || {
+              echo "::error::${stable} already exists on another commit; refusing"
+              exit 1
+            }
+            tag_exists=true
+          fi
+          image_exists=false
+          if existing="$(docker buildx imagetools inspect "${IMAGE}:${version}" --format '{{.Manifest.Digest}}' 2>/dev/null)"; then
+            [[ "${existing}" == "${DIGEST}" ]] || { echo "::error::${IMAGE}:${version} already points at ${existing}, not ${DIGEST}"; exit 1; }
+            image_exists=true
+          fi
+          release_exists=false
+          if state="$(gh release view "${stable}" --json isDraft,isPrerelease --jq '[.isDraft, .isPrerelease] | map(tostring) | join(",")' 2>"${RUNNER_TEMP}/release.err")"; then
+            [[ "${state}" == "false,false" ]] || { echo "::error::release ${stable} exists but is a draft or a prerelease (${state}); refusing to change it"; exit 1; }
+            [[ "${tag_exists}" == "true" ]] || { echo "::error::release ${stable} exists without its tag"; exit 1; }
+            release_exists=true
+          else
+            grep -qi 'not found' "${RUNNER_TEMP}/release.err" || { echo "::error::could not read release ${stable}"; exit 1; }
+          fi
+          {
+            echo "version=${version}"
+            echo "rc_tag=${tag}"
+            echo "stable=${stable}"
+            echo "tag_exists=${tag_exists}"
+            echo "image_exists=${image_exists}"
+            echo "release_exists=${release_exists}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Write the release notes
+        id: notes
+        shell: bash
+        env:
+          COMMIT: ${{ steps.stage.outputs.commit }}
+          DIGEST: ${{ steps.stage.outputs.digest }}
+          STABLE: ${{ steps.rel.outputs.stable }}
+          RC_TAG: ${{ steps.rel.outputs.rc_tag }}
+        run: |
+          set -euo pipefail
+          # The last stable release before this one that the commit contains.
+          previous=""
+          while IFS= read -r tag; do
+            [[ "${tag}" != "${STABLE}" ]] || continue
+            if git merge-base --is-ancestor "refs/tags/${tag}" "${COMMIT}"; then
+              previous="${tag}"
+            fi
+          done < <(git tag -l 'v27.*' | grep -E '^v27\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' | sort -V || true)
+          range="${COMMIT}"
+          [[ -z "${previous}" ]] || range="refs/tags/${previous}..${COMMIT}"
+          # Pull requests on development's first-parent line: squash merges
+          # "<title> (#<n>)" and older merge commits "Merge pull request #<n> from ..."
+          # whose first body line is the title. Direct commits are not listed.
+          merge_re='^Merge pull request #([0-9]+) from'
+          squash_re='\(#[0-9]+\)$'
+          prs=""
+          while IFS= read -r sha; do
+            subject="$(git log -1 --format='%s' "${sha}")"
+            if [[ "${subject}" =~ ${merge_re} ]]; then
+              number="${BASH_REMATCH[1]}"
+              title="$(git log -1 --format='%b' "${sha}" | awk 'NF && !seen { print; seen = 1 }')"
+              prs+="- ${title:-${subject}} (#${number})"$'\n'
+            elif [[ "${subject}" =~ ${squash_re} ]]; then
+              prs+="- ${subject}"$'\n'
+            fi
+          done < <(git log --first-parent --format='%H' "${range}")
+          prs="${prs%$'\n'}"
+          {
+            echo "Revrook-CE ${STABLE}, released from the release candidate ${RC_TAG} that Stage runs, without a rebuild."
+            echo
+            echo "- Source commit: ${COMMIT}"
+            echo "- Image: ${IMAGE}@${DIGEST} (also tagged ${STABLE#v})"
+            echo
+            if [[ -n "${previous}" ]]; then
+              echo "## Pull requests merged since ${previous}"
+            else
+              echo "## Pull requests merged since the start of the project"
+            fi
+            echo
+            echo "${prs:-- none}"
+          } > "${NOTES}"
+          echo "previous=${previous:-none}" >> "${GITHUB_OUTPUT}"
+
+      - name: Plan the merge of stage into main
+        id: merge
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.stage.outputs.commit }}
+        run: |
+          set -euo pipefail
+          main_sha="$(git rev-parse refs/remotes/origin/main)"
+          merged=false
+          tree=""
+          if git merge-base --is-ancestor "${COMMIT}" "${main_sha}"; then
+            merged=true
+          else
+            # main ends with Stage's files. The workflow definitions stay main's own:
+            # GITHUB_TOKEN cannot change files under .github/workflows, and they are
+            # registered on main by the workflow-only route.
+            export GIT_INDEX_FILE="${RUNNER_TEMP}/merge.index"
+            git read-tree "${COMMIT}"
+            git rm -r -q --cached --ignore-unmatch .github/workflows
+            if git rev-parse -q --verify "${main_sha}:.github/workflows" >/dev/null; then
+              git read-tree --prefix=.github/workflows/ "${main_sha}:.github/workflows"
+            fi
+            tree="$(git write-tree)"
+            unset GIT_INDEX_FILE
+            [[ -z "$(git diff --name-only "${main_sha}" "${tree}" -- .github/workflows)" ]] || {
+              echo "::error::the planned main tree changes workflow files"
+              exit 1
+            }
+            echo "Files main gains or changes (main ${main_sha} -> stage ${COMMIT}, workflows kept):"
+            git diff --stat "${main_sha}" "${tree}" | tail -n 1
+          fi
+          protected="$(gh api "repos/${GITHUB_REPOSITORY}/branches/main" --jq '.protected' || echo unknown)"
+          {
+            echo "main_sha=${main_sha}"
+            echo "merged=${merged}"
+            echo "tree=${tree}"
+            echo "protected=${protected}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Summary of what this run does
+        shell: bash
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          COMMIT: ${{ steps.stage.outputs.commit }}
+          DIGEST: ${{ steps.stage.outputs.digest }}
+          VERSION: ${{ steps.rel.outputs.version }}
+          RC_TAG: ${{ steps.rel.outputs.rc_tag }}
+          STABLE: ${{ steps.rel.outputs.stable }}
+          TAG_EXISTS: ${{ steps.rel.outputs.tag_exists }}
+          IMAGE_EXISTS: ${{ steps.rel.outputs.image_exists }}
+          RELEASE_EXISTS: ${{ steps.rel.outputs.release_exists }}
+          MAIN_SHA: ${{ steps.merge.outputs.main_sha }}
+          MERGED: ${{ steps.merge.outputs.merged }}
+          PROTECTED: ${{ steps.merge.outputs.protected }}
+        run: |
+          set -euo pipefail
+          action() { if [[ "$1" == "true" ]]; then echo "exists, kept as it is"; else echo "create"; fi; }
+          {
+            if [[ "${DRY_RUN}" == "true" ]]; then
+              echo "## revrook-ce Release ${STABLE}: DRY RUN (nothing is changed)"
+            else
+              echo "## revrook-ce Release ${STABLE}: plan"
+            fi
+            echo
+            echo "- What Stage runs: commit \`${COMMIT}\` (stage branch head), image \`${IMAGE}@${DIGEST}\`"
+            echo "- Candidate: \`${RC_TAG}\`; version \`${VERSION}\`; no rebuild"
+            echo "- GHCR tag \`${IMAGE}:${VERSION}\` on that digest: $(action "${IMAGE_EXISTS}")"
+            echo "- Annotated tag \`${STABLE}\` on \`${COMMIT}\`: $(action "${TAG_EXISTS}")"
+            echo "- GitHub Release \`${STABLE}\`: $(action "${RELEASE_EXISTS}")"
+            if [[ "${MERGED}" == "true" ]]; then
+              echo "- Merge stage into main: already merged (main \`${MAIN_SHA}\`), nothing to do"
+            else
+              echo "- Merge stage into main: merge commit on main \`${MAIN_SHA}\` with parents main and \`${COMMIT}\`; main takes Stage's files and keeps its own workflow definitions (main protected: ${PROTECTED})"
+            fi
+            echo "- No Production deployment (CE). development is not touched."
+            echo
+            echo "### Release notes"
+            echo
+            cat "${NOTES}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      # Every step below writes. Each is skipped in a dry run and refuses again itself.
+
+      - name: Refuse to write in a dry run and re-check stage
+        if: steps.mode.outputs.dry_run == 'false'
+        shell: bash
+        env:
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.stage.outputs.commit }}
+        run: |
+          set -euo pipefail
+          [[ "${DRY_RUN}" == "false" ]] || { echo "::error::dry run: no step may write"; exit 1; }
+          now="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/stage" --jq '.object.sha')"
+          [[ "${now}" == "${COMMIT}" ]] || { echo "::error::stage moved to ${now} during the run"; exit 1; }
+
+      - name: Tag the image with the version
+        if: steps.mode.outputs.dry_run == 'false' && steps.rel.outputs.image_exists == 'false'
+        shell: bash
+        env:
+          DIGEST: ${{ steps.stage.outputs.digest }}
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --prefer-index=false --tag "${IMAGE}:${VERSION}" "${IMAGE}@${DIGEST}"
+          tagged="$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{.Manifest.Digest}}')"
+          [[ "${tagged}" == "${DIGEST}" ]] || { echo "::error::${IMAGE}:${VERSION} is ${tagged}, not ${DIGEST}"; exit 1; }
+
+      - name: Create the annotated stable tag
+        if: steps.mode.outputs.dry_run == 'false' && steps.rel.outputs.tag_exists == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.stage.outputs.commit }}
+          DIGEST: ${{ steps.stage.outputs.digest }}
+          RC_TAG: ${{ steps.rel.outputs.rc_tag }}
+          STABLE: ${{ steps.rel.outputs.stable }}
+        run: |
+          set -euo pipefail
+          message="$(jq -cn --arg c "${COMMIT}" --arg d "${DIGEST}" --arg rc "${RC_TAG}" --argjson run "${GITHUB_RUN_ID}" \
+            '{sourceCommit: $c, imageDigest: $d, rcTag: $rc, workflowRunId: $run}')"
+          tag_sha="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/tags" \
+            -f tag="${STABLE}" -f message="${message}" -f object="${COMMIT}" -f type=commit --jq '.sha')"
+          [[ "${tag_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the tag object was not created"; exit 1; }
+          if ! gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/tags/${STABLE}" -f sha="${tag_sha}" >/dev/null; then
+            # Uncertain result: read the ref back, never create twice.
+            existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${STABLE}" --jq '.object.sha' || true)"
+            [[ "${existing}" == "${tag_sha}" ]] || { echo "::error::could not create ${STABLE}"; exit 1; }
+          fi
+          jq -e --arg t "${STABLE}" --arg c "${COMMIT}" '.tag == $t and .object.sha == $c' \
+            <<<"$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_sha}")" >/dev/null || { echo "::error::${STABLE} did not read back"; exit 1; }
+
+      - name: Create the GitHub Release
+        if: steps.mode.outputs.dry_run == 'false' && steps.rel.outputs.release_exists == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STABLE: ${{ steps.rel.outputs.stable }}
+        run: |
+          set -euo pipefail
+          gh release create "${STABLE}" --verify-tag --title "Revrook-CE ${STABLE}" --notes-file "${NOTES}"
+          state="$(gh release view "${STABLE}" --json isDraft,isPrerelease --jq '[.isDraft, .isPrerelease] | map(tostring) | join(",")')"
+          [[ "${state}" == "false,false" ]] || { echo "::error::release ${STABLE} is not a published stable release (${state})"; exit 1; }
+
+      - name: Merge stage into main
+        if: steps.mode.outputs.dry_run == 'false' && steps.merge.outputs.merged == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.stage.outputs.commit }}
+          MAIN_SHA: ${{ steps.merge.outputs.main_sha }}
+          TREE: ${{ steps.merge.outputs.tree }}
+          STABLE: ${{ steps.rel.outputs.stable }}
+        run: |
+          set -euo pipefail
+          [[ "${TREE}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::no planned tree"; exit 1; }
+          workflows="$(git rev-parse -q --verify "${MAIN_SHA}:.github/workflows" || true)"
+          # The same tree as planned, built on GitHub from objects it already has.
+          jq -n --arg base "$(git rev-parse "${COMMIT}^{tree}")" --arg wf "${workflows}" '
+              {base_tree: $base, tree: [{path: ".github/workflows", mode: "040000", type: "tree",
+                sha: (if $wf == "" then null else $wf end)}]}' > "${RUNNER_TEMP}/tree.json"
+          made="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/trees" --input "${RUNNER_TEMP}/tree.json" --jq '.sha')"
+          [[ "${made}" == "${TREE}" ]] || { echo "::error::GitHub built tree ${made}, planned ${TREE}; refusing"; exit 1; }
+          jq -n --arg tree "${TREE}" --arg main "${MAIN_SHA}" --arg stage "${COMMIT}" --arg tag "${STABLE}" '
+              {message: ("Release " + $tag + ": merge stage " + $stage + " into main"),
+               tree: $tree, parents: [$main, $stage]}' > "${RUNNER_TEMP}/commit.json"
+          merge="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/git/commits" --input "${RUNNER_TEMP}/commit.json" --jq '.sha')"
+          [[ "${merge}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::the merge commit was not created"; exit 1; }
+          # Fast-forward only: if main moved since the plan, this fails and nothing changes.
+          if ! gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/heads/main" \
+              -f sha="${merge}" -F force=false >/dev/null; then
+            echo "::error::main could not be moved to the merge commit ${merge}"
+            exit 1
+          fi
+          now="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          [[ "${now}" == "${merge}" ]] || { echo "::error::main is ${now}, expected ${merge}"; exit 1; }
+          echo "main is ${merge} (merge of stage ${COMMIT})"
+
+      - name: Record the release
+        if: steps.mode.outputs.dry_run == 'false'
+        shell: bash
+        env:
+          COMMIT: ${{ steps.stage.outputs.commit }}
+          DIGEST: ${{ steps.stage.outputs.digest }}
+          VERSION: ${{ steps.rel.outputs.version }}
+          STABLE: ${{ steps.rel.outputs.stable }}
+        run: |
+          set -euo pipefail
+          {
+            echo
+            echo "## revrook-ce ${STABLE} released"
+            echo
+            echo "- Commit: \`${COMMIT}\`; image \`${IMAGE}@${DIGEST}\` (tag \`${VERSION}\`), not rebuilt"
+            echo "- Release: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${STABLE}"
+            echo "- main contains stage; development untouched; no Production deployment"
+          } >> "${GITHUB_STEP_SUMMARY}"
