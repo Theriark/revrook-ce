@@ -109,6 +109,12 @@ const FOCUS_PITCH = 0.82;
 const FOCUS_EDGE = 0.8;
 // A label hides when it covers this share of a label already placed.
 const LABEL_OVERLAP = 0.1;
+// The least room between the names of two domains, in pixels, and the lines a
+// domain's name may step from its place (nearest first) to keep that room.
+const LABEL_AIR = 2;
+const LABEL_STEPS = [0, -1, 1, -2, 2];
+// Below this width of the stage, in pixels, a domain goes by its first word.
+const COMPACT_STAGE = 480;
 
 const SOURCE_RADIUS = 2.4;
 const CONTROL_RADIUS = 5.3;
@@ -912,7 +918,7 @@ function buildWall(THREE, root, data, options) {
         element.appendChild(small);
       }
       overlay.appendChild(element);
-      labels.push({ element, anchor, id, domain: kind === "is-domain", width: 0, height: 0 });
+      labels.push({ element, anchor, id, domain: kind === "is-domain", name: strong, full: name, width: 0, height: 0 });
     };
     plan.clients.forEach((entry) => {
       const client = entry.client;
@@ -928,8 +934,8 @@ function buildWall(THREE, root, data, options) {
   }
 
   // Each label at its point, unless it is behind the camera or would cover much of
-  // one already placed: the chosen one first, then the clients nearest first, then
-  // the domains. Sizes are measured once (and again after a resize).
+  // one already placed: the chosen one first, then the domains, then the clients
+  // nearest first. Sizes are measured once (and again after a resize).
   const projected = new THREE.Vector3();
   let measured = false;
 
@@ -941,6 +947,22 @@ function buildWall(THREE, root, data, options) {
       });
       measured = labels.every((item) => item.width > 0);
     }
+  }
+
+  // Where the names cannot all stand beside the ring (a phone), a domain goes by
+  // its first word and a client's chip is cut sooner (the stylesheet), so that
+  // they can: the whole names are in the tables below the stage.
+  function compactLabels(on) {
+    if (!overlay || overlay.classList.contains("is-compact") === on) {
+      return;
+    }
+    overlay.classList.toggle("is-compact", on);
+    labels.forEach((item) => {
+      if (item.domain) {
+        item.name.textContent = on ? item.full.split(" ")[0] : item.full;
+      }
+    });
+    measured = false;
   }
 
   // The middle of the ring on the stage, in pixels.
@@ -980,17 +1002,29 @@ function buildWall(THREE, root, data, options) {
       item.top = clamp(box.top, 4, Math.max(4, height - item.height - 4));
     });
     const focus = selected || hovered;
-    const order = labels.slice().sort((a, b) => (b.id === focus) - (a.id === focus) || a.domain - b.domain || a.depth - b.depth);
+    // The eight domains come before the clients: they are the map of the ring, and
+    // a client that finds no room is one tap away.
+    const order = labels.slice().sort((a, b) => (b.id === focus) - (a.id === focus) || b.domain - a.domain || a.depth - b.depth);
     const placed = [];
-    order.forEach((item) => {
-      const crowded = placed.some((other) => {
+    const crowdedAt = (item, top) =>
+      placed.some((other) => {
         const across = Math.min(item.left + item.width, other.left + other.width) - Math.max(item.left, other.left);
-        const down = Math.min(item.top + item.height, other.top + other.height) - Math.max(item.top, other.top);
+        const down = Math.min(top + item.height, other.top + other.height) - Math.max(top, other.top);
+        // A domain's name is plain words on the floor, with no chip of its own: no
+        // other name may touch it.
+        if (item.domain || other.domain) {
+          return across > -LABEL_AIR && down > -LABEL_AIR;
+        }
         return across > 0 && down > 0 && across * down > LABEL_OVERLAP * Math.min(item.width * item.height, other.width * other.height);
       });
-      const show = !item.behind && !crowded;
+    order.forEach((item) => {
+      // A domain's name steps up or down a line or two before it gives way.
+      const steps = item.domain ? LABEL_STEPS : LABEL_STEPS.slice(0, 1);
+      const top = steps.map((n) => clamp(item.top + n * (item.height + LABEL_AIR), 4, Math.max(4, height - item.height - 4))).find((at) => !crowdedAt(item, at));
+      const show = !item.behind && top !== undefined;
       item.element.classList.toggle("is-hidden", !show);
       if (show) {
+        item.top = top;
         placed.push(item);
         item.element.style.transform = "translate(" + Math.round(item.left) + "px, " + Math.round(item.top) + "px)";
       }
@@ -1198,6 +1232,8 @@ function buildWall(THREE, root, data, options) {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     const atHome = !focused && Math.abs(view.distance - home.distance) < 0.001 && target.equals(center);
+    // A phone (the width where the stage turns 4 by 3) shows the short names.
+    compactLabels(width < COMPACT_STAGE);
     measured = false;
     const pose = { yaw: home.yaw, pitch: home.pitch, target: center, lift: companies, named: companies ? "boxes" : false };
     home.distance = fitDistance(probes, pose, FIT_EDGE);

@@ -152,6 +152,17 @@
   visibility: hidden;
 }
 
+/* Where the names do not fit beside the ring (compactLabels of
+   evidence-explorer.js): a domain is one word, and a client's chip is its name
+   alone, cut sooner; the score is in the card and the table below */
+.rv-explorer-labels.is-compact .rv-explorer-label {
+  max-width: 8rem;
+}
+
+.rv-explorer-labels.is-compact .rv-explorer-label-extra {
+  display: none;
+}
+
 /* The note over the stage: before the script runs (and without WebGL 2) it says
    so; while loading it pulses; on an error or a lost context it explains. Its
    words are drawn on the surface, as a small card on the charcoal, so no text

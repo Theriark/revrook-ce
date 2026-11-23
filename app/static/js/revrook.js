@@ -328,6 +328,11 @@
     for (var k = 0; k < buttons.length; k += 1) {
       buttons[k].setAttribute("aria-pressed", buttons[k].value === theme ? "true" : "false");
     }
+    // The same choice on the Account page, when that is the page open
+    var choice = document.querySelector('.rv-account-theme input[name="theme"][value="' + theme + '"]');
+    if (choice) {
+      choice.checked = true;
+    }
     // After the click is done: the form posts the value the button had when pressed
     window.setTimeout(syncThemeToggle, 0);
   }

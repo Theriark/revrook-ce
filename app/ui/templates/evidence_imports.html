@@ -67,6 +67,7 @@
 <div class="rv-section-head">
 <div><h3 id="sources-title">Sources</h3><p class="rv-section-note">Every source a control reads: newest export, age, stale date.</p></div>
 </div>
+<div class="rv-table-scroll rv-sources-scroll" role="region" aria-label="Sources table" tabindex="0">
 <table id="sources" class="rv-table-cards rv-sources">
 <caption>The newest export of every source</caption>
 <thead>
@@ -95,6 +96,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% if ages %}
 <ul class="rv-legend">
 {% for state in ages.values()|map(attribute="state")|unique %}
