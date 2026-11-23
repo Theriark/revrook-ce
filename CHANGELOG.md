@@ -111,6 +111,7 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Fixed
 
+- The open **account menu** lay under the page: on Home the stat cards, and on a client's pages the client tabs, drew over Settings, Glossary and Sign out, so a click there went to the page instead (found in the Dev check of REV-367, 2026-11-23). The top bar is now lifted above the page content.
 - From the Stage QA of 2026-11-23 (rc.17): the **theme button** of the top bar kept its 40 px square only while the pointer was away, so under the pointer it shrank to its icon and a click on its right half did nothing (REV-382); it is now the same square in both states, and the Account page shows the theme the top bar set without a reload.
 - The names over the companies ring of the **Evidence Explorer** ran into one another at phone width and three were missing (REV-383). On a phone-sized stage a domain now goes by its first word and a client's chip by its name alone, the eight domains are placed before the clients, and no name touches a domain's name; checked at 320, 390, 414, 600, 768, 1024 and 1440 px.
 - The **sources table** of a client's evidence page was wider than its card at 768 and 1024 px, with "Exports kept" cut off (REV-384). It stands in a scroll region like the other wide tables and fits at those widths.

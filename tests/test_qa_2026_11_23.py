@@ -128,3 +128,22 @@ async def test_the_sources_table_stands_in_a_scroll_region(
     assert region in html
     after = html.split(region, 1)[1]
     assert after.index("</table>") < after.index("</div>")
+
+
+# --- The account menu under the page (found in the Dev check of REV-367) -----------
+
+
+def test_the_top_bar_with_its_account_menu_lies_above_the_page() -> None:
+    # The bar is a stacking context (its view-transition-name), so its own z-index,
+    # not the menu's, decides whether the page draws over the open menu.
+    assert ".rv-topbar {\n  view-transition-name: rv-topbar;\n}" in REVAMP
+    lifted = rule(REVAMP, ".rv-app .rv-topbar")
+    assert "position: relative;" in lifted and "z-index: 15;" in lifted
+    # Above every layer of the page (the sticky rail is 10, the bulk bar 5), under
+    # the skip link (20) and a chart's tip (30).
+    sheets = "".join(
+        (STATIC_DIR / f"css/{name}.css").read_text(encoding="utf-8")
+        for name in ("revrook", "bulk-actions", "charts", "scenes", "revrook-retest")
+    )
+    levels = sorted({int(z) for z in re.findall(r"z-index:\s*(\d+);", sheets)})
+    assert levels == [1, 5, 10, 20, 30]

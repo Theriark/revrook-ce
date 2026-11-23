@@ -2162,6 +2162,18 @@ main .rv-exceptions td[data-label="Owner"] {
   view-transition-name: rv-topbar;
 }
 
+/* A view-transition-name makes the top bar a stacking context of its own, so the
+   account menu inside it (z-index 60) only rises within the bar: the page after
+   it, whose cards and client tabs have names of their own, drew over the open menu
+   and took the clicks on Settings, Glossary and Sign out. The bar itself is lifted
+   above the page (whose highest layer is the sticky rail, 10), and stays under the
+   skip link (20) and a chart's tip (30); the control drawer is a dialog in the top
+   layer and stays above all of them */
+.rv-app .rv-topbar {
+  position: relative;
+  z-index: 15;
+}
+
 ::view-transition-group(*) {
   animation-duration: 220ms;
   animation-timing-function: var(--rv-ease-out);
