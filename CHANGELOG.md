@@ -111,6 +111,9 @@ No version has been released: there is no stable tag, no stable GitHub release a
 
 ### Fixed
 
+- From the Stage QA of 2026-11-23 (rc.17): the **theme button** of the top bar kept its 40 px square only while the pointer was away, so under the pointer it shrank to its icon and a click on its right half did nothing (REV-382); it is now the same square in both states, and the Account page shows the theme the top bar set without a reload.
+- The names over the companies ring of the **Evidence Explorer** ran into one another at phone width and three were missing (REV-383). On a phone-sized stage a domain now goes by its first word and a client's chip by its name alone, the eight domains are placed before the clients, and no name touches a domain's name; checked at 320, 390, 414, 600, 768, 1024 and 1440 px.
+- The **sources table** of a client's evidence page was wider than its card at 768 and 1024 px, with "Exports kept" cut off (REV-384). It stands in a scroll region like the other wide tables and fits at those widths.
 - A **picture** chosen on the Account page that was larger than 1 MB got a line of JSON instead of an answer (founder report). A form or a file over the size limit, sent from a page, is now refused with the problem page ("Too large"), and the Account page draws a picture over 512 KB smaller in the browser before it is sent, so a photo straight from a camera can be used. The API keeps its JSON answer.
 - Opening the preview of a report no longer writes an exception to the console: the preview takes no part in a page change, so the page that is left for it cuts the change itself.
 - Nothing shifts between two pages: a page too short to scroll stood 7 px to the right of a long one (the room of the scrollbar is kept on every page now), and the tabs of a client moved 5 px between a page with actions beside its name and one without.

@@ -1288,9 +1288,13 @@ span.rv-status-not-applicable {
   }
 }
 
-/* An icon button: a square target of 40px, quiet until pointed at */
+/* An icon button: a square target of 40px, quiet until pointed at. The rule
+   names both states, so it weighs the same in each: with :not(:hover) alone the
+   square was lost under the pointer, where button[type="submit"] { width: auto }
+   won and the button shrank to its icon (REV-382) */
 .rv-icon-button,
-.rv-icon-button:not(:hover) {
+.rv-icon-button:not(:hover),
+.rv-icon-button:hover {
   display: inline-grid;
   place-items: center;
   width: 40px;
@@ -2566,5 +2570,30 @@ dialog.rv-drawer[open] {
   .rv-sheet-band .rv-sheet .rv-sheet-cover {
     margin: -20px -18px 20px;
     padding: 20px 18px 18px;
+  }
+}
+
+/* ---------- The sources table of a client's evidence page (REV-384) ---------- */
+
+/* It stands in a scroll region like the other wide tables, so a column can never
+   be cut off, and keeps the look it had outside one */
+.rv-sources-scroll thead th {
+  color: var(--rv-text);
+}
+
+.rv-sources-scroll td {
+  max-width: none;
+  overflow-wrap: break-word;
+}
+
+/* Between the cards (below 768px) and the wide page it was a few tens of pixels
+   wider than its card: less air in a cell and a shorter age bar let it fit */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .rv-sources :is(th, td) {
+    padding-inline: 8px;
+  }
+
+  .rv-sources .rv-age-cell .rv-age-bar {
+    min-width: 64px;
   }
 }
