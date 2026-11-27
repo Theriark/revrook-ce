@@ -70,7 +70,7 @@ rows were downloaded.
 1. Press **Make reports**. A dialog names every chosen client and says what will
    happen: a report of the state of each client today, for the last full quarter, as
    the report builder makes it without dates. Nothing is exported or sent.
-2. Press **Make reports** in the dialog to go on, or **Cancel** (or Escape) to leave
+2. Press **Make N reports** in the dialog (the button names how many clients you chose) to go on, or **Cancel** (or Escape) to leave
    everything as it was; the focus goes back to the button you pressed.
 3. The result card lists each client with what happened and a link to each new
    report, to preview and export it from its own page

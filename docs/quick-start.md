@@ -117,7 +117,7 @@ mapped once in the **Profile editor**. Plan the installation first: [install.md]
 | --- | --- |
 | `docker compose up` stops with `copy .env.example to .env` | Step 1: the `.env` file is missing. |
 | Port 8080 is in use | Stop what uses it and run step 1 again. To publish another port, see [install.md](install.md). |
-| `scripts/demo.sh` says there is no account of that name | Use the name you made in step 2; names are case sensitive. |
+| `scripts/demo.sh` says there is no account of that name | Use the name you made in step 2, in lowercase: user names are stored in lowercase. |
 | `scripts/demo.sh` says the example files could not be made | Python 3.11 or newer is needed on this machine. |
 | The page says the background worker has not reported | The worker container is not running: `docker compose ps`, then `docker compose logs worker`. |
 

@@ -13,7 +13,7 @@
     "imageDigest": "sha256:22d402c93e9a387817d291d69ba539b8089de91a2c83531fac04ca2d8c33ef94",
     "image": "ghcr.io/theriark/revrook-ce@sha256:22d402c93e9a387817d291d69ba539b8089de91a2c83531fac04ca2d8c33ef94",
     "ciRun": 43516815094,
-    "dokployDeployment": "the Development application of revrook-ce in Dokploy (service revrook-ce-development-zuqdeu)",
+    "dokployDeployment": "the Development application of revrook-ce in Dokploy",
     "deployedAt": "2026-11-13, between the push of the commit at 22:08 UTC and the capture at 22:40 UTC",
     "target": "the Development site, https://ce-dev-revrook.theriark.dev",
     "evidence": "the System page of the site showed revrook 27.0.0.dev0, build 0f705cace6f1, role all, during the session (pictured in system-1440.png); the running service was read as image digest sha256:22d402c93e9a387817d291d69ba539b8089de91a2c83531fac04ca2d8c33ef94 for the Stage promotion of the same commit (v27.0.0-rc.10)",

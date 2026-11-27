@@ -6,11 +6,11 @@ Licensed under the [MIT licence](LICENSE).
 
 ## Status
 
-Pre-release. This repository is in Development only. There is no released version, no hosted service and no supported installation yet. Nothing here should be read as a claim of customers, certification or availability.
+Version 27.0.0, the first release of the Community Edition ([release notes](docs/release-notes.md)). It is self-hosted: there is no hosted service. Nothing here should be read as a claim of customers, certification or availability.
 
 ## What this repository is
 
-This is the Community Edition (CE) and nothing else. Every file in it is under the MIT licence, it runs on your own machine with no licence key, no outside account and no paid service, and it holds no code and no names that belong to a later or paid edition. What an installation adds goes in through the documented extension API (version 1, [docs/extension-api.md](docs/extension-api.md)).
+This is the Community Edition (CE) and nothing else. Its code is under the MIT licence (bundled third-party files keep their own licences, listed in [NOTICE](NOTICE) and [docs/licences.md](docs/licences.md)), it runs on your own machine with no licence key, no outside account and no paid service, and it holds no code and no names that belong to a later or paid edition. What an installation adds goes in through the documented extension API (version 1, [docs/extension-api.md](docs/extension-api.md)).
 
 You export evidence from the tools you already use (device, backup, network, training, leaver, mail and Microsoft 365 exports) and upload it. Revrook checks it against 51 plain-language controls, scores the result with a lower and an upper bound, and makes a quarterly security review and a cyber insurance evidence pack for each client, each as one HTML file.
 
@@ -110,7 +110,7 @@ sideways, with a cue at its edge, and every card and table row takes the whole w
 | [docs/testing.md](docs/testing.md) | Testing notes |
 | [docs/ci-cd.md](docs/ci-cd.md) | CI/CD flow and known gaps |
 | [docs/pdf-spike.md](docs/pdf-spike.md) | How a report becomes a PDF, and the earlier PDF spike |
-| [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state and the release workflow check |
+| [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state, the first release and the history of the release candidates |
 | [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
 | [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the import page, the Microsoft 365 export script, the public DNS check, the scenes, the folded rail, the Evidence Explorer, the top bar, the checklist tools, the score drivers and the bulk actions, with live screenshots ([docs/images](docs/images/README.md)) |
 
@@ -118,7 +118,7 @@ Changes are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## Known limits
 
-The release candidate keeps these limits in the open ([docs/release-notes.md](docs/release-notes.md)): the 321 mapping rows to outside frameworks are unverified, so no report prints an outside identifier; there is no importer for the controls PC-END-03 and PC-END-05, which stay Not checked; there is no PDF export, the reports are HTML files with print styles; the copyright holder named in the MIT licence is still an open decision; and branch protection on the repository has not been set.
+The release keeps these limits in the open ([docs/release-notes.md](docs/release-notes.md)): the 321 mapping rows to outside frameworks are unverified, so no report prints an outside identifier; there is no importer for the controls PC-END-03 and PC-END-05, which stay Not checked; and branch protection on the repository has not been set.
 
 ## Contributing and security
 

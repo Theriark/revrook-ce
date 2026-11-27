@@ -131,7 +131,8 @@ edition; the licence and font gates would still need to be assessed.
   "Save as PDF" in a browser gives a PDF of it.
 - The disclaimer in the footer of every section and in full on the last page (checked on
   every section of both reports by `tests/test_reports.py`). A PDF text-extraction test
-  is not written: there is no PDF to extract from.
+  is not written: the PDF is the report printed by a browser, and
+  `tests/test_report_pdf.py` checks it.
 
 ## What R&D needs to decide for a later edition
 

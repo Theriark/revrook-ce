@@ -299,7 +299,8 @@ it dates its evidence itself, and the form's time is not needed. It also keeps a
 export of an unchanged account from being refused: two exports at different times
 have different bytes, while the same bytes uploaded twice for one client are refused
 as a duplicate. The export scripts (`export-aws.sh`, `export-gcp.sh`,
-`export-cloudflare.sh`, and the Exchange CSV of `export-m365.ps1`) write it on every
+`export-cloudflare.sh`, `export-unifi.sh`, `export-checkmk.sh`, `export-xo.sh`, and the
+Exchange CSV of `export-m365.ps1`) write it on every
 line. Without the column the capture time is the upload's (`capture_time_source` is
 `upload`).
 Personal identifiers (a user, a device, a mailbox, a mail domain, a network name)

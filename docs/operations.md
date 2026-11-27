@@ -236,7 +236,7 @@ date in the folder name, and copy them off the machine.
 
 ## Restore
 
-On a stopped or fresh stack, with the same `SECRET_KEY` and `FERNET_KEY` in `.env`:
+On a stopped or fresh stack, with the same `SECRET_KEY` and `FERNET_KEY`, and a `POSTGRES_PASSWORD`, in `.env`:
 
 ```bash
 docker compose up -d db

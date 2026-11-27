@@ -38,9 +38,21 @@ A variable that is empty counts as not set.
 Limits that are not settings (a request body of 1 MiB, 120 API requests a minute, five
 failed sign-ins) are listed in [operations.md](operations.md#limits).
 
+## Set outside these settings
+
+- `REVROOK_REVISION` is set by the image build to the commit the image was built from,
+  and the System page shows it. Do not set it by hand.
+- `DEV_SEED`, `DEV_SEED_ACCOUNTS`, `DEV_SEED_DATA` and `DEV_SEED_PASSWORD_<NAME>` are for
+  the Development site only: **never set them on a real installation.** With `DEV_SEED=1`
+  the web process creates the sign-in accounts named in `DEV_SEED_ACCOUNTS`, with the
+  passwords in `DEV_SEED_PASSWORD_<NAME>`, and synthetic test data unless
+  `DEV_SEED_DATA=0` (`app/devseed.py`). Its only guard is the address: it runs when
+  `BASE_URL` is a localhost address or a `ce-dev-` Development site, and compose sets
+  `BASE_URL` to `http://localhost:8080` unless you change it.
+
 ## Where to set them
 
-**Compose.** `docker-compose.yml` reads `SECRET_KEY` and `FERNET_KEY` from `.env` and
+**Compose.** `docker-compose.yml` reads `SECRET_KEY`, `FERNET_KEY` and `POSTGRES_PASSWORD` from `.env` and
 sets `DATABASE_URL`, `BASE_URL` and `EVIDENCE_DIR` itself. To set the others, put them
 in a file named `docker-compose.override.yml` next to it, which compose reads
 automatically and merges with the first file. Set a variable for both `web` and

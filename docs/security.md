@@ -53,7 +53,7 @@ SHA-256 hash and a 12-character prefix are stored; the token is shown once.
 limited to 120 requests a minute per token (in memory, per process). There is no
 page to create, list or revoke tokens: the Community Edition issues one only through
 `scripts/demo.sh` (which keeps it in a shell variable and never prints it) or through
-the `issue_token` function of `app/auth.py`, and the web interface does not manage
+the `issue_api_token` function of `app/auth.py`, and the web interface does not manage
 them ([quick-start.md](quick-start.md#6-clean-up) says what that means for the demo).
 
 ## Stored secrets

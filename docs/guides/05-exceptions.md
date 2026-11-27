@@ -12,7 +12,7 @@ Open a client and its tab **Exceptions**.
 
 - The verdict band: how many exceptions are open and overdue, how many are closed, and
   the next review date.
-- **Reviews in the coming year**: the year ahead as one line, today at its left end,
+- **Reviews in the coming year** (shown while the register has an open exception): the year ahead as one line, today at its left end,
   every open exception a mark at its review date and those past their date stacked
   before today. The words beside it and the register under it carry the same dates.
 - The table lists the exceptions, open first, the earliest review date at the top:

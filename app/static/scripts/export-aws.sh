@@ -6,7 +6,7 @@
 #   backup-export-aws.csv      AWS Backup jobs by resource (written only when there are any)
 #
 # Drop the folder on Import evidence in revrook: each file is recognised by its columns.
-# CSV files carry no capture time, so set "exported at" on the import page.
+# Every line carries its own exported_at, so the time on the import page is not used.
 #
 # Needs bash, awk and AWS CLI v2, signed in to the client's account. The calls are
 # describe/list only (the AWS managed policy ReadOnlyAccess or SecurityAudit is enough):

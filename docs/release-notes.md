@@ -1,13 +1,40 @@
 # Release notes
 
-The notes of the release candidates of revrook CE built from `development`. revrook CE
-has no released version yet: there is no stable tag, no stable GitHub release and no
-released image (the only image is the one built for each `development` commit and
-deployed to the Development environment, named below by its digest), and the version
-the application reports is `27.0.0.dev0`
-([release-candidate.md](release-candidate.md)). The newest candidate comes first; the
-earlier ones are kept below as history. The full list of changes is the
-[CHANGELOG](../CHANGELOG.md).
+The notes of the releases of revrook CE, newest first. The candidates before the first
+release are kept below as history; they name the workflows of their time, which were
+replaced on 2026-11-11 ([release-candidate.md](release-candidate.md)). The full list of
+changes is the [CHANGELOG](../CHANGELOG.md).
+
+## 27.0.0
+
+The first release of the Community Edition. It is the release candidate that Stage runs
+when the release is approved, released without a rebuild: the GitHub Release names its
+candidate tag `v27.0.0-rc.N`, the commit and the image digest. The application reports
+`27.0.0`, with the build commit beside it on the System page.
+
+What changed since the candidate of 2026-11-11:
+
+- **Download PDF** of both reports, printed by the headless browser the image carries.
+- The redesigned report: a cover with your logo, a score dial, and findings that say
+  what was checked and the usual next step.
+- Your logo in Settings and on the cover of a report.
+- The interface revamp: the Inter typeface, motion, light and dark themes, the folded
+  side menu, the Evidence Explorer and the clients filters and bulk actions.
+- The fixes of the Stage QA of 2026-11-23 (the theme button, the Evidence Explorer
+  names at phone width, the sources table at tablet width) and the account menu.
+- The documentation was inspected against the running application before the release.
+
+Known limits:
+
+1. **The mapping rows are unverified.** None of the 321 rows to outside frameworks is
+   verified, so no report prints an outside identifier
+   ([mapping-verification.md](mapping-verification.md)).
+2. **No importer for `PC-END-03` and `PC-END-05`.** Both stay Not checked
+   ([controls.md](controls.md#open-points-for-rd)).
+3. **One account, no recovery command.** The Community Edition has one administrator,
+   made on the first-run page. There is no command to add an account or reset a lost
+   password; keep the password in a password manager.
+4. **Branch protection on the repository** has not been set.
 
 ## Candidate of 2026-11-11
 
@@ -205,9 +232,8 @@ These are visible in the product and in the documentation; none is hidden by a l
 3. **No PDF export.** Both reports are one HTML file with a print stylesheet; print it to
    PDF from the browser ([pdf-spike.md](pdf-spike.md)). Closed on 2026-11-14: the
    application prints the PDF itself (**Download PDF**).
-4. **The copyright holder of the MIT licence is still open.** The [LICENSE](../LICENSE)
-   names "Theriark"; the final legal name of the holder is a decision of the founders
-   that has not been taken.
+4. **The copyright holder of the MIT licence.** Closed on 2026-11-27: the holder is
+   Theriark, as the [LICENSE](../LICENSE) names it.
 5. **Branch protection is open.** Branch protection and `.github/CODEOWNERS` on the
    repository are a human action that has not been done
    ([ci-cd.md](ci-cd.md#branch-protection-and-ownership-optional-hardening-human-action)).
