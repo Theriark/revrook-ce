@@ -48,9 +48,7 @@ Controls by domain and Recent changes. On a tablet the navigation wraps on two r
 the top and the cards stand two to a row; on a phone they stand one to a row and the navigation wraps too, its links
 without their icons, in two or three rows.
 
-The picture below shows the score drivers of Home at 768 px.
-
-![The score drivers of Home at 768 px (tablet view), light theme](../images/home-768.png)
+![Home at 768 px (tablet view), light theme](../images/home-768.png)
 
 ![Home on a phone at 390 px, light theme](../images/home-390.png)
 
