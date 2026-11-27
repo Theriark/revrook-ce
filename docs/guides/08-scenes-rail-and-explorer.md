@@ -133,7 +133,7 @@ shown.
 ## Light, dark or the choice of the system
 
 The sun or moon button in the top bar, beside the account menu, switches between
-**Light** and **Dark** at once; **Account** in the account menu also offers **System**,
+**Light** and **Dark** at once; **Account** in the account menu also offers **Same as the system**,
 to follow the setting of the device. The choice is kept with your account (and in a cookie for the sign-in page),
 so it follows you to another browser. The ground of every scene is the
 same charcoal in both themes; the pictures of this guide show both.

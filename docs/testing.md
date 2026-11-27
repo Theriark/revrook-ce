@@ -20,8 +20,8 @@ the first request of a page. The pages are the client list, the overview, the
 checklist, the evidence page, the report builder and the report page. Every one must
 stay under 0.5 seconds (`MAX_SECONDS` in the test).
 
-Where it runs. In CI the test runs in job `3 - pytest with PostgreSQL 16 and coverage
-thresholds` of `.github/workflows/ci.yml`, on a GitHub-hosted `ubuntu-latest` runner
+Where it runs. In CI the test runs in jobs `3 - pytest with PostgreSQL 16 (shard N of 4)` and `3 - coverage
+thresholds (all shards)` of `.github/workflows/ci.yml`, on a GitHub-hosted `ubuntu-latest` runner
 with the PostgreSQL 16 service container of the workflow.
 
 Where the number is. The test prints, in the log of that job:

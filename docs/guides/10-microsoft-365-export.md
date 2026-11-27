@@ -9,8 +9,8 @@ each file holds and which controls read it is in
 [importers](../importers.md#the-five-microsoft-sources).
 
 The script is `app/static/scripts/export-m365.ps1` in the repository, and every
-installation serves it at `/static/scripts/export-m365.ps1`; the link **download the
-export script** on Import evidence points there.
+installation serves it at `/static/scripts/export-m365.ps1`; the button **Microsoft 365
+export script** in the head of **Supported exports** on Import evidence points there.
 
 ## What you need
 
@@ -34,7 +34,8 @@ browser window PowerShell opens; no password, token or secret is written anywher
 
 ## Run it, in four steps
 
-1. Open **Import evidence** and press **download the export script**. A downloaded
+1. Open **Import evidence** and press **Microsoft 365 export script** in the head of
+   **Supported exports**. A downloaded
    script may need `Unblock-File ./export-m365.ps1` before PowerShell runs it.
 2. Run it with the folder to write into, and the tenant when it is not your own:
 
@@ -56,7 +57,7 @@ browser window PowerShell opens; no password, token or secret is written anywher
 4. Open **Import evidence**, choose the client and drop the whole folder on the import
    area (or choose the six files). Each file is recognised by its content; the five
    JSON files keep the time they were made (`capturedAt`), so their evidence is dated
-   correctly, and the Exchange CSV takes the time of the form.
+   correctly, and the Exchange CSV carries its own `exported_at` on every line.
 
 ![The result of an import at 1440 px, with a Conditional Access and an Intune export among the files; the Microsoft 365 files land the same way](../images/imports-1440-result.png)
 

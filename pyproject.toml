@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "revrook"
-version = "27.0.0.dev0"
+version = "27.0.0"
 description = "Client security posture, insurance evidence and QBR reports for small MSPs (Community Edition)."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"

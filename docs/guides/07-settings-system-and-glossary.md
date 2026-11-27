@@ -40,7 +40,7 @@ Open **System** in the Administration group.
 - The verdict band says whether the worker is running, the newest heartbeat, when the
   banner appears (90 seconds without a report), the schedules and the role of this
   process. The purpose line names the version the application reports
-  (`27.0.0.dev0`, the development line of the v27 candidates) and, after it, the
+  (`27.0.0`) and, after it, the
   commit the image was built from (`build` and its first twelve characters).
 - **Schedules**: what the worker runs, all times UTC, with the cron expression, whether
   it is on, and its last and next run. The two daily schedules, expiry reminders at

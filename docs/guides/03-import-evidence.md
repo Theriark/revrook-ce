@@ -21,8 +21,8 @@ evidence** on the evidence page of a client, which opens the page on that client
 ![Import evidence at 1440 px](../images/imports-1440.png)
 
 1. **Client and files.** Choose the **Client**. Leave **When the files were exported
-   (UTC)** at now, or set it to the time the tool made the exports: it is used for the
-   CSV files, which carry no time of their own, while a Microsoft Graph file keeps the
+   (UTC)** at now, or set it to the time the tool made the exports: it is used for a
+   CSV file without an `exported_at` column, while a Microsoft Graph file keeps the
    time it says it was made. Drop the exports on the area, or choose them: CSV or JSON,
    up to 20 files and 20 MB in all. The names of the chosen files appear under the
    area.
@@ -50,9 +50,9 @@ the others keep their status until their own export is imported. The score
 on the clients list and on Home comes from the newest report, so make a report to
 carry the change there ([6. Reports and exports](06-reports-and-exports.md)).
 
-**What revrook recognises**, under the form, lists every source a file can feed and
-what kind of file each one is (CSV, or JSON from Microsoft Graph), with the link to
-the Microsoft 365 export script. The internal reference user list that the tests use
+**Supported exports**, under the form, lists every source a file can feed and
+what kind of file each one is (CSV, or JSON from Microsoft Graph), with the **Microsoft 365 export script** button in
+its head. The internal reference user list that the tests use
 is not offered: no page, list or report shows it.
 
 ![Import evidence on a phone at 390 px](../images/imports-390.png)

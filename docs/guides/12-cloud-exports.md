@@ -135,7 +135,7 @@ XO_URL=https://xo.example XO_TOKEN=... XO_NAME_SEPARATOR=' | ' ./export-xo.sh ./
 
 | File | What it holds |
 | --- | --- |
-| `backup-export-xo.csv` | One line per VM of each scheduled backup job (by id or by tags) and one per metadata job: the job's newest result and newest success, how often it runs and for how long it keeps backups, whether every repository is encrypted (its address carries an encryption key) and whether it is away from the site (object storage: yes; a share on a private address: no). `XO_NAME_SEPARATOR` cuts VM names (`VM-05 \| AI` gives `VM-05`) so they match the device inventory, which PC-BCK-01 joins. Restore tests and immutability are not read; repository addresses are never written. |
+| `backup-export-xo.csv` | One line per VM of each scheduled backup job (by id or by tags) and one per metadata job: the job's newest result and newest success, how often it runs and for how long it keeps backups, whether every repository is encrypted (its address carries an encryption key) and whether it is away from the site (object storage: yes; a share on a private address: no). `XO_NAME_SEPARATOR` cuts VM names (`web-01 \| prod` gives `web-01`) so they match the device inventory, which PC-BCK-01 joins. Restore tests and immutability are not read; repository addresses are never written. |
 
 ## Import the files
 
@@ -146,7 +146,7 @@ not used, and running a script again next month is imported again even when noth
 the account changed.
 
 Every line the scripts write names its tool in a `tool` column (`aws`, `gcp`,
-`cloudflare`). A client often has several tools for one kind of evidence: the office
+`cloudflare`, `unifi:<gateway>`, `checkmk`, `xo`). A client often has several tools for one kind of evidence: the office
 firewall and a cloud for the network, or two clouds. For the device, backup and network
 sources the checks read the newest file of each tool together, so importing the AWS file
 does not push out the firewall's file: it replaces only the previous AWS file. A file

@@ -6,7 +6,8 @@ Every one is a live capture of the Development site of revrook CE,
 `0f705cace6f1d91c950693a2f1d67552904a2744` (the merge of pull request #135), signed in as
 the test administrator `revrook-admin`, with the synthetic test data of that
 installation only. No picture is a mock-up or was edited, and none holds a credential,
-a real person or a real customer.
+a real person or a real customer. Pull requests #149 and #150, which came after the
+captures, changed no pictured frame, so the set stands for the first release, 27.0.0.
 
 ## The current set
 
@@ -126,6 +127,8 @@ Ltd (synthetic) its ten entries are the imports made for this set by `revrook-ad
 Before every capture the text of the frame was read for an e-mail address and a
 ticket-style identifier; none was found. The one address in a picture is
 `reminders@example.test` in the reminder field of Settings, a reserved test domain.
+The **Export history** of Seed Gaps Ltd (synthetic) stays out too: one of its rows names a
+seeded sign-in account.
 
 Changes made for the captures. **Prepared by** of Seed Tidy Ltd (synthetic) was written
 as `revrook-admin` and two reports were made for it; the newer one is the report

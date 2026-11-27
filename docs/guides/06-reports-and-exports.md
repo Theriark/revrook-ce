@@ -67,7 +67,7 @@ report.
 receives it: one HTML file laid out as sheets of paper. The cover opens with a dark
 head: your logo when one is set in Settings, the name of your business, the report,
 the client and the period. Under it stand the score as a dial with its band, who
-prepared it (the name you chose on the Account page), the date it was generated, the
+prepared it (the **Prepared by** of the report builder), the date it was generated, the
 pack date, the data sources and the id of the snapshot it was made from, followed by
 the disclaimer that every report prints.
 

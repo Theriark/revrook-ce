@@ -32,6 +32,15 @@ three.js 0.186.1 (r186)
   Licence: MIT, Copyright 2010-2026 Three.js Authors
   Licence file: app/static/vendor/three/LICENSE
 
+Inter (variable, fontsource 5.3.0)
+  Files: app/static/vendor/inter/inter-latin-opsz-normal.woff2,
+         app/static/vendor/inter/inter-latin-ext-opsz-normal.woff2,
+         app/static/vendor/inter/inter.css
+  Source: npm package @fontsource-variable/inter 5.3.0, unmodified font files
+  Licence: SIL Open Font License 1.1 (OFL-1.1), Copyright 2016 The Inter Project
+           Authors (https://github.com/rsms/inter)
+  Licence file: app/static/vendor/inter/LICENSE
+
 Kenney City Kit Commercial 2.1, City Kit Roads 2.2, City Kit Suburban 2.0
   Files: app/static/models/kenney/<kit>/*.glb and Textures/colormap.png (the
          offices, road tiles, street lamps and trees of the scenes)

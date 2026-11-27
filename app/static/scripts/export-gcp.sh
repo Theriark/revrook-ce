@@ -6,8 +6,8 @@
 #   backup-export-gcp.csv      disk snapshots, by disk and snapshot schedule
 #
 # A file is written only when it has a line. Drop the folder on Import evidence in
-# revrook: each file is recognised by its columns. CSV files carry no capture time, so
-# set "exported at" on the import page.
+# revrook: each file is recognised by its columns. Every line carries its own
+# exported_at, so the time on the import page is not used.
 #
 # Needs bash, awk and the Google Cloud CLI, signed in with an account that can read the
 # projects (the role Viewer, or Compute Viewer, is enough):
