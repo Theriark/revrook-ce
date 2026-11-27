@@ -1,8 +1,8 @@
 # Upgrade
 
 How to move an installation to a newer version without losing data, and how to go back.
-revrook is pre-release and has no released version yet, so the steps below use the
-`development` branch; with a release they use its tag.
+revrook 27.0.0 is the first release. The steps below use a release tag; on the
+`development` branch they work the same way.
 
 ## What an upgrade does
 

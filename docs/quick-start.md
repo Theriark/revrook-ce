@@ -4,8 +4,8 @@ From nothing to an exported quarterly security review in about ten minutes, on o
 machine, with invented demo data. Nothing here touches a real customer or a real
 Microsoft tenant.
 
-revrook is pre-release: there is no released version and no published image yet, so you
-build the image from the repository. What the output is, and is not, is in the
+revrook 27.0.0 is the first release. This quick start builds the image from the
+repository. What the output is, and is not, is in the
 [README](../README.md): a configuration evidence summary, not a certification.
 
 ## What you need

@@ -3,9 +3,9 @@
 How to run revrook CE for real on a machine you administer. To try it first with demo
 data, use the [quick start](quick-start.md).
 
-revrook is pre-release. There is no released version and no published image; you build
-the image from the repository, and the code is on the `development` branch until a
-release exists. Everything below is what the repository does today.
+revrook 27.0.0 is the first release. You build the image from the repository, at the
+release tag `v27.0.0` or on the `development` branch. Everything below is what the
+repository does today.
 
 ## What runs
 
