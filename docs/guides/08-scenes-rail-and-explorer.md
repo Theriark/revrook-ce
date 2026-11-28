@@ -53,8 +53,9 @@ Choosing an office opens its company card beside it, inside the stage: the clien
 name (a link to the client), its score and band (**at least** and **Insufficient
 evidence** when the evidence is too thin), **Needs work** with its three most urgent
 controls in the order of Home's **Needs attention**, each a link to the control,
-**Exports to refresh** with the number of its exports that are expired, stale or never
-imported (a link to its evidence page), and the buttons **Open client**, **Checklist**
+**Exports to refresh** with the number of its exports that are expired or stale (a
+link to its evidence page), followed by **not imported yet** and the number of sources
+never imported when there are any, and the buttons **Open client**, **Checklist**
 and **Evidence**. Choosing another office moves the card. Close it with its **x**
 button, **Escape**, a press anywhere outside it, **Reset view** or **Hide the 3D view**.
 When you choose with the keyboard the focus moves to the name on the card: **Left**,
@@ -179,7 +180,8 @@ client's wall directly ([evidence-explorer-preview.md](../evidence-explorer-prev
 
 1. Choose the client under **View** and press **Show**.
 2. The verdict band gives the status that needs the most work, with the sources, the
-   current exports, the exports to refresh and the links between sources and controls.
+   current exports, the exports to refresh, the sources not imported yet and the links
+   between sources and controls.
 3. **The evidence wall** opens with **Show the 3D view** in the head of its card (the
    same choice as the scenes of Home and the client overview): an inner ring of office
    blocks, one per evidence source, as tall as the number of controls it feeds, its roof

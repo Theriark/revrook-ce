@@ -10,7 +10,8 @@ from sqlalchemy import select
 from app.auth import get_user
 from app.evidence.chain import ChainResult, verify_all
 from app.models import AppUser, Client
-from app.ui.auth import redirect, render
+from app.ui.auth import render
+from app.ui.common import to_login
 from app.web import clock_of, current_session, session_factory
 
 router = APIRouter()
@@ -78,7 +79,7 @@ def _context(
 async def integrity_form(request: Request) -> Response:
     user = await _signed_in_user(request)
     if user is None:
-        return redirect("/login")
+        return to_login(request)
     return render(
         request,
         "evidence_integrity.html",
@@ -92,7 +93,7 @@ async def integrity_check(request: Request) -> Response:
     """Verify every client's chain. Only reads; the CSRF check still applies."""
     user = await _signed_in_user(request)
     if user is None:
-        return redirect("/login")
+        return to_login(request)
     async with session_factory(request)() as db:
         results = await verify_all(db)
         named = await db.execute(select(Client.id, Client.name))

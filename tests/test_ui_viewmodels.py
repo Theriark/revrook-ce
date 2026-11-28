@@ -259,6 +259,15 @@ def test_sources_are_listed_by_name_and_the_oldest_export_is_refreshed_first() -
     assert all(row.refresh for row in refresh)
     dns_refresh = by_code["dns-check"].refresh
     assert dns_refresh is not None and "public DNS check" in dns_refresh
+    # A source never imported asks for its first export, not to export it again.
+    assert dns_refresh.startswith("Not imported yet.")
+    backup_refresh = by_code["backup-export"].refresh
+    assert backup_refresh is not None and backup_refresh.startswith("Export it again")
+    (file_row,) = source_rows([], ["backup-export"])
+    assert file_row.refresh == (
+        "Not imported yet. Export it from the source system and import it on "
+        "Import evidence."
+    )
 
 
 def test_a_source_is_measured_by_the_strictest_control_that_reads_it() -> None:
@@ -318,7 +327,8 @@ def test_the_evidence_verdict_counts_the_sources_and_names_the_worst_state() -> 
     ]
     wanted = ["backup-export", "device-inventory", "dns-check", "network-export"]
     facts = evidence_facts(source_rows(views, wanted), views)
-    assert (facts.sources, facts.current, facts.to_refresh) == (4, 1, 3)
+    assert (facts.sources, facts.current, facts.to_refresh) == (4, 1, 2)
+    assert facts.not_imported == 1
     assert facts.items == 4
     assert facts.label.key == "not-protected" and facts.label.icon == "cross"
     assert facts.label.text == "1 stale, 1 expired, 1 not imported"
@@ -338,7 +348,8 @@ def test_the_evidence_verdict_counts_the_sources_and_names_the_worst_state() -> 
     nothing = evidence_facts(source_rows([], ["dns-check"]), [])
     assert nothing.label.key == "not-checked"
     assert nothing.label.text == "No evidence yet"
-    assert (nothing.sources, nothing.current, nothing.to_refresh) == (1, 0, 1)
+    assert (nothing.sources, nothing.current, nothing.to_refresh) == (1, 0, 0)
+    assert nothing.not_imported == 1
     assert nothing.items == 0
 
 

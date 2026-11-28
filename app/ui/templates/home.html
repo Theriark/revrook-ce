@@ -168,7 +168,7 @@
 {#- The company card the street shows beside the office it chooses (scenes.js
     clones it, never builds it). -#}
 {% for client in clients %}
-{{ cc.card(client, card_focus.get(client.client_id, []), card_refresh.get(client.client_id, 0)) }}
+{{ cc.card(client, card_focus.get(client.client_id, []), card_refresh.get(client.client_id, 0), (card_missing or {}).get(client.client_id, 0)) }}
 {% endfor %}
 {% if portfolio %}
 <details class="rv-chart-data" id="drivers-data">

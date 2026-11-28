@@ -146,6 +146,7 @@ async def load_companies(request: Request, user: AppUser) -> dict[str, Any]:
         "unread": today.unread,
         "card_focus": today.focus,
         "card_refresh": today.refresh,
+        "card_missing": today.missing,
     }
 
 
@@ -165,6 +166,7 @@ def page_context(
         "unread": [],
         "card_focus": {},
         "card_refresh": {},
+        "card_missing": {},
         "explorer_version": EXPLORER_VERSION,
         "data_url": None,
         "verdict": "",

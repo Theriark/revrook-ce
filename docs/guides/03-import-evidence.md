@@ -96,9 +96,11 @@ Open the client and its tab **Evidence and imports**.
 ![Evidence and imports at 1440 px, right after the import above](../images/evidence-1440.png)
 
 - The verdict band: the state of the client's evidence as one pill, with the sources,
-  the current ones, the ones to refresh and the items imported.
+  the current ones, the ones to refresh (an expired or stale export), the ones **Not
+  imported yet** and the items imported.
 - **Refresh these exports**: a numbered list in the order to work in, the oldest export
-  first, then the sources never imported.
+  first, then the sources never imported. A stale or expired export says to export it
+  again; a source never imported says **Not imported yet** and asks for its first export.
 - **Public DNS check**: the card that runs the check of the client's mail domains,
   once or every Monday ([11. The public DNS check](11-public-dns-check.md)).
 - **Sources**: every source a control reads, with its newest export, the date it goes

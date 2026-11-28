@@ -369,7 +369,13 @@ class EvidenceSummary:
 
     @property
     def to_refresh(self) -> int:
-        return self.of(STALE) + self.of(EXPIRED) + self.of(MISSING)
+        """Sources with an export that is out of date (a fresh export is due)."""
+        return self.of(STALE) + self.of(EXPIRED)
+
+    @property
+    def not_imported(self) -> int:
+        """Sources never imported: they need a first export, counted apart."""
+        return self.of(MISSING)
 
     @property
     def segments(self) -> tuple[Segment, ...]:
@@ -1009,8 +1015,8 @@ def stat_cards(
             label="Exports to refresh",
             value=str(evidence.to_refresh),
             note=(
-                f"{evidence.of(EXPIRED)} expired, {evidence.of(STALE)} stale, "
-                f"{evidence.of(MISSING)} never imported"
+                f"{evidence.of(EXPIRED)} expired, {evidence.of(STALE)} stale; "
+                f"{evidence.not_imported} not imported yet"
             ),
             change="",
             spark="",

@@ -42,6 +42,7 @@
 <div><dt>Sources</dt><dd>{{ view.counts.sources }}</dd></div>
 <div><dt>Current exports</dt><dd>{{ view.counts.current }}</dd></div>
 <div><dt>To refresh</dt><dd>{{ view.counts.to_refresh }}</dd></div>
+<div><dt>Not imported yet</dt><dd>{{ view.counts.not_imported }}</dd></div>
 <div><dt>Links</dt><dd>{{ view.counts.links }}</dd></div>
 </dl>
 </section>
@@ -151,7 +152,7 @@
     each client, as on Home, and a card per control listing every client with its
     status, worst first. The scene reads its links from these lists. -#}
 {% for item in portfolio.clients %}
-{{ cc.card(item.posture, card_focus.get(item.posture.client_id, []), card_refresh.get(item.posture.client_id, 0)) }}
+{{ cc.card(item.posture, card_focus.get(item.posture.client_id, []), card_refresh.get(item.posture.client_id, 0), (card_missing or {}).get(item.posture.client_id, 0)) }}
 {% endfor %}
 {% for control in portfolio.controls %}
 <template id="control-card-{{ control.control_id }}">

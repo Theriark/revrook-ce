@@ -367,6 +367,20 @@ async def test_a_sign_in_comes_back_to_the_page_that_was_asked_for(
 
 
 @pytest.mark.parametrize(
+    "page", ["/evidence/integrity", "/imports/profile-editor?client_id=1"]
+)
+async def test_the_integrity_and_editor_pages_are_remembered_too(
+    client: httpx.AsyncClient, db_engine: AsyncEngine, page: str
+) -> None:
+    await create_admin(db_engine)
+    asked = await client.get(page)
+    assert asked.status_code == 303 and asked.headers["location"] == "/login"
+    response = await login(client)
+    assert response.status_code == 303
+    assert response.headers["location"] == page
+
+
+@pytest.mark.parametrize(
     "forged", ["//x.example/", "https://x.example/", "/\\x.example", "/a\nb"]
 )
 async def test_a_forged_page_to_come_back_to_signs_in_to_home(

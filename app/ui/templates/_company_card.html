@@ -3,10 +3,10 @@
     ring of the Evidence Explorer. The server draws it into a <template>; the scene
     clones it (app/static/js/scene-card.js), never builds it. `client` is the
     client's posture (app/ui/dashboard.py), `top` its most urgent controls (they open
-    in the control drawer, so the page carries _drawer.html) and `refresh` how many
-    of its exports are due. -#}
+    in the control drawer, so the page carries _drawer.html), `refresh` how many
+    of its exports are due and `missing` how many sources were never imported. -#}
 {% import "_status.html" as s %}
-{% macro card(client, top, refresh) -%}
+{% macro card(client, top, refresh, missing=0) -%}
 <template id="client-card-{{ client.client_id }}">
 <div class="rv-scene-card rv-keep" role="dialog" aria-modal="false" aria-labelledby="client-card-{{ client.client_id }}-title">
 <div class="rv-scene-card-head">
@@ -20,7 +20,7 @@
 {% for item in top %}<li>{{ s.status(item.label) }} <a href="/{{ item.path }}" data-drawer>{{ item.control_id }} {{ item.title }}</a></li>
 {% endfor %}</ul>
 {% endif %}
-<p class="rv-scene-card-meta"><a href="/clients/{{ client.client_id }}/evidence">Exports to refresh: {{ refresh }}</a></p>
+<p class="rv-scene-card-meta"><a href="/clients/{{ client.client_id }}/evidence">Exports to refresh: {{ refresh }}</a>{% if missing %}, not imported yet: {{ missing }}{% endif %}</p>
 <p class="rv-scene-card-actions"><a role="button" class="rv-button-small" href="/clients/{{ client.client_id }}">Open client</a><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client.client_id }}/checklist">Checklist</a><a role="button" class="rv-button-quiet rv-button-small" href="/clients/{{ client.client_id }}/evidence">Evidence</a></p>
 </div>
 </template>

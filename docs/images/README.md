@@ -36,7 +36,7 @@ address.
 | Image | `ghcr.io/theriark/revrook-ce@sha256:22d402c93e9a387817d291d69ba539b8089de91a2c83531fac04ca2d8c33ef94` |
 | CI run | 43516815094 (the push of the commit to `development`) |
 | Evidence | the System page showed `revrook 27.0.0.dev0, build 0f705cace6f1, role all` during the session of 2026-11-13 (`system-1440.png` now shows the later build, see the next row) |
-| Version shown | `27.0.0.dev0` on the System page, with the build commit beside it; `system-1440.png` was taken again on 2026-11-28 on the first release build and shows `revrook 27.0.0, build 47a578414e65`, and `home-768.png` was taken again the same day at the top of Home |
+| Version shown | `27.0.0.dev0` on the System page, with the build commit beside it; `system-1440.png` was taken again on 2026-11-28 on the Development build of version 27.0.0 and shows `revrook 27.0.0, build 47a578414e65`, and `home-768.png` was taken again the same day at the top of Home |
 | Browser | Playwright for Python driving the installed Chrome 157, headless, CSS-pixel scale |
 | Renderer | `ANGLE (NVIDIA, NVIDIA GeForce RTX 2080 SUPER (0x00001E81) Direct3D11 vs_5_0 ps_5_0, D3D11)`, a hardware GPU |
 | Account | `revrook-admin`, signed in with a session cookie made on the Development server; no password typed |
