@@ -640,7 +640,7 @@ def test_the_administration_pages_use_header_cards_and_confirmation() -> None:
     assert columns is not None and "repeat(2, minmax(0, 1fr))" in columns.group(1)
     system = (templates / "system.html").read_text(encoding="utf-8")
     assert '<div id="worker-status" class="rv-verdict-status">' in system
-    assert '<details class="rv-confirm">' in system
+    assert '<details class="rv-confirm"' in system
     assert 'class="rv-button-danger"' in system
     assert 'id="clients" class="rv-delete-list"' in system
     glossary = re.search(

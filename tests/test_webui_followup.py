@@ -313,7 +313,11 @@ def test_an_opened_delete_disclosure_is_white_on_charcoal() -> None:
     assert "color: var(--rv-text);" in rule("details.rv-confirm > summary", CSS)
     assert "color: var(--rv-white);" in rule("details.rv-confirm > summary:hover", CSS)
     system = (TEMPLATES / "system.html").read_text(encoding="utf-8")
-    assert '<details class="rv-confirm">\n<summary>Delete {{ client.name }}' in system
+    disclosure = (
+        '<details class="rv-confirm"{% if refused %} open{% endif %}>\n'
+        "<summary>Delete {{ client.name }}"
+    )
+    assert disclosure in system
 
 
 # --- L1: an unknown address with the database down ----------------------------------
