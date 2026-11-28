@@ -158,7 +158,7 @@ async def test_a_file_in_which_no_row_can_be_read_cannot_be_saved(
     assert shown.status_code == 200
     assert 'id="rv-problem"' in shown.text
     assert "No row of the file could be read." in shown.text
-    assert "3 row(s) shown, 3 of them rejected." in shown.text
+    assert "3 rows shown, 3 of them rejected." in shown.text
     refused = await post(browser, "save", fields, data, htmx=True)
     assert refused.status_code == 422
     expected = "The profile was not saved. No row of the file could be read."
@@ -175,7 +175,7 @@ async def test_a_text_that_is_only_an_at_sign_and_a_domain_rejects_its_row(
     fields = form(client_id, csrf, REQUIRED_ONLY)
     shown = await post(browser, "preview", fields, data, htmx=True)
     assert shown.status_code == 200
-    assert "2 row(s) shown, 1 of them rejected." in shown.text
+    assert "2 rows shown, 1 of them rejected." in shown.text
     assert "Rejected: av_product must not contain an email address" in shown.text
     assert "acme.com" not in shown.text
 
@@ -190,8 +190,8 @@ async def test_a_very_wide_file_is_previewed_and_its_extra_columns_are_not_offer
     fields = form(client_id, csrf, REQUIRED_ONLY)
     shown = await post(browser, "preview", fields, to_csv(header, [row]))
     assert shown.status_code == 200
-    assert "2809 column(s) of the file are not offered" in shown.text
-    assert "1 row(s) shown, 0 of them rejected." in shown.text
+    assert "2809 columns of the file are not offered" in shown.text
+    assert "1 row shown, 0 of them rejected." in shown.text
 
 
 async def test_a_file_that_is_not_utf8_is_read_or_refused_never_an_error(

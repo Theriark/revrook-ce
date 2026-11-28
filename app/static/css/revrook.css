@@ -3891,6 +3891,15 @@ fieldset.rv-topics {
   display: inline-flex;
 }
 
+/* With script the row of the details form holds only the saving note, so it
+   keeps that note's height while the note is hidden. A field that loses focus
+   to a press of "Make the report for this period" saves on that change; a row
+   that grew then pushed the button down from under the pointer between the
+   press and the release, and the first press was lost. */
+#details-form .rv-notes-actions {
+  min-height: 24px;
+}
+
 .rv-snapshots th.rv-date {
   white-space: normal;
 }

@@ -1,6 +1,7 @@
 """First-run setup, sign-in, lockout and sign-out against PostgreSQL."""
 
 import asyncio
+from urllib.parse import quote
 
 import httpx
 import pytest
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from app.auth import SetupClosedError, count_users, create_first_admin
 from app.models import AppUser
 from app.security import SESSION_COOKIE
+from app.ui.auth import NEXT_COOKIE
 from helpers import (
     PASSWORD,
     WRONG_PASSWORD,
@@ -351,3 +353,27 @@ async def test_a_nul_byte_in_the_username_is_an_unknown_user_not_a_server_error(
     assert "username or password is not correct" in response.text
     events = await audit_since(db_engine, baseline)
     assert [event.detail["reason"] for event in events] == ["unknown_user"]
+
+
+async def test_a_sign_in_comes_back_to_the_page_that_was_asked_for(
+    client: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    await create_admin(db_engine)
+    asked = await client.get("/clients?show=needs-work")
+    assert asked.status_code == 303 and asked.headers["location"] == "/login"
+    response = await login(client)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/clients?show=needs-work"
+
+
+@pytest.mark.parametrize(
+    "forged", ["//x.example/", "https://x.example/", "/\\x.example", "/a\nb"]
+)
+async def test_a_forged_page_to_come_back_to_signs_in_to_home(
+    client: httpx.AsyncClient, db_engine: AsyncEngine, forged: str
+) -> None:
+    await create_admin(db_engine)
+    client.cookies.set(NEXT_COOKIE, quote(forged, safe=""))
+    response = await login(client)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/"

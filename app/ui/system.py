@@ -14,6 +14,7 @@ from fastapi import APIRouter, Form, Request, Response
 from app import __version__
 from app.api_ops import export_response
 from app.evidence.deletion import delete_client
+from app.evidence.errors import EvidenceRejectedError
 from app.models import AppUser
 from app.preferences import get_reminder_recipient
 from app.settings import Settings
@@ -49,33 +50,49 @@ def age_text(seconds: float | None) -> str:
     return f"{minutes // 60} hours"
 
 
+async def system_response(
+    request: Request,
+    user: AppUser,
+    *,
+    deleted: bool = False,
+    refused_id: int | None = None,
+    refused_message: str = "",
+    status_code: int = 200,
+) -> Response:
+    """The System page; `refused_id` is the client whose deletion was refused,
+    drawn with its form open and the reason beside it."""
+    async with session_factory(request)() as session:
+        overview = await load_overview(session, clock_of(request)())
+        recipient = await get_reminder_recipient(session)
+    settings: Settings = request.app.state.settings
+    context: dict[str, Any] = {
+        "title": "System",
+        "nav": "system",
+        "errors": [],
+        "deleted": deleted,
+        "refused_id": refused_id,
+        "refused_message": refused_message,
+        "version": __version__,
+        "revision": build_revision(),
+        "worker": overview.worker,
+        "worker_label": overview.worker_label,
+        "age": age_text(overview.worker.age_seconds),
+        "stale_seconds": int(STALE_AFTER.total_seconds()),
+        "schedules": overview.schedules,
+        "clients": overview.clients,
+        "mail_relay": mail_configured(settings),
+        "reminder_set": recipient is not None,
+        "heartbeat_url": settings.heartbeat_url is not None,
+        "metrics": settings.metrics_token is not None,
+        "role": settings.role,
+    }
+    return page(request, "system.html", user, context, status_code)
+
+
 @router.get("/system")
 async def system_page(request: Request, deleted: str = "") -> Response:
     async def handle(user: AppUser) -> Response:
-        async with session_factory(request)() as session:
-            overview = await load_overview(session, clock_of(request)())
-            recipient = await get_reminder_recipient(session)
-        settings: Settings = request.app.state.settings
-        context: dict[str, Any] = {
-            "title": "System",
-            "nav": "system",
-            "errors": [],
-            "deleted": deleted == "1",
-            "version": __version__,
-            "revision": build_revision(),
-            "worker": overview.worker,
-            "worker_label": overview.worker_label,
-            "age": age_text(overview.worker.age_seconds),
-            "stale_seconds": int(STALE_AFTER.total_seconds()),
-            "schedules": overview.schedules,
-            "clients": overview.clients,
-            "mail_relay": mail_configured(settings),
-            "reminder_set": recipient is not None,
-            "heartbeat_url": settings.heartbeat_url is not None,
-            "metrics": settings.metrics_token is not None,
-            "role": settings.role,
-        }
-        return page(request, "system.html", user, context)
+        return await system_response(request, user, deleted=deleted == "1")
 
     return await guarded(request, handle)
 
@@ -92,19 +109,39 @@ async def system_export(request: Request) -> Response:
 
 @router.post("/system/clients/{client_id}/delete")
 async def system_delete_client(
-    request: Request, client_id: RowId, confirm: Annotated[str, Form()] = ""
+    request: Request,
+    client_id: RowId,
+    confirm: Annotated[str, Form()] = "",
+    back: Annotated[str, Form()] = "",
 ) -> Response:
-    """Delete a client for good. `confirm` must be the exact name of the client."""
+    """Delete a client for good. `confirm` must be the exact name of the client.
+
+    The form of the System page sends back=system: a name that does not match then
+    draws the System page again with that form open and the reason beside it, so
+    the person can type the name again. The bulk actions of the clients list send
+    no `back` and read the reason from the problem page.
+    """
 
     async def handle(user: AppUser) -> Response:
-        await delete_client(
-            session_factory(request),
-            files_of(request),
-            client_id,
-            confirm_name=confirm,
-            actor_user_id=user.id,
-            now=clock_of(request)(),
-        )
+        try:
+            await delete_client(
+                session_factory(request),
+                files_of(request),
+                client_id,
+                confirm_name=confirm,
+                actor_user_id=user.id,
+                now=clock_of(request)(),
+            )
+        except EvidenceRejectedError as error:
+            if back != "system":
+                raise
+            return await system_response(
+                request,
+                user,
+                refused_id=client_id,
+                refused_message=str(error),
+                status_code=422,
+            )
         return redirect("/system?deleted=1")
 
     return await guarded(request, handle)

@@ -50,7 +50,7 @@
 <legend><span class="rv-step-number">2</span>Map the columns</legend>
 <p class="rv-step-lead">For each column of the source, choose the column of your file that holds it. Columns found by their name are chosen already. A column marked required must be in the file.</p>
 {% if preview.hidden_headers %}
-<p class="rv-step-note">{{ preview.hidden_headers }} column(s) of the file are not offered: columns revrook never reads (serial numbers, client names), names longer than 100 characters, not printable or like an email address, and repeated names.</p>
+<p class="rv-step-note">{{ preview.hidden_headers }} column{% if preview.hidden_headers != 1 %}s{% endif %} of the file {% if preview.hidden_headers == 1 %}is{% else %}are{% endif %} not offered: columns revrook never reads (serial numbers, client names), names longer than 100 characters, not printable or like an email address, and repeated names.</p>
 {% endif %}
 <div class="rv-mapping">
 {% for choice in preview.choices %}
@@ -95,7 +95,7 @@
 <p class="rv-empty-text">{% if not preview.shown %}Choose a file column for the columns of the source in step 2, then update the preview.{% else %}The file would be refused as it is (see above). Fix the mapping or the file, then update the preview.{% endif %}</p>
 </div>
 {% else %}
-<p class="rv-step-lead">{{ preview.rows|length }} row(s) shown, {{ preview.rejected }} of them rejected.{% if preview.more_rows %} The file has more rows; only the first 20 are shown.{% endif %} A user, a device, a mailbox or another identifier is shown as this client's pseudonym, the way it is stored.</p>
+<p class="rv-step-lead">{{ preview.rows|length }} row{% if preview.rows|length != 1 %}s{% endif %} shown, {{ preview.rejected }} of them rejected.{% if preview.more_rows %} The file has more rows; only the first 20 are shown.{% endif %} A user, a device, a mailbox or another identifier is shown as this client's pseudonym, the way it is stored.</p>
 {% if preview.assumed_utc %}
 <p id="rv-utc-note" class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">?</span> <span>Some times have no time zone. They are read as UTC, and the import marks the file as UTC assumed.</span></p>
 {% endif %}

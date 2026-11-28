@@ -2,7 +2,7 @@
 
 > **2026-11-27: the first release, 27.0.0.** The repository has three workflows: `CI`,
 > `Promote - Stage` and `Release` ([ci-cd.md](ci-cd.md)). `Promote - Stage` tags each
-> candidate `v27.0.0-rc.N`; at Gate 4 `Release` releases the candidate Stage runs as
+> candidate `v27.0.0-rc.N`; once the release is approved, `Release` releases the candidate Stage runs as
 > `v27.0.0`, without rebuilding it. The updates below are the history of the earlier
 > candidates and name the workflows of their time.
 
@@ -113,8 +113,8 @@ from this page. The findings below stand; what changed since the first reading:
 
 - 27.0.0 is the first release. `pyproject.toml` and `app/__init__.py` both say `27.0.0`,
   and `tests/test_packages.py` pins both.
-- Development and Stage run the same candidate. The human QA follows Stage (Gate 3), and
-  the release is approved at Gate 4 ([ci-cd.md](ci-cd.md)).
+- Development and Stage run the same candidate. The human QA follows Stage, and
+  the release is approved after it ([ci-cd.md](ci-cd.md)).
 - There is no Production deployment for the Community Edition: the release is the
   stable tag, the image tag and the GitHub Release.
 
@@ -164,8 +164,8 @@ candidate.
    application on Development, and Stage was prepared and tested (2026-11-27).
 2. The version is `27.0.0` in `pyproject.toml` and `app/__init__.py`, and the
    Unreleased section of the [CHANGELOG](../CHANGELOG.md) became `[27.0.0]`.
-3. `Promote - Stage` promotes the candidate and the human QA on Stage follows (Gate 3).
-4. Gate 4 approves the release: the gate merges `stage` into `main` and dispatches
+3. `Promote - Stage` promotes the candidate and the human QA on Stage follows.
+4. The release is approved: the gate merges `stage` into `main` and dispatches
    `Release`.
 5. Open after the release: the mapping rows stay unverified
    ([mapping-verification.md](mapping-verification.md)) and branch protection is a human

@@ -48,7 +48,7 @@
       ]
     }
   },
-  "releaseCandidate": "not set by this documentation: the prepare-rc job mints the next v27.<minor>.<patch>-rc.<n> tag; v27.0.0-rc.1 to v27.0.0-rc.10 name earlier candidates (rc.10 is this application commit, 0f705cac, with the earlier pictures)",
+  "releaseCandidate": "not set by this documentation: the Promote - Stage workflow mints the next v27.<minor>.<patch>-rc.<n> tag; v27.0.0-rc.1 to v27.0.0-rc.10 name earlier candidates (rc.10 is this application commit, 0f705cac, with the earlier pictures)",
   "applicationVersionShown": "27.0.0, build 6372a1a70189 on the System page as pictured on 2026-11-27 (system-1440.png); 27.0.0.dev0, build 0f705cace6f1 for the set of 2026-11-13; build 56e697d499ef for the five pictures of 2026-11-14; build af35cfa59234 for report-preview-1440.png; build fd6e0f95f758 for the second report-preview-1440.png of 2026-11-14",
   "environment": "Development: https://ce-dev-revrook.theriark.dev, the Development deployment of revrook CE (web and worker in one process, role all) with the installation's own PostgreSQL and its synthetic test data; reached from the operator's Windows computer over the public address",
   "role": "administrator: revrook-admin (user id 1), the test administrator of the Development seed, signed in with a session cookie (revrook_session) made on the Development server with SessionCodec.encode of app/security.py; no password was typed anywhere and none is in any frame",

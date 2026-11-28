@@ -14,7 +14,7 @@
 #
 #   XO_URL=https://xo.example XO_TOKEN=... ./export-xo.sh ./contoso-2026-11
 #
-# XO_NAME_SEPARATOR cuts VM names at a separator ("VM-05 | AI" with " | " gives VM-05), so
+# XO_NAME_SEPARATOR cuts VM names at a separator ("web-01 | prod" with " | " gives web-01), so
 # they match the host names of the device inventory (PC-BCK-01 joins them). A repository is
 # encrypted when its address carries an encryption key, and away from the site when it is
 # object storage (s3, azure); a file share on a private address is on site. Restore tests

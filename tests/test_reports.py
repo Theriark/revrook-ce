@@ -287,6 +287,24 @@ def test_a_client_never_reads_an_empty_roadmap() -> None:
     assert "Plan for next quarter" in section and "<h3>Roadmap</h3>" not in section
 
 
+def test_notes_on_a_control_outside_the_top_findings_are_printed() -> None:
+    # The worked clients write notes only where the report already prints them.
+    for name in NAMES:
+        assert section_of(html_of(QBR, name), "other-notes") is None, name
+    view = view_of("A")
+    top = {item.row.control_id for item in view.top_findings}
+    other = next(row for row in view.rows if row.control_id not in top)
+    base = report_clients.context_for("A")
+    note = Finding(did="Checked the setting by hand.", need="The admin password.")
+    context = replace(base, findings={**base.findings, other.control_id: note})
+    section = section_of(html_of(QBR, "A", context), "other-notes")
+    assert section is not None and other.control_id in section
+    assert "<dt>What we did</dt><dd>Checked the setting by hand.</dd>" in section
+    assert "<dt>What we need from you</dt><dd>The admin password.</dd>" in section
+    # The notes of the top findings stay with them and are not printed twice.
+    assert not any(control_id in section for control_id in top)
+
+
 @pytest.mark.parametrize("name", NAMES)
 def test_a_domain_is_marked_where_it_is_named(name: str) -> None:
     text = html_of(QBR, name)

@@ -34,7 +34,7 @@ from app.reports.completeness import ExportBlockedError
 from app.reports.export import ExportIntegrityError, ExportNotFoundError
 from app.reports.view import ReportError
 from app.snapshots import SnapshotNotFoundError
-from app.ui.auth import redirect, render
+from app.ui.auth import redirect, remember_next, render
 from app.web import current_session, session_factory
 
 MAX_PERIOD_DAYS = 400
@@ -52,7 +52,14 @@ NO_SUCH_PAGE = "There is no page at this address."
 WRONG_METHOD = "This address does not accept what was sent to it."
 # A form or a file over the size limit (app/limits.py), refused before it is read.
 TOO_LARGE = "What was sent is larger than revrook accepts here. Choose a smaller file."
-MISSING_MESSAGES = {404: NO_SUCH_PAGE, 405: WRONG_METHOD, 413: TOO_LARGE}
+# An address or a value of the wrong form, such as a client id that is not a number.
+NOT_VALID = "This address or a value sent to it is not one revrook can use."
+MISSING_MESSAGES = {
+    404: NO_SUCH_PAGE,
+    405: WRONG_METHOD,
+    413: TOO_LARGE,
+    422: NOT_VALID,
+}
 
 logger = logging.getLogger("revrook.web")
 
@@ -89,7 +96,10 @@ def to_login(request: Request) -> Response:
     """The answer to a request without a user: the sign-in page."""
     if is_htmx(request):
         return Response(status_code=200, headers={"HX-Redirect": "/login"})
-    return redirect("/login")
+    response = redirect("/login")
+    # The sign-in comes back to the page that was asked for (ui/auth.py).
+    remember_next(response, request)
+    return response
 
 
 def page(
@@ -137,8 +147,8 @@ async def missing_page(
     request: Request, status_code: int, headers: Mapping[str, str] | None = None
 ) -> Response:
     """The problem page for an address no route answers (404), a method it does
-    not take (405) or a body over the size limit (413), whether or not someone
-    is signed in.
+    not take (405), a body over the size limit (413) or an address or value of
+    the wrong form (422), whether or not someone is signed in.
 
     No route ran, so the page dependencies did not either: the stale-worker flag
     is set here so the shell can read it. Signed out, the page is drawn in the

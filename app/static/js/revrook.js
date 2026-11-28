@@ -47,6 +47,12 @@
  *   JPEG, so a photo straight from a camera can be used; without the script,
  *   or when the browser cannot read the file, the file is sent as it is and
  *   the server says what is wrong with it.
+ * - a form marked data-confirm (closing an exception) asks its question first,
+ *   and a press that was a slip sends nothing; without the script it posts.
+ * - the delete forms of the System page (templates/system.html): the button
+ *   stays off until the name is typed as the client is called, and Cancel folds
+ *   the form away, as the bulk dialog of the clients list does; without the
+ *   script the server still refuses a name that does not match.
  */
 (function () {
   "use strict";
@@ -582,8 +588,49 @@
       });
   }
 
+  function confirmSubmit(event) {
+    var form = event.target;
+    var question = form.getAttribute ? form.getAttribute("data-confirm") : null;
+    if (question && !window.confirm(question)) {
+      event.preventDefault();
+    }
+  }
+
+  function guardDelete(input) {
+    var form = input.form;
+    var button = form ? form.querySelector('button[type="submit"]') : null;
+    if (!button) {
+      return;
+    }
+    var name = input.getAttribute("data-confirm-name");
+    var cancel = form.querySelector("[data-confirm-cancel]");
+    function check() {
+      button.disabled = input.value.trim() !== name;
+    }
+    input.addEventListener("input", check);
+    check();
+    if (!cancel) {
+      return;
+    }
+    cancel.hidden = false;
+    cancel.addEventListener("click", function () {
+      input.value = "";
+      check();
+      var details = form.closest("details");
+      if (details) {
+        details.open = false;
+        details.querySelector("summary").focus();
+      }
+    });
+  }
+
   function ready() {
     watchDrawer();
+    var deletes = document.querySelectorAll("input[data-confirm-name]");
+    for (var d = 0; d < deletes.length; d += 1) {
+      guardDelete(deletes[d]);
+    }
+    document.addEventListener("submit", confirmSubmit);
     syncThemeToggle();
     document.addEventListener("keydown", closeAccountMenu);
     document.addEventListener("click", closeAccountMenu);

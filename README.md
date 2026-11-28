@@ -111,7 +111,7 @@ sideways, with a cue at its edge, and every card and table row takes the whole w
 | [docs/ci-cd.md](docs/ci-cd.md) | CI/CD flow and known gaps |
 | [docs/pdf-spike.md](docs/pdf-spike.md) | How a report becomes a PDF, and the earlier PDF spike |
 | [docs/release-candidate.md](docs/release-candidate.md) | Acceptance state, the first release and the history of the release candidates |
-| [docs/release-notes.md](docs/release-notes.md) | The release candidate, what it holds and its known limits |
+| [docs/release-notes.md](docs/release-notes.md) | The notes of each release (27.0.0 is the first), what it holds and its known limits, with the earlier candidates as history |
 | [docs/guides/README.md](docs/guides/README.md) | Step-by-step guides for every flow, including the import page, the Microsoft 365 export script, the public DNS check, the scenes, the folded rail, the Evidence Explorer, the top bar, the checklist tools, the score drivers and the bulk actions, with live screenshots ([docs/images](docs/images/README.md)) |
 
 Changes are listed in the [CHANGELOG](CHANGELOG.md).

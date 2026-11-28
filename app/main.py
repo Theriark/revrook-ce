@@ -7,7 +7,11 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request, Response, status
-from fastapi.exception_handlers import http_exception_handler
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import DataError, SQLAlchemyError
@@ -43,7 +47,7 @@ from app.ui import reports as ui_reports
 from app.ui import site as ui_site
 from app.ui import system as ui_system
 from app.ui.brand import STATIC_DIR
-from app.ui.common import TOO_LARGE, is_htmx, missing_page
+from app.ui.common import NOT_VALID, TOO_LARGE, is_htmx, missing_page
 from app.web import clock_of, csrf_protect, session_factory
 from app.worker.heartbeat import read_status
 
@@ -186,6 +190,22 @@ def create_app(
         if error.status_code in PAGE_REFUSALS and page_wanted:
             return await missing_page(request, error.status_code, error.headers)
         return await http_exception_handler(request, error)
+
+    @app.exception_handler(RequestValidationError)
+    async def not_valid(request: Request, error: RequestValidationError) -> Response:
+        """An address or a value a page cannot use (/clients/abc) is still a 422,
+        shown as the problem page or as a message for htmx, not as JSON. The API
+        keeps FastAPI's JSON answer, which names the field that was wrong.
+        """
+        if not is_page_address(request.url.path):
+            return await request_validation_exception_handler(request, error)
+        if request.headers.get("hx-request") == "true":
+            return HTMLResponse(
+                REFUSED_HTML.format(message=html.escape(NOT_VALID)),
+                status_code=422,
+                headers={"Cache-Control": "no-store"},
+            )
+        return await missing_page(request, 422)
 
     @app.exception_handler(DataError)
     async def out_of_range(request: Request, error: DataError) -> Response:

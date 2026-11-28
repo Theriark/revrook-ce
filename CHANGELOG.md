@@ -2,7 +2,7 @@
 
 All notable changes to revrook CE are recorded in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows [Semantic Versioning](https://semver.org/).
 
-27.0.0 is the first release. Release candidates are tagged `v27.0.0-rc.N` by the `promote` job of `Promote - Stage`, and at Gate 4 `Release` releases the candidate Stage runs as `v27.0.0` without rebuilding it ([docs/ci-cd.md](docs/ci-cd.md)).
+27.0.0 is the first release. Release candidates are tagged `v27.0.0-rc.N` by the `promote` job of `Promote - Stage`, and once the release is approved after human QA on Stage, `Release` releases the candidate Stage runs as `v27.0.0` without rebuilding it ([docs/ci-cd.md](docs/ci-cd.md)).
 
 ## [Unreleased]
 
@@ -111,6 +111,7 @@ All notable changes to revrook CE are recorded in this file. The format follows 
 
 ### Fixed
 
+- From the readiness check of 2026-11-28: a **client name** that already exists (in another case, or with spaces around it) is refused with a form error, so the import list and the delete list never show two identical clients. The first press of **Make the report for this period** is no longer lost while a detail field has focus (the saving note no longer moves the button from under the pointer). The quarterly review prints **What we did** and **What we need from you** for every control they were written for, under **Notes on other controls** when the control is not among the top findings. A wrong current password on the Account page marks the **Current password** field. A new client with no control checked reads **Not checked yet** instead of a check mark and "Nothing needs attention". A malformed address such as `/clients/abc` shows the problem page instead of JSON; signing in returns to the page that was asked for; an exception review date in the past is refused; closing an exception asks first; the System page keeps its delete button off until the name is typed, has Cancel, keeps a wrong name on the page and words the result as the bulk actions do; a source never imported is no longer counted as needing a fresh export; a switched-off schedule shows no next run; the import preview counts rows and columns in plain words.
 - The open **account menu** lay under the page: on Home the stat cards, and on a client's pages the client tabs, drew over Settings, Glossary and Sign out, so a click there went to the page instead (found in a check of 2026-11-23). The top bar is now lifted above the page content.
 - From the Stage QA of 2026-11-23: the **theme button** of the top bar kept its 40 px square only while the pointer was away, so under the pointer it shrank to its icon and a click on its right half did nothing; it is now the same square in both states, and the Account page shows the theme the top bar set without a reload.
 - The names over the companies ring of the **Evidence Explorer** ran into one another at phone width and three were missing. On a phone-sized stage a domain now goes by its first word and a client's chip by its name alone, the eight domains are placed before the clients, and no name touches a domain's name; checked at 320, 390, 414, 600, 768, 1024 and 1440 px.

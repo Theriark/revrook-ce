@@ -5,6 +5,7 @@ The Home page itself is `app.ui.home`.
 
 from pathlib import Path
 from typing import Annotated, Any
+from urllib.parse import quote, unquote
 
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -22,7 +23,7 @@ from app.models import AppUser
 from app.ratelimit import ConcurrencyGate
 from app.security import SessionData, new_csrf_token
 from app.sources import source_icon
-from app.theme import COLOR_SCHEMES, rail_of, theme_of
+from app.theme import COLOR_SCHEMES, rail_of, safe_next, theme_of
 from app.ui.brand import (
     BULK_ACTION_FILES,
     DRIVER_FILES,
@@ -54,11 +55,41 @@ INVALID_LOGIN = "The username or password is not correct."
 SETUP_CLOSED = "Setup is closed: an administrator already exists. Sign in instead."
 LOGIN_BUSY = "Many sign-ins are being checked. Wait a few seconds, then retry."
 LOGIN_BUSY_RETRY_SECONDS = 5
+# The page a signed-out person asked for, kept for ten minutes so the sign-in can
+# come back to it. The cookie is sent only to /login, never with another request.
+NEXT_COOKIE = "rv_next"
+NEXT_MAX_AGE = 600
 
 
 def redirect(url: str) -> RedirectResponse:
     """A 303 so the browser follows a POST with a GET."""
     return RedirectResponse(url, status_code=303)
+
+
+def remember_next(response: Response, request: Request) -> None:
+    """Remember the page a signed-out person asked for (common.to_login).
+
+    Only a GET of a page other than Home is kept, since a form post cannot be
+    repeated by a redirect, and only a path of this site (safe_next).
+    """
+    target = theme_next_of(request)
+    if target == "/" or safe_next(target) != target:
+        return
+    response.set_cookie(
+        NEXT_COOKIE,
+        quote(target, safe=""),
+        max_age=NEXT_MAX_AGE,
+        httponly=True,
+        secure=request.app.state.settings.base_url.startswith("https://"),
+        samesite="lax",
+        path="/login",
+    )
+
+
+def signed_in_target(request: Request) -> str:
+    """Where a sign-in goes: the page that was asked for, else Home."""
+    wanted = request.cookies.get(NEXT_COOKIE)
+    return safe_next(unquote(wanted)) if wanted else "/"
 
 
 def theme_next_of(request: Request) -> str:
@@ -189,7 +220,9 @@ async def login_submit(
     finally:
         gate.leave()
     if result.outcome == "ok" and result.user is not None:
-        signed_in = redirect("/")
+        signed_in = redirect(signed_in_target(request))
+        if NEXT_COOKIE in request.cookies:
+            signed_in.delete_cookie(NEXT_COOKIE, path="/login")
         set_session_cookie(
             signed_in,
             request,

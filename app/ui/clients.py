@@ -113,6 +113,9 @@ STATUS_CHOICES = tuple(label.key for label in LABELS)
 DRAWER_TARGET = "control-drawer-body"
 DRAWER_TEMPLATE = "_control_drawer.html"
 MAX_REVIEW_YEARS = 5
+# A review that is already due when the exception is added would be overdue from
+# the first day, and the register would say "Next review" with a day gone by.
+PAST_REVIEW = "The review date is in the past. Choose today or a later day."
 NO_SUCH_CONTROL = "There is no such control."
 # The message of the exceptions register after a redirect, chosen by its `done` query
 # (a message in the page itself would not survive the redirect of the form).
@@ -703,6 +706,8 @@ async def exceptions_add(
             if review > limit:
                 problems.append("The review date is more than five years away.")
             else:
+                if review < now.date():
+                    problems.append(PAST_REVIEW)
                 entry = ExceptionEntry(
                     form["control_id"],
                     form["owner"],

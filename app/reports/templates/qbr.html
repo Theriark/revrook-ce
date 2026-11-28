@@ -73,7 +73,26 @@
 {% else %}
 <p>No control is Not protected or in need of attention at the pack date.</p>
 {% endif %}
-{% endcall %}
+{% endcall %}{#- The notes written for any other control (render.py, _other_notes), so
+    "What we did" and "What we need from you" print wherever they were written.
+    The tags join the lines above and below, so a report without such notes is
+    the same, byte for byte. -#}{% if other_notes %}
+
+{% call m.page("other-notes", "Notes on other controls") %}
+<p class="note">What was written for controls outside the top findings.</p>
+{% for item in other_notes %}
+<article class="finding" aria-labelledby="other-note-{{ item.number }}">
+<h3 id="other-note-{{ item.number }}">{{ item.row.title }}</h3>
+<p>{{ m.status(item.row.label) }} <span class="secondary">{{ item.row.control_id }}{% if item.row.gate %} &middot; gate control{% endif %} &middot; {{ item.row.domain_name }}</span></p>
+<dl class="facts">
+{% if item.finding.did %}<dt>What we did</dt><dd>{{ item.finding.did }}</dd>{% endif %}
+{% if item.finding.recommend %}<dt>What we recommend</dt><dd>{{ item.finding.recommend }}</dd>{% endif %}
+{% if item.finding.need %}<dt>What we need from you</dt><dd>{{ item.finding.need }}</dd>{% endif %}
+{% if item.finding.by_when %}<dt>By when</dt><dd>{{ item.finding.by_when }}</dd>{% endif %}
+</dl>
+</article>
+{% endfor %}
+{% endcall %}{% endif %}
 
 {% if waiting %}
 {% call m.page("unchecked", "What could not be checked") %}

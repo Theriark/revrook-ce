@@ -244,11 +244,12 @@ async def account_password(
         ) <= MAX_PASSWORD_LENGTH and await asyncio.to_thread(
             verify_password, user.password_hash, current_password
         )
-        problems = (
-            password_problems(user, new_password, confirm_password)
-            if right
-            else ["The current password is not right."]
-        )
+        if not right:
+            # The wrong field is the current password, so the message and the
+            # mark go there, not under the new password.
+            wrong = {"current_password": ["The current password is not right."]}
+            return account_page(request, user, errors=wrong, status_code=422)
+        problems = password_problems(user, new_password, confirm_password)
         if problems:
             return account_page(
                 request, user, errors={"password": problems}, status_code=422
