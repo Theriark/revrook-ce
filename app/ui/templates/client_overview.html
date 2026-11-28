@@ -77,6 +77,15 @@
 {% if attention_total > attention|length %}
 <p class="rv-text-secondary"><a href="/clients/{{ client_id }}/checklist?show=flagged">{{ attention_total - attention|length }} more on the checklist</a>.</p>
 {% endif %}
+{% elif not posture.checked %}
+{#- No control has a verdict yet (a new client, or evidence too old to count):
+    a check mark would read as good news, so the state stays neutral. -#}
+<div class="rv-empty" id="attention-empty">
+{{ i.icon("info", "xl") }}
+<p class="rv-empty-title">Not checked yet</p>
+<p class="rv-empty-text">{% if posture.evidence %}No control could be checked from the evidence so far: it is missing or too old to count. Import a fresh export and the controls that need work appear here, most urgent first.{% else %}Import the first export: the controls it shows as not protected appear here, most urgent first.{% endif %}</p>
+<a role="button" class="rv-button-quiet" href="/clients/{{ client_id }}/evidence">Import evidence</a>
+</div>
 {% else %}
 <div class="rv-empty" id="attention-empty">
 {{ i.icon("check", "xl") }}
@@ -137,7 +146,11 @@
 <h2 id="freshness-title" class="rv-card-title">How fresh is the evidence?</h2>
 <p class="rv-card-subtitle">Whether the newest export of every source is still current.</p>
 {% if refresh %}
-<p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>{{ refresh|length }} source{% if refresh|length != 1 %}s need{% else %} needs{% endif %} a fresh export. <a href="/clients/{{ client_id }}/evidence">See which export to refresh</a>.</span></p>
+{#- A source with an export that is out of date needs a fresh one; a source never
+    imported needs its first, so the two are counted apart. -#}
+{%- set stale = refresh|selectattr("captured_at")|list %}
+{%- set missing = refresh|length - stale|length %}
+<p class="rv-status-needs-attention" role="status"><span class="rv-status-icon" aria-hidden="true">&#9650;</span> <span>{% if stale %}{{ stale|length }} source{% if stale|length != 1 %}s need{% else %} needs{% endif %} a fresh export{% if missing %}, and {{ missing }} {% if missing != 1 %}have{% else %}has{% endif %} never been imported{% endif %}. <a href="/clients/{{ client_id }}/evidence">See which export to refresh</a>{% else %}{{ missing }} source{% if missing != 1 %}s have{% else %} has{% endif %} never been imported. <a href="/clients/{{ client_id }}/evidence">See which to import</a>{% endif %}.</span></p>
 {% else %}
 <p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>Every source is current.</span></p>
 {% endif %}

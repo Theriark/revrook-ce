@@ -178,6 +178,11 @@ class ClientPosture:
     def counted(self) -> int:
         return sum(count for _, count in self.counts)
 
+    @property
+    def checked(self) -> int:
+        """The controls with a verdict: protected, or in need of work."""
+        return self.protected + self.needs_work
+
 
 def change_words(current: SnapshotInput, earlier: SnapshotInput | None) -> str:
     """How the score moved since the last stored report, in words."""

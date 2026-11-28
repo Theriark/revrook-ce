@@ -171,7 +171,7 @@ async def test_a_vendor_file_round_trips_to_the_counts_of_the_canonical_fixture(
     shown = await post(browser, "preview", form(client_id, csrf, VENDOR_COLUMNS), data)
     assert shown.status_code == 200, shown.text
     assert 'id="rv-preview"' in shown.text
-    assert "10 row(s) shown, 0 of them rejected." in shown.text
+    assert "10 rows shown, 0 of them rejected." in shown.text
     assert 'id="rv-utc-note"' in shown.text
     assert "UTC assumed" in shown.text
     assert '<option value="Machine" selected>Machine</option>' in shown.text
@@ -320,7 +320,7 @@ async def test_hostile_cells_are_escaped_and_neutralised_in_the_preview(
     assert "&lt;img src=x onerror=&#34;alert(1)&#34;&gt;" in page
     assert DOMAIN not in page
     assert "Rejected: av_product must not contain an email address" in page
-    assert "4 row(s) shown, 1 of them rejected." in page
+    assert "4 rows shown, 1 of them rejected." in page
 
 
 async def test_a_signed_out_post_is_sent_to_the_sign_in_page(

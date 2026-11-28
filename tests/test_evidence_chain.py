@@ -54,8 +54,13 @@ async def verify(engine: AsyncEngine, client_id: int) -> ChainResult:
         return await verify_chain(session, client_id)
 
 
-async def new_client(engine: AsyncEngine, settings: Settings, tmp_path: Path) -> int:
-    return await create_test_client(engine, make_context(settings, tmp_path))
+async def new_client(
+    engine: AsyncEngine,
+    settings: Settings,
+    tmp_path: Path,
+    name: str = "Synthetic Client Ltd",
+) -> int:
+    return await create_test_client(engine, make_context(settings, tmp_path), name)
 
 
 async def test_records_link_to_the_one_before_and_the_chain_verifies(
@@ -176,7 +181,7 @@ async def test_chains_are_separate_for_each_client(
     db_engine: AsyncEngine, settings: Settings, tmp_path: Path
 ) -> None:
     first = await new_client(db_engine, settings, tmp_path)
-    second = await new_client(db_engine, settings, tmp_path)
+    second = await new_client(db_engine, settings, tmp_path, "Second Client Ltd")
     first_records = await build_chain(db_engine, first, 3)
     await build_chain(db_engine, second, 2)
     assert first_records[0].previous_hash == GENESIS_HASH

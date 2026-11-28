@@ -1,5 +1,6 @@
 """Clients and their per-client pseudonym key (decision I6)."""
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit import add_audit_event
@@ -31,6 +32,12 @@ async def create_client(
         raise ValueError(
             f"client name must not contain a control character ({describe(bad)})"
         )
+    # Two clients with the same name cannot be told apart in the import list, the
+    # delete grid or a report, so a name is refused when it differs from an
+    # existing one only in case or surrounding spaces.
+    same = select(Client.id).where(func.lower(Client.name) == func.lower(cleaned))
+    if (await session.execute(same.limit(1))).first() is not None:
+        raise ValueError("a client with this name already exists")
     client = Client(
         name=cleaned,
         pseudonym_key_encrypted=cipher.encrypt(new_pseudonym_key()),

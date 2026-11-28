@@ -74,6 +74,19 @@ async def test_a_client_name_must_be_1_to_200_characters(
         await make_client_row(db_engine, FieldCipher(KEY), name)
 
 
+@pytest.mark.parametrize("name", ["Client One", "client one", "  CLIENT ONE  "])
+async def test_a_client_name_that_already_exists_is_refused(
+    db_engine: AsyncEngine, name: str
+) -> None:
+    cipher = FieldCipher(KEY)
+    await make_client_row(db_engine, cipher, "Client One")
+    with pytest.raises(ValueError, match="already exists"):
+        await make_client_row(db_engine, cipher, name)
+    async with db_engine.connect() as connection:
+        count = await connection.execute(text("SELECT count(*) FROM client"))
+        assert count.scalar_one() == 1
+
+
 async def test_deleting_a_client_deletes_its_key_and_leaves_the_audit_entry(
     db_engine: AsyncEngine,
 ) -> None:

@@ -72,7 +72,10 @@ of evidence are named as a client reads them (`PLAIN_SOURCES` of `app/reports/vi
 **What could not be checked** lists the kinds of evidence the controls that were not
 checked read, the kind most of them wait for first; it is left out when every control
 was checked. The roadmap and the plan are printed only when something was written, so
-a client never reads an empty heading. Each of the eight domains has a mark beside its
+a client never reads an empty heading. **Notes on other controls** follows the top
+findings when notes were written for a control outside them: what was done or what is
+needed from the client, or a recommendation the roadmap does not carry
+(`_other_notes` of `app/reports/render.py`); it too is left out when there is none. Each of the eight domains has a mark beside its
 name (the coverage table, the appendix).
 
 Printed (`print.css`), the cover is a sheet of its own, the appendix and the last page

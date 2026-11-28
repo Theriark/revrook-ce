@@ -7,7 +7,7 @@
 <div><h1>System</h1><p class="rv-page-purpose">Worker, connections, data export and client deletion. revrook {{ version }}{% if revision %}, build {{ revision }}{% endif %}, role {{ role }}.</p></div>
 </div>
 {% if deleted %}
-<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>The client and everything of it was deleted. Only the audit entry remains.</span></p>
+<p class="rv-status-protected" role="status"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> <span>The client was deleted, with its evidence, reports and files. Only the audit entry remains.</span></p>
 {% endif %}
 {% include "_errors.html" %}
 
@@ -50,7 +50,7 @@
 <td data-label="When"><code>{{ line.cron }}</code></td>
 <td data-label="On">{% if line.enabled %}<span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Yes</span>{% else %}<span class="rv-status-not-checked"><span class="rv-status-icon" aria-hidden="true">&#8211;</span> No</span>{% endif %}</td>
 <td data-label="Last run" class="rv-date">{% if line.last_run_at %}{{ line.last_run_at.strftime("%Y-%m-%d %H:%M") }}{% else %}Never{% endif %}</td>
-<td data-label="Next run" class="rv-date">{% if line.next_run_at %}{{ line.next_run_at.strftime("%Y-%m-%d %H:%M") }}{% else %}None{% endif %}</td>
+<td data-label="Next run" class="rv-date">{% if not line.enabled %}None, switched off{% elif line.next_run_at %}{{ line.next_run_at.strftime("%Y-%m-%d %H:%M") }}{% else %}None{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -97,17 +97,24 @@
 <ul id="clients" class="rv-delete-list">
 {% for client in clients %}
 <li>
-<details class="rv-confirm">
+{#- The script (revrook.js) keeps the button off until the name is typed as the
+    client is called and shows Cancel, as the bulk dialog of the clients list does.
+    A name that does not match comes back here with this form open (back=system). -#}
+{%- set refused = client.id == refused_id %}
+<details class="rv-confirm"{% if refused %} open{% endif %}>
 <summary>Delete {{ client.name }}</summary>
 <div class="rv-confirm-body">
 <form method="post" action="/system/clients/{{ client.id }}/delete">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="back" value="system">
 <div class="rv-field">
 <label for="confirm-{{ client.id }}">To delete {{ client.name }}, type its name</label>
-<input id="confirm-{{ client.id }}" name="confirm" type="text" maxlength="200" required autocomplete="off">
+<input id="confirm-{{ client.id }}" name="confirm" type="text" maxlength="200" required autocomplete="off" data-confirm-name="{{ client.name }}"{% if refused %} aria-invalid="true" aria-describedby="confirm-{{ client.id }}-error"{% endif %}>
+{% if refused %}<small id="confirm-{{ client.id }}-error" class="rv-field-error">{{ refused_message }}</small>{% endif %}
 </div>
 <div class="rv-actions">
 <button type="submit" class="rv-button-danger">Delete {{ client.name }} for good</button>
+<button type="button" class="rv-button-quiet" data-confirm-cancel hidden>Cancel</button>
 </div>
 </form>
 </div>

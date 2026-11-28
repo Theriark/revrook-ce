@@ -84,7 +84,7 @@
 <span class="rv-status-protected"><span class="rv-status-icon" aria-hidden="true">&#10003;</span> Open</span>
 {% endif %}
 </td>
-<td class="rv-row-actions">{% if not row.closed %}<form class="rv-inline-form" method="post" action="/clients/{{ client_id }}/exceptions/{{ row.id }}/close">
+<td class="rv-row-actions">{% if not row.closed %}<form class="rv-inline-form" method="post" action="/clients/{{ client_id }}/exceptions/{{ row.id }}/close" data-confirm="Close the exception for {{ row.control_id }}? It stays in the register as closed and no longer shows beside the control.">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 <button type="submit" class="rv-button-quiet rv-button-small">Close this exception</button>
 </form>{% endif %}</td>

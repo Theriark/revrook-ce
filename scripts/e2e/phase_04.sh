@@ -241,7 +241,7 @@ with_csrf=(-F "csrf_token=${csrf}")
 code="$(editor_post preview "${with_csrf[@]}" "${editor_maps[@]}")"
 [[ "${code}" == "200" ]] || fail "the editor preview returned ${code}"
 grep -qF 'id="rv-preview"' "${work}/editor.html" || fail "the editor shows no preview table"
-grep -qF '10 row(s) shown, 0 of them rejected.' "${work}/editor.html" || fail "the editor preview does not show the 10 rows"
+grep -qF '10 rows shown, 0 of them rejected.' "${work}/editor.html" || fail "the editor preview does not show the 10 rows"
 grep -qF 'UTC assumed' "${work}/editor.html" || fail "the editor preview does not flag the dates without a time zone"
 for needle in "$(jq -r .domain "${manifest}")" SERIAL-FIXTURE- FIXTURE-HOST- "Fixture Client Ltd"; do
   if grep -qF -- "${needle}" "${work}/editor.html"; then fail "the editor preview shows '${needle}'"; fi

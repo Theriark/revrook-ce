@@ -600,6 +600,11 @@ def test_the_builder_shows_that_it_is_saving_and_the_pages_become_cards() -> Non
         r"\n#details-form\.htmx-request \.rv-notes-saving \{([^}]*)\}", CSS
     )
     assert shown is not None and "display: inline-flex;" in shown.group(1)
+    # The row keeps the note's height while it is hidden, so the save that starts
+    # when a field loses focus does not move "Make the report" from under the
+    # pointer and swallow the first press.
+    row = re.search(r"\n#details-form \.rv-notes-actions \{([^}]*)\}", CSS)
+    assert row is not None and "min-height: 24px;" in row.group(1)
     builder = (ROOT / "app/ui/templates/reports.html").read_text(encoding="utf-8")
     assert '<span class="rv-notes-saving" aria-hidden="true">' in builder
     for step in ("1", "2", "3"):
@@ -635,7 +640,7 @@ def test_the_administration_pages_use_header_cards_and_confirmation() -> None:
     assert columns is not None and "repeat(2, minmax(0, 1fr))" in columns.group(1)
     system = (templates / "system.html").read_text(encoding="utf-8")
     assert '<div id="worker-status" class="rv-verdict-status">' in system
-    assert '<details class="rv-confirm">' in system
+    assert '<details class="rv-confirm"' in system
     assert 'class="rv-button-danger"' in system
     assert 'id="clients" class="rv-delete-list"' in system
     glossary = re.search(
@@ -684,6 +689,13 @@ def test_the_shell_script_is_linked_and_plain() -> None:
     for forbidden in ("eval(", "http", "fetch(", "XMLHttpRequest", "innerHTML"):
         assert forbidden not in SCRIPT, forbidden
     assert '"use strict"' in SCRIPT
+
+
+def test_the_shell_script_confirms_and_guards_the_deletes() -> None:
+    # Closing an exception asks first; a System delete waits for the exact name.
+    assert 'getAttribute("data-confirm")' in SCRIPT and "window.confirm(" in SCRIPT
+    assert "input[data-confirm-name]" in SCRIPT and "[data-confirm-cancel]" in SCRIPT
+    assert "button.disabled = input.value.trim() !== name;" in SCRIPT
 
 
 async def test_the_shell_script_is_served_with_the_security_headers(

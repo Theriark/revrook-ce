@@ -399,6 +399,66 @@ async def test_a_client_name_with_a_control_character_is_refused(
     assert await count(db_engine, Client) == 0
 
 
+async def test_a_duplicate_client_name_is_refused_with_a_form_error(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    csrf = await sign_in(ui_browser, db_engine)
+    made = await ui_browser.post(
+        "/clients", data={"csrf_token": csrf, "name": "Alder Finch Ltd"}
+    )
+    assert made.status_code == 303
+    refused = await ui_browser.post(
+        "/clients", data={"csrf_token": csrf, "name": " alder finch ltd "}
+    )
+    assert refused.status_code == 422
+    assert "A client with this name already exists." in refused.text
+    assert await count(db_engine, Client) == 1
+
+
+async def test_a_new_client_reads_not_checked_yet_not_nothing_needs_attention(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    csrf = await sign_in(ui_browser, db_engine)
+    made = await ui_browser.post(
+        "/clients", data={"csrf_token": csrf, "name": "Brand New Ltd"}
+    )
+    assert made.status_code == 303
+    overview = await ui_browser.get(made.headers["location"])
+    assert overview.status_code == 200
+    # Every control is Not checked: no check mark, no good news.
+    assert 'id="attention-empty"' in overview.text
+    assert "Not checked yet" in overview.text
+    assert "Nothing needs attention" not in overview.text
+    # No source was ever imported: none of them needs a "fresh" export.
+    assert "never been imported" in overview.text
+    assert "a fresh export" not in overview.text
+
+
+async def test_an_exception_with_a_review_date_in_the_past_is_refused(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    csrf = await sign_in(ui_browser, db_engine)
+    client_id = await seed_client(db_engine, ui_ctx)
+    form = {
+        "csrf_token": csrf,
+        "control_id": CONTROL,
+        "owner": "Office manager",
+        "reason": "Accepted for the test",
+    }
+    path = f"/clients/{client_id}/exceptions"
+    yesterday = (NOW.date() - timedelta(days=1)).isoformat()
+    refused = await ui_browser.post(path, data={**form, "review_date": yesterday})
+    assert refused.status_code == 422
+    assert "The review date is in the past." in refused.text
+    assert await count(db_engine, ExceptionRecord) == 0
+    today = NOW.date().isoformat()
+    added = await ui_browser.post(path, data={**form, "review_date": today})
+    assert added.status_code == 303
+    # Closing it asks first (revrook.js reads data-confirm).
+    listing = await ui_browser.get(path)
+    assert f'data-confirm="Close the exception for {CONTROL}?' in listing.text
+
+
 async def test_the_draft_notes_are_saved_for_the_client_and_refuse_bad_text(
     ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
 ) -> None:
@@ -445,6 +505,11 @@ async def test_a_malformed_address_is_a_4xx_never_a_500(
         (f"/clients/{client_id}", 200),
     ):
         assert (await ui_browser.get(path)).status_code == status, path
+    # A malformed id is the designed problem page, not the JSON of the framework.
+    malformed = await ui_browser.get("/clients/abc")
+    assert malformed.headers["content-type"].startswith("text/html")
+    assert 'class="rv-problem"' in malformed.text
+    assert "not one revrook can use" in malformed.text
     for query in (
         {"period_start": "2026-13-45"},
         {"period_start": "2026-09-30", "period_end": "2026-07-01"},

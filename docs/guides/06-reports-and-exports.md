@@ -78,7 +78,8 @@ the controls by status as one bar above their table), the coverage by domain, an
 **top findings**. A finding names the control and its status, the evidence it was read
 from and its date, **what was checked** (what the check found when the report was
 made) and, when you wrote no recommendation for it, the **usual next step** of that
-control; what you write under **What we recommend** takes its place. **What could not
+control; what you write under **What we recommend** takes its place. Notes you wrote
+for any other control follow under **Notes on other controls**. **What could not
 be checked** lists the kinds of evidence the unchecked controls wait for. The roadmap
 and the plan for next quarter are printed only when you wrote them.
 

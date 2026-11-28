@@ -73,9 +73,9 @@ link can open the glossary at that term.
 
 ## When a page does not exist
 
-An address that answers nothing, an id that was deleted or a method a page does not
-take shows the problem page with the status code, the message and two ways back
-(**Home** and **Back to the clients**). The API, the probes and the static files keep
-their JSON answers.
+An address that answers nothing, an id that was deleted or is not a number, or a
+method a page does not take shows the problem page with the status code, the message
+and two ways back (**Home** and **Back to the clients**). The API, the probes and the
+static files keep their JSON answers.
 
 ![The problem page for a missing client at 1440 px](../images/not-found-1440.png)

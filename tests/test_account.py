@@ -119,6 +119,9 @@ async def test_the_password_changes_only_with_the_current_one(
         },
     )
     assert wrong.status_code == 422 and "current password is not right" in wrong.text
+    # The mark and the message belong to the current password, not the new one.
+    assert 'id="current-password-error"' in wrong.text
+    assert 'id="password-error"' not in wrong.text
     mismatch = await ui_browser.post(
         "/account/password",
         data={

@@ -83,6 +83,15 @@ class RoadmapItem:
     finding: Finding
 
 
+@dataclass(frozen=True)
+class OtherNote:
+    """The notes of a control outside the top findings, numbered for the page."""
+
+    number: int
+    row: ControlRow
+    finding: Finding
+
+
 def _day(value: datetime | date | None) -> str:
     if value is None:
         return "No date"
@@ -256,6 +265,28 @@ def _roadmap(view: ReportView) -> list[RoadmapItem]:
     return items
 
 
+def _other_notes(view: ReportView) -> list[OtherNote]:
+    """The notes written for controls outside the top findings, in library order.
+
+    A top finding prints all four lines and the roadmap prints what is recommended
+    and by when, so a control is listed here when it has "What we did" or "What we
+    need from you", or a recommendation or date that the roadmap does not carry.
+    Every line the control page offers then reaches the report.
+    """
+    top = {item.row.control_id for item in view.top_findings}
+    planned = {item.row.control_id for item in _roadmap(view)}
+    notes: list[OtherNote] = []
+    for row in view.rows:
+        finding = view.context.findings.get(row.control_id)
+        if finding is None or row.control_id in top:
+            continue
+        told = bool(finding.did.strip() or finding.need.strip())
+        later = bool(finding.recommend.strip() or finding.by_when.strip())
+        if told or (later and row.control_id not in planned):
+            notes.append(OtherNote(len(notes) + 1, row, finding))
+    return notes
+
+
 def render_qbr(view: ReportView) -> bytes:
     """The quarterly review as HTML (UTF-8)."""
     states = (EVIDENCE_CURRENT, EVIDENCE_EXPIRING, EVIDENCE_EXPIRED, EVIDENCE_NONE)
@@ -281,6 +312,7 @@ def render_qbr(view: ReportView) -> bytes:
         not_checked=sum(1 for row in view.rows if row.label == NOT_CHECKED),
         domain_chart=_domain_chart(view),
         roadmap=_roadmap(view),
+        other_notes=_other_notes(view),
         evidence_counts=evidence_counts,
         expiring=due[:EXPIRING_SHOWN],
         expiring_more=max(0, len(due) - EXPIRING_SHOWN),

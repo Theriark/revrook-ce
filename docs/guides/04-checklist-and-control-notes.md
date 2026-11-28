@@ -85,7 +85,9 @@ The page of a control:
    ([5. Exceptions](05-exceptions.md)).
 4. **Your notes**: the four lines the report prints for this control, **What we did**,
    **What we recommend**, **What we need from you** and **By when**, with a suggested
-   wording above them. Notes are saved as you type (the card says "Saving" while a
+   wording above them. The report prints them with the control among its top
+   findings, or under **Notes on other controls** for any other control (what is
+   recommended, by when, also goes to the roadmap). Notes are saved as you type (the card says "Saving" while a
    note is posted); **Save notes** posts them without script.
 
 To change a status, drop newer exports on **Import evidence** (the line at the foot

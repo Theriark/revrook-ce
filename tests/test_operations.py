@@ -836,6 +836,8 @@ async def test_deleting_a_client_from_the_system_page_removes_it_and_is_audited(
     assert ui_ctx.files.count_client_files(other) == 1
     page = await ui_browser.get("/system?deleted=1")
     assert "was deleted" in page.text and "Doomed Client Ltd" not in page.text
+    # The same words as the bulk actions of the clients list.
+    assert "deleted, with its evidence, reports and files" in page.text
     events = await audit_since(db_engine, baseline)
     deleted = [event for event in events if "deleted" in event.action]
     assert [event.action for event in deleted] == ["client.deleted"]
@@ -844,6 +846,50 @@ async def test_deleting_a_client_from_the_system_page_removes_it_and_is_audited(
     async with factory_of(db_engine)() as session:
         survivors = list((await session.execute(select(Client.name))).scalars())
     assert survivors == ["Other Client Ltd"]
+
+
+async def test_a_wrong_name_on_the_system_page_comes_back_to_the_open_form(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine, ui_ctx: EvidenceContext
+) -> None:
+    csrf = await sign_in(ui_browser, db_engine)
+    doomed = await seed_client(db_engine, ui_ctx, "Doomed Client Ltd")
+    page = await ui_browser.get("/system")
+    # The button waits for the name and there is a Cancel (revrook.js).
+    assert 'data-confirm-name="Doomed Client Ltd"' in page.text
+    assert '<input type="hidden" name="back" value="system">' in page.text
+    assert "data-confirm-cancel hidden>Cancel</button>" in page.text
+    wrong = await ui_browser.post(
+        f"/system/clients/{doomed}/delete",
+        data={"csrf_token": csrf, "confirm": "Doomed", "back": "system"},
+    )
+    assert wrong.status_code == 422
+    assert 'id="delete-client"' in wrong.text
+    assert '<details class="rv-confirm" open>' in wrong.text
+    assert f'id="confirm-{doomed}-error"' in wrong.text
+    assert "Nothing was deleted" in wrong.text
+    assert await count(db_engine, Client) == 1
+
+
+async def test_a_switched_off_schedule_shows_no_next_run(
+    ui_browser: httpx.AsyncClient, db_engine: AsyncEngine
+) -> None:
+    await sign_in(ui_browser, db_engine)
+    past = NOW - timedelta(days=3)
+    async with factory_of(db_engine)() as session, session.begin():
+        session.add(
+            Schedule(
+                name="off",
+                kind="retention-purge",
+                cron="@daily",
+                next_run_at=past,
+                enabled=False,
+                config={},
+            )
+        )
+    page = await ui_browser.get("/system")
+    assert page.status_code == 200
+    assert "None, switched off" in page.text
+    assert past.strftime("%Y-%m-%d %H:%M") not in page.text
 
 
 # --- Prometheus metrics ---

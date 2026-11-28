@@ -56,7 +56,8 @@
 <input type="text" name="username" value="{{ user.username }}" autocomplete="username" hidden>
 <div class="rv-field">
 <label for="current_password">Current password</label>
-<input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+<input id="current_password" name="current_password" type="password" autocomplete="current-password" required{% if errors.current_password %} aria-describedby="current-password-error" aria-invalid="true"{% endif %}>
+{% if errors.current_password %}<small id="current-password-error" class="rv-field-error">{{ errors.current_password|join(' ') }}</small>{% endif %}
 </div>
 <div class="rv-field">
 <label for="new_password">New password</label>
