@@ -41,8 +41,8 @@ from app.scoring.snapshot import (
 )
 from app.sources import control_sources as control_sources
 from app.sources import (
-    is_shown,
     first_import_instruction,
+    is_shown,
     refresh_instruction,
     source_name,
 )
