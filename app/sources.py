@@ -65,6 +65,19 @@ def refresh_instruction(code: str) -> str:
     return "Export it again from the source system and import it on Import evidence."
 
 
+def first_import_instruction(code: str) -> str:
+    """What the MSP does for a source that was never imported: its first export."""
+    if code == DNS_SOURCE:
+        return (
+            "Not imported yet. Run the public DNS check for the mail domains of "
+            "this client."
+        )
+    return (
+        "Not imported yet. Export it from the source system and import it on "
+        "Import evidence."
+    )
+
+
 def control_sources(library: "Library") -> dict[str, tuple[str, ...]]:
     """The sources (importer codes) each control reads, by control id.
 

@@ -34,8 +34,9 @@
 <dl class="rv-facts">
 <div><dt>Evidence coverage</dt><dd>{{ posture.coverage_percent }}%</dd></div>
 <div><dt>Controls that need work</dt><dd>{{ posture.needs_work }} of {{ posture.counted }}</dd></div>
-<div><dt>Exports to refresh</dt><dd>{{ refresh|length }}</dd></div>
-<div><dt>Since the last report</dt><dd>{{ posture.change_text }}</dd></div>
+{% set due = refresh|selectattr("captured_at")|list|length %}<div><dt>Exports to refresh</dt><dd>{{ due }}</dd></div>
+{% if refresh|length > due %}<div><dt>Not imported yet</dt><dd>{{ refresh|length - due }}</dd></div>
+{% endif %}<div><dt>Since the last report</dt><dd>{{ posture.change_text }}</dd></div>
 </dl>
 </div>
 </div>

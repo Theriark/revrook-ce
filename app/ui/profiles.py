@@ -37,7 +37,8 @@ from app.importers.preview import Preview, build_preview, editor_adapters
 from app.importers.profiles import save_profile
 from app.models import AppUser, Client, Fact, ImportProfile
 from app.pseudonym import Pseudonymiser
-from app.ui.auth import redirect, render
+from app.ui.auth import render
+from app.ui.common import to_login
 from app.web import (
     cipher_of,
     clock_of,
@@ -75,12 +76,6 @@ async def _signed_in_user(request: Request) -> AppUser | None:
         return None
     async with session_factory(request)() as db:
         return await get_user(db, session.user_id)
-
-
-def _to_login(request: Request) -> Response:
-    if _is_htmx(request):
-        return Response(status_code=200, headers={"HX-Redirect": "/login"})
-    return redirect("/login")
 
 
 def _status_of(error: EvidenceError) -> int:
@@ -272,7 +267,7 @@ def _respond(request: Request, context: dict[str, Any], status: int) -> Response
 async def editor_page(request: Request) -> Response:
     user = await _signed_in_user(request)
     if user is None:
-        return redirect("/login")
+        return to_login(request)
     context = await _base_context(request, user)
     context["client_id"] = _chosen_client(request, context["clients"])
     return render(request, PAGE_TEMPLATE, context, current_session(request))
@@ -353,7 +348,7 @@ async def _handle(request: Request, action: str) -> Response:
     """Preview, save or import: each reads the form and shows the preview again."""
     user = await _signed_in_user(request)
     if user is None:
-        return _to_login(request)
+        return to_login(request)
     context = await _base_context(request, user)
     status = 200
     form = await request.form(max_files=1, max_fields=MAX_FORM_FIELDS)

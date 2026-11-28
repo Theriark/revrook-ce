@@ -267,7 +267,7 @@
         var gone = lines.filter(function (line) {
           return line.ok;
         }).length;
-        report(plural(gone, "client", "clients") + " deleted of " + lines.length + ". Only the audit entries remain.", lines);
+        report(plural(gone, "client", "clients") + " deleted of " + lines.length + ". Only the audit entries and the hash chains remain.", lines);
         // The rows go at once, but the counts of the chips, the chart of the bands
         // and the pages were made by the server before; only a new list is current.
         if (gone) {

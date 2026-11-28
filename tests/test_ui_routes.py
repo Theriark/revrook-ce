@@ -432,6 +432,15 @@ async def test_a_new_client_reads_not_checked_yet_not_nothing_needs_attention(
     # No source was ever imported: none of them needs a "fresh" export.
     assert "never been imported" in overview.text
     assert "a fresh export" not in overview.text
+    assert "<dt>Exports to refresh</dt><dd>0</dd>" in overview.text
+    assert "<dt>Not imported yet</dt><dd>" in overview.text
+    # The evidence page counts them apart and asks for a first export.
+    evidence = await ui_browser.get(made.headers["location"] + "/evidence")
+    assert evidence.status_code == 200
+    assert "<dt>To refresh</dt><dd>0</dd>" in evidence.text
+    assert "<dt>Not imported yet</dt><dd>0</dd>" not in evidence.text
+    assert "Not imported yet. Export it from the source system" in evidence.text
+    assert "Export it again" not in evidence.text
 
 
 async def test_an_exception_with_a_review_date_in_the_past_is_refused(
@@ -510,6 +519,10 @@ async def test_a_malformed_address_is_a_4xx_never_a_500(
     assert malformed.headers["content-type"].startswith("text/html")
     assert 'class="rv-problem"' in malformed.text
     assert "not one revrook can use" in malformed.text
+    # Nothing is listed on it, so it does not ask to fix what is listed.
+    assert 'class="rv-problem-details"' not in malformed.text
+    assert "Nothing was saved." in malformed.text
+    assert "Fix what is listed" not in malformed.text
     for query in (
         {"period_start": "2026-13-45"},
         {"period_start": "2026-09-30", "period_end": "2026-07-01"},

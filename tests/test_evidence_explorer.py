@@ -221,7 +221,9 @@ def test_the_view_links_only_both_ends_and_counts_every_control() -> None:
     total = counts.protected + counts.needs_attention + counts.not_protected
     assert total + counts.not_checked + counts.not_applicable == 51
     assert counts.links == sum(len(s.controls) for s in view.sources) > 0
-    assert counts.sources == len(view.sources) == counts.current + counts.to_refresh
+    assert counts.sources == len(view.sources)
+    assert counts.sources == counts.current + counts.to_refresh + counts.not_imported
+    assert counts.to_refresh == 1  # the stale one; the rest were never imported
     assert counts.current == 2
     assert view.ruleset == f"{LIBRARY.ruleset_id} {LIBRARY.version}"
     assert view.as_of.endswith("+00:00")
@@ -663,6 +665,7 @@ def test_the_companies_ring_page_has_its_tables_cards_and_filters() -> None:
         "unread": [],
         "card_focus": {},
         "card_refresh": {7: 2, 8: 0},
+        "card_missing": {7: 3},
     }
     html = render_page(None, [(7, "Alpha"), (8, "Beta")], companies)
     assert structure_problems(html) == []
@@ -678,7 +681,9 @@ def test_the_companies_ring_page_has_its_tables_cards_and_filters() -> None:
     # every client with its status; their links open in the drawer of the page.
     for client_id in (7, 8):
         assert html.count(f'<template id="client-card-{client_id}">') == 1
-    assert 'href="/clients/7/evidence">Exports to refresh: 2</a>' in html
+    due = 'href="/clients/7/evidence">Exports to refresh: 2</a>'
+    assert due + ", not imported yet: 3</p>" in html
+    assert 'href="/clients/8/evidence">Exports to refresh: 0</a></p>' in html
     cards = CONTROL_CARD.findall(html)
     assert len(cards) == 51
     for control_id, body in cards:

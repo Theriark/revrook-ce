@@ -672,9 +672,10 @@ The server draws one `<template id="client-card-{id}">` per client with the macr
 (a link to the client), the score and band with the status and score styles of the
 driver cards (`at least` and "Insufficient evidence" when the evidence is too thin),
 **Needs work** (the client's three most urgent controls by the order of **Needs
-attention**, each a link to the control), **Exports to refresh: N** (its expired, stale
-and never-imported sources, counted as the stat card counts them for all clients; a
-link to its evidence page) and Open client, Checklist and Evidence. It is a non-modal
+attention**, each a link to the control), **Exports to refresh: N** (its expired and stale
+sources, counted as the stat card counts them for all clients; a
+link to its evidence page; then ", not imported yet: M" when M sources were never
+imported) and Open client, Checklist and Evidence. It is a non-modal
 popover, `role="dialog" aria-modal="false"` labelled by its heading, on the keep
 surface (the card carries `.rv-keep`) so it reads in both themes. Chosen from the
 keyboard, the focus moves to its heading, where Left, Right and Enter still answer;
@@ -855,7 +856,8 @@ and the tabs. Under it the period toolbar (`form.rv-period`), then:
 
 - Where the client stands (`#posture`): a large posture ring (`.rv-ring-large`, the
   same drawing as Home at 144 px) with the band, four facts (evidence coverage,
-  controls that need work, exports to refresh, the movement since the last report)
+  controls that need work, exports to refresh, the movement since the last report;
+  a fifth, not imported yet, between the last two when a source was never imported)
   and the three summary sentences of the report (`#summary`). A client whose
   evidence is too thin shows a dashed ring and the lower bound in words.
 - Controls by status (`#status-counts`): one stacked bar (`.rv-mix-bar`) and the
@@ -987,12 +989,14 @@ The evidence page. Under the client header, whose one action leads to the profil
 editor, the section head names the page and the rule of freshness, then the evidence
 verdict (`section.rv-verdict`, the band of the control page): the state of the
 client's evidence as one large pill (every export current; `1 stale`; `1 expired, 2
-not imported`; no evidence yet) beside four facts (sources, current, to refresh,
+not imported`; no evidence yet) beside five facts (sources, current, to refresh (stale
+or expired), not imported yet,
 items imported), computed by `evidence_facts` in `app/ui/viewmodels.py` from the
 source rows the page shows. Then the parts, each with a section head at h3:
 "Refresh these exports", an ordered list (`.rv-refresh`, the oldest export first and
 then the sources never imported) whose numbers are the order to work in, with the
-state pill, the date of the newest export and what to do, or a success strip when
+state pill, the date of the newest export and what to do ("Not imported yet." and the
+first export for a source never imported), or a success strip when
 every export is current; the public DNS check; "Sources", a table of every source a
 control reads with its state, newest export, the date it goes stale, its age and the
 exports kept. The Age column (`age_bars` in `app/ui/charts.py`, matched to its row by

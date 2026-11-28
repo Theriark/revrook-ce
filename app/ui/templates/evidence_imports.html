@@ -16,13 +16,14 @@
 <div><dt>Sources</dt><dd>{{ facts.sources }}</dd></div>
 <div><dt>Current</dt><dd>{{ facts.current }}</dd></div>
 <div><dt>To refresh</dt><dd>{{ facts.to_refresh }}</dd></div>
+<div><dt>Not imported yet</dt><dd>{{ facts.not_imported }}</dd></div>
 <div><dt>Items imported</dt><dd>{{ facts.items }}</dd></div>
 </dl>
 </section>
 
 <section id="refresh" aria-labelledby="refresh-title">
 <div class="rv-section-head">
-<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">Oldest first. Drop fresh files on <a href="/imports?client_id={{ client_id }}">Import evidence</a> or run the DNS check.</p></div>
+<div><h3 id="refresh-title">Refresh these exports</h3><p class="rv-section-note">Oldest first, then the sources not imported yet. Drop fresh files on <a href="/imports?client_id={{ client_id }}">Import evidence</a> or run the DNS check.</p></div>
 </div>
 {% if refresh %}
 <div class="rv-refresh">

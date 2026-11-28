@@ -33,7 +33,7 @@ from app.reports.status import (
 )
 from app.reports.view import ControlRow
 from app.ui.dashboard import ClientPosture
-from app.ui.viewmodels import CURRENT, SourceRow, control_sources
+from app.ui.viewmodels import CURRENT, MISSING, SourceRow, control_sources
 
 MANUAL_ONLY = "Manual evidence (no export)"
 
@@ -87,6 +87,8 @@ class ExplorerCounts:
     current: int
     to_refresh: int
     links: int
+    # Sources never imported need a first export, not a fresh one: counted apart.
+    not_imported: int = 0
 
 
 @dataclass(frozen=True)
@@ -195,6 +197,7 @@ def build_explorer(
     )
     labels = _label_counts(rows)
     current = sum(1 for source in sources if source.state == CURRENT)
+    missing = sum(1 for source in sources if source.state == MISSING)
     counts = ExplorerCounts(
         protected=labels.get(PROTECTED.key, 0),
         needs_attention=labels.get(NEEDS_ATTENTION.key, 0),
@@ -203,8 +206,9 @@ def build_explorer(
         not_applicable=labels.get(NOT_APPLICABLE.key, 0),
         sources=len(sources),
         current=current,
-        to_refresh=len(sources) - current,
+        to_refresh=len(sources) - current - missing,
         links=sum(len(pillar.controls) for pillar in pillars),
+        not_imported=missing,
     )
     return ExplorerView(
         client_id=client_id,

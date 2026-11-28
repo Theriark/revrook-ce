@@ -17,8 +17,10 @@ Under it the title of the page, one line on what it is for and its one primary a
 From top to bottom:
 
 1. Four stat cards in one ledger standing on the foot of the band: clients, controls
-   protected, controls that need work and exports to refresh, each with the change
-   since the last reports and a sparkline of its weeks.
+   protected, controls that need work and exports to refresh (an expired or stale
+   export; a source that has never been imported is not counted there, and the note
+   of the card names it apart as not imported yet), each with the change since the
+   last reports and a sparkline of its weeks.
 2. **Needs attention**: the gate controls first, then what is not protected, by weight,
    across all clients. **Open** shows the control in a drawer over the page
    ([4. The checklist](04-checklist-and-control-notes.md#the-drawer-and-the-page-of-a-control)).
@@ -146,7 +148,8 @@ strip that scrolls sideways, with a chevron at its edge while more tabs lie beyo
 - The period picker at the top chooses the quarter a report would cover; **Show this
   period** reloads the page for it. The evidence is always read as it is today.
 - **Where the client stands** is the posture ring with the band, the coverage, the
-  exports to refresh and the change since the last report, with the summary sentence
+  exports to refresh, the sources **Not imported yet** (shown only when a source has
+  never been imported) and the change since the last report, with the summary sentence
   the report would print.
 - **Controls by status** is the bar and the four pills; **Open the checklist** leads to
   every control with its evidence.
@@ -156,8 +159,10 @@ strip that scrolls sideways, with a chevron at its edge while more tabs lie beyo
   built of its controls in layers by status, above one bar per domain with its weight
   and score. A segment of a bar opens the checklist narrowed to
   that domain and status ([8. Scenes](08-scenes-rail-and-explorer.md#the-domain-keep-on-a-client-overview)).
-- **How fresh is the evidence?** says how many sources need a fresh export, with a link
-  to the evidence page, which lists every source with its age.
+- **How fresh is the evidence?** says how many sources need a fresh export and, apart,
+  how many have never been imported, with a link to the evidence page, which lists
+  every source with its age. A new client, whose sources have never been imported,
+  reads "N sources have never been imported" and is not told it needs a fresh export.
 - **Recent changes** is the audit trail of this client (not pictured, for the reason
   given under Home).
 

@@ -24,7 +24,9 @@ Open a client and its tab **Exceptions**.
 
 1. In **Add an exception**, choose the **Control**.
 2. Type the **Owner** (the person at the client who accepted the gap) and the **Review
-   date** (after it the exception shows as overdue).
+   date** (after it the exception shows as overdue). The review date is today or a
+   later day, at most five years away: a date in the past is refused with "The review
+   date is in the past. Choose today or a later day."
 3. Write the **Reason**, and the **Compensating control** if the client does something
    instead (leave it empty otherwise).
 4. Press **Add the exception**. The page reloads with a message and the new row; the
@@ -32,7 +34,9 @@ Open a client and its tab **Exceptions**.
 
 ## Close an exception
 
-Press **Close this exception** on its row. The row stays in the register as closed, and
+Press **Close this exception** on its row. The browser asks first ("Close the exception
+for ...? It stays in the register as closed and no longer shows beside the control.");
+**Cancel** closes nothing. Once confirmed, the row stays in the register as closed, and
 the audit trail of the client records who closed it and when.
 
 Next: [6. Reports and exports](06-reports-and-exports.md).

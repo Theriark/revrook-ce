@@ -223,9 +223,11 @@ class ClientsToday:
     unread: list[Unread] = field(default_factory=list)
     created: list[datetime] = field(default_factory=list)
     # Per client, for its company card in a scene: its most urgent controls and
-    # how many of its exports are due for a refresh.
+    # how many of its exports are due for a refresh and how many sources were
+    # never imported.
     focus: dict[int, list[AttentionItem]] = field(default_factory=dict)
     refresh: dict[int, int] = field(default_factory=dict)
+    missing: dict[int, int] = field(default_factory=dict)
     # Per client, every control of the library with its label today.
     rows: dict[int, tuple[ControlRow, ...]] = field(default_factory=dict)
 
@@ -269,7 +271,9 @@ async def read_clients(
         today.domain_rows.extend(view.domains)
         rows = source_rows(evidence, wanted, ages, now)
         today.sources.extend(rows)
-        today.refresh[client_id] = evidence_summary(rows).to_refresh
+        summary = evidence_summary(rows)
+        today.refresh[client_id] = summary.to_refresh
+        today.missing[client_id] = summary.not_imported
         today.rows[client_id] = tuple(view.rows)
     return today
 
@@ -310,6 +314,7 @@ async def load_board(
         # The company card of each client in the scene.
         "card_focus": today.focus,
         "card_refresh": today.refresh,
+        "card_missing": today.missing,
         "trend": trend_chart(trend_points, names, now, days=days),
         "trend_narrow": trend_chart(
             trend_points, names, now, days=days, size=NARROW_CHART

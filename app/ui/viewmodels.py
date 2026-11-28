@@ -42,6 +42,7 @@ from app.scoring.snapshot import (
 from app.sources import control_sources as control_sources
 from app.sources import (
     is_shown,
+    first_import_instruction,
     refresh_instruction,
     source_name,
 )
@@ -400,7 +401,7 @@ def source_rows(
                     captured_at=None,
                     expires_at=None,
                     exports=0,
-                    refresh=refresh_instruction(code),
+                    refresh=first_import_instruction(code),
                 )
             )
     return sorted(rows, key=lambda item: (item.name, item.code))
@@ -419,7 +420,7 @@ def refresh_list(rows: Sequence[SourceRow]) -> list[SourceRow]:
 
 @dataclass(frozen=True)
 class EvidenceFacts:
-    """The verdict band of the evidence page: one status and four counts.
+    """The verdict band of the evidence page: one status and five counts.
 
     The status is read from the source rows the page already shows; nothing is
     scored here.
@@ -429,6 +430,8 @@ class EvidenceFacts:
     sources: int
     current: int
     to_refresh: int
+    # Sources never imported need a first export, not a fresh one: counted apart.
+    not_imported: int
     items: int
 
 
@@ -475,6 +478,7 @@ def evidence_facts(
         label=label,
         sources=len(rows),
         current=len(rows) - len(to_refresh),
-        to_refresh=len(to_refresh),
+        to_refresh=stale + expired,
+        not_imported=missing,
         items=len(views),
     )
